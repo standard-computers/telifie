@@ -1,0 +1,151 @@
+{
+	"commands" : [
+		{
+			"command" : "articles",
+			"description" : "Perform actions on Articles in a given domain",
+			"commands" : [
+				{
+					"command" : "id",
+					"description" : "Returns Article as JSON given ID of Article",
+					"usage" : "/articles/id/[ARTICLE_ID]"
+				},{
+					"command" : "update",
+					"description" : "Set request body as JSON of new Article you want to update",
+					"usage" : "/articles/update/[ARTICLE_ID]"
+				},{
+					"command" : "delete",
+					"description" : "Deletes article specified by Article ID",
+					"usage" : "/articles/delete/[ARTICLE_ID]"
+				},{
+					"command" : "comment",
+					"description" : "",
+					"usage" : ""
+				}
+			]
+		},{
+			"command" : "favorites",
+			"description" : "Manage your favorite (saved) articles",
+			"usage" : "/favorites",
+			"commands" : [
+				{
+					"command" : "save",
+					"description" : "Saves Article given Article ID and Folder ID",
+					"usage" : "/favorites/save/[FOLDER_ID]/[ARTICLE_ID]"
+				},{
+					"command" : "unsave",
+					"description" : "Removes Article from folder given Article ID and Folder ID",
+					"usage" : "/favorites/unsave/[FOLDER_ID]/[ARTICLE_ID]"
+				},{
+					"command" : "delete",
+					"description" : "Deletes a 'Folder' of favorites",
+					"usage" : "/favorites/[FOLDER_ID]"
+				},{
+					"command" : "create",
+					"description" : "Creates a 'Folder' of favorites with name",
+					"usage" : "/favorites/[NEW_FOLDER_NAME]",
+
+
+				}
+			]
+		},{
+			"command" : "users",
+			"description" : "Returns JSON of viewable user info given user ID or email.",
+			"usage" : "/users/[COMMAND || USER_VALUE]",
+			"commands" : [
+				{
+					"command" : "update",
+					"description" : "Set request Body as JSON of user data that is modified. System will update info with JSON.",
+					"usage" : "/users/update/[USER_ID]"
+				},{
+					"command" : "delete",
+					"description" : "Deletes user with User ID if correct credentials are given.",
+					"usage" : "/users/delete/[USER_ID]"
+				}
+			]
+		},{
+			"command" : "domains",
+			"description" : "Manage or commit actions on domains.",
+			"commands" : [
+				{
+					"command" : "owner",
+					"description" : "Returns owned domains as JSON for provided id of user (i.e. domains/owner/USER_ID",
+					"usage" : "/domains/owner/[USER_ID]"
+				},{
+					"command" : "user",
+					"description" : "Returns domains as JSON for for provided user that they own or are a member of.",
+					"usage" : "/domains/user/[USER_ID]"
+				},{
+					"command" : "create",
+					"description" : "Creates domain given JSON data of new domain as POST body.",
+					"usage" : "/domains/create"
+				},{
+					"command" : "delete",
+					"description" : "Deletes domain with Domain ID if correct credential are given.",
+					"usage" : "/domains/delete/[DOMAIN_ID]"
+				},{
+					"command" : "[DOMAIN_NAME || DOMAIN_ID]",
+					"description" : "ONLY IN CONSOLE. Switches working domain",
+					"usage" : "[DOMAIN_NAME]://[COMMAND PATH...]"
+				}
+			]
+		},{
+			"command" : "server",
+			"description" : "Starts an HTTP or HTTPS server to receive requests.",
+			"commands" : [
+				{
+					"command" : "http",
+					"description" : "Starts HTTP server.",
+					"usage" : "/server/http",
+					"commands" : [
+						{
+							"command" : "/server/http/threaded/[TRUE || FALSE]",
+							"description" : "If true is provided, then start HTTP server in new thread.",
+							"usage" : "/server/http/threaded/[TRUE || FALSE]"
+						}
+					]
+				},
+				{
+					"command" : "https",
+					"description" : "Starts the HTTPS server. Please read docs for correct setup.",
+					"usage" : "/server/https",
+					"commands" : [
+						{
+							"command" : "/server/https/threaded/[true || false]",
+							"description" : "If true is provided, then start HTTPS server in new thread.",
+							"usage" : "/server/https/threaded/[true || false]"
+						}
+					]
+				}
+			]
+		}, {
+			"command" : "search",
+			"description" : "",
+			"usage" : "/search/[URL_ENCODED_SEARCH_QUERY]"
+		},{
+			"command" : "connect",
+			"description" : "Requests and sends 2FA token to the user for /verify",
+			"usage" : "/connect/[USER_EMAIL]",
+			"commands" : []
+		},{
+			"command" : "verify",
+			"description" : "Verifies and authenticates user given correct credentials.",
+			"usage" : "/verify/[USER_EMAIL]/[VERIFICATION_CODE]"
+		},{
+			"command" : "parser",
+			"description" : "Parses Digital Assets into Articles given a URI of file or website.",
+			"usage" : "/parser/[URI]",
+			"commands" : [
+				{
+					"command" : "csv",
+					"usage" : "/parsers/csv/[CSV_FILE_URI]"
+				}
+			]
+		},{
+			"command" : "exit",
+			"description" : "Exits Telifie. Use close also. Only accessible through console. Not HTTP(s) request."
+		},{
+			"command" : "close",
+			"description" : "Exits Telifie. Use close also. Only accessible through console. Not HTTP(s) request."
+		}
+	]
+}
