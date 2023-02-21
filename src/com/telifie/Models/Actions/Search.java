@@ -58,8 +58,8 @@ public class Search {
 
         try(MongoClient mongoClient = MongoClients.create(configuration.getDomain(0).getUri())){
 
-            MongoDatabase database = mongoClient.getDatabase("telifie");
-            MongoCollection<Document> collection = database.getCollection("articles");
+            MongoDatabase database = mongoClient.getDatabase( (configuration.defaultDomain().getName().equals("telifie") || configuration.defaultDomain().getName().equals("") || configuration.defaultDomain().getName() == null ? "telifie" : "domains-articles") );
+            MongoCollection<Document> collection = database.getCollection((configuration.defaultDomain().getName().equals("telifie") || configuration.defaultDomain().getName().equals("") || configuration.defaultDomain().getName() == null ? "articles" : configuration.defaultDomain().getName()));
 
             Document filter = generateFilter();
             FindIterable<Document> iterable = collection.find(filter).limit(100);

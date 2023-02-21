@@ -24,6 +24,15 @@ public class Tool {
                 NUMERALS[(int) random(0, 9)];
     }
 
+    public static String shortEid(){
+        return ALPHAS[(int) random(0, 25)] +
+                ALPHAS[(int) random(0, 25)] +
+                ALPHAS[(int) random(0, 25)] +
+                NUMERALS[(int) random(0, 9)] +
+                NUMERALS[(int) random(0, 9)] +
+                NUMERALS[(int) random(0, 9)];
+    }
+
     public static String simpleCode(){
         return NUMERALS[(int) random(0, 9)] +
                 NUMERALS[(int) random(0, 9)] +

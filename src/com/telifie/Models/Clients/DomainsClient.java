@@ -1,8 +1,14 @@
 package com.telifie.Models.Clients;
 
+import com.mongodb.MongoException;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import com.telifie.Models.Domain;
 import org.bson.Document;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class DomainsClient extends Client {
@@ -28,8 +34,23 @@ public class DomainsClient extends Client {
         for(Document doc : found){
             domains.add(new Domain(doc));
         }
-        return domains;
 
+        return domains;
+    }
+
+    public Domain getWithId(String id){
+        return new Domain(super.findOne(new Document("id", id)));
+    }
+
+    public boolean delete(String owner, String id){
+        return super.deleteOne(
+            new Document("$and",
+                Arrays.asList(
+                    new Document("owner", owner),
+                    new Document("id", id)
+                )
+            )
+        );
     }
 
     /**
@@ -47,14 +68,31 @@ public class DomainsClient extends Client {
                 )
             )
         );
-        return domains;
 
+        return domains;
     }
 
     public boolean create(Domain domain){
 
-        return this.insertOne(Document.parse(domain.toString()));
+        if(this.insertOne(Document.parse(domain.toString()))){
+
+            //Now setup collections in the databases to be prepared for use.
+            try(MongoClient mongoClient = MongoClients.create(super.domain.getUri())){
+
+                MongoDatabase database = mongoClient.getDatabase("domains-articles");
+                database.createCollection(domain.getAlt());
+
+            }catch(MongoException e){
+
+                return true;
+            }
+
+            return true;
+
+        }else{
+
+            return false;
+        }
 
     }
-
 }

@@ -43,6 +43,10 @@ public class Configuration implements Serializable {
         return this.domains.get(0);
     }
 
+    public void setDefaultDomain(Domain domain){
+        this.domains.add(0, domain);
+    }
+
     public ArrayList<Domain> getDomains() {
         return domains;
     }

@@ -34,7 +34,6 @@ public class ArticlesClient extends Client {
     public Article get(String articleId){
 
         return new Article(this.findOne(new Document("id", articleId)));
-
     }
 
     public ArrayList<Article> get(Document filter){

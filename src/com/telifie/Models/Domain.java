@@ -1,5 +1,6 @@
 package com.telifie.Models;
 
+import com.telifie.Models.Utilities.Tool;
 import org.bson.Document;
 
 import java.io.Serializable;
@@ -7,7 +8,7 @@ import java.io.Serializable;
 public class Domain implements Serializable {
 
     private String uri, id, alt, icon, owner, name;
-    private int permissions;
+    private int origin, permissions;
     //TODO users
 
     public Domain(String uri){
@@ -18,9 +19,19 @@ public class Domain implements Serializable {
         this.name = name;
         this.uri = uri;
     }
+    
+    public Domain(String owner, String name, String icon, int permissions){
+        this.owner = owner;
+        this.id = Tool.md5(Tool.shortEid());
+        this.alt = Tool.eid();
+        this.name = name;
+        this.icon = icon;
+        this.origin = Tool.epochTime();
+        this.permissions = (permissions <= 2 && permissions >= 0 ? permissions : 0); //Private is default mode if none
+    }
 
     public Domain(Document document){
-        this.id = document.getString("id");
+        this.id = (document.getString("id") == null ? Tool.md5(Tool.eid()) : document.getString("id"));
         this.alt = document.getString("alt");
         this.icon = document.getString("icon");
         this.owner = document.getString("owner");
@@ -72,8 +83,13 @@ public class Domain implements Serializable {
         return name;
     }
 
-    public void setName(String name) {
+    public Domain setName(String name) {
         this.name = name;
+        return this;
+    }
+
+    public int getOrigin() {
+        return origin;
     }
 
     public int getPermissions() {
@@ -84,15 +100,28 @@ public class Domain implements Serializable {
         this.permissions = permissions;
     }
 
+    public void makePrivate(){
+        this.permissions = 0;
+    }
+
+    public void makePublic(){
+        this.permissions = 1;
+    }
+
+    public void makeProtected(){
+        this.permissions = 2;
+    }
+
     @Override
     public String toString() {
         return "{" +
-                "\"uri\" : \"" + uri + '\"' +
-                ", \"id\" : \"" + id + '\"' +
+                (uri == null ? "" : "\"uri\" : \"" + uri + "\", ") +
+                "\"id\" : \"" + id + '\"' +
                 ", \"alt\" : \"" + alt + '\"' +
                 ", \"icon\" : \"" + icon + '\"' +
                 ", \"owner\" : \"" + owner + '\"' +
                 ", \"name\" : \"" + name + '\"' +
+                ", \"origin\" :" + origin +
                 ", \"permissions\" :" + permissions +
                 '}';
     }

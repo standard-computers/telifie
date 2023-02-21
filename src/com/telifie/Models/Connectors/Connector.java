@@ -5,21 +5,14 @@ import com.telifie.Models.Utilities.*;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Connector extends CommonObject implements Serializable {
+public class Connector implements Serializable {
 
-    private String client, token, refreshToken; //Data from API host, use their backend/platform
-    /**
-     * For CommonObject with connectors, use title for name, and link for endpoint url
-     * */
-    private ArrayList<CommonObject> endpoints = new ArrayList<>();
+    private String id, client, token, refreshToken;
+    private ArrayList<Endpoint> endpoints = new ArrayList<>();
     private Authentication authentication; //The authentication with Telifie to use this Connector, replicated when in use
 
-    public Connector(){
-        super("", "", "", "");
-    }
-
-    public Connector(String icon, String title, String link, String description) {
-        super(icon, title, link, description);
+    public String getId() {
+        return id;
     }
 
     public String getClient() {
@@ -46,16 +39,16 @@ public class Connector extends CommonObject implements Serializable {
         this.refreshToken = refreshToken;
     }
 
-    public ArrayList<CommonObject> getEndpoints() {
+    public ArrayList<Endpoint> getEndpoints() {
         return endpoints;
     }
 
-    public void setEndpoints(ArrayList<CommonObject> endpoints) {
+    public void setEndpoints(ArrayList<Endpoint> endpoints) {
         this.endpoints = endpoints;
     }
 
-    public void addEndpoint(CommonObject object){
-
+    public void addEndpoint(Endpoint endpoint) {
+        this.endpoints.add(endpoint);
     }
 
     public Authentication getAuthentication() {
@@ -64,6 +57,50 @@ public class Connector extends CommonObject implements Serializable {
 
     public void setAuthentication(Authentication authentication) {
         this.authentication = authentication;
+    }
+
+    class Endpoint {
+
+        private String url, method, description;
+
+        public Endpoint(String url, String method, String description) {
+            this.url = url;
+            this.method = method;
+            this.description = description;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public void setUrl(String url) {
+            this.url = url;
+        }
+
+        public String getMethod() {
+            return method;
+        }
+
+        public void setMethod(String method) {
+            this.method = method;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        @Override
+        public String toString() {
+            return "{" +
+                    "\"url\" : \"" + url + '\"' +
+                    ", \"method\" :" + method + '\"' +
+                    ", \"description\" :" + method + '\"' +
+                    '}';
+        }
     }
 
 }
