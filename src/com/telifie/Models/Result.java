@@ -96,8 +96,7 @@ public class Result {
 
     @Override
     public String toString() {
-        return "{" +
-                "\"status_code\" : " + statusCode +
+        return "{\"status_code\" : " + statusCode +
                 ", \"query\" : \"" + query + '\"' +
                 ", \"count\" : " + count +
                 (quickResults.size() > 0 && quickResults != null ? ", \"quick_results\" : " + quickResults : "") +

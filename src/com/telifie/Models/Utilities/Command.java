@@ -4,6 +4,7 @@ import com.telifie.Models.*;
 import com.telifie.Models.Actions.Out;
 import com.telifie.Models.Actions.Search;
 import com.telifie.Models.Clients.*;
+import com.telifie.Models.Connectors.Connector;
 import org.bson.Document;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -618,12 +619,10 @@ public class Command {
                 }else{
 
                     Out.error("Failed to authorize app with ID: " + appId);
-
                 }
-
             }
 
-        }else if(primarySelector.startsWith("connect")){
+        }else if(primarySelector.equals("connect")){
             //TODO pass through request type from server if possible
             //TODO make sure that it's a post request
             if(this.selectors.length >= 2){
@@ -635,15 +634,15 @@ public class Command {
                     User user = usersClient.getUserWithEmail(email);
                     if(user.lock()){
 
-                        return new Result(200, "Authentication code sent");
+                        return new Result(200, "\"Authentication code sent\"");
                     }else{
 
-                        return new Result(501, "Failed to send code");
+                        return new Result(501, "\"Failed to send code\"");
                     }
 
                 }else{
 
-                    return new Result(404, "Account not found");
+                    return new Result(404, "\"Account not found\"");
                 }
 
             }
@@ -693,15 +692,60 @@ public class Command {
 
             //TODO diagnostics, logging, system stats, etc.
 
+        }else if(primarySelector.equals("connectors")){
+
+            if(this.selectors.length > 1){
+
+                if(objectSelector.equals("create")){
+
+                    if(content != null){
+
+                        Connector newConnector = new Connector(content);
+                        if(new ConnectorsClient().create(newConnector)){
+
+                            return new Result(
+                                this.command,
+                                "connector",
+                                newConnector.toString(),
+                                1
+                            );
+
+                        }else{
+
+                            return new Result(505, this.command, "\"Failed to create Connector\"");
+                        }
+
+                    }else{
+
+                        return new Result(428, this.command, "\"JSON body expected to create connector\"");
+                    }
+
+                }else{
+
+                    new Result(404, this.command, "\"Invalid connectors action provided\"");
+                }
+
+            }else{ //Gets all available Connectors for use
+
+                //TODO Do not get files everytime, do this once when the server starts
+
+                ConnectorsClient connectors = new ConnectorsClient();
+                ArrayList<Connector> all = connectors.getConnectors();
+                return new Result(
+                    this.command,
+                    "connectors",
+                    all.toString(),
+                    all.size()
+                );
+
+            }
+
         }else{
 
-            //TODO GraphQL with POST method as query
             return new Result(404, this.command, "\"Invalid command\"");
-
         }
 
         return new Result(200, this.command, "\"No command received\"");
-
     }
 
 }

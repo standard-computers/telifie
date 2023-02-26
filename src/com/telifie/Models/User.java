@@ -1,7 +1,7 @@
 package com.telifie.Models;
 
 import com.telifie.Models.Clients.UsersClient;
-import com.telifie.Models.Connectors.TextMessenger;
+import com.telifie.Models.Connectors.Available.TextMessenger;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Network;
 import com.telifie.Models.Actions.Out;

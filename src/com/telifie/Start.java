@@ -39,6 +39,7 @@ public class Start {
         configuration_file = new File(workingDirectory + "/telifie.configuration");
 
         if (args.length > 0) {
+
             if(args[0].equals("--install")){ //First run/install
 
                 install();
@@ -47,10 +48,13 @@ public class Start {
 
                 Out.console("<!----------- Purge Mode -----------!>\n");
                 if(In.string("Confirm purge and fresh install (y/n) -> ").equals("y")){
+
                     configuration_file.delete();
                     Out.console("telifie.configuration deleted.");
                     install();
+
                 }else{
+
                     System.exit(1);
                 }
 
@@ -69,12 +73,14 @@ public class Start {
                 Out.console("Starting HTTP server...");
                 new Server(false);
 
-            }else{
+            }else {
+
                 System.err.println("\nInvalid argument provided...\n");
                 System.exit(-1);
             }
 
         }else{
+
             Out.line();
             Out.console("Searching for telifie.configuration file...");
             if(configuration_file.exists()){

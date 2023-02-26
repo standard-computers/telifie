@@ -1,18 +1,45 @@
 package com.telifie.Models.Connectors;
 
-import com.telifie.Models.Authentication;
 import com.telifie.Models.Utilities.*;
+import org.bson.Document;
 import java.io.Serializable;
 import java.util.ArrayList;
 
 public class Connector implements Serializable {
 
-    private String id, client, token, refreshToken;
+    private String id, name, client, token, refreshToken;
     private ArrayList<Endpoint> endpoints = new ArrayList<>();
-    private Authentication authentication; //The authentication with Telifie to use this Connector, replicated when in use
+
+    public Connector(Document document){
+
+        if((this.client = document.getString("client")) != null
+                && (this.token = document.getString("token")) != null
+                && (this.name = document.getString("name")) != null
+                && (this.refreshToken = document.getString("refresh_token")) != null) {
+
+            this.id = (document.getString("id") != null ? document.getString("id") : Tool.md5(Tool.eid()));
+            ArrayList<Document> eps = (ArrayList<Document>) document.getList("endpoints", Document.class);
+            if (eps != null) {
+
+                endpoints = new ArrayList<>();
+                for (Document d : eps) {
+
+                    endpoints.add(new Endpoint(d));
+                }
+            }
+        }
+    }
 
     public String getId() {
         return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getClient() {
@@ -51,56 +78,15 @@ public class Connector implements Serializable {
         this.endpoints.add(endpoint);
     }
 
-    public Authentication getAuthentication() {
-        return authentication;
-    }
-
-    public void setAuthentication(Authentication authentication) {
-        this.authentication = authentication;
-    }
-
-    class Endpoint {
-
-        private String url, method, description;
-
-        public Endpoint(String url, String method, String description) {
-            this.url = url;
-            this.method = method;
-            this.description = description;
-        }
-
-        public String getUrl() {
-            return url;
-        }
-
-        public void setUrl(String url) {
-            this.url = url;
-        }
-
-        public String getMethod() {
-            return method;
-        }
-
-        public void setMethod(String method) {
-            this.method = method;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
-
-        @Override
-        public String toString() {
-            return "{" +
-                    "\"url\" : \"" + url + '\"' +
-                    ", \"method\" :" + method + '\"' +
-                    ", \"description\" :" + method + '\"' +
-                    '}';
-        }
+    @Override
+    public String toString() {
+        return "{\"id\" : \"" + id + '\"' +
+                ", \"name\" : \"" + name + '\"' +
+                ", \"client\" : \"" + client + '\"' +
+                ", \"token\" : \"" + token + '\"' +
+                ", \"refresh_token\" : \"" + refreshToken + '\"' +
+                ", \"endpoints\" : " + endpoints +
+                '}';
     }
 
 }

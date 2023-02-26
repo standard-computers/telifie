@@ -1,7 +1,12 @@
 package com.telifie.Models.Utilities;
 
+import com.telifie.Models.Actions.Out;
 import com.telifie.Models.Authentication;
+import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Clients.AuthenticationClient;
+import com.telifie.Models.Clients.ConnectorsClient;
+import com.telifie.Models.Connectors.Available.AWSS3;
+import com.telifie.Models.Connectors.Connector;
 import com.telifie.Models.Domain;
 import com.telifie.Models.Result;
 import org.apache.http.*;
@@ -29,13 +34,10 @@ public class Server {
 
             Thread thread = new Thread(this::server);
             thread.start();
-
         }else{
 
             server();
-
         }
-
     }
 
     private void server(){
@@ -54,7 +56,6 @@ public class Server {
 
                 result.setStatusCode(406);
                 result.setResults("\"No Authentication credentials provided\"");
-
             }else{
 
                 //Check if request has a body
@@ -63,31 +64,51 @@ public class Server {
 
                     HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
                     body = EntityUtils.toString(entity);
-
                 }
 
                 AuthenticationClient authenticationClient = new AuthenticationClient(new Domain("telifie", "mongodb://137.184.70.9:27017"));
                 if(authenticationClient.isAuthenticated(auth)){
 
-                    Configuration requestConfiguration = new Configuration();
-                    //TODO reconfigure configuration of request
-                    requestConfiguration.addDomain(new Domain("telifie", "mongodb://137.184.70.9:27017"));
-                    requestConfiguration.setAuthentication(auth);
-                    result = processRequest(requestConfiguration, method, query, body);
+                    String contentType = (request.getFirstHeader("Content-Type") == null ? "" : request.getFirstHeader("Content-Type").getValue());
+                    if(contentType.equals("application/octet-stream")
+                            || contentType.startsWith("multipart/form-data")){ //File upload
 
+                        String director = request.getRequestLine().getUri(); //Where the file should go
+                        ConnectorsClient connectors = new ConnectorsClient();
+                        Connector awss3 = connectors.getConnector("AWS");
+
+                        if(awss3 != null){
+
+                            AWSS3 aws = new AWSS3(awss3);
+                            if(aws.upload(director, body)){
+
+                                result = new Result(200, director, "\"" + awss3.getEndpoints().get(0).getUrl() + director + "\"");
+                            }else{
+
+                                result = new Result(505, director, "\"Failed to upload file to provided director (AWS S3)\"");
+                            }
+
+                        }else{
+
+                            result = new Result(505, director, "\"Please set AWS S3 Connector\"");
+                        }
+
+                    }else{
+
+                        Configuration requestConfiguration = new Configuration();
+                        requestConfiguration.addDomain(new Domain("telifie", "mongodb://137.184.70.9:27017"));
+                        requestConfiguration.setAuthentication(auth);
+                        result = processRequest(requestConfiguration, method, query, body);
+                    }
                 }else{
 
                     result = new Result(403, "\"Invalid Auth Credentials\"");
-
                 }
-
-
-
             }
+
             response.setStatusCode(result.getStatusCode());
             response.setHeader("Content-Type", result.getType());
             response.setEntity(new StringEntity(result.toString()));
-
         };
 
         HttpParams params = new BasicHttpParams();
@@ -97,11 +118,7 @@ public class Server {
         // Create a request handler registry
         HttpRequestHandlerRegistry registry = new HttpRequestHandlerRegistry();
         registry.register("*", requestHandler);
-        HttpService httpService = new HttpService(
-                new BasicHttpProcessor(),
-                new DefaultConnectionReuseStrategy(),
-                new DefaultHttpResponseFactory(),
-                registry, params);
+        HttpService httpService = new HttpService(new BasicHttpProcessor(), new DefaultConnectionReuseStrategy(), new DefaultHttpResponseFactory(), registry, params);
         ServerSocket serverSocket;
         try {
 
@@ -112,16 +129,12 @@ public class Server {
                 DefaultBHttpServerConnection connection = new DefaultBHttpServerConnection(8 * 1024);
                 connection.bind(socket);
                 httpService.handleRequest(connection, new BasicHttpContext());
-
             }
-
         } catch (IOException | HttpException e) {
 
             //TODO log and don't quit server
             throw new RuntimeException(e);
-
         }
-
     }
 
     private Result processRequest(Configuration configuration, String method, String request, String requestBody){

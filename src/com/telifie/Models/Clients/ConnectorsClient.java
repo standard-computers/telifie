@@ -1,15 +1,98 @@
 package com.telifie.Models.Clients;
 
-import com.telifie.Models.Domain;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import com.telifie.Models.Actions.Out;
+import com.telifie.Models.Connectors.Connector;
+import org.bson.Document;
+import java.io.*;
+import java.util.ArrayList;
 
-public class ConnectorsClient extends Client {
+public class ConnectorsClient {
 
-    public ConnectorsClient(String mongoUri) {
-        super(mongoUri);
+    private final String workingDirectory;
+    private ArrayList<Connector> connectors = new ArrayList<>();
+
+    public ConnectorsClient(){
+
+        String operatingSystem = System.getProperty("os.name");
+        if(operatingSystem.equals("Mac OS X")){
+
+            this.workingDirectory = Out.MAC_SYSTEM_DIR + "/connectors/";
+        }else if(operatingSystem.startsWith("Windows")){
+
+            this.workingDirectory = Out.WINDOWS_SYSTEM_DIR + "/connectors/";
+        }else{
+
+            this.workingDirectory = Out.UNIX_SYSTEM_DIR + "/connectors/";
+        }
+
+        File connectorsFolder;
+        if(!(connectorsFolder = new File(workingDirectory)).exists()){
+
+            connectorsFolder.mkdirs();
+        }
+
+        this.connectors.removeAll(connectors);
+        File connectorsContainer = new File(this.workingDirectory);
+        File[] connectorFiles = connectorsContainer.listFiles();
+        for(File file : connectorFiles){
+
+            try {
+
+                if(!file.getPath().contains(".DS_Store")) {
+
+                    String json = new String(Files.readAllBytes(Paths.get(file.getPath())));
+                    Document bsonDocument = Document.parse(json);
+                    Connector connector = new Connector(bsonDocument);
+                    this.connectors.add(connector);
+                }
+            } catch (IOException e) {
+
+                e.printStackTrace();
+            }
+        }
     }
 
-    public ConnectorsClient(Domain domain) {
-        super(domain);
+    public boolean create(Connector connector){
+
+        try (FileWriter file = new FileWriter(workingDirectory + connector.getId() + ".json")) {
+
+            file.write(connector.toString());
+            file.flush();
+            file.close();
+            return true;
+        } catch (IOException e) {
+
+            return false;
+        }
     }
 
+    public void save(Connector connector){
+
+    }
+
+    /**
+     * Returns all available Connectors
+     */
+    public ArrayList<Connector> getConnectors(){
+
+        return this.connectors;
+    }
+
+    public Connector getConnector(String name){
+
+        if(connectors.size() > 0){
+
+            for (Connector connector : connectors) {
+
+                if(connector.getName().equals(name)){
+
+                    return connector;
+                }
+            }
+        }
+
+        return null;
+    }
 }
