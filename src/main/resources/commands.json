@@ -42,9 +42,7 @@
 				},{
 					"command" : "create",
 					"description" : "Creates a 'Folder' of favorites with name",
-					"usage" : "/favorites/[NEW_FOLDER_NAME]",
-
-
+					"usage" : "/favorites/[NEW_FOLDER_NAME]"
 				}
 			]
 		},{

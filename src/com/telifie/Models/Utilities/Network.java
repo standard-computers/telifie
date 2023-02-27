@@ -19,7 +19,7 @@ public class Network {
     private String url;
     private int statusCode;
 
-    public HttpResponse get(String url){
+    public void get(String url){
         this.url = url;
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request;
@@ -32,8 +32,8 @@ public class Network {
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             this.statusCode = response.statusCode();
-            return response;
         } catch (IOException | InterruptedException | URISyntaxException e) {
+
             throw new RuntimeException(e);
         }
     }

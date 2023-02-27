@@ -10,6 +10,7 @@ import com.telifie.Models.User;
 import com.telifie.Models.Utilities.CommonObject;
 import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Statement;
+import com.telifie.Models.Utilities.Tool;
 import org.bson.Document;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -18,18 +19,21 @@ import java.util.regex.Pattern;
 
 public class Search {
 
-    private String query;
+    private String query, targetDomain, domainArticles;
     private Statement statement;
     private Result result;
-    private ArrayList<Article> results = new ArrayList<>();
 
     public Search(Configuration configuration, String query) {
 
         this.query = URLDecoder.decode(query, StandardCharsets.UTF_8).toLowerCase().trim();
         this.statement = new Statement(query);
         this.result = new Result(this.query);
+        this.targetDomain = (configuration.defaultDomain().getName().equals("telifie") || configuration.defaultDomain().getName().equals("") || configuration.defaultDomain().getName() == null ? "telifie" : "domains-articles");
+        this.domainArticles = (configuration.defaultDomain().getName().equals("telifie") || configuration.defaultDomain().getName().equals("") || configuration.defaultDomain().getName() == null ? "articles" : configuration.defaultDomain().getName());
 
-        //TODO quick answers here if querying database is not necessary
+        Out.console(query);
+        //TODO integrate ArticlesClient
+
         if(this.query.matches("(\\d+\\.?\\d*|\\.\\d+)([\\+\\-\\*\\/](\\d+\\.?\\d*|\\.\\d+))*")){ //Asking math expression
 
             Double mathResult = new DoubleEvaluator().evaluate(this.query);
@@ -44,37 +48,54 @@ public class Search {
             UsersClient users = new UsersClient(configuration.getDomain(0));
             User user = users.getUserWithEmail(this.query);
             this.result.addQuickResult(
-                    new CommonObject(
-                            "",
-                            user.getName(),
-                            "", user.getEmail()
-                    )
+                new CommonObject(
+                    "",
+                    user.getName(),
+                    "",
+                    user.getEmail()
+                )
             );
 
         }else if(this.query.equals("how many articles are there")){
             //TODO if query is LIKE
 
+        }else if(Tool.isHexColor(query) || Tool.isHSLColor(query) || Tool.isRGBColor(query)){
+
+            this.result.addQuickResult(
+                new CommonObject(
+                    "COLOR_ICON",
+                    query,
+                    "",
+                    query
+                )
+            );
+
+        }else if(query.contains("random") && query.contains("color")){
+
+            //TODO https://www.thecolorapi.com/
+
         }
 
         try(MongoClient mongoClient = MongoClients.create(configuration.getDomain(0).getUri())){
 
-            MongoDatabase database = mongoClient.getDatabase( (configuration.defaultDomain().getName().equals("telifie") || configuration.defaultDomain().getName().equals("") || configuration.defaultDomain().getName() == null ? "telifie" : "domains-articles") );
-            MongoCollection<Document> collection = database.getCollection((configuration.defaultDomain().getName().equals("telifie") || configuration.defaultDomain().getName().equals("") || configuration.defaultDomain().getName() == null ? "articles" : configuration.defaultDomain().getName()));
+            MongoDatabase database = mongoClient.getDatabase(targetDomain);
+            MongoCollection<Document> collection = database.getCollection(domainArticles);
 
             Document filter = generateFilter();
             FindIterable<Document> iterable = collection.find(filter).limit(100);
 
+            ArrayList<Article> results = new ArrayList<>();
             for (Document document : iterable) {
                 results.add(new Article(document));
             }
             this.result.setObject("articles");
-            this.result.setCount(this.results.size());
+            this.result.setCount(results.size());
 
             //Sort for query & name relevance
-            Collections.sort(this.results, new RelevanceComparator(query));
-            Collections.reverse(this.results);
+            Collections.sort(results, new RelevanceComparator(query));
+            Collections.reverse(results);
 
-            this.result.setResults(this.results.toString());
+            this.result.setResults(results.toString());
 
         }catch(MongoException e){
 

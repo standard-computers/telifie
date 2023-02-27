@@ -8,7 +8,7 @@ import java.io.File;
 
 public class Start {
 
-    private static String targetDomain = "telifie", workingDirectory;
+    private static String workingDirectory;
     private static Configuration configuration = null;
     private static File configuration_file;
 
@@ -171,6 +171,7 @@ public class Start {
     private static void console(){
         //TODO Get preferences and user information
         while(true){
+            String targetDomain = "telifie";
             String input = In.string(targetDomain + "://");
             Command command = new Command(targetDomain + "://" + input);
             command.parseCommand(configuration);

@@ -130,4 +130,16 @@ public class Tool {
         return (int) (System.currentTimeMillis() / 1000);
     }
 
+    public static boolean isHexColor(String value) {
+        return value.matches("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$");
+    }
+
+    public static boolean isHSLColor(String value) {
+        return value.matches("^hsl\\(\\s*\\d+(\\.\\d+)?\\s*,\\s*\\d+(\\.\\d+)?%\\s*,\\s*\\d+(\\.\\d+)?%\\s*\\)$");
+    }
+
+    public static boolean isRGBColor(String value) {
+        return value.matches("^rgb\\(\\s*\\d+(\\s*,\\s*\\d+){2}\\s*\\)$");
+    }
+
 }

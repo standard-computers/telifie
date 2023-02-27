@@ -10,7 +10,7 @@ import java.util.ArrayList;
 
 public class Client {
 
-    private String mongoUri;
+    private final String mongoUri;
     protected Domain domain;
     protected String collection;
 

@@ -18,32 +18,32 @@ public class UsersClient extends Client {
     }
 
     public User getUserWithEmail(String email){
+
         return new User(this.findOne(new Document("email", email)));
     }
 
     public User getUserWithId(String id){
+
         return new User(this.findOne(new Document("id", id)));
     }
 
     public boolean userExists(String id){
 
         return this.findOne(new Document("id", id)) != null;
-
     }
 
     public boolean userExistsWithEmail(String email){
 
         return this.findOne(new Document("email", email)) != null;
-
     }
 
     public boolean lockUser(User user, String code){
 
         return this.updateOne(new Document("email", user.getEmail()), new Document("$set", new Document("token", Tool.md5(code))));
-
     }
 
     public boolean updateUserTheme(User user, Document update){
+
         return super.updateOne(
             new Document("email", user.getEmail()),
             new Document("$set",
@@ -52,4 +52,18 @@ public class UsersClient extends Client {
         );
     }
 
+    public boolean createUser(User user){
+
+        return super.insertOne(Document.parse(user.toString()));
+    }
+
+    public boolean upgradePermissions(User user){
+
+        return super.updateOne(
+            new Document("email", user.getEmail()),
+                new Document("$set",
+                    new Document("permissions", user.getPermissions() + 1)
+                )
+        );
+    }
 }

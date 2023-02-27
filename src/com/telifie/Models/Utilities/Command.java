@@ -4,6 +4,7 @@ import com.telifie.Models.*;
 import com.telifie.Models.Actions.Out;
 import com.telifie.Models.Actions.Search;
 import com.telifie.Models.Clients.*;
+import com.telifie.Models.Connectors.Available.SGrid;
 import com.telifie.Models.Connectors.Connector;
 import org.bson.Document;
 import org.json.JSONException;
@@ -24,7 +25,7 @@ public class Command {
 
         this.command = command;
         String[] spl = this.command.split("://");
-        this.targetDomain = (spl.length <= 1 || spl[0].equals("") || spl[0] == null ? "telifie" : spl[0]);
+        this.targetDomain = spl.length <= 1 || spl[0].equals("") ? "telifie" : spl[0];
         this.selectorsString = this.command.replaceFirst(targetDomain + "://", "");
         this.selectors = this.selectorsString.split("(?!//)/");
         this.primarySelector = this.get(0).replaceAll("/", "");
@@ -140,18 +141,22 @@ public class Command {
                 return new Result(200, this.command, "none");
             }
 
-        }else if(primarySelector.equals("articles")){ //Access Articles
+        }
+        /**
+         * Accessing Articles
+         */
+        else if(primarySelector.equals("articles")){
 
             if(this.selectors.length >= 3){ //Provide [ACTION]/[ARTICLE_ID]
 
                 String articleId = this.get(2);
-
                 if(objectSelector.equals("id")){ //Specifying Article with ID
+
+
 
                 }else if(objectSelector.equals("update")){
 
                     if(content != null){
-
 
 
                     }else{
@@ -419,7 +424,45 @@ public class Command {
                     return new Result(404, this.command, "\"Invalid command received\"");
                 }
 
-            }else{
+            }else if(objectSelector.equals("create")){ //Creating User
+
+                if(content != null){
+
+                    User newUser = new User(
+                        content.getString("email"),
+                        content.getString("name"),
+                        content.getString("phone")
+                    );
+                    if(newUser.getPermissions() == 0 && !newUser.getName().equals("") && !newUser.getEmail().equals("") && newUser.getName() != null && newUser.getEmail() != null){ //0 is permissions of new user
+
+                        UsersClient users = new UsersClient(config.defaultDomain());
+                        if(!users.userExistsWithEmail(newUser.getEmail())){
+
+                            if(users.createUser(newUser)){
+
+                                return new Result(
+                                    this.command,
+                                    "user",
+                                    newUser.toString(),
+                                    1
+                                );
+                            }else{
+
+                                return new Result(505, this.command, "\"Failed making user for email '" + newUser.getEmail() + "'\"");
+                            }
+                        }else{
+
+                           return new Result(410, this.command, "\"User already exists for email '" + newUser.getEmail() + "'\"");
+                        }
+                    }else{
+
+                        return new Result(428, this.command, "\"Name, email, phone number, and permissions are required to create a User\"");
+                    }
+                }else{
+
+                    return new Result(428, this.command, "\"New User details expected with JSON request body.\"");
+                }
+            }else{ //Get user with email
 
                 UsersClient usersClient = new UsersClient(config.defaultDomain());
                 Matcher matcher = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", Pattern.CASE_INSENSITIVE).matcher(this.get(1));
@@ -475,7 +518,6 @@ public class Command {
 
         }else if(primarySelector.equals("queue")){
 
-
             if(this.selectors.length >= 2){
 
             }else if(content != null){
@@ -489,7 +531,6 @@ public class Command {
                     if(uri == null || uri.equals("")){
 
                         return new Result(410, this.command, "\"No URI provided as {\"uri\" : \"URI\"}\"");
-
                     }else{
 
                         //Check if an article exists for this already
@@ -515,15 +556,13 @@ public class Command {
 
                                 return new Result(505, "\"There was an error parsing the queue request\"");
                             }
-
                         }
 
                         return new Result(200, uri, "\"Queued\"");
                     }
-
                 }else{
 
-                    //Queue from connector
+                    //TODO Queue from connector
                     return new Result(200, this.command, "\"Queued from connector\"");
                 }
 
@@ -535,7 +574,8 @@ public class Command {
         }else if(primarySelector.equals("search")){
 
             String query = this.selectorsString.replace("search/", "");
-            if(!this.targetDomain.equals("telifie") && !this.targetDomain.equals("") && this.targetDomain != null){
+            if(!this.targetDomain.equals("telifie") && !this.targetDomain.equals("")){
+
                 config.setDefaultDomain(config.defaultDomain().setName(this.targetDomain));
             }
             return new Search(config, query).result();
@@ -544,62 +584,32 @@ public class Command {
 
             if(this.selectors.length >= 2){
 
+                boolean threaded = false;
+                if(this.get(2).equals("threaded") && this.get(3).equals("true")){
+
+                    threaded = true;
+                }
+
                 if(this.get(1).equals("https")){
 
                     Out.console("Starting HTTPS server...");
-                    boolean threaded = false;
-                    if(this.selectors.length >= 3){
-
-                        if(this.get(2).equals("threaded") && this.get(3).equals("false")){
-
-                            threaded = false;
-
-                        }else if(this.get(2).equals("threaded") && this.get(3).equals("true")){
-
-                            threaded = true;
-
-                        }
-                    }
-                    HttpsServer https_server = new HttpsServer(config, threaded);
-
+                    new HttpsServer(config, threaded);
                 }else if(this.get(1).equals("http")){
 
                     Out.console("Starting HTTP server...");
-                    Server http_server;
-                    boolean threaded = false;
-                    if(this.selectors.length >= 3){
-                        if(this.get(2).equals("threaded") && this.get(3).equals("false")){
-                            threaded = false;
-                        }else if(this.get(2).equals("threaded") && this.get(3).equals("true")){
-                            threaded = true;
-                        }
-                    }
-                    http_server = new Server(threaded);
-
+                    new Server(threaded);
                 }
-
             }else{
 
                 Out.console("Starting HTTP server...");
-                Server http_server;
                 boolean threaded = false;
-                if(this.selectors.length >= 3){
+                if(this.get(2).equals("threaded") && this.get(3).equals("true")){
 
-                    if(this.get(2).equals("threaded") && this.get(3).equals("false")){
-
-                        threaded = false;
-
-                    }else if(this.get(2).equals("threaded") && this.get(3).equals("true")){
-
-                        threaded = true;
-
-                    }
-
+                    threaded = true;
                 }
-                http_server = new Server(threaded);
+                new Server(threaded);
 
             }
-
         }else if(primarySelector.equals("exit") || primarySelector.equals("close")){
 
             Out.console("Exiting telifie...");
@@ -623,8 +633,7 @@ public class Command {
             }
 
         }else if(primarySelector.equals("connect")){
-            //TODO pass through request type from server if possible
-            //TODO make sure that it's a post request
+
             if(this.selectors.length >= 2){
 
                 String email = this.get(1);
@@ -632,35 +641,62 @@ public class Command {
                 if(usersClient.userExistsWithEmail(email)){
 
                     User user = usersClient.getUserWithEmail(email);
-                    if(user.lock()){
+                    if(user.getPermissions() == 0){ //Email needs verified
 
-                        return new Result(200, "\"Authentication code sent\"");
-                    }else{
+                        ConnectorsClient connectors = new ConnectorsClient();
+                        Connector sendgrid = connectors.getConnector("SendGrid");
+                        if(sendgrid != null){
 
-                        return new Result(501, "\"Failed to send code\"");
+                            SGrid sg = new SGrid(sendgrid);
+                            String code = Tool.shortEid();
+                            if(usersClient.lockUser(user, code)){
+
+                                if(sg.sendAuthenticationCode(user.getEmail(), code)){
+
+                                }else{
+
+                                    return new Result(505, this.command, "\"Failed to email code through SendGrid\"");
+                                }
+                            }else{
+
+                                return new Result(505, this.command, "\"Failed to lock users account\"");
+                            }
+                        }else{
+
+                            return new Result(410, "\"Please create SendGrid Connector information\"");
+                        }
+
+                    }else if(user.getPermissions() >= 1){ //Phone needs verified
+
+                        if(user.lock()){
+
+                            return new Result(200, "\"Authentication code sent\"");
+                        }else{
+
+                            return new Result(501, "\"Failed to send code\"");
+                        }
                     }
 
                 }else{
 
                     return new Result(404, "\"Account not found\"");
                 }
-
             }
+        }else if(primarySelector.startsWith("verify")){ //Provided /verify/[USER_EMAIL]/[VERIFICATION_CODE]
 
-            //TODO check authentication with Authentication and MongoDB
-
-        }else if(primarySelector.startsWith("verify")){
-
-            //TODO use Twilio or Email/SendGrid for account verification
             if(this.selectors.length >= 3){
 
-                String email = this.get(1);
-                String code = Tool.md5(this.get(2));
+                String email = this.get(1), code = Tool.md5(this.get(2));
                 UsersClient users = new UsersClient(config.defaultDomain());
                 User user = users.getUserWithEmail(email);
                 if(user.hasToken(code)){ //Check if user has the right code
 
-                    //TODO create authentication with client
+                    if(user.getPermissions() == 0 || user.getPermissions() == 1){ //User was verifying email
+
+                        users.upgradePermissions(user);
+                        user.setPermissions(user.getPermissions() + 1); //For request return purposes. It has been updated
+                    }
+
                     Authentication auth = new Authentication(user);
                     AuthenticationClient auths = new AuthenticationClient(config.defaultDomain());
                     auths.authenticate(auth);
@@ -676,12 +712,12 @@ public class Command {
 
                 }else{
 
-                    return new Result(403, "Invalid verification code provided");
+                    return new Result(403, "\"Invalid verification code provided\"");
                 }
 
             }else{
 
-                return new Result(404, this.command, "Invalid command received");
+                return new Result(404, this.command, "\"Invalid command received\"");
             }
 
         }else if(primarySelector.equals("messaging")){

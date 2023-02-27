@@ -1,6 +1,6 @@
 package com.telifie.Models;
 
-import com.telifie.Models.Utilities.*;
+import com.telifie.Models.Utilities.Tool;
 import org.bson.Document;
 import org.json.JSONObject;
 import java.io.Serializable;

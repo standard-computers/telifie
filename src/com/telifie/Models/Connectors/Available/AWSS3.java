@@ -12,7 +12,7 @@ import com.telifie.Models.Connectors.Connector;
 
 public class AWSS3 {
 
-    private AmazonS3 doBuckets;
+    private final AmazonS3 doBuckets;
     private final Connector connector;
 
     public AWSS3(Connector connector){

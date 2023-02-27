@@ -32,6 +32,13 @@ public class User implements Serializable {
         this.permissions = 0;
     }
 
+    /**
+     * Constructor for creating user.
+     * Other data is autofill such as origin, permissions, and customerId
+     * @param email
+     * @param name
+     * @param phone
+     */
     public User(String email, String name, String phone) {
         this.id = Tool.md5(Tool.eid());
         this.email = email;
@@ -49,7 +56,7 @@ public class User implements Serializable {
         this.token = document.getString("token");
         this.origin = document.getInteger("origin");
         this.permissions = document.getInteger("permissions");
-        this.theme = new Theme(document.get("theme", Document.class));
+        this.theme = ( document.get("theme", Document.class) == null ? null : new Theme(document.get("theme", Document.class)) );
     }
 
     public String getId() {
@@ -117,19 +124,7 @@ public class User implements Serializable {
     }
 
     public boolean lock(){
-        if(this.getPhone() == null || this.getPhone() == ""){
-            return lockWithEmail();
-        }else{
-            return lockWithPhone();
-        }
-    }
-
-    private boolean lockWithEmail(){
-        //TODO
-        return false;
-    }
-
-    private boolean lockWithPhone(){
+        //TODO Twilio sdk
         String code = Tool.simpleCode();
         TextMessenger messenger = new TextMessenger();
         messenger.send(this.getPhone(), "+12243476722", "Welcome back! Your login code is " + code);

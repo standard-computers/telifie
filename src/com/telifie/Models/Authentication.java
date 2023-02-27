@@ -6,7 +6,7 @@ import org.json.JSONObject;
 
 public class Authentication {
 
-    private String user, token, refreshToken;
+    private final String user, token, refreshToken;
     private int origin, expiration;
 
     public Authentication(String user) {
