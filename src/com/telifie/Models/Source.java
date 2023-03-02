@@ -1,5 +1,6 @@
 package com.telifie.Models;
 
+import org.bson.Document;
 import org.json.JSONObject;
 
 import java.io.Serializable;
@@ -7,6 +8,22 @@ import java.io.Serializable;
 public class Source implements Serializable {
 
     private String id, icon, name, url, description;
+
+    public Source(String id, String icon, String name, String url, String description) {
+        this.id = id;
+        this.icon = icon;
+        this.name = name;
+        this.url = url;
+        this.description = description;
+    }
+
+    public Source(Document document){
+        this.id = document.getString("id");
+        this.icon = document.getString("icon");
+        this.name = document.getString("name");
+        this.url = document.getString("url");
+        this.description = document.getString("description");
+    }
 
     public String getId() {
         return id;
@@ -46,13 +63,11 @@ public class Source implements Serializable {
 
     @Override
     public String toString() {
-        return "{" +
-                "\"id\" : \"" + id + '\"' +
+        return "{\"id\" : \"" + id + '\"' +
                 ", \"icon\" : \"" + icon + '\"' +
                 ", \"name\" : \"" + name + '\"' +
                 ", \"url\" : \"" + url + '\"' +
-                ", \"description\" : \"" + description + '\"' +
-                '}';
+                ", \"description\" : \"" + description + "\"}";
     }
 
     public JSONObject toJson(){

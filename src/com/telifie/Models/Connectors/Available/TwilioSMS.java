@@ -4,7 +4,7 @@ import com.twilio.Twilio;
 import com.twilio.base.ResourceSet;
 import com.twilio.rest.api.v2010.account.Message;
 
-public class TextMessenger {
+public class TwilioSMS {
 
     // Find your Account Sid and Token at twilio.com/console
     public static final String ACCOUNT_SID = "AC62612d034fff5be14392544b53d119c3";

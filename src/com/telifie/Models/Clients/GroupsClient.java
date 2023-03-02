@@ -89,7 +89,6 @@ public class GroupsClient extends Client {
             ),
             new Document("$push", new Document("articles", articleId))
         );
-
     }
 
     public boolean unsave(String userId, String groupId, String articleId){

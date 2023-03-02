@@ -5,6 +5,7 @@ import com.telifie.Models.Authentication;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Clients.AuthenticationClient;
 import com.telifie.Models.Clients.ConnectorsClient;
+import com.telifie.Models.Clients.UsersClient;
 import com.telifie.Models.Connectors.Available.AWSS3;
 import com.telifie.Models.Connectors.Connector;
 import com.telifie.Models.Domain;
@@ -44,27 +45,19 @@ public class Server {
 
         HttpRequestHandler requestHandler = (request, response, context) -> {
 
+            //Set Request variables
             String method = request.getRequestLine().getMethod();
             String query = request.getRequestLine().getUri().substring(1);
-
             String authString = (request.getFirstHeader("Authorization") == null ? "" : request.getFirstHeader("Authorization").getValue());
             Authentication auth = (authString.equals("") ? null : new Authentication(authString.split(" ")[1].split("\\.")));
-
             Result result = new Result(200, query,"\"okay\"");
 
+            //Check if authentication is present
             if(auth == null){
 
                 result.setStatusCode(406);
                 result.setResults("\"No Authentication credentials provided\"");
             }else{
-
-                //Check if request has a body
-                String body = null;
-                if (request instanceof HttpEntityEnclosingRequest) {
-
-                    HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
-                    body = EntityUtils.toString(entity);
-                }
 
                 AuthenticationClient authenticationClient = new AuthenticationClient(new Domain("telifie", "mongodb://137.184.70.9:27017"));
                 if(authenticationClient.isAuthenticated(auth)){
@@ -79,13 +72,35 @@ public class Server {
 
                         if(awss3 != null){
 
-                            AWSS3 aws = new AWSS3(awss3);
-                            if(aws.upload(director, body)){
+                            if (request instanceof HttpEntityEnclosingRequest) {
 
-                                result = new Result(200, director, "\"" + awss3.getEndpoints().get(0).getUrl() + director + "\"");
-                            }else{
+                                HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
+                                InputStream inputStream = entity.getContent();
+                                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-                                result = new Result(505, director, "\"Failed to upload file to provided director (AWS S3)\"");
+                                try {
+                                    byte[] buffer = new byte[4096];
+                                    int bytesRead;
+                                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                                        outputStream.write(buffer, 0, bytesRead);
+                                    }
+                                } finally {
+                                    inputStream.close();
+                                    outputStream.close();
+                                    EntityUtils.consume(entity);
+                                }
+
+
+
+                                byte[] fileContents = outputStream.toByteArray();
+                                AWSS3 aws = new AWSS3(awss3);
+                                if(aws.upload(director, fileContents, false)){
+
+                                    result = new Result(200, director, "\"" + awss3.getEndpoints().get(0).getUrl() + director + "\"");
+                                }else{
+
+                                    result = new Result(505, director, "\"Failed to upload file to provided director (AWS S3)\"");
+                                }
                             }
 
                         }else{
@@ -94,6 +109,14 @@ public class Server {
                         }
 
                     }else{
+
+                        //Check if request has a body
+                        String body = null;
+                        if (request instanceof HttpEntityEnclosingRequest) {
+
+                            HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
+                            body = EntityUtils.toString(entity);
+                        }
 
                         Configuration requestConfiguration = new Configuration();
                         requestConfiguration.addDomain(new Domain("telifie", "mongodb://137.184.70.9:27017"));
@@ -144,23 +167,19 @@ public class Server {
         if(command.primarySelector().equals("exit") || command.primarySelector().equals("server")){
 
             return new Result(403, request, "\"Illegal command given\"");
-
         }else if(method.equals("POST")){
 
             try {
 
                 return command.parseCommand(configuration, Document.parse(requestBody));
-
             }catch(BsonInvalidOperationException e){
 
                 return new Result(505, "\"Malformed JSON data provided\"");
-
             }
 
         }else if(method.equals("GET")){
 
             return command.parseCommand(configuration);
-
         }
 
         return new Result(404, request, "\"Invalid command received\"");

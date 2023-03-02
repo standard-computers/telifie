@@ -1,5 +1,7 @@
 package com.telifie.Models.Utilities;
 
+import com.telifie.Models.Actions.Out;
+
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -142,4 +144,40 @@ public class Tool {
         return value.matches("^rgb\\(\\s*\\d+(\\s*,\\s*\\d+){2}\\s*\\)$");
     }
 
+    public static boolean containsAnyOf(String[] things, String string){
+        for (String thing: things) {
+
+            if(string.contains(thing)){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    public static String formatNumber(double number){
+
+        String numberStr = String.valueOf(number);
+        if (number % 1 == 0) { // check if number is a whole number
+            if (numberStr.indexOf('.') != -1 && numberStr.endsWith(".0")) {
+                numberStr = numberStr.substring(0, numberStr.length() - 2);
+            }
+        }
+        return numberStr;
+    }
+
+    public static String getWorkingDirectory(){
+        String operatingSystem = System.getProperty("os.name");
+        if(operatingSystem.equals("Mac OS X")){
+
+            return Out.MAC_SYSTEM_DIR + "/connectors/";
+        }else if(operatingSystem.startsWith("Windows")){
+
+            return Out.WINDOWS_SYSTEM_DIR + "/connectors/";
+        }else{
+
+            return Out.UNIX_SYSTEM_DIR + "/connectors/";
+        }
+    }
 }

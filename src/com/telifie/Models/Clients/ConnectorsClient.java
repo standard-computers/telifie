@@ -2,30 +2,20 @@ package com.telifie.Models.Clients;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+
 import com.telifie.Models.Actions.Out;
 import com.telifie.Models.Connectors.Connector;
+import com.telifie.Models.Utilities.Tool;
 import org.bson.Document;
 import java.io.*;
 import java.util.ArrayList;
 
 public class ConnectorsClient {
 
-    private final String workingDirectory;
+    private final String workingDirectory = Tool.getWorkingDirectory();
     private ArrayList<Connector> connectors = new ArrayList<>();
 
     public ConnectorsClient(){
-
-        String operatingSystem = System.getProperty("os.name");
-        if(operatingSystem.equals("Mac OS X")){
-
-            this.workingDirectory = Out.MAC_SYSTEM_DIR + "/connectors/";
-        }else if(operatingSystem.startsWith("Windows")){
-
-            this.workingDirectory = Out.WINDOWS_SYSTEM_DIR + "/connectors/";
-        }else{
-
-            this.workingDirectory = Out.UNIX_SYSTEM_DIR + "/connectors/";
-        }
 
         File connectorsFolder;
         if(!(connectorsFolder = new File(workingDirectory)).exists()){
@@ -40,7 +30,8 @@ public class ConnectorsClient {
 
             try {
 
-                if(!file.getPath().contains(".DS_Store")) {
+                Out.console("Importing Connector ->" + file.getPath());
+                if(!file.getPath().contains(".DS_Store") && !file.isDirectory()) {
 
                     String json = new String(Files.readAllBytes(Paths.get(file.getPath())));
                     Document bsonDocument = Document.parse(json);

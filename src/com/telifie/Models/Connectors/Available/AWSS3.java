@@ -7,13 +7,23 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectResult;
+import com.telifie.Models.Actions.Out;
 import com.telifie.Models.Connectors.Connector;
+import com.telifie.Models.Utilities.Tool;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class AWSS3 {
 
     private final AmazonS3 doBuckets;
     private final Connector connector;
+    private final String workingDirectory = Tool.getWorkingDirectory();
 
     public AWSS3(Connector connector){
 
@@ -27,15 +37,49 @@ public class AWSS3 {
                 .build();
     }
 
-    public boolean upload(String director, String content){
-        director = (director.startsWith("/") ? director.substring(1) : director);
+    public boolean upload(String director, byte[] content, boolean isPublic){
+
+        File temps = new File(this.workingDirectory + "temps");
+        if(!temps.exists()){
+            temps.mkdirs();
+        }
+        String tempFileName = Tool.md5(Tool.eid()) + "." + director.split("\\.")[director.split("\\.").length - 1];
+        Out.console("Writing file -> " +this.workingDirectory + "temps/" + tempFileName);
+        File tempFile = new File(this.workingDirectory + "temps/" + tempFileName);
+        FileOutputStream fos = null;
         try {
 
-            PutObjectResult result = doBuckets.putObject(this.connector.getEndpoints().get(0).getDescription(), director, content);
-            return result != null;
-        } catch (AmazonServiceException e) {
+            fos = new FileOutputStream(tempFile);
+            fos.write(content);
+            fos.flush();
+            fos.close();
 
-            return false;
+            director = (director.startsWith("/") ? director.substring(1) : director);
+            try {
+
+                PutObjectResult result;
+
+                if(isPublic){
+
+                    PutObjectRequest putRequest = new PutObjectRequest(this.connector.getEndpoints().get(0).getDescription(), director, tempFile);
+                    putRequest.setCannedAcl(CannedAccessControlList.PublicRead);
+                    result = doBuckets.putObject(putRequest);
+                }else{
+
+                    result = doBuckets.putObject(this.connector.getEndpoints().get(0).getDescription(), director, tempFile);
+                }
+                tempFile.delete();
+                return result != null;
+            } catch (AmazonServiceException e) {
+
+                throw new RuntimeException(e);
+            }
+        } catch (FileNotFoundException e) {
+
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+
+            throw new RuntimeException(e);
         }
     }
 }

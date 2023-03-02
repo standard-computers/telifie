@@ -1,6 +1,7 @@
 package com.telifie.Models.Utilities;
 
 import com.telifie.Models.*;
+import com.telifie.Models.Actions.Event;
 import com.telifie.Models.Actions.Out;
 import com.telifie.Models.Actions.Search;
 import com.telifie.Models.Clients.*;
@@ -147,23 +148,66 @@ public class Command {
          */
         else if(primarySelector.equals("articles")){
 
+            UsersClient users = new UsersClient(config.defaultDomain());
+            User actor = users.getUserWithId(config.getAuthentication().getUser());
+
             if(this.selectors.length >= 3){ //Provide [ACTION]/[ARTICLE_ID]
 
                 String articleId = this.get(2);
                 if(objectSelector.equals("id")){ //Specifying Article with ID
 
-
+                    //TODO get article with ID
 
                 }else if(objectSelector.equals("update")){
 
                     if(content != null){
+                        if(content.getString("id") == null){
+                            content.put("id", articleId);
+                        }
+                        Article updatedArticle = new Article(content);
+                        ArticlesClient articles = new ArticlesClient(config.defaultDomain());
+                        if(actor.getPermissions() >= 12 && this.targetDomain.equals("telifie")){ //Update Article in Public Domain
 
+                            Article ogArticle = articles.get(articleId);
+                            ArrayList<Event> events = updatedArticle.compare(ogArticle);
 
-                    }else{
+                            if(events.size() > 0){
+
+                                for(int i = 0; i < events.size(); i++){
+
+                                    events.get(i).setUser(actor.getId());
+                                }
+
+                                if(articles.update(ogArticle, updatedArticle)){
+
+                                    TimelinesClient timelines = new TimelinesClient(config.defaultDomain());
+                                    timelines.addEvents(articleId, events);
+
+                                    //TODO Decide to return changes made to article or return new article
+                                    return new Result(
+                                            this.command,
+                                            "events",
+                                            events.toString(),
+                                            events.size()
+                                    );
+                                }else{
+
+                                    return new Result(505, this.command, "\"Failed to update Article\"");
+                                }
+                            }else{
+
+                                return new Result(304, this.command, "\"No changes were made to the Article\"");
+                            }
+                        }else{
+
+                            //Check permissions of user in Domains
+                            //TODO, share changes with data team for approval and change status on Article
+                            return new Result(401, this.command, "\"Insufficient permissions to update Article in Public Domain\"");
+                        }
+                    }else {
 
                         return new Result(428, "\"No new Article JSON data provided\"");
                     }
-
                 }else if(objectSelector.equals("delete")){
 
 
@@ -174,7 +218,6 @@ public class Command {
 
                     return new Result(404, this.command, "\"Unknown Articles action command\"");
                 }
-
             }else if(objectSelector.equals("create")){
 
                 if(content != null){
@@ -196,17 +239,14 @@ public class Command {
 
                             return new Result(505, "Failed to create Article");
                         }
-
                     }catch(JSONException e){
 
                         return new Result(505, this.command, "\"Malformed Article JSON data provided\"");
                     }
-
                 }else{
 
                     return new Result(428, "\"Precondition Failed. No new Article provided (JSON.article) as body\"");
                 }
-
             }else if(objectSelector.equals("")){ //Return stats of Articles in domain (summary)
 
                 return new Result(this.command,"stats", "", 0);
@@ -307,17 +347,14 @@ public class Command {
                                 newGroup.toString(),
                                 1
                         );
-
                     }else{
 
                         return new Result(505, this.command, "\"Failed to create group '" + groupName + "'\"");
                     }
-
                 }else{
 
                     return new Result(428, "\"Name of new group required\"");
                 }
-
             }
             // Deletes folder given /groups/delete/[GROUP_NAME]
             else if(objectSelector.equals("delete")){
@@ -750,21 +787,17 @@ public class Command {
 
                             return new Result(505, this.command, "\"Failed to create Connector\"");
                         }
-
                     }else{
 
                         return new Result(428, this.command, "\"JSON body expected to create connector\"");
                     }
-
                 }else{
 
                     new Result(404, this.command, "\"Invalid connectors action provided\"");
                 }
-
             }else{ //Gets all available Connectors for use
 
                 //TODO Do not get files everytime, do this once when the server starts
-
                 ConnectorsClient connectors = new ConnectorsClient();
                 ArrayList<Connector> all = connectors.getConnectors();
                 return new Result(
@@ -783,5 +816,4 @@ public class Command {
 
         return new Result(200, this.command, "\"No command received\"");
     }
-
 }

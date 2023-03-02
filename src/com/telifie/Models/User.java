@@ -1,7 +1,7 @@
 package com.telifie.Models;
 
 import com.telifie.Models.Clients.UsersClient;
-import com.telifie.Models.Connectors.Available.TextMessenger;
+import com.telifie.Models.Connectors.Available.TwilioSMS;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Network;
 import com.telifie.Models.Actions.Out;
@@ -21,7 +21,7 @@ import java.util.List;
 
 public class User implements Serializable {
 
-    private String id, email, name, phone, token, customerId;
+    private String id, email, name, photo = "", phone, token, customerId;
     private final int origin;
     private int permissions;
     private Theme theme;
@@ -52,6 +52,7 @@ public class User implements Serializable {
         this.id = document.getString("id");
         this.email = document.getString("email");
         this.name = document.getString("name");
+        this.photo = document.getString("photo");
         this.phone = document.getString("phone");
         this.token = document.getString("token");
         this.origin = document.getInteger("origin");
@@ -77,6 +78,14 @@ public class User implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getPhoto() {
+        return photo;
+    }
+
+    public void setPhoto(String photo) {
+        this.photo = photo;
     }
 
     public String getPhone() {
@@ -126,7 +135,7 @@ public class User implements Serializable {
     public boolean lock(){
         //TODO Twilio sdk
         String code = Tool.simpleCode();
-        TextMessenger messenger = new TextMessenger();
+        TwilioSMS messenger = new TwilioSMS();
         messenger.send(this.getPhone(), "+12243476722", "Welcome back! Your login code is " + code);
         //TODO ini UsersClient class with domain to fix OOP issue
         UsersClient users = new UsersClient("mongodb://137.184.70.9:27017");
@@ -184,6 +193,7 @@ public class User implements Serializable {
                 "\"id\" : \"" + id + '\"' +
                 ", \"email\" : \"" + email + '\"' +
                 ", \"name\" : \"" + name + '\"' +
+                ", \"photo\" : \"" + photo + '\"' +
                 ", \"phone\" : \"" + phone + '\"' +
                 (this.customerId == null || this.customerId.equals("") ? "" : ", \"phone\" : \"" + phone + '\"') +
                 ", \"origin\" : " + origin +

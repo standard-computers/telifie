@@ -34,15 +34,18 @@ public class Search {
         Out.console(query);
         //TODO integrate ArticlesClient
 
-        if(this.query.matches("(\\d+\\.?\\d*|\\.\\d+)([\\+\\-\\*\\/](\\d+\\.?\\d*|\\.\\d+))*")){ //Asking math expression
+        if(this.query.matches("(\\d+\\.?\\d*|\\.\\d+)([\\+\\-\\*\\/](\\d+\\.?\\d*|\\.\\d+))*") || Tool.containsAnyOf(new String[] {"+", "-", "*", "/", "^"}, this.query)){ //Asking math expression
 
-            Double mathResult = new DoubleEvaluator().evaluate(this.query);
-            this.result.addQuickResult(
-                    new CommonObject("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/wwdb/calculate.gif",
-                            String.valueOf(mathResult),
-                            "", "Calculation")
-            );
+            try {
+                Double mathResult = new DoubleEvaluator().evaluate(this.query.replaceAll("\\$", ""));
+                this.result.addQuickResult(
+                        new CommonObject("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/wwdb/calculate.gif",
+                                Tool.formatNumber(mathResult),
+                                "", "Calculation")
+                );
+            }catch(IllegalArgumentException e){
 
+            }
         }else if(this.query.matches("^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$")){
 
             UsersClient users = new UsersClient(configuration.getDomain(0));
@@ -55,7 +58,6 @@ public class Search {
                     user.getEmail()
                 )
             );
-
         }else if(this.query.equals("how many articles are there")){
             //TODO if query is LIKE
 
@@ -69,7 +71,6 @@ public class Search {
                     query
                 )
             );
-
         }else if(query.contains("random") && query.contains("color")){
 
             //TODO https://www.thecolorapi.com/
@@ -100,7 +101,6 @@ public class Search {
         }catch(MongoException e){
 
         }
-
     }
 
     /**
@@ -131,27 +131,29 @@ public class Search {
             );
 
         }else if(this.query.startsWith("define ")){
-            //TODO
+
+            return new Document("$and",
+                Arrays.asList(
+                    new Document("description", pattern("definition")),
+                    new Document("title", pattern(this.query.replaceFirst("define ", "")))
+                )
+            );
         }else{
 
             Pattern pattern = Pattern.compile(Pattern.quote(this.query), Pattern.CASE_INSENSITIVE);
-            List<Document> orQuery = new ArrayList<Document>();
-            orQuery.add(new Document("title", pattern));
-            orQuery.add(new Document("link", pattern));
-            orQuery.add(new Document("description", pattern));
-            orQuery.add(new Document("tags", new Document("$in", Arrays.asList(this.query))));
-            return new Document("$or", orQuery);
-
+            return new Document("$or",
+                Arrays.asList(
+                    new Document("title", pattern),
+                    new Document("link", pattern),
+                    new Document("description", pattern),
+                    new Document("tags", new Document("$in", Arrays.asList(this.query)))
+                )
+            );
         }
-        return null;//TODO remove when done with the former
     }
 
     public Result result(){
         return result;
-    }
-
-    private Pattern pattern(){
-        return Pattern.compile(Pattern.quote(this.query), Pattern.CASE_INSENSITIVE);
     }
 
     private Pattern pattern(String value){

@@ -2,6 +2,7 @@ package com.telifie.Models.Clients;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.*;
+import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.UpdateResult;
 import com.telifie.Models.Actions.Out;
 import com.telifie.Models.Domain;
@@ -62,14 +63,28 @@ public class Client {
             UpdateResult result = collection.updateOne(filter, update);
 
             return result.getModifiedCount() > 0;
-
         }catch(MongoException e){
 
             System.out.println("Couldn't process updateOne MongoDB request :(");
-
         }
-        return false;
 
+        return false;
+    }
+
+    protected boolean updateOne(Document filter, Document update, UpdateOptions options){
+
+        try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
+
+            MongoDatabase database = mongoClient.getDatabase("telifie");
+            MongoCollection<Document> collection = database.getCollection(this.collection);
+            UpdateResult result = collection.updateOne(filter, update, options);
+            return result.getModifiedCount() > 0;
+        }catch(MongoException e){
+
+            System.out.println("Couldn't process updateOne MongoDB request :(");
+        }
+
+        return false;
     }
 
     protected UpdateResult updateMany(Document filter, Document update){

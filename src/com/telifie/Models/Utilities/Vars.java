@@ -1,6 +1,6 @@
 package com.telifie.Models.Utilities;
 
 public class Vars {
-    public static final int PRIVATE = 0, PUBLIC = 1, PROTECTED = 2;
+    public static final int PRIVATE = 0, PROTECTED = 1, PUBLIC = 2;
 
 }

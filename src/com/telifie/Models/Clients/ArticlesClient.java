@@ -4,6 +4,7 @@ import com.telifie.Models.Article;
 import com.telifie.Models.Domain;
 import org.bson.Document;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class ArticlesClient extends Client {
 
@@ -12,8 +13,12 @@ public class ArticlesClient extends Client {
         super.collection = "articles";
     }
 
-    public void update(Article article, Article newArticle){
-        //TODO using compare
+    public boolean update(Article article, Article newArticle){
+
+        return super.updateOne(
+                new Document("id", article.getId()),
+                new Document("$set", Document.parse(newArticle.toString()))
+        );
     }
 
     public boolean create(Article article){
@@ -22,13 +27,10 @@ public class ArticlesClient extends Client {
         if(super.insertOne(document)){
 
             return true;
-
         }else{
 
             return false;
-
         }
-
     }
 
     public Article get(String articleId){
@@ -45,22 +47,22 @@ public class ArticlesClient extends Client {
         return articles;
     }
 
-//
-//    public ArrayList<Article> getArticlesWithAttribute(String key, String value){
-//        FindIterable<Document> found = this.find(
-//                new Document("$and",
-//                        Arrays.asList(
-//                                new Document("attributes.key", key ),
-//                                new Document("attributes.value", value )
-//                        )
-//                )
-//        );
-//        ArrayList<Article> articles = new ArrayList<>();
-//        for(Document doc : found){
-//            articles.add(new Article(doc));
-//        }
-//        return articles;
-//    }
+
+    public ArrayList<Article> getArticlesWithAttribute(String key, String value){
+        ArrayList<Document> found = this.find(
+            new Document("$and",
+                Arrays.asList(
+                        new Document("attributes.key", key ),
+                        new Document("attributes.value", value )
+                )
+            )
+        );
+        ArrayList<Article> articles = new ArrayList<>();
+        for(Document doc : found){
+            articles.add(new Article(doc));
+        }
+        return articles;
+    }
 
     /**
      * Returns total count of Articles in Domain

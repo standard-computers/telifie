@@ -1,5 +1,6 @@
 package com.telifie.Models;
 
+import com.telifie.Models.Actions.Event;
 import com.telifie.Models.Utilities.Tool;
 import org.bson.Document;
 import org.json.JSONObject;
@@ -37,14 +38,14 @@ public class Article implements Serializable {
 
         String contentString = (document.getString("content") != null ? document.getString("content").replaceAll("\\s+|\\r?\\n", " ") : "" );
         this.content = contentString.replaceAll("\"", "&quot;");
-
         this.origin = (document.getInteger("origin") == null ? 0 : document.getInteger("origin"));
-
         this.tags = document.get("tags", ArrayList.class);
 
         ArrayList<Document> iterable = (ArrayList<Document>) document.getList("images", Document.class);
         if(iterable != null && iterable.size() >= 1){
+
             for(Document doc : iterable){
+
                 this.addImage(new Image(doc));
             }
         }
@@ -55,9 +56,7 @@ public class Article implements Serializable {
             for(Document doc : iterable2){
 
                 this.addAttribute(new Attribute(doc.getString("key"), doc.getString("value")));
-
             }
-
         }
 
         ArrayList<Document> iterable3 = (ArrayList<Document>) document.getList("associations", Document.class);
@@ -66,13 +65,14 @@ public class Article implements Serializable {
             for(Document doc : iterable3){
 
                 this.addAssociation(new Association(doc));
-
             }
-
         }
 
-        //TODO this.source
+        Document sourceDocument = document.get("source", Document.class);
+        if(sourceDocument != null){
 
+            this.source = new Source(sourceDocument);
+        }
     }
 
     public Article(String title, String link, String icon, String description) {
@@ -227,23 +227,46 @@ public class Article implements Serializable {
         return json;
     }
 
-    public ArrayList<String[]> compare(Article old){
+    public ArrayList<Event> compare(Article old){
 
-        ArrayList<String[]> changes = new ArrayList<>();
+        ArrayList<Event> changes = new ArrayList<>();
 
         Iterator<String> newKeys = this.toJson().keys();
         while (newKeys.hasNext()) {
 
             String key = newKeys.next();
-            if(!this.toJson().getString(key).equals(old.toJson().getString(key))){ //If the value at key HAS changed
+            if(this.toJson().get(key) instanceof String){
 
-                //i.e. {"title", "old_title_value", "new_title_value"}
-                changes.add(new String[] { key, old.toJson().getString(key), old.toJson().getString(key) });
+                if(old.toJson().has(key) && !this.toJson().getString(key.toString()).equals(old.toJson().getString(key.toString()))){ //If the value at key HAS changed
 
+                    //i.e. {"title", "old_title_value", "new_title_value"}
+                    changes.add(
+                            new Event(
+                                    Event.Type.UPDATE,
+                                    Tool.epochTime(),
+                                    "GUEST",
+                                    key + " : " + old.toJson().getString(key) + " => " + key + " : " + this.toJson().getString(key)
+                            )
+                    );
+                }else if(!old.toJson().has(key)){
+
+                    changes.add(
+                            new Event(
+                                    Event.Type.PUT,
+                                    Tool.epochTime(),
+                                    "GUEST",
+                                    key + " : " + this.toJson().getString(key)
+                            )
+                    );
+                }
+            }else if(this.toJson().get(key) instanceof ArrayList<?>){
+
+                if(!this.toJson().get(key).toString().equals(old.toJson().get(key).toString())){
+
+                }
             }
-
         }
+
         return changes;
     }
-
 }
