@@ -28,7 +28,7 @@ public class Group {
     }
 
     public Group(Document document){
-        this.id = document.getString("id");
+        this.id = (document.getString("id") == null ? Tool.md5(Tool.eid()) : document.getString("id") );
         this.user = document.getString("user");
         this.icon = document.getString("icon");
         this.name = document.getString("name");

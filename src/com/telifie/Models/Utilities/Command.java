@@ -10,6 +10,9 @@ import com.telifie.Models.Connectors.Connector;
 import org.bson.Document;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -334,26 +337,50 @@ public class Command {
             //Creates Group given /groups/create/[GROUP_NAME]
             else if(objectSelector.equals("create")){
 
-                String groupName = (this.selectors.length == 3 ? this.get(2) : null);
-                if(groupName != null){
+                if(content != null){ //Creating Group with JSON content
 
+                    Group newGroup = new Group(content);
                     GroupsClient groups = new GroupsClient(config.defaultDomain());
-                    Group newGroup = groups.create(config.getAuthentication().getUser(), groupName);
-                    if(newGroup != null){
+                    Group createdGroup = groups.create(config.getAuthentication().getUser(), newGroup);
+                    if(createdGroup != null){
 
                         return new Result(
                                 this.command,
                                 "group",
-                                newGroup.toString(),
+                                createdGroup.toString(),
                                 1
                         );
                     }else{
 
-                        return new Result(505, this.command, "\"Failed to create group '" + groupName + "'\"");
+                        return new Result(505, this.command, "\"Failed to make Group with JSON\"");
                     }
                 }else{
+                    String groupName = (this.selectors.length == 3 ? this.get(2) : null);
+                    try {
+                        groupName = URLDecoder.decode(groupName, "UTF-8");
+                    } catch (UnsupportedEncodingException e) {
 
-                    return new Result(428, "\"Name of new group required\"");
+                    }
+                    if(groupName != null){
+
+                        GroupsClient groups = new GroupsClient(config.defaultDomain());
+                        Group newGroup = groups.create(config.getAuthentication().getUser(), groupName);
+                        if(newGroup != null){
+
+                            return new Result(
+                                    this.command,
+                                    "group",
+                                    newGroup.toString(),
+                                    1
+                            );
+                        }else{
+
+                            return new Result(505, this.command, "\"Failed to create group '" + groupName + "'\"");
+                        }
+                    }else{
+
+                        return new Result(428, "\"Name of new group required\"");
+                    }
                 }
             }
             // Deletes folder given /groups/delete/[GROUP_NAME]
@@ -413,10 +440,7 @@ public class Command {
                     usersGroups.toString(),
                     usersGroups.size()
                 );
-
             }
-
-
         }
         /*
          * Accessing Users
@@ -644,7 +668,11 @@ public class Command {
 
                     threaded = true;
                 }
-                new Server(threaded);
+                try{
+                    new Server(threaded);
+                }catch(Exception e){
+                    new Server(threaded);
+                }
 
             }
         }else if(primarySelector.equals("exit") || primarySelector.equals("close")){

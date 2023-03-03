@@ -52,15 +52,27 @@ public class GroupsClient extends Client {
 
     }
 
+    public Group create(String userId, Group group){
+        //TODO Install checks to ensure that proper information was provided by JSON
+        group.setUser(userId);
+        if(super.insertOne( Document.parse(group.toString()) )){
+
+            return group;
+        }else{
+
+            return null;
+        }
+    }
+
     public Group create(String userId, String name){
 
         if(this.exists(
-                new Document("$and",
-                    Arrays.asList(
-                            new Document("user", userId ),
-                            new Document("name", name )
-                    )
+            new Document("$and",
+                Arrays.asList(
+                    new Document("user", userId ),
+                    new Document("name", name )
                 )
+            )
         )){
             return null;
         }
@@ -69,13 +81,10 @@ public class GroupsClient extends Client {
         if(super.insertOne( Document.parse(group.toString()) )){
 
             return group;
-
         }else{
 
             return null;
-
         }
-
     }
 
     public boolean save(String userId, String groupId, String articleId){
@@ -102,7 +111,6 @@ public class GroupsClient extends Client {
             ),
             new Document("$pull", new Document("articles", articleId))
         );
-
     }
 
     public boolean delete(String userId, String groupId){

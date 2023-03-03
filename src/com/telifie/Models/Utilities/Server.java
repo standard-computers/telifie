@@ -29,6 +29,9 @@ import java.net.Socket;
 
 public class Server {
 
+    private boolean running = true;
+    private ServerSocket serverSocket;
+
     public Server(boolean threaded){
 
         if(threaded){
@@ -41,7 +44,7 @@ public class Server {
         }
     }
 
-    private void server(){
+    private void server() {
 
         HttpRequestHandler requestHandler = (request, response, context) -> {
 
@@ -50,27 +53,27 @@ public class Server {
             String query = request.getRequestLine().getUri().substring(1);
             String authString = (request.getFirstHeader("Authorization") == null ? "" : request.getFirstHeader("Authorization").getValue());
             Authentication auth = (authString.equals("") ? null : new Authentication(authString.split(" ")[1].split("\\.")));
-            Result result = new Result(200, query,"\"okay\"");
+            Result result = new Result(200, query, "\"okay\"");
 
             //Check if authentication is present
-            if(auth == null){
+            if (auth == null) {
 
                 result.setStatusCode(406);
                 result.setResults("\"No Authentication credentials provided\"");
-            }else{
+            } else {
 
                 AuthenticationClient authenticationClient = new AuthenticationClient(new Domain("telifie", "mongodb://137.184.70.9:27017"));
-                if(authenticationClient.isAuthenticated(auth)){
+                if (authenticationClient.isAuthenticated(auth)) {
 
                     String contentType = (request.getFirstHeader("Content-Type") == null ? "" : request.getFirstHeader("Content-Type").getValue());
-                    if(contentType.equals("application/octet-stream")
-                            || contentType.startsWith("multipart/form-data")){ //File upload
+                    if (contentType.equals("application/octet-stream")
+                            || contentType.startsWith("multipart/form-data")) { //File upload
 
                         String director = request.getRequestLine().getUri(); //Where the file should go
                         ConnectorsClient connectors = new ConnectorsClient();
                         Connector awss3 = connectors.getConnector("AWS");
 
-                        if(awss3 != null){
+                        if (awss3 != null) {
 
                             if (request instanceof HttpEntityEnclosingRequest) {
 
@@ -91,24 +94,23 @@ public class Server {
                                 }
 
 
-
                                 byte[] fileContents = outputStream.toByteArray();
                                 AWSS3 aws = new AWSS3(awss3);
-                                if(aws.upload(director, fileContents, false)){
+                                if (aws.upload(director, fileContents, false)) {
 
                                     result = new Result(200, director, "\"" + awss3.getEndpoints().get(0).getUrl() + director + "\"");
-                                }else{
+                                } else {
 
                                     result = new Result(505, director, "\"Failed to upload file to provided director (AWS S3)\"");
                                 }
                             }
 
-                        }else{
+                        } else {
 
                             result = new Result(505, director, "\"Please set AWS S3 Connector\"");
                         }
 
-                    }else{
+                    } else {
 
                         //Check if request has a body
                         String body = null;
@@ -123,7 +125,7 @@ public class Server {
                         requestConfiguration.setAuthentication(auth);
                         result = processRequest(requestConfiguration, method, query, body);
                     }
-                }else{
+                } else {
 
                     result = new Result(403, "\"Invalid Auth Credentials\"");
                 }
@@ -142,11 +144,10 @@ public class Server {
         HttpRequestHandlerRegistry registry = new HttpRequestHandlerRegistry();
         registry.register("*", requestHandler);
         HttpService httpService = new HttpService(new BasicHttpProcessor(), new DefaultConnectionReuseStrategy(), new DefaultHttpResponseFactory(), registry, params);
-        ServerSocket serverSocket;
         try {
 
             serverSocket = new ServerSocket(80);
-            while (true) {
+            while (running) {
 
                 Socket socket = serverSocket.accept();
                 DefaultBHttpServerConnection connection = new DefaultBHttpServerConnection(8 * 1024);
@@ -154,8 +155,18 @@ public class Server {
                 httpService.handleRequest(connection, new BasicHttpContext());
             }
         } catch (IOException | HttpException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-            //TODO log and don't quit server
+    private void stop(){
+
+        running = false;
+        try {
+
+            serverSocket.close();
+        } catch (IOException e) {
+
             throw new RuntimeException(e);
         }
     }
