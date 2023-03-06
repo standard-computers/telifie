@@ -4,6 +4,7 @@ import com.telifie.Models.*;
 import com.telifie.Models.Actions.Event;
 import com.telifie.Models.Actions.Out;
 import com.telifie.Models.Actions.Search;
+import com.telifie.Models.Actions.Timeline;
 import com.telifie.Models.Clients.*;
 import com.telifie.Models.Connectors.Available.SGrid;
 import com.telifie.Models.Connectors.Connector;
@@ -174,7 +175,7 @@ public class Command {
                             Article ogArticle = articles.get(articleId);
                             ArrayList<Event> events = updatedArticle.compare(ogArticle);
 
-                            if(events.size() > 0){
+//                            if(events.size() > 0){
 
                                 for(int i = 0; i < events.size(); i++){
 
@@ -197,10 +198,10 @@ public class Command {
 
                                     return new Result(505, this.command, "\"Failed to update Article\"");
                                 }
-                            }else{
-
-                                return new Result(304, this.command, "\"No changes were made to the Article\"");
-                            }
+//                            }else{
+//
+//                                return new Result(304, this.command, "\"No changes were made to the Article\"");
+//                            }
                         }else{
 
                             //Check permissions of user in Domains
@@ -237,7 +238,6 @@ public class Command {
                                     newArticle.toString(),
                                     1
                             );
-
                         }else{
 
                             return new Result(505, "Failed to create Article");
@@ -269,7 +269,8 @@ public class Command {
 
                 String groupId = this.get(2), articleId = this.get(3);
                 GroupsClient groups = new GroupsClient(config.defaultDomain());
-                //Saves Article to Group given /groups/unsave/[GROUP_ID]/[ARTICLE_ID]
+
+                //Saves Article to Group given /groups/save/[GROUP_ID]/[ARTICLE_ID]
                 if(objectSelector.equals("save")){
 
                     if(groups.save(config.getAuthentication().getUser(), groupId, articleId)){
@@ -279,9 +280,8 @@ public class Command {
 
                         return new Result(505, this.command, "\"Failed to save Article\"");
                     }
-
                 }
-                //Removes Article from Group given /groups/save/[GROUP_NAME]/[ARTICLE_ID]
+                //Removes article from group given /groups/unsave/[GROUP_NAME]/[ARTICLE_ID]
                 else if(objectSelector.equals("unsave")){
 
                     if(groups.unsave(config.getAuthentication().getUser(), groupId, articleId)){
@@ -291,12 +291,10 @@ public class Command {
 
                         return new Result(505, this.command, "\"Failed to unsave Article\"");
                     }
-
                 }else{
 
                     return new Result(404, this.command, "\"Invalid favorites command\"");
                 }
-
             }
             //Updates Group given JSON POST. See reference
             else if(objectSelector.equals("update")){
@@ -414,18 +412,22 @@ public class Command {
                 if(groupId != null){
 
                     Group group = groups.get(config.getAuthentication().getUser(), groupId);
-                    return new Result(
-                        this.command,
-                        "group",
-                        group.toString(),
-                        1
-                    );
+                    if(group != null){
 
+                        return new Result(
+                            this.command,
+                            "group",
+                            group.toString(),
+                            1
+                        );
+                    }else{
+
+                        return new Result(404, this.command, "\"Group not found with ID '" + groupId + "'\"");
+                    }
                 }else{
 
                     return new Result(428, this.command, "\"Group ID is required to get\"");
                 }
-
             }
             /*
              *
@@ -741,7 +743,6 @@ public class Command {
                             return new Result(501, "\"Failed to send code\"");
                         }
                     }
-
                 }else{
 
                     return new Result(404, "\"Account not found\"");
@@ -774,17 +775,38 @@ public class Command {
                             json.toString(),
                             1
                     );
-
                 }else{
 
                     return new Result(403, "\"Invalid verification code provided\"");
                 }
-
             }else{
 
                 return new Result(404, this.command, "\"Invalid command received\"");
             }
+        }else if(primarySelector.equals("timelines")){
 
+            if(this.selectors.length >= 2){
+
+                String objectId = this.get(1);
+                TimelinesClient timelines = new TimelinesClient(config.defaultDomain());
+                Timeline timeline = timelines.getTimeline(objectId);
+                if(timeline != null){
+
+                    return new Result(
+                            this.command,
+                            "timeline",
+                            timeline.toString(),
+                            1
+                    );
+                }else{
+
+                    return new Result(404, this.command, "\"No timeline found for " + objectId + "\"");
+                }
+
+            }else{
+
+                return new Result(428, this.command, "\"Please provide object ID to get timeline\"");
+            }
         }else if(primarySelector.equals("messaging")){
 
             //TODO sending/receiving messages

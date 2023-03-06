@@ -206,19 +206,18 @@ public class Article implements Serializable {
 
         }
 
-        return "{" +
-                "\"id\" : \"" + id + '\"' +
+        return "{\"id\" : \"" + id + '\"' +
                 ", \"title\" : \"" + title + '\"' +
                 (link == null ? "" : ", \"link\" : \"" + link + '\"') +
                 (icon == null ? "" : ", \"icon\" : \"" + icon + '\"') +
                 (description == null || description.equals("") ? "" : ", \"description\" : \"" + description + '\"') +
                 (content == null ? "" : ", \"content\" : \"" + content + "\"") +
-                (this.tags == null || this.tags.size() == 0 ? "" : ", \"tags\" : " + tags) +
-                (images == null || images.size() < 1 ? "" : ", \"images\" : " + images) +
-                (attributes == null || attributes.size() < 1 ? "" : ", \"attributes\" : " + attributes) +
-                (associations == null || associations.size() < 1 ? "" : ", \"associations\" : " + associations) +
-                (source == null ? "" : ", \"source\" : " + source) +
-                (origin == 0 ? "" : ", \"origin\" : " + origin) +
+                ", \"tags\" : " + tags +
+                ", \"images\" : " + images +
+                ", \"attributes\" : " + attributes +
+                ", \"associations\" : " + associations +
+                ", \"source\" : " + source +
+                ", \"origin\" : " + origin +
                 '}';
     }
 

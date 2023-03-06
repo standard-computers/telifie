@@ -1,5 +1,6 @@
 package com.telifie.Models.Actions;
 
+import org.bson.Document;
 import org.json.JSONObject;
 
 public class Event {
@@ -17,6 +18,13 @@ public class Event {
         this.origin = origin;
         this.user = user;
         this.content = content;
+    }
+
+    public Event(Document document){
+        this.type = Type.valueOf(document.getString("type"));
+        this.origin = document.getInteger("origin");
+        this.user = document.getString("user");
+        this.content = document.getString("content");
     }
 
     public Type getType() {

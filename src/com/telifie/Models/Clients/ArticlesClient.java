@@ -1,5 +1,6 @@
 package com.telifie.Models.Clients;
 
+import com.telifie.Models.Actions.Out;
 import com.telifie.Models.Article;
 import com.telifie.Models.Domain;
 import org.bson.Document;
@@ -14,7 +15,7 @@ public class ArticlesClient extends Client {
     }
 
     public boolean update(Article article, Article newArticle){
-
+        Out.console(newArticle.toString());
         return super.updateOne(
                 new Document("id", article.getId()),
                 new Document("$set", Document.parse(newArticle.toString()))

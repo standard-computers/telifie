@@ -8,6 +8,7 @@ import org.bson.Document;
 public class QueueClient extends Client {
 
     public QueueClient(Domain domain) {
+
         super(domain);
         super.collection = "queue";
     }
@@ -19,13 +20,9 @@ public class QueueClient extends Client {
         if(this.insertOne(Document.parse(parsed.toString()))){
 
            return parsed;
-
         }else{
 
             return null;
-
         }
-
     }
-
 }

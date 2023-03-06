@@ -33,11 +33,12 @@ public class GroupsClient extends Client {
         ArrayList<Article> articles = new ArrayList<Article>();
         ArticlesClient articlesClient = new ArticlesClient(this.domain);
         for (String articleId : group.getArticles()) {
+
             articles.add(articlesClient.get(articleId));
         }
+
         group.setDetailedList(articles);
         return group;
-
     }
 
     public ArrayList<Group> groupsForUser(String userId){
