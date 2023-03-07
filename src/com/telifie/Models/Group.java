@@ -28,13 +28,15 @@ public class Group {
     }
 
     public Group(Document document){
-        this.id = (document.getString("id") == null ? Tool.md5(Tool.eid()) : document.getString("id") );
-        this.user = document.getString("user");
-        this.icon = document.getString("icon");
-        this.name = document.getString("name");
-        this.articles = document.get("articles", ArrayList.class);
-        this.origin = Tool.epochTime();
-        this.permissions = document.getInteger("permissions");
+        if(document != null){
+            this.id = (document.getString("id") == null ? Tool.md5(Tool.eid()) : document.getString("id") );
+            this.user = document.getString("user");
+            this.icon = document.getString("icon");
+            this.name = document.getString("name");
+            this.articles = document.get("articles", ArrayList.class);
+            this.origin = Tool.epochTime();
+            this.permissions = document.getInteger("permissions");
+        }
     }
 
     public String getId() {

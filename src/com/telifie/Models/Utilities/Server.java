@@ -175,10 +175,7 @@ public class Server {
 
         //TODO log all requests from http to file
         Command command = new Command(request);
-        if(command.primarySelector().equals("exit") || command.primarySelector().equals("server")){
-
-            return new Result(403, request, "\"Illegal command given\"");
-        }else if(method.equals("POST")){
+        if(method.equals("POST")){
 
             try {
 
@@ -187,14 +184,11 @@ public class Server {
 
                 return new Result(505, "\"Malformed JSON data provided\"");
             }
-
         }else if(method.equals("GET")){
 
             return command.parseCommand(configuration);
         }
 
         return new Result(404, request, "\"Invalid command received\"");
-
     }
-
 }

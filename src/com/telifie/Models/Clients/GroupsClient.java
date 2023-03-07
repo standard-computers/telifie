@@ -29,16 +29,21 @@ public class GroupsClient extends Client {
                 )
             )
         );
-
         ArrayList<Article> articles = new ArrayList<Article>();
         ArticlesClient articlesClient = new ArticlesClient(this.domain);
-        for (String articleId : group.getArticles()) {
+        if(group.getArticles() != null){
 
-            articles.add(articlesClient.get(articleId));
+            for (String articleId : group.getArticles()) {
+
+                articles.add(articlesClient.get(articleId));
+            }
+
+            group.setDetailedList(articles);
+            return group;
+        }else{
+
+            return null;
         }
-
-        group.setDetailedList(articles);
-        return group;
     }
 
     public ArrayList<Group> groupsForUser(String userId){
@@ -50,7 +55,6 @@ public class GroupsClient extends Client {
         }
 
         return found;
-
     }
 
     public Group create(String userId, Group group){
@@ -119,7 +123,7 @@ public class GroupsClient extends Client {
             new Document("$and",
                 Arrays.asList(
                     new Document("user", userId),
-                    new Document("name", groupId)
+                    new Document("id", groupId)
                 )
             )
         );

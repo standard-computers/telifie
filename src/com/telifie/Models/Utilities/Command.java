@@ -61,28 +61,27 @@ public class Command {
 
             if(this.selectors.length >= 2){
 
-                if(objectSelector.equals("owner") || objectSelector.equals("")){
+                if(objectSelector.equals("owner")){ //Get domains for owner /domains/owner/[USER_ID]
 
                     DomainsClient domains = new DomainsClient(config.defaultDomain());
                     ArrayList<Domain> foundDomains = domains.getOwnedDomains(this.get(2));
                     return new Result(
-                            this.command,
-                            "domains",
-                            foundDomains.toString(),
-                            foundDomains.size()
+                        this.command,
+                        "domains",
+                        foundDomains.toString(),
+                        foundDomains.size()
                     );
+                }else if(objectSelector.equals("member")){ //Get domains for user /domains/member/[USER_ID]
 
-                }else if(objectSelector.equals("user")){
-
+                    //TODO get domains that user is attached too
                     DomainsClient domains = new DomainsClient(config.defaultDomain());
                     ArrayList<Domain> foundDomains = domains.getDomainsForUser(this.get(2));
                     return new Result(
-                            this.command,
-                            "domains",
-                            foundDomains.toString(),
-                            foundDomains.size()
+                        this.command,
+                        "domains",
+                        foundDomains.toString(),
+                        foundDomains.size()
                     );
-
                 }else if(objectSelector.equals("create")){
 
                     if(content != null){
@@ -96,12 +95,11 @@ public class Command {
                             if(domains.create(newDomain)){
 
                                 return new Result(
-                                        this.command,
-                                        "domain",
-                                        newDomain.toString(),
-                                        1
+                                    this.command,
+                                    "domain",
+                                    newDomain.toString(),
+                                    1
                                 );
-
                             }else{
 
                                 return new Result(505, this.command, "\"Failed to make domain\"");
@@ -110,7 +108,6 @@ public class Command {
 
                             return new Result(428, this.command, "\"Required JSON properties not provided\"");
                         }
-
                     }else{
 
                         return new Result(428, this.command, "\"JSON body expected\"");
@@ -130,22 +127,44 @@ public class Command {
 
                             return new Result(505, this.command, "\"Failed to delete domain\"");
                         }
-
                     }else{
 
                         return new Result(401, this.command, "\"This is not your domain!!!!!\"");
                     }
+                }else if(objectSelector.equals("public")){ //Get public domains
 
+                    //TODO get public domains
+                }else if(objectSelector.equals("protected")){ //Get public domains
+
+                    //TODO get protected domains
                 }else{
 
-                    return new Result(404, this.command, "\"Invalid domains selector\"");
-                }
+                    if(this.get(1) != null){
 
+                        String domainId = this.get(1);
+                        DomainsClient domains = new DomainsClient(config.defaultDomain());
+                        Domain selectedDomain = domains.getWithId(domainId);
+                        if(selectedDomain.getId() != null){
+
+                            return new Result(
+                                this.command,
+                                "domain",
+                                selectedDomain.toString(),
+                                1
+                            );
+                        }else{
+
+                            return new Result(404, this.command, "\"Domain with id '" + domainId + "' not found\"");
+                        }
+                    }else{
+
+                        return new Result(404, this.command, "\"Invalid domains selector\"");
+                    }
+                }
             }else{
 
-                return new Result(200, this.command, "none");
+                return new Result(200, this.command, "\"Invalid command for domains\"");
             }
-
         }
         /**
          * Accessing Articles
@@ -160,11 +179,24 @@ public class Command {
                 String articleId = this.get(2);
                 if(objectSelector.equals("id")){ //Specifying Article with ID
 
-                    //TODO get article with ID
+                    ArticlesClient articles = new ArticlesClient(config.defaultDomain());
+                    Article article = articles.get(articleId);
+                    if(article != null && article.getId() != null){
 
+                        return new Result(
+                            this.command,
+                            "article",
+                            article.toString(),
+                            1
+                        );
+                    }else{
+
+                        return new Result(404, this.command, "\"Article not found\"");
+                    }
                 }else if(objectSelector.equals("update")){
 
                     if(content != null){
+
                         if(content.getString("id") == null){
                             content.put("id", articleId);
                         }
@@ -305,9 +337,9 @@ public class Command {
                     if(content != null){
 
                         //Cannot make a folder named $pinned as its reserved
-                        if(content.getString("name") != null && content.getString("name").equals("$pinned")){
+                        if(content.getString("name") != null && content.getString("name").equals("Pinned")){
                             
-                            return new Result(304, this.command, "\"'$pinned' is a reserved Group name\"");
+                            return new Result(304, this.command, "\"'Pinned' is a reserved Group name\"");
                             
                         }
 
@@ -319,18 +351,14 @@ public class Command {
 
                             return new Result(505, this.command, "\"Failed to update Group\"");
                         }
-
                     }else{
 
                         return new Result(428, this.command, "\"Update content for Group not provided\"");
                     }
-
-
                 }else{
 
                     return new Result(428, "\"ID of Group required to update\"");
                 }
-
             }
             //Creates Group given /groups/create/[GROUP_NAME]
             else if(objectSelector.equals("create")){
@@ -355,6 +383,7 @@ public class Command {
                 }else{
                     String groupName = (this.selectors.length == 3 ? this.get(2) : null);
                     try {
+
                         groupName = URLDecoder.decode(groupName, "UTF-8");
                     } catch (UnsupportedEncodingException e) {
 
@@ -366,10 +395,10 @@ public class Command {
                         if(newGroup != null){
 
                             return new Result(
-                                    this.command,
-                                    "group",
-                                    newGroup.toString(),
-                                    1
+                                this.command,
+                                "group",
+                                newGroup.toString(),
+                                1
                             );
                         }else{
 
@@ -381,7 +410,7 @@ public class Command {
                     }
                 }
             }
-            // Deletes folder given /groups/delete/[GROUP_NAME]
+            // Deletes folder given /groups/delete/[GROUP_ID]
             else if(objectSelector.equals("delete")){
 
                 String groupId = (this.selectors.length == 3 ? this.get(2) : null);
@@ -395,12 +424,10 @@ public class Command {
 
                         return new Result(505, this.command, "\"Failed to delete group '" + groupId + "'\"");
                     }
-
                 }else{
 
                     return new Result(428, "Name of new group required.");
                 }
-
             }
             /*
              * Returns Group given /groups/id/[GROUP_ID]
@@ -457,36 +484,30 @@ public class Command {
                     if(content.containsKey("id") && content.containsKey("email")){
 
                         UsersClient usersClient = new UsersClient(config.defaultDomain());
-
                         if(this.selectors.length >= 3 && this.get(2).equals("theme")){
 
                             if(usersClient.updateUserTheme(usersClient.getUserWithEmail(userEmail), content)){
 
                                 User changedUser = usersClient.getUserWithEmail(userEmail);
                                 return new Result(
-                                        this.command,
-                                        "user",
-                                        changedUser.toString(),
-                                        1
+                                    this.command,
+                                    "user",
+                                    changedUser.toString(),
+                                    1
                                 );
-
                             }else{
 
                                 return new Result(400, "\"Bad Request\"");
                             }
-
                         }
-
                     }else{
 
                         return new Result(403, this.command, "\"User information not included\"");
                     }
-
                 }else{
 
                     return new Result(404, this.command, "\"Invalid command received\"");
                 }
-
             }else if(objectSelector.equals("create")){ //Creating User
 
                 if(content != null){
@@ -535,21 +556,17 @@ public class Command {
 
                         User found = usersClient.getUserWithEmail(this.get(1));
                         return new Result(
-                                this.command,
-                                "user",
-                                found.toString(),
-                                1
+                            this.command,
+                            "user",
+                            found.toString(),
+                            1
                         );
-
                     }else { //No valid user action command provided
 
                         return new Result(404, this.command, "\"User not found\"");
                     }
-
                 }
-
             }
-
         }else if(primarySelector.equals("parser")){ //Accessing parser
 
             if(this.selectors.length >= 2){
@@ -558,27 +575,23 @@ public class Command {
                 if(this.get(1).equals("csv")){ //Importing CSV as batch of Articles
 
                     uri = this.command.replaceFirst(this.targetDomain + "://parser/csv/", "");
-                    //Todo batch uploader
+                    //TODO Batch uploader
 
                 }else{
 
                     uri = this.command.replaceFirst(this.targetDomain + "://parser/", "");
                     Parser parser = new Parser(uri);
                     return new Result(
-                            this.command,
-                            "article",
-                            parser.parse().toString(),
-                            1
+                        this.command,
+                        "article",
+                        parser.parse().toString(),
+                        1
                     );
-
                 }
-
             }else{
 
                 return new Result(404, this.command, "\"Invalid parser action command\"");
-
             }
-
         }else if(primarySelector.equals("queue")){
 
             if(this.selectors.length >= 2){
@@ -609,12 +622,11 @@ public class Command {
                             if(queued != null){
 
                                 return new Result(
-                                        this.command,
-                                        "article",
-                                        queued.toString(),
-                                        1
+                                    this.command,
+                                    "article",
+                                    queued.toString(),
+                                    1
                                 );
-
                             }else{
 
                                 return new Result(505, "\"There was an error parsing the queue request\"");
@@ -628,12 +640,10 @@ public class Command {
                     //TODO Queue from connector
                     return new Result(200, this.command, "\"Queued from connector\"");
                 }
-
             }else{
 
                 return new Result(404, "\"Invalid queue command\"");
             }
-
         }else if(primarySelector.equals("search")){
 
             String query = this.selectorsString.replace("search/", "");
@@ -642,7 +652,6 @@ public class Command {
                 config.setDefaultDomain(config.defaultDomain().setName(this.targetDomain));
             }
             return new Search(config, query).result();
-
         }else if(primarySelector.equals("server")){ //Accessing server
 
             if(this.selectors.length >= 2){
@@ -671,17 +680,13 @@ public class Command {
                     threaded = true;
                 }
                 try{
+
                     new Server(threaded);
                 }catch(Exception e){
+
                     new Server(threaded);
                 }
-
             }
-        }else if(primarySelector.equals("exit") || primarySelector.equals("close")){
-
-            Out.console("Exiting telifie...");
-            System.exit(0);
-
         }else if(primarySelector.equals("authenticate")){ //authentication
 
             if(this.selectors.length >= 3 && this.get(1).equals("app")){
@@ -832,7 +837,6 @@ public class Command {
                                 newConnector.toString(),
                                 1
                             );
-
                         }else{
 
                             return new Result(505, this.command, "\"Failed to create Connector\"");
@@ -856,9 +860,7 @@ public class Command {
                     all.toString(),
                     all.size()
                 );
-
             }
-
         }else{
 
             return new Result(404, this.command, "\"Invalid command\"");

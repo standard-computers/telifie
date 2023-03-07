@@ -31,12 +31,14 @@ public class Domain implements Serializable {
     }
 
     public Domain(Document document){
-        this.id = (document.getString("id") == null ? Tool.md5(Tool.eid()) : document.getString("id"));
-        this.alt = document.getString("alt");
-        this.icon = document.getString("icon");
-        this.owner = document.getString("owner");
-        this.name = document.getString("name");
-        this.permissions = (document.getInteger("permissions") == null ? 0 : document.getInteger("permissions"));
+        if(document != null){
+            this.id = (document.getString("id") == null ? Tool.md5(Tool.eid()) : document.getString("id"));
+            this.alt = document.getString("alt");
+            this.icon = document.getString("icon");
+            this.owner = document.getString("owner");
+            this.name = document.getString("name");
+            this.permissions = (document.getInteger("permissions") == null ? 0 : document.getInteger("permissions"));
+        }
     }
 
     public String getUri() {

@@ -29,49 +29,50 @@ public class Article implements Serializable {
     }
 
     public Article(Document document){
+        if(document != null) {
+            this.id = (document.getString("id") == null ? Tool.md5(Tool.eid()) : document.getString("id"));
+            this.title = document.getString("title");
+            this.link = document.getString("link");
+            this.icon = document.getString("icon");
+            this.description = document.getString("description");
 
-        this.id = (document.getString("id") == null ? Tool.md5(Tool.eid()) : document.getString("id"));
-        this.title = document.getString("title");
-        this.link = document.getString("link");
-        this.icon = document.getString("icon");
-        this.description = document.getString("description");
+            String contentString = (document.getString("content") != null ? document.getString("content").replaceAll("\\s+|\\r?\\n", " ") : "");
+            this.content = contentString.replaceAll("\"", "&quot;");
+            this.origin = (document.getInteger("origin") == null ? 0 : document.getInteger("origin"));
+            this.tags = document.get("tags", ArrayList.class);
 
-        String contentString = (document.getString("content") != null ? document.getString("content").replaceAll("\\s+|\\r?\\n", " ") : "" );
-        this.content = contentString.replaceAll("\"", "&quot;");
-        this.origin = (document.getInteger("origin") == null ? 0 : document.getInteger("origin"));
-        this.tags = document.get("tags", ArrayList.class);
+            ArrayList<Document> iterable = (ArrayList<Document>) document.getList("images", Document.class);
+            if (iterable != null && iterable.size() >= 1) {
 
-        ArrayList<Document> iterable = (ArrayList<Document>) document.getList("images", Document.class);
-        if(iterable != null && iterable.size() >= 1){
+                for (Document doc : iterable) {
 
-            for(Document doc : iterable){
-
-                this.addImage(new Image(doc));
+                    this.addImage(new Image(doc));
+                }
             }
-        }
 
-        ArrayList<Document> iterable2 = (ArrayList<Document>) document.getList("attributes", Document.class);
-        if(iterable2 != null){
+            ArrayList<Document> iterable2 = (ArrayList<Document>) document.getList("attributes", Document.class);
+            if (iterable2 != null) {
 
-            for(Document doc : iterable2){
+                for (Document doc : iterable2) {
 
-                this.addAttribute(new Attribute(doc.getString("key"), doc.getString("value")));
+                    this.addAttribute(new Attribute(doc.getString("key"), doc.getString("value")));
+                }
             }
-        }
 
-        ArrayList<Document> iterable3 = (ArrayList<Document>) document.getList("associations", Document.class);
-        if(iterable3 != null){
+            ArrayList<Document> iterable3 = (ArrayList<Document>) document.getList("associations", Document.class);
+            if (iterable3 != null) {
 
-            for(Document doc : iterable3){
+                for (Document doc : iterable3) {
 
-                this.addAssociation(new Association(doc));
+                    this.addAssociation(new Association(doc));
+                }
             }
-        }
 
-        Document sourceDocument = document.get("source", Document.class);
-        if(sourceDocument != null){
+            Document sourceDocument = document.get("source", Document.class);
+            if (sourceDocument != null) {
 
-            this.source = new Source(sourceDocument);
+                this.source = new Source(sourceDocument);
+            }
         }
     }
 
