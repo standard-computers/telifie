@@ -7,58 +7,111 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 
 public class Parser {
 
-    private final String uri;
-    private final ArrayList<Article> traversable = new ArrayList<>();
-    private final ArrayList<String> parsed = new ArrayList<>();
-    private final int MAX_DEPTH = 1;
+    private static String uri;
+    private static final ArrayList<Article> traversable = new ArrayList<>();
+    private static final ArrayList<String> parsed = new ArrayList<>();
+    private static final int MAX_DEPTH = 1;
 
-    public Parser(String uri){
-        this.uri = uri;
-    }
+    public static class engine {
 
-    public ArrayList<Article> getTraversable() {
-        return traversable;
-    }
+        public static Article parse(String uri){
+            Parser.setUri(uri);
+            if(Tool.isUrl(uri)){ //Crawl website if url
 
-    public ArrayList<String> getParsed() {
-        return parsed;
-    }
+                return Parser.crawl(uri, 0);
+            }else if(Tool.isFile(uri)){ //Parsing a file
 
-    public int getMAX_DEPTH() {
-        return MAX_DEPTH;
-    }
+                File file = new File(uri);
+                if(file.exists()){
 
-    public Article parse(){
-        if(this.isUrl()){ //Crawl website if url
-
-            return crawl(uri, 0);
-
-        }else if(this.isFile()){ //Parsing a file
-
-            File file = new File(this.uri);
-            if(file.exists()){
-
-                String file_type = this.getType();
-                String file_extension = this.getExtension();
-
-            }else{
-                Out.error("[FILE NOT FOUND] " + uri);
+                }else{
+                    Out.error("[FILE NOT FOUND] " + uri);
+                }
             }
 
+            return null;
         }
 
-        return null;
+        public static ArrayList<Article> batch(String csvPath, String delimiter){
+            if(!new File(csvPath).exists()){
+                return null;
+            }
 
+            if(csvPath.endsWith("csv")){
+
+                ArrayList<String[]> lines = new ArrayList<>();
+                try (BufferedReader br = new BufferedReader(new FileReader(csvPath))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        String[] fields = line.split(delimiter);
+                        lines.add(fields);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                ArrayList<Article> articles = new ArrayList<>();
+                String[] headers = lines.get(0);
+                int titleIndex = 0, descriptionIndex = 0, linkIndex = 0, contentIndex = 0;
+                for (int i = 0; i < headers.length; i++){
+                    String hV = lines.get(0)[i].toLowerCase().trim();
+                    if(hV.equals("title")){
+                        titleIndex = i;
+                    }else if(hV.equals("description")){
+                        descriptionIndex = i;
+                    }else if(hV.equals("link")){
+                        linkIndex = i;
+                    }else if(hV.equals("content")){
+                        contentIndex = i;
+                    }
+                }
+                for (int i = 1; i < lines.size(); i++) {
+
+                    String[] articleData = lines.get(i);
+                    Article article = new Article();
+                    for(int g = 0; g < articleData.length; g++){
+
+                        String value = articleData[g];
+                        if(g == titleIndex){
+
+                            article.setTitle(value);
+                        }else if(g == descriptionIndex){
+
+                            article.setDescription(value);
+                        }else if(g == linkIndex){
+
+                            article.setLink(value);
+                        }else if(g == contentIndex){
+
+                            article.setContent(value);
+                        }else{ //Not specified value
+
+                            //Do special stuff with attributes
+                            article.addAttribute(new Attribute(headers[g], value));
+                        }
+                    }
+                    articles.add(article);
+                }
+
+                return articles;
+            }else{
+
+                return null;
+            }
+        }
     }
 
-    private Article crawl(String url, int depth){
+    private static Article crawl(String url, int depth){
         if(depth > MAX_DEPTH){
             return null;
         }
@@ -156,31 +209,30 @@ public class Parser {
 
                         String page = link.attr("href"), fixed_url = Tool.fixLink(uri, page);
 
-                        if(!page.equals(url) && !page.equals("") && !page.startsWith("tel:") && !page.startsWith("mailto:") && !this.isParsed(fixed_url) && !page.equals("/") && !page.startsWith("#") && !page.equals(uri)){ //So long as it's not original URL or hasn't been parsed yet
+                        if(!page.equals(url) && !page.equals("")
+                                && !page.startsWith("tel:") && !page.startsWith("mailto:")
+                                && !Parser.isParsed(fixed_url) && !page.equals("/")
+                                && !page.startsWith("#") && !page.equals(uri)) { //So long as it's not original URL or hasn't been parsed yet
 
-                            if(page.startsWith("/") || page.startsWith(url) || page.contains(fixed_url)){ //Make sure their actual child pages, not links out
+                            if (page.startsWith("/") || page.startsWith(url) || page.contains(fixed_url)) { //Make sure their actual child pages, not links out
                                 Article child = crawl(fixed_url, depth + 1);
 
-                                if(child != null){
+                                if (child != null) {
                                     Child child_association = new Child(child.getId(), child.getIcon(), child.getTitle(), child.getDescription());
                                     child_association.setId(child.getId());
                                     pages.addArticle(child_association);
                                 }
-
                             }
-
                         }
-
                     }
 
                     if(pages.size() >= 1){
                         article.addAssociation(pages);
                     }
-
                 }
 
                 Out.console(article.toString());
-                this.traversable.add(article); //Push new articles to traversable for upload.
+                Parser.traversable.add(article); //Push new articles to traversable for upload.
                 return article;
 
             }else{
@@ -192,47 +244,24 @@ public class Parser {
         }
     }
 
-    public boolean isUrl(){
-
-        return this.uri.startsWith("https://") || this.uri.startsWith("http://") || this.uri.startsWith("www");
-
+    public ArrayList<Article> getTraversable() {
+        return traversable;
     }
 
-    public boolean isFile(){
-
-        return this.uri.startsWith("file://") || this.uri.startsWith("c:/") || this.uri.startsWith("\\");
-
+    public static void setUri(String uri){
+        Parser.uri = uri;
     }
 
-    public String getType(){
-        if(this.isUrl() || this.uri.endsWith("html")){
-            return "webpage";
-        }else if(this.uri.endsWith("png") || this.uri.endsWith("gif") || this.uri.endsWith("jpeg") || this.uri.endsWith("jpg") || this.uri.endsWith("psd")){
-            return "image";
-        }else if(this.uri.endsWith("mp4") || this.uri.endsWith("wmv") || this.uri.endsWith("mov") || this.uri.endsWith("avi") || this.uri.endsWith("flv") || this.uri.endsWith("mkv")){
-            return "video";
-        }else if(this.uri.endsWith("wav") || this.uri.endsWith("mp3")){
-            return "audio";
-        }else if(this.uri.endsWith("pdf") || this.uri.endsWith("docx") || this.uri.endsWith("txt") || this.uri.endsWith("rtf")){
-            return "document";
-        }else if(this.uri.endsWith("php") || this.uri.endsWith("css")){
-            return "code";
-        }else{
-            return "Unknown";
-        }
+    public static String getUri(){
+        return uri;
     }
 
-    public String getExtension(){
-        return this.uri.split("\\.")[this.uri.split("\\.").length - 1];
-    }
-
-    public boolean isParsed(String uri){
-        for (String s : this.parsed) {
+    public static boolean isParsed(String uri){
+        for (String s : Parser.parsed) {
             if (s.equals(uri)) {
                 return true;
             }
         }
         return false;
     }
-
 }

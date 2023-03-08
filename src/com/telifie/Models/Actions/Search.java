@@ -26,12 +26,10 @@ public class Search {
     public Search(Configuration configuration, String query) {
 
         this.query = URLDecoder.decode(query, StandardCharsets.UTF_8).toLowerCase().trim();
-        this.statement = new Statement(query);
+        this.statement = new Statement(this.query);
         this.result = new Result(this.query);
         this.targetDomain = (configuration.defaultDomain().getName().equals("telifie") || configuration.defaultDomain().getName().equals("") || configuration.defaultDomain().getName() == null ? "telifie" : "domains-articles");
         this.domainArticles = (configuration.defaultDomain().getName().equals("telifie") || configuration.defaultDomain().getName().equals("") || configuration.defaultDomain().getName() == null ? "articles" : configuration.defaultDomain().getName());
-
-        Out.console(query);
         //TODO integrate ArticlesClient
 
         if(this.query.matches("(\\d+\\.?\\d*|\\.\\d+)([\\+\\-\\*\\/](\\d+\\.?\\d*|\\.\\d+))*") || Tool.containsAnyOf(new String[] {"+", "-", "*", "/", "^"}, this.query)){ //Asking math expression
@@ -61,7 +59,7 @@ public class Search {
         }else if(this.query.equals("how many articles are there")){
             //TODO if query is LIKE
 
-        }else if(Tool.isHexColor(query) || Tool.isHSLColor(query) || Tool.isRGBColor(query)){
+        }else if(Tool.isHexColor(this.query) || Tool.isHSLColor(this.query) || Tool.isRGBColor(this.query)){
 
             this.result.addQuickResult(
                 new CommonObject(
@@ -71,7 +69,7 @@ public class Search {
                     query
                 )
             );
-        }else if(query.contains("random") && query.contains("color")){
+        }else if(this.query.contains("random") && this.query.contains("color")){
 
             //TODO https://www.thecolorapi.com/
 
@@ -81,9 +79,7 @@ public class Search {
 
             MongoDatabase database = mongoClient.getDatabase(targetDomain);
             MongoCollection<Document> collection = database.getCollection(domainArticles);
-
-            Document filter = generateFilter();
-            FindIterable<Document> iterable = collection.find(filter).limit(100);
+            FindIterable<Document> iterable = collection.find(generateFilter()).limit(100);
 
             ArrayList<Article> results = new ArrayList<>();
             for (Document document : iterable) {
@@ -93,7 +89,7 @@ public class Search {
             this.result.setCount(results.size());
 
             //Sort for query & name relevance
-            Collections.sort(results, new RelevanceComparator(query));
+            Collections.sort(results, new RelevanceComparator(this.query));
             Collections.reverse(results);
 
             this.result.setResults(results.toString());
@@ -110,25 +106,44 @@ public class Search {
      */
     private Document generateFilter(){
 
-        if(this.query.startsWith("id:")){ //Return articles with id
+        if(this.query.matches("^id\\s*:\\s*.*")){ //Return articles with id
 
             return new Document("id", this.query.split(":")[1]);
 
-        }else if(this.query.startsWith("description:")){ //Return Articles with requested description
+        }else if(this.query.matches("^description\\s*:\\s*.*")){ //Return Articles with requested description
 
             return new Document("description", pattern(this.query.split(":")[1]));
 
-        }else if(this.query.startsWith("attribute:")){
+        }else if(this.query.matches("^title\\s*:\\s*.*")){ //Return Articles with requested description
+
+            return new Document("title", pattern(this.query.split(":")[1]));
+
+        }else if(this.query.matches("^attribute\\s*:\\s*.*")){
 
             String[] spl = this.query.split(":"), spl2 = spl[1].split("=");
-            String key = spl2[0].trim(), value = spl2[1].trim();
+            if(spl[1].contains("&")){ //Has multiple attribute requirements
 
-            return new Document("$and",
-                    Arrays.asList(
-                            new Document("attributes.key", pattern( key ) ),
-                            new Document("attributes.value", pattern( value ) )
-                    )
-            );
+                String[] attrReqs = spl[1].split("&");
+                List<Document> andFilters = new ArrayList<>();
+                for (String attr : attrReqs) {
+
+                    String[] args = attr.split("=");
+                    String key = args[0].trim(), value = args[1].trim();
+                    andFilters.add(new Document("attributes.key", pattern(key)));
+                    andFilters.add(new Document("attributes.value", pattern(value)));
+                }
+
+                return new Document("$and", andFilters);
+            }else{
+
+                String key = spl2[0].trim(), value = spl2[1].trim();
+                return new Document("$and",
+                        Arrays.asList(
+                                new Document("attributes.key", pattern( key ) ),
+                                new Document("attributes.value", pattern( value ) )
+                        )
+                );
+            }
 
         }else if(this.query.startsWith("define ")){
 
@@ -191,8 +206,8 @@ public class Search {
                     }
                 }
             }
+
             return dp[title.length()][query.length()];
         }
     }
-
 }

@@ -64,24 +64,6 @@ public class Tool {
         }
     }
 
-    public static  String getType(String uri){
-        if(uri.endsWith("html")){
-            return "webpage";
-        }else if(uri.endsWith("png") || uri.endsWith("svg") || uri.endsWith("gif") || uri.endsWith("jpeg") || uri.endsWith("jpg") || uri.endsWith("psd")){
-            return "image";
-        }else if(uri.endsWith("mp4") || uri.endsWith("wmv") || uri.endsWith("mov") || uri.endsWith("avi") || uri.endsWith("flv") || uri.endsWith("mkv")){
-            return "video";
-        }else if(uri.endsWith("wav") || uri.endsWith("mp3")){
-            return "audio";
-        }else if(uri.endsWith("pdf") || uri.endsWith("docx") || uri.endsWith("txt") || uri.endsWith("rtf")){
-            return "document";
-        }else if(uri.endsWith("php") || uri.endsWith("css")){
-            return "code";
-        }else{
-            return "Unknown";
-        }
-    }
-
     public static Matcher findPhoneNumbers(String text){
         String regex = "\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b";
         Pattern pattern = Pattern.compile(regex);
@@ -155,7 +137,6 @@ public class Tool {
         return false;
     }
 
-
     public static String formatNumber(double number){
 
         String numberStr = String.valueOf(number);
@@ -178,6 +159,38 @@ public class Tool {
         }else{
 
             return Out.UNIX_SYSTEM_DIR + "/connectors/";
+        }
+    }
+
+    public static boolean isUrl(String uri){
+
+        return uri.startsWith("https://") || uri.startsWith("http://") || uri.startsWith("www");
+    }
+
+    public static boolean isFile(String uri){
+
+        return uri.startsWith("file://") || uri.startsWith("c:/") || uri.startsWith("\\");
+    }
+
+    public static String getExtension(String uri){
+        return uri.split("\\.")[uri.split("\\.").length - 1];
+    }
+
+    public static String getType(String uri){
+        if(Tool.isUrl(uri) || uri.endsWith("html")){
+            return "webpage";
+        }else if(uri.endsWith("png") || uri.endsWith("gif") || uri.endsWith("jpeg") || uri.endsWith("jpg") || uri.endsWith("psd")){
+            return "image";
+        }else if(uri.endsWith("mp4") || uri.endsWith("wmv") || uri.endsWith("mov") || uri.endsWith("avi") || uri.endsWith("flv") || uri.endsWith("mkv")){
+            return "video";
+        }else if(uri.endsWith("wav") || uri.endsWith("mp3")){
+            return "audio";
+        }else if(uri.endsWith("pdf") || uri.endsWith("docx") || uri.endsWith("txt") || uri.endsWith("rtf")){
+            return "document";
+        }else if(uri.endsWith("php") || uri.endsWith("css")){
+            return "code";
+        }else{
+            return "Unknown";
         }
     }
 }

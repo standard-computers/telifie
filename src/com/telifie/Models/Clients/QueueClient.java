@@ -15,8 +15,7 @@ public class QueueClient extends Client {
 
     public Article add(String uri){
 
-        Parser parser = new Parser(uri);
-        Article parsed = parser.parse();
+        Article parsed = Parser.engine.parse(uri);
         if(this.insertOne(Document.parse(parsed.toString()))){
 
            return parsed;

@@ -11,7 +11,6 @@ import com.telifie.Models.Connectors.Connector;
 import org.bson.Document;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -66,10 +65,10 @@ public class Command {
                     DomainsClient domains = new DomainsClient(config.defaultDomain());
                     ArrayList<Domain> foundDomains = domains.getOwnedDomains(this.get(2));
                     return new Result(
-                        this.command,
-                        "domains",
-                        foundDomains.toString(),
-                        foundDomains.size()
+                            this.command,
+                            "domains",
+                            foundDomains.toString(),
+                            foundDomains.size()
                     );
                 }else if(objectSelector.equals("member")){ //Get domains for user /domains/member/[USER_ID]
 
@@ -77,10 +76,10 @@ public class Command {
                     DomainsClient domains = new DomainsClient(config.defaultDomain());
                     ArrayList<Domain> foundDomains = domains.getDomainsForUser(this.get(2));
                     return new Result(
-                        this.command,
-                        "domains",
-                        foundDomains.toString(),
-                        foundDomains.size()
+                            this.command,
+                            "domains",
+                            foundDomains.toString(),
+                            foundDomains.size()
                     );
                 }else if(objectSelector.equals("create")){
 
@@ -95,10 +94,10 @@ public class Command {
                             if(domains.create(newDomain)){
 
                                 return new Result(
-                                    this.command,
-                                    "domain",
-                                    newDomain.toString(),
-                                    1
+                                        this.command,
+                                        "domain",
+                                        newDomain.toString(),
+                                        1
                                 );
                             }else{
 
@@ -147,10 +146,10 @@ public class Command {
                         if(selectedDomain.getId() != null){
 
                             return new Result(
-                                this.command,
-                                "domain",
-                                selectedDomain.toString(),
-                                1
+                                    this.command,
+                                    "domain",
+                                    selectedDomain.toString(),
+                                    1
                             );
                         }else{
 
@@ -184,10 +183,10 @@ public class Command {
                     if(article != null && article.getId() != null){
 
                         return new Result(
-                            this.command,
-                            "article",
-                            article.toString(),
-                            1
+                                this.command,
+                                "article",
+                                article.toString(),
+                                1
                         );
                     }else{
 
@@ -209,27 +208,27 @@ public class Command {
 
 //                            if(events.size() > 0){
 
-                                for(int i = 0; i < events.size(); i++){
+                            for(int i = 0; i < events.size(); i++){
 
-                                    events.get(i).setUser(actor.getId());
-                                }
+                                events.get(i).setUser(actor.getId());
+                            }
 
-                                if(articles.update(ogArticle, updatedArticle)){
+                            if(articles.update(ogArticle, updatedArticle)){
 
-                                    TimelinesClient timelines = new TimelinesClient(config.defaultDomain());
-                                    timelines.addEvents(articleId, events);
+                                TimelinesClient timelines = new TimelinesClient(config.defaultDomain());
+                                timelines.addEvents(articleId, events);
 
-                                    //TODO Decide to return changes made to article or return new article
-                                    return new Result(
-                                            this.command,
-                                            "events",
-                                            events.toString(),
-                                            events.size()
-                                    );
-                                }else{
+                                //TODO Decide to return changes made to article or return new article
+                                return new Result(
+                                        this.command,
+                                        "events",
+                                        events.toString(),
+                                        events.size()
+                                );
+                            }else{
 
-                                    return new Result(505, this.command, "\"Failed to update Article\"");
-                                }
+                                return new Result(505, this.command, "\"Failed to update Article\"");
+                            }
 //                            }else{
 //
 //                                return new Result(304, this.command, "\"No changes were made to the Article\"");
@@ -290,10 +289,10 @@ public class Command {
                 return new Result(404, "\"No Article ID provided\"");
             }
         }
-        
+
         /*
          * Accessing Groups
-         * Save, unsave, create, delete, update, 
+         * Save, unsave, create, delete, update,
          */
         else if(primarySelector.equals("groups")){
 
@@ -338,9 +337,9 @@ public class Command {
 
                         //Cannot make a folder named $pinned as its reserved
                         if(content.getString("name") != null && content.getString("name").equals("Pinned")){
-                            
+
                             return new Result(304, this.command, "\"'Pinned' is a reserved Group name\"");
-                            
+
                         }
 
                         GroupsClient groups = new GroupsClient(config.defaultDomain());
@@ -395,10 +394,10 @@ public class Command {
                         if(newGroup != null){
 
                             return new Result(
-                                this.command,
-                                "group",
-                                newGroup.toString(),
-                                1
+                                    this.command,
+                                    "group",
+                                    newGroup.toString(),
+                                    1
                             );
                         }else{
 
@@ -442,10 +441,10 @@ public class Command {
                     if(group != null){
 
                         return new Result(
-                            this.command,
-                            "group",
-                            group.toString(),
-                            1
+                                this.command,
+                                "group",
+                                group.toString(),
+                                1
                         );
                     }else{
 
@@ -464,10 +463,10 @@ public class Command {
                 GroupsClient groups = new GroupsClient(config.defaultDomain());
                 ArrayList<Group> usersGroups = groups.groupsForUser(config.getAuthentication().getUser());
                 return new Result(
-                    this.command,
-                    "groups",
-                    usersGroups.toString(),
-                    usersGroups.size()
+                        this.command,
+                        "groups",
+                        usersGroups.toString(),
+                        usersGroups.size()
                 );
             }
         }
@@ -480,29 +479,23 @@ public class Command {
 
                 if(this.get(1).equals("update") && content != null){
 
-                    String userEmail = content.getString("email");
-                    if(content.containsKey("id") && content.containsKey("email")){
+                    String userEmail = this.get(3);
+                    UsersClient usersClient = new UsersClient(config.defaultDomain());
+                    if(this.get(2).equals("theme")){
 
-                        UsersClient usersClient = new UsersClient(config.defaultDomain());
-                        if(this.selectors.length >= 3 && this.get(2).equals("theme")){
+                        if(usersClient.updateUserTheme(usersClient.getUserWithEmail(userEmail), content)){
 
-                            if(usersClient.updateUserTheme(usersClient.getUserWithEmail(userEmail), content)){
-
-                                User changedUser = usersClient.getUserWithEmail(userEmail);
-                                return new Result(
+                            User changedUser = usersClient.getUserWithEmail(userEmail);
+                            return new Result(
                                     this.command,
                                     "user",
                                     changedUser.toString(),
                                     1
-                                );
-                            }else{
+                            );
+                        }else{
 
-                                return new Result(400, "\"Bad Request\"");
-                            }
+                            return new Result(400, "\"Bad Request\"");
                         }
-                    }else{
-
-                        return new Result(403, this.command, "\"User information not included\"");
                     }
                 }else{
 
@@ -513,9 +506,9 @@ public class Command {
                 if(content != null){
 
                     User newUser = new User(
-                        content.getString("email"),
-                        content.getString("name"),
-                        content.getString("phone")
+                            content.getString("email"),
+                            content.getString("name"),
+                            content.getString("phone")
                     );
                     if(newUser.getPermissions() == 0 && !newUser.getName().equals("") && !newUser.getEmail().equals("") && newUser.getName() != null && newUser.getEmail() != null){ //0 is permissions of new user
 
@@ -525,10 +518,10 @@ public class Command {
                             if(users.createUser(newUser)){
 
                                 return new Result(
-                                    this.command,
-                                    "user",
-                                    newUser.toString(),
-                                    1
+                                        this.command,
+                                        "user",
+                                        newUser.toString(),
+                                        1
                                 );
                             }else{
 
@@ -536,7 +529,7 @@ public class Command {
                             }
                         }else{
 
-                           return new Result(410, this.command, "\"User already exists for email '" + newUser.getEmail() + "'\"");
+                            return new Result(410, this.command, "\"User already exists for email '" + newUser.getEmail() + "'\"");
                         }
                     }else{
 
@@ -556,10 +549,10 @@ public class Command {
 
                         User found = usersClient.getUserWithEmail(this.get(1));
                         return new Result(
-                            this.command,
-                            "user",
-                            found.toString(),
-                            1
+                                this.command,
+                                "user",
+                                found.toString(),
+                                1
                         );
                     }else { //No valid user action command provided
 
@@ -571,26 +564,35 @@ public class Command {
 
             if(this.selectors.length >= 2){
 
-                String uri;
-                if(this.get(1).equals("csv")){ //Importing CSV as batch of Articles
+                if(objectSelector.equals("batch")){ //Importing CSV as batch of Articles
 
-                    uri = this.command.replaceFirst(this.targetDomain + "://parser/csv/", "");
-                    //TODO Batch uploader
+                    String uri = this.command.replaceFirst("parser/batch", "");
+                    ArrayList<Article> extractedArticles = Parser.engine.batch(uri, ",");
 
+                    if(extractedArticles != null){
+
+                        return new Result(
+                                this.command,
+                                "articles",
+                                extractedArticles.toString(),
+                                extractedArticles.size()
+                        );
+                    }else{
+
+                        return new Result(404, this.command, "\"No articles from batch upload\"");
+                    }
                 }else{
-
-                    uri = this.command.replaceFirst(this.targetDomain + "://parser/", "");
-                    Parser parser = new Parser(uri);
+                    String uri = this.command.replaceFirst(this.targetDomain + "://parser/", "");
                     return new Result(
-                        this.command,
-                        "article",
-                        parser.parse().toString(),
-                        1
+                            this.command,
+                            "article",
+                            Parser.engine.parse(uri).toString(),
+                            1
                     );
                 }
             }else{
-
-                return new Result(404, this.command, "\"Invalid parser action command\"");
+                //TODO accept file uploads instead of using URI
+                return new Result(404, this.command, "\"Parser action command required\"");
             }
         }else if(primarySelector.equals("queue")){
 
@@ -622,10 +624,10 @@ public class Command {
                             if(queued != null){
 
                                 return new Result(
-                                    this.command,
-                                    "article",
-                                    queued.toString(),
-                                    1
+                                        this.command,
+                                        "article",
+                                        queued.toString(),
+                                        1
                                 );
                             }else{
 
@@ -646,7 +648,7 @@ public class Command {
             }
         }else if(primarySelector.equals("search")){
 
-            String query = this.selectorsString.replace("search/", "");
+            String query = this.selectorsString.replaceFirst("search/", "");
             if(!this.targetDomain.equals("telifie") && !this.targetDomain.equals("")){
 
                 config.setDefaultDomain(config.defaultDomain().setName(this.targetDomain));
@@ -832,10 +834,10 @@ public class Command {
                         if(new ConnectorsClient().create(newConnector)){
 
                             return new Result(
-                                this.command,
-                                "connector",
-                                newConnector.toString(),
-                                1
+                                    this.command,
+                                    "connector",
+                                    newConnector.toString(),
+                                    1
                             );
                         }else{
 
@@ -855,10 +857,10 @@ public class Command {
                 ConnectorsClient connectors = new ConnectorsClient();
                 ArrayList<Connector> all = connectors.getConnectors();
                 return new Result(
-                    this.command,
-                    "connectors",
-                    all.toString(),
-                    all.size()
+                        this.command,
+                        "connectors",
+                        all.toString(),
+                        all.size()
                 );
             }
         }else{

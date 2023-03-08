@@ -29,13 +29,15 @@ public class Start {
         Out.console("Operating System : " + operatingSystem);
         Out.console("System Architecture : " + System.getProperty("os.arch"));
         if(operatingSystem.equals("Mac OS X")){
+
             workingDirectory = Out.MAC_SYSTEM_DIR;
         }else if(operatingSystem.startsWith("Windows")){
+
             workingDirectory = Out.WINDOWS_SYSTEM_DIR;
         }else{
+
             workingDirectory = Out.UNIX_SYSTEM_DIR;
         }
-
         configuration_file = new File(workingDirectory + "/telifie.configuration");
 
         if (args.length > 0) {
@@ -52,33 +54,28 @@ public class Start {
                     configuration_file.delete();
                     Out.console("telifie.configuration deleted.");
                     install();
-
                 }else{
 
                     System.exit(1);
                 }
-
             }else if(args[0].equals("--parser")){
 
                 Out.console("<!---------- Parser Mode ----------!>\n");
                 String in = In.string("URI/URL -> ");
                 while(!in.equals("q")){
-                    Parser parser = new Parser(in);
-                    parser.parse();
+
+                    Parser.engine.parse(in);
                     in = In.string("URI/URL -> ");
                 }
-
             }else if(args[0].equals("--server")){
 
                 Out.console("Starting HTTP server...");
                 new Server(false);
-
             }else {
 
                 System.err.println("\nInvalid argument provided...\n");
                 System.exit(-1);
             }
-
         }else{
 
             Out.line();

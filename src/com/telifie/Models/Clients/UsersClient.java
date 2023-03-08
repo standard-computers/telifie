@@ -47,7 +47,7 @@ public class UsersClient extends Client {
         return super.updateOne(
             new Document("email", user.getEmail()),
             new Document("$set",
-                    new Document("theme", update.get("theme", Document.class))
+                    new Document("theme", update)
             )
         );
     }

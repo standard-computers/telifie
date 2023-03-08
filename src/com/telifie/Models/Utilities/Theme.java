@@ -11,12 +11,6 @@ public class Theme implements Serializable {
 
         private String name, color, light;
 
-        public Color(String name, String color, String light) {
-            this.name = name;
-            this.color = color;
-            this.light = light;
-        }
-
         public Color(Document document){
             this.name = document.getString("name");
             this.color = document.getString("color");
@@ -62,13 +56,14 @@ public class Theme implements Serializable {
 
     }
 
-    private String name, background, cornerRadius;
+    private String name, background;
+    private int cornerRadius;
     private Color color;
 
     public Theme(Document document){
         this.name = document.getString("name");
         this.background = document.getString("background");
-        this.cornerRadius = document.getString("corner_radius");
+        this.cornerRadius = document.getInteger("corner_radius");
         this.color = new Color(document.get("color", Document.class));
     }
 
@@ -88,11 +83,11 @@ public class Theme implements Serializable {
         this.background = background;
     }
 
-    public String getCornerRadius() {
+    public int getCornerRadius() {
         return cornerRadius;
     }
 
-    public void setCornerRadius(String cornerRadius) {
+    public void setCornerRadius(int cornerRadius) {
         this.cornerRadius = cornerRadius;
     }
 
@@ -109,7 +104,7 @@ public class Theme implements Serializable {
         return "{" +
                 "\"name\" : \"" + name + '\"' +
                 ", \"background\" : \"" + background + '\"' +
-                ", \"corner_radius\" : \"" + cornerRadius + '\"' +
+                ", \"corner_radius\" : " + cornerRadius +
                 ", \"color\" : " + color +
                 '}';
     }
