@@ -21,14 +21,14 @@ public class GroupsClient extends Client {
 
         Group group = new Group(
             this.findOne(
-                new Document("$and",
-                    Arrays.asList(
-                        new Document("user", userId),
-                        new Document("id", id)
-                    )
-                )
+                    new Document("id", id)
             )
         );
+        if(group.getPermissions() == 0){ //Group is
+            if(!group.getUser().equals(userId)){
+                return null;
+            }
+        }
         ArrayList<Article> articles = new ArrayList<Article>();
         ArticlesClient articlesClient = new ArticlesClient(this.domain);
         if(group.getArticles() != null){

@@ -108,16 +108,24 @@ public class Search {
 
         if(this.query.matches("^id\\s*:\\s*.*")){ //Return articles with id
 
-            return new Document("id", this.query.split(":")[1]);
+            String[] spl = this.query.split(":");
+            if(spl.length >= 2) {
 
+                return new Document("id", spl[1]);
+            }
+            return generalFilter();
         }else if(this.query.matches("^description\\s*:\\s*.*")){ //Return Articles with requested description
 
             return new Document("description", pattern(this.query.split(":")[1]));
 
         }else if(this.query.matches("^title\\s*:\\s*.*")){ //Return Articles with requested description
 
-            return new Document("title", pattern(this.query.split(":")[1]));
+            String[] spl = this.query.split(":");
+            if(spl.length >= 2){
 
+                return new Document("title", pattern(this.query.split(":")[1]));
+            }
+            return generalFilter();
         }else if(this.query.matches("^attribute\\s*:\\s*.*")){
 
             String[] spl = this.query.split(":"), spl2 = spl[1].split("=");
@@ -145,26 +153,28 @@ public class Search {
                 );
             }
 
-        }else if(this.query.startsWith("define ")){
+        }else if(this.query.startsWith("define ")) {
 
             return new Document("$and",
-                Arrays.asList(
-                    new Document("description", pattern("definition")),
-                    new Document("title", pattern(this.query.replaceFirst("define ", "")))
-                )
-            );
-        }else{
-
-            Pattern pattern = Pattern.compile(Pattern.quote(this.query), Pattern.CASE_INSENSITIVE);
-            return new Document("$or",
-                Arrays.asList(
-                    new Document("title", pattern),
-                    new Document("link", pattern),
-                    new Document("description", pattern),
-                    new Document("tags", new Document("$in", Arrays.asList(this.query)))
-                )
+                    Arrays.asList(
+                            new Document("description", pattern("definition")),
+                            new Document("title", pattern(this.query.replaceFirst("define ", "")))
+                    )
             );
         }
+        return generalFilter();
+    }
+
+    private Document generalFilter(){
+        Pattern pattern = Pattern.compile(Pattern.quote(this.query), Pattern.CASE_INSENSITIVE);
+        return new Document("$or",
+                Arrays.asList(
+                        new Document("title", pattern),
+                        new Document("link", pattern),
+                        new Document("description", pattern),
+                        new Document("tags", new Document("$in", Arrays.asList(this.query)))
+                )
+        );
     }
 
     public Result result(){

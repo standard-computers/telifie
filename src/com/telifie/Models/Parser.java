@@ -8,11 +8,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
+import java.io.*;
+import java.util.*;
 import java.util.regex.Matcher;
 
 public class Parser {
@@ -22,12 +19,15 @@ public class Parser {
     private static final ArrayList<String> parsed = new ArrayList<>();
     private static final int MAX_DEPTH = 1;
 
-    public static class engine {
+    public static class engines {
 
         public static Article parse(String uri){
-            Parser.setUri(uri);
             if(Tool.isUrl(uri)){ //Crawl website if url
-
+                //Is it a file though and not a website or both
+                //TODO change parsing based on uri/url extension
+                //TODO check url against articles domain parsing is happening under
+                //TODO Download anyways
+                //TODO firewall check on url
                 return Parser.crawl(uri, 0);
             }else if(Tool.isFile(uri)){ //Parsing a file
 
@@ -42,15 +42,22 @@ public class Parser {
             return null;
         }
 
-        public static ArrayList<Article> batch(String csvPath, String delimiter){
-            if(!new File(csvPath).exists()){
+        /**
+         * Parses articles for csv rows
+         * Provide csv file location. <a href=''>See template</a>
+         * @param uri Location of csv on disk
+         * @param delimiter CSV data delimiter
+         * @return ArrayList<Article> List of Articles
+         */
+        public static ArrayList<Article> batch(String uri, String delimiter){
+            if(!new File(uri).exists()){
                 return null;
             }
 
-            if(csvPath.endsWith("csv")){
+            if(uri.endsWith("csv")){
 
                 ArrayList<String[]> lines = new ArrayList<>();
-                try (BufferedReader br = new BufferedReader(new FileReader(csvPath))) {
+                try (BufferedReader br = new BufferedReader(new FileReader(uri))) {
                     String line;
                     while ((line = br.readLine()) != null) {
                         String[] fields = line.split(delimiter);
@@ -107,6 +114,202 @@ public class Parser {
             }else{
 
                 return null;
+            }
+        }
+
+        /**
+         * Parsing any image file into article (except gif)
+         * @param uri Location of asset on disk
+         * @return Article representation of asset
+         */
+        public static Article image(String uri){
+
+            return null;
+        }
+
+        /**
+         * Parsing video to article
+         * @param uri Location of asset on disk
+         * @return Article representation of asset
+         */
+        public static Article video(String uri){
+
+            return null;
+        }
+
+        /**
+         * Parsing gif files into article
+         * Requires separate parser engine due to file format
+         * @param uri Location of asset on disk
+         * @return Article representation of asset
+         */
+        public static Article gif(String uri){
+
+            return null;
+        }
+
+        /**
+         * Parsing textual files into articles
+         * For example, docx, txt, rtf
+         * @param uri Location of asset on disk
+         * @return Article representation of asset
+         */
+        public static Article document(String uri){
+
+            return null;
+        }
+
+        /**
+         * Parse plain text into an article
+         * @param text Plain text as string to parse
+         * @return
+         */
+        public static Article text(String text){
+
+            return null;
+        }
+
+        /**
+         * Parsing code files into article
+         * This could be things like css, html, js, cpp, etc.
+         * @param uri Location of asset on disk
+         * @return Article representation of asset
+         */
+        public static Article code(String uri){
+
+            return null;
+        }
+    }
+
+    /**
+     * Parser.connectors is for parsing content from connectors
+     */
+    public static class connectors {
+
+        /**
+         * Returns article for wikipedia page given title
+         * Title must be the title for the API reference in the URL
+         * @param title String title of wikipedia article
+         * @return Article of Wikipedia
+         */
+        public static Article wikipedia(String title) {
+
+            return null;
+        }
+    }
+
+    /**
+     * The index is the knowledge base to parse assets against
+     * Parser.index is an objectification of this
+     * There are separate indexes created for each domain
+     */
+    public static class index {
+
+        private static String workingDirectory;
+
+        public index(){
+            String operatingSystem = System.getProperty("os.name");
+            if(operatingSystem.equals("Mac OS X")){
+
+                workingDirectory = Out.MAC_SYSTEM_DIR;
+            }else if(operatingSystem.startsWith("Windows")){
+
+                workingDirectory = Out.WINDOWS_SYSTEM_DIR;
+            }else{
+
+                workingDirectory = Out.UNIX_SYSTEM_DIR;
+            }
+        }
+
+        public static void add(Vars.Languages language){
+
+        }
+
+        /**
+         * Subclass if Parser.index for dictionary of correctly spelled acceptable words
+         */
+        public static class dictionary {
+
+            private static File dictionaryFile;
+            private static List<String> words = new ArrayList<>();
+
+            /**
+             * Select the dictionary using preferred language Vars.Language.LANGUAGE
+             * @param language
+             */
+            public dictionary(Vars.Languages language){
+                File dictionaryDir = new File(index.workingDirectory + "/dictionary/");
+                if(!dictionaryDir.exists()){
+                    dictionaryDir.mkdirs();
+                }
+                dictionaryFile = new File(index.workingDirectory + "/dictionary/" + language + ".txt");
+
+                //Load words already in dictionary
+                String dict = Tool.fileToString(dictionaryFile.getAbsolutePath());
+                String[] dictWords = dict.split("\\s+");
+                for(String word : dictWords){
+                    if(!word.trim().equals("")){
+                        words.add(word);
+                    }
+                }
+                Out.console("Read In -> " + words.toString());
+            }
+
+            /**
+             * Adds array of String words to the onboard dictionary
+             * @param newWords
+             */
+            public static void add(String[] newWords){
+                for(String word : newWords){
+                    if(!words.contains(word.trim().toLowerCase())){
+                        words.add(word.trim().toLowerCase());
+                    }
+                }
+                save();
+            }
+
+            /**
+             * Given a word as String, returns if exists in the provided dictionary
+             * @param req Word
+             * @return boolean True or False if the word exists in the provided dictionary
+             */
+            public static boolean exists(String req){
+                for(String word : words){
+                    if(word.equals(req)){
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            /**
+             * Saves dictionary
+             */
+            private static void save(){
+                Collections.sort(words);
+                String dict = "";
+                for(String word : words){
+                    dict = dict + word + " ";
+                }
+                try {
+                    FileWriter fileWriter = new FileWriter(dictionaryFile);
+                    fileWriter.write(dict);
+                    fileWriter.close();
+//                    words.removeAll(words);
+                    Out.console("Dictionary updated");
+                } catch (IOException e) {
+                    Out.console("Failed to update dictionary");
+                    e.printStackTrace();
+                }
+            }
+
+            /**
+             * Returns length of dictionary
+             * @return
+             */
+            public static int getSize(){
+
+                return words.size();
             }
         }
     }

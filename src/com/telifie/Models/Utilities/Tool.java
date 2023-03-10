@@ -2,6 +2,10 @@ package com.telifie.Models.Utilities;
 
 import com.telifie.Models.Actions.Out;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -192,5 +196,22 @@ public class Tool {
         }else{
             return "Unknown";
         }
+    }
+
+    public static String fileToString(String filePath) {
+        File file = new File(filePath);
+        if(!file.exists()){
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line).append("\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return sb.toString();
     }
 }

@@ -1,5 +1,8 @@
 package com.telifie.Models.Utilities;
 
+/**
+ * Helper class for text normalization
+ */
 public class Statement {
 
     private String content, normalized;

@@ -123,6 +123,8 @@ public class Server {
                         Configuration requestConfiguration = new Configuration();
                         requestConfiguration.addDomain(new Domain("telifie", "mongodb://137.184.70.9:27017"));
                         requestConfiguration.setAuthentication(auth);
+                        UsersClient users = new UsersClient(requestConfiguration.defaultDomain()); //Ini UsersClient to find requesting user
+                        requestConfiguration.setUser(users.getUserWithId(auth.getUser())); //Set Configuration User as requesting user
                         result = processRequest(requestConfiguration, method, query, body);
                     }
                 } else {

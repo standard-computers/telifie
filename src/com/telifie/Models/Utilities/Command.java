@@ -171,7 +171,6 @@ public class Command {
         else if(primarySelector.equals("articles")){
 
             UsersClient users = new UsersClient(config.defaultDomain());
-            User actor = users.getUserWithId(config.getAuthentication().getUser());
 
             if(this.selectors.length >= 3){ //Provide [ACTION]/[ARTICLE_ID]
 
@@ -201,7 +200,7 @@ public class Command {
                         }
                         Article updatedArticle = new Article(content);
                         ArticlesClient articles = new ArticlesClient(config.defaultDomain());
-                        if(actor.getPermissions() >= 12 && this.targetDomain.equals("telifie")){ //Update Article in Public Domain
+                        if(config.getUser().getPermissions() >= 12 && this.targetDomain.equals("telifie")){ //Update Article in Public Domain
 
                             Article ogArticle = articles.get(articleId);
                             ArrayList<Event> events = updatedArticle.compare(ogArticle);
@@ -210,7 +209,7 @@ public class Command {
 
                             for(int i = 0; i < events.size(); i++){
 
-                                events.get(i).setUser(actor.getId());
+                                events.get(i).setUser(config.getUser().getId());
                             }
 
                             if(articles.update(ogArticle, updatedArticle)){
@@ -257,6 +256,11 @@ public class Command {
 
                 if(content != null){
 
+                    User user = config.getUser();
+                    if(this.targetDomain.equals("telifie") && user.getPermissions() < 12){ //Make sure that the user has the permissions
+
+                        return new Result(403, this.command, "\"No sufficient permissions to publish to public domain\"");
+                    }
                     try {
 
                         Article newArticle = new Article(content);
@@ -339,7 +343,6 @@ public class Command {
                         if(content.getString("name") != null && content.getString("name").equals("Pinned")){
 
                             return new Result(304, this.command, "\"'Pinned' is a reserved Group name\"");
-
                         }
 
                         GroupsClient groups = new GroupsClient(config.defaultDomain());
@@ -567,7 +570,7 @@ public class Command {
                 if(objectSelector.equals("batch")){ //Importing CSV as batch of Articles
 
                     String uri = this.command.replaceFirst("parser/batch", "");
-                    ArrayList<Article> extractedArticles = Parser.engine.batch(uri, ",");
+                    ArrayList<Article> extractedArticles = Parser.engines.batch(uri, ",");
 
                     if(extractedArticles != null){
 
@@ -581,12 +584,25 @@ public class Command {
 
                         return new Result(404, this.command, "\"No articles from batch upload\"");
                     }
+                }else if(objectSelector.equals("dictionary")){ //Managing index dictionary for parsing
+
+                    if(content != null && content.getString("words") != null){
+
+                        String[] words = content.getString("words").split(" ");
+                        Parser.index index = new Parser.index();
+                        Parser.index.dictionary dict = new Parser.index.dictionary(Vars.Languages.ENGLISH);
+                        dict.add(words);
+                        return new Result(200, this.command, "\"Words added to dictionary\"").setCount(dict.getSize());
+                    }else{
+
+                        return new Result(428, this.command, "\"JSON http request body expected\"");
+                    }
                 }else{
                     String uri = this.command.replaceFirst(this.targetDomain + "://parser/", "");
                     return new Result(
                             this.command,
                             "article",
-                            Parser.engine.parse(uri).toString(),
+                            Parser.engines.parse(uri).toString(),
                             1
                     );
                 }
