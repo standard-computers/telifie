@@ -2,7 +2,6 @@ package com.telifie.Models;
 
 import com.telifie.Models.Utilities.Tool;
 import org.bson.Document;
-
 import java.io.Serializable;
 
 public class Domain implements Serializable {
@@ -30,15 +29,13 @@ public class Domain implements Serializable {
         this.permissions = (permissions <= 2 && permissions >= 0 ? permissions : 0); //Private is default mode if none
     }
 
-    public Domain(Document document){
-        if(document != null){
-            this.id = (document.getString("id") == null ? Tool.md5(Tool.eid()) : document.getString("id"));
-            this.alt = document.getString("alt");
-            this.icon = document.getString("icon");
-            this.owner = document.getString("owner");
-            this.name = document.getString("name");
-            this.permissions = (document.getInteger("permissions") == null ? 0 : document.getInteger("permissions"));
-        }
+    public Domain(Document document) throws NullPointerException {
+        this.id = (document.getString("id") == null ? Tool.md5(Tool.eid()) : document.getString("id"));
+        this.alt = document.getString("alt");
+        this.icon = document.getString("icon");
+        this.owner = document.getString("owner");
+        this.name = document.getString("name");
+        this.permissions = (document.getInteger("permissions") == null ? 0 : document.getInteger("permissions"));
     }
 
     public String getUri() {

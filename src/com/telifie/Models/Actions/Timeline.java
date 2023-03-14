@@ -1,7 +1,6 @@
 package com.telifie.Models.Actions;
 
 import org.bson.Document;
-
 import java.util.ArrayList;
 
 public class Timeline {

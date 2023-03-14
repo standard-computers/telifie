@@ -2,6 +2,7 @@ package com.telifie.Models;
 
 import com.telifie.Models.Utilities.Tool;
 import com.telifie.Models.Utilities.Vars;
+import org.apache.commons.lang3.ObjectUtils;
 import org.bson.Document;
 import java.util.ArrayList;
 
@@ -27,16 +28,14 @@ public class Group {
         this.origin = Tool.epochTime();
     }
 
-    public Group(Document document){
-        if(document != null){
-            this.id = (document.getString("id") == null ? Tool.md5(Tool.eid()) : document.getString("id") );
-            this.user = document.getString("user");
-            this.icon = document.getString("icon");
-            this.name = document.getString("name");
-            this.articles = document.get("articles", ArrayList.class);
-            this.origin = Tool.epochTime();
-            this.permissions = document.getInteger("permissions");
-        }
+    public Group(Document document) throws NullPointerException {
+        this.id = (document.getString("id") == null ? Tool.md5(Tool.eid()) : document.getString("id") );
+        this.user = document.getString("user");
+        this.icon = document.getString("icon");
+        this.name = document.getString("name");
+        this.articles = document.get("articles", ArrayList.class);
+        this.origin = Tool.epochTime();
+        this.permissions = document.getInteger("permissions");
     }
 
     public String getId() {

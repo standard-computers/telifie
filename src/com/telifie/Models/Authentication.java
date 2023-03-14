@@ -23,7 +23,7 @@ public class Authentication {
         this.refreshToken = bearer[2];
     }
 
-    public Authentication(Document document){
+    public Authentication(Document document) throws NullPointerException {
         this.user = document.getString("user");
         this.token = document.getString("token");
         this.refreshToken = document.getString("refresh_token");

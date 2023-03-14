@@ -201,9 +201,4 @@ public class User implements Serializable {
                 ", \"theme\" : " + theme +
                 '}';
     }
-
-    public JSONObject toJson(){
-        return new JSONObject(this.toString());
-    }
-
 }

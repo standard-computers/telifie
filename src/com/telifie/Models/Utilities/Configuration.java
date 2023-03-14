@@ -47,14 +47,6 @@ public class Configuration implements Serializable {
         this.domains.add(0, domain);
     }
 
-    public ArrayList<Domain> getDomains() {
-        return domains;
-    }
-
-    public void setDomains(ArrayList<Domain> domains) {
-        this.domains = domains;
-    }
-
     public void addDomain(Domain domain){
         this.domains.add(domain);
     }

@@ -1,7 +1,6 @@
 package com.telifie.Models;
 
 import com.telifie.Models.Utilities.CommonObject;
-import org.json.JSONObject;
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -103,9 +102,4 @@ public class Result implements Serializable {
                 ", \"" + object + "\" : " + results +
                 '}';
     }
-
-    public JSONObject toJson(){
-        return new JSONObject(this.toString());
-    }
-
 }

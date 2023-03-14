@@ -1,7 +1,6 @@
 package com.telifie.Models.Utilities;
 
 import com.telifie.Models.Actions.Out;
-
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;

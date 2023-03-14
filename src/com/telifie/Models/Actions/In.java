@@ -16,17 +16,6 @@ public class In {
         return in.nextLine();
     }
 
-    public static int integer(){
-        Scanner in = new Scanner(System.in);
-        return in.nextInt();
-    }
-
-    public static boolean aBoolean(String prompt){
-        System.out.print(prompt);
-        Scanner in = new Scanner(System.in);
-        return in.nextBoolean();
-    }
-
     public static Object serialized(String dir){
         try {
             ObjectInputStream in = new ObjectInputStream(new FileInputStream(dir));
@@ -38,5 +27,4 @@ public class In {
             throw new RuntimeException(e);
         }
     }
-
 }

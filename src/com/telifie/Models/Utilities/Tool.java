@@ -1,7 +1,6 @@
 package com.telifie.Models.Utilities;
 
 import com.telifie.Models.Actions.Out;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;

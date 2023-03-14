@@ -71,8 +71,7 @@ public class Association implements Serializable {
 
     @Override
     public String toString() {
-        return "{" +
-                "\"icon\" : \"" + icon + '\"' +
+        return "{\"icon\" : \"" + icon + '\"' +
                 ", \"name\" : \"" + name + '\"' +
                 ", \"articles\" : " + articles +
                 '}';

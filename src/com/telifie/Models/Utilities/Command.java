@@ -36,10 +36,6 @@ public class Command {
 
     }
 
-    public String primarySelector() {
-        return primarySelector;
-    }
-
     public String getSelector(int index){
         return this.selectors[index];
     }
@@ -142,16 +138,16 @@ public class Command {
 
                         String domainId = this.get(1);
                         DomainsClient domains = new DomainsClient(config.defaultDomain());
-                        Domain selectedDomain = domains.getWithId(domainId);
-                        if(selectedDomain.getId() != null){
+                        try{
 
+                            Domain selectedDomain = domains.getWithId(domainId);
                             return new Result(
                                     this.command,
                                     "domain",
                                     selectedDomain.toString(),
                                     1
                             );
-                        }else{
+                        }catch(NullPointerException n){
 
                             return new Result(404, this.command, "\"Domain with id '" + domainId + "' not found\"");
                         }
@@ -165,7 +161,7 @@ public class Command {
                 return new Result(200, this.command, "\"Invalid command for domains\"");
             }
         }
-        /**
+        /*
          * Accessing Articles
          */
         else if(primarySelector.equals("articles")){
@@ -178,16 +174,16 @@ public class Command {
                 if(objectSelector.equals("id")){ //Specifying Article with ID
 
                     ArticlesClient articles = new ArticlesClient(config.defaultDomain());
-                    Article article = articles.get(articleId);
-                    if(article != null && article.getId() != null){
+                    try {
 
+                        Article article = articles.get(articleId);
                         return new Result(
                                 this.command,
                                 "article",
                                 article.toString(),
                                 1
                         );
-                    }else{
+                    }catch(NullPointerException n){
 
                         return new Result(404, this.command, "\"Article not found\"");
                     }
@@ -440,16 +436,16 @@ public class Command {
                 GroupsClient groups = new GroupsClient(config.defaultDomain());
                 if(groupId != null){
 
-                    Group group = groups.get(config.getAuthentication().getUser(), groupId);
-                    if(group != null){
+                    try{
 
+                        Group group = groups.get(config.getAuthentication().getUser(), groupId);
                         return new Result(
                                 this.command,
                                 "group",
                                 group.toString(),
                                 1
                         );
-                    }else{
+                    }catch(NullPointerException n){
 
                         return new Result(404, this.command, "\"Group not found with ID '" + groupId + "'\"");
                     }
@@ -457,11 +453,7 @@ public class Command {
 
                     return new Result(428, this.command, "\"Group ID is required to get\"");
                 }
-            }
-            /*
-             *
-             */
-            else{
+            }else{
 
                 GroupsClient groups = new GroupsClient(config.defaultDomain());
                 ArrayList<Group> usersGroups = groups.groupsForUser(config.getAuthentication().getUser());
@@ -879,9 +871,68 @@ public class Command {
                         all.size()
                 );
             }
-        }else{
+        }else if(primarySelector.equals("sources")){
 
-            return new Result(404, this.command, "\"Invalid command\"");
+            if(this.selectors.length >= 2){
+
+                SourcesClient sources = new SourcesClient(config.defaultDomain());
+                if (objectSelector.equals("id")){ //Getting source by ID
+
+                    String sourceId = this.get(2);
+                    try{
+
+                        Source source = sources.get(sourceId);
+                        return new Result(
+                                this.command,
+                                "source",
+                                source.toString(),
+                                1
+                        );
+                    }catch(NullPointerException n){
+
+                        return new Result(404, this.command, "\"No source found\"");
+                    }
+
+                }else if(objectSelector.equals("create")){
+
+                    if(content != null){
+
+                        Source newSource = new Source(content);
+                        if(sources.create(newSource)){
+
+                            return new Result(
+                                    this.command,
+                                    "source",
+                                    newSource.toString(),
+                                    1
+                            );
+                        }else{
+                            return new Result(505, this.command, "\"Failed to make source\"");
+                        }
+                    }else{
+
+                    }
+                }else{ //Searching sources by title
+
+                    String search = this.get(1);
+                    ArrayList<Source> foundSources = sources.find(search);
+                    if(foundSources.size() > 0){
+
+                        return new Result(
+                                this.command,
+                                "sources",
+                                foundSources.toString(),
+                                foundSources.size()
+                        );
+                    }else{
+
+                        return new Result(404, this.command, "\"No sources found\"");
+                    }
+                }
+
+            }else{ //Fetching all available sources
+
+            }
         }
 
         return new Result(200, this.command, "\"No command received\"");

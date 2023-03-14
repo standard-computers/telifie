@@ -17,7 +17,7 @@ public class Image implements Serializable {
         this.source = source;
     }
 
-    public Image(Document document){
+    public Image(Document document) throws NullPointerException {
         this.url = document.getString("url");
         this.caption = document.getString("caption");
         this.source = document.getString("source");

@@ -1,24 +1,16 @@
 package com.telifie.Models;
 
+import com.telifie.Models.Utilities.Tool;
 import org.bson.Document;
 import org.json.JSONObject;
-
 import java.io.Serializable;
 
 public class Source implements Serializable {
 
-    private String id, icon, name, url, description;
+    private String id, icon, name, url, description = "";
 
-    public Source(String id, String icon, String name, String url, String description) {
-        this.id = id;
-        this.icon = icon;
-        this.name = name;
-        this.url = url;
-        this.description = description;
-    }
-
-    public Source(Document document){
-        this.id = document.getString("id");
+    public Source(Document document) throws NullPointerException {
+        this.id = (document.getString("id") == null ? Tool.md5(Tool.eid()) : document.getString("id") );
         this.icon = document.getString("icon");
         this.name = document.getString("name");
         this.url = document.getString("url");
@@ -69,10 +61,4 @@ public class Source implements Serializable {
                 ", \"url\" : \"" + url + '\"' +
                 ", \"description\" : \"" + description + "\"}";
     }
-
-    public JSONObject toJson(){
-        JSONObject json = new JSONObject(this.toString());
-        return json;
-    }
-
 }

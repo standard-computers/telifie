@@ -9,7 +9,6 @@ import com.telifie.Models.Result;
 import com.telifie.Models.User;
 import com.telifie.Models.Utilities.CommonObject;
 import com.telifie.Models.Utilities.Configuration;
-import com.telifie.Models.Utilities.Statement;
 import com.telifie.Models.Utilities.Tool;
 import org.bson.Document;
 import java.net.URLDecoder;
@@ -20,13 +19,12 @@ import java.util.regex.Pattern;
 public class Search {
 
     private String query, targetDomain, domainArticles;
-    private Statement statement;
+    private Parameters parameters;
     private Result result;
 
     public Search(Configuration configuration, String query) {
 
         this.query = URLDecoder.decode(query, StandardCharsets.UTF_8).toLowerCase().trim();
-        this.statement = new Statement(this.query);
         this.result = new Result(this.query);
         this.targetDomain = (configuration.defaultDomain().getName().equals("telifie") || configuration.defaultDomain().getName().equals("") || configuration.defaultDomain().getName() == null ? "telifie" : "domains-articles");
         this.domainArticles = (configuration.defaultDomain().getName().equals("telifie") || configuration.defaultDomain().getName().equals("") || configuration.defaultDomain().getName() == null ? "articles" : configuration.defaultDomain().getName());

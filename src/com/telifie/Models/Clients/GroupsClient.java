@@ -4,7 +4,6 @@ import com.telifie.Models.Article;
 import com.telifie.Models.Domain;
 import com.telifie.Models.Group;
 import org.bson.Document;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 
