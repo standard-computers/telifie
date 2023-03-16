@@ -40,10 +40,20 @@ public class UsersClient extends Client {
     public boolean updateUserTheme(User user, Document update){
 
         return super.updateOne(
-            new Document("email", user.getEmail()),
+            new Document("id", user.getId()),
             new Document("$set",
                     new Document("theme", update)
             )
+        );
+    }
+
+    public boolean updateUserPhoto(User user, String photoUri){
+
+        return super.updateOne(
+                new Document("id", user.getId()),
+                new Document("$set",
+                        new Document("photo", photoUri)
+                )
         );
     }
 

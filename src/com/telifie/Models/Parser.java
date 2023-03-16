@@ -2,6 +2,8 @@ package com.telifie.Models;
 
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Actions.Out;
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.json.JSONObject;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -9,6 +11,8 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 
@@ -22,8 +26,10 @@ public class Parser {
     public static class engines {
 
         public static Article parse(String uri){
+
+            Out.console("Parser URI Attempt on -> " + uri);
             if(Tool.isUrl(uri)){ //Crawl website if url
-                //Is it a file though and not a website or both
+
                 //TODO change parsing based on uri/url extension
                 //TODO check url against articles domain parsing is happening under
                 //TODO Download anyways
@@ -34,6 +40,7 @@ public class Parser {
                 File file = new File(uri);
                 if(file.exists()){
 
+                    //TODO get extension and call designated parser engine
                 }else{
                     Out.error("[FILE NOT FOUND] " + uri);
                 }
@@ -192,9 +199,53 @@ public class Parser {
          * @param title String title of wikipedia article
          * @return Article of Wikipedia
          */
-        public static Article wikipedia(String title) {
+        public static Article wikipedia(String title) throws NullPointerException {
+            Article wikiArticle = new Article();
+            wikiArticle.setTitle(title.replace("_", " "));
+            wikiArticle.setSource(
+                    new Source(
+                            "a3161b589be3b2a7709309342f9ac874",
+                            "https://telifie-static.nyc3.digitaloceanspaces.com/wwdb-index-storage/wikipedia.png",
+                            "Wikipedia",
+                            "https://en.wikipedia.org/wiki/" + title
+                    )
+            );
 
-            return null;
+            //Set article content
+            String apiUrl = "https://en.wikipedia.org/w/api.php?action=query&prop=extracts&format=json&exintro=&titles=" + title;
+            URL url;
+            HttpURLConnection conn = null;
+            try {
+                url = new URL(apiUrl);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setRequestProperty("Accept", "application/json");
+
+                BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+
+                StringBuilder json = new StringBuilder();
+                String output;
+                while ((output = br.readLine()) != null) {
+                    json.append(output);
+                }
+                conn.disconnect();
+                org.bson.Document wikiDoc = org.bson.Document.parse(json.toString());
+                org.bson.Document query = wikiDoc.get("query", org.bson.Document.class);
+                org.bson.Document pages = query.get("pages", org.bson.Document.class);
+                if (pages != null && !pages.isEmpty()) {
+                    org.bson.Document firstPage = (org.bson.Document) pages.values().iterator().next();
+                    // Do something with the first page Document object
+                    String text = StringEscapeUtils.escapeJson(Jsoup.parse(firstPage.getString("extract")).text());
+                    wikiArticle.setContent(text);
+                } else {
+                    System.out.println("No pages found for the search query.");
+                }
+            } catch (IOException e) {
+                Out.error("Failed to get Wikipedia article");
+                return null;
+            }
+
+            return wikiArticle;
         }
     }
 
@@ -314,7 +365,43 @@ public class Parser {
         }
     }
 
+    /**
+     * Encodes text for TNN
+     */
+    public static class encoder {
+
+        private static List<String>  sentences;
+        private static List<String[]> tokens;
+
+        /**
+         * Tokenizes provided text to be encoded
+         * @param text
+         */
+        public static List<String[]> tokenize(String text){
+            sentences = new ArrayList<String>();
+            StringBuilder currentSentence = new StringBuilder();
+            for (int i = 0; i < text.length(); i++) {
+                char c = text.charAt(i);
+                currentSentence.append(c);
+                if (Tool.equals(c, new char[] {'.', '!', '?'})) {
+                    sentences.add(currentSentence.toString().trim());
+                    currentSentence = new StringBuilder();
+                }
+            }
+            if (currentSentence.length() > 0) {
+                sentences.add(currentSentence.toString().trim());
+            }
+
+            for(String sentence : sentences){
+                tokens.add(sentence.split("\\s"));
+            }
+
+            return tokens;
+        }
+    }
+
     private static Article crawl(String url, int depth){
+
         if(depth > MAX_DEPTH){
             return null;
         }
@@ -417,7 +504,7 @@ public class Parser {
                                 && !Parser.isParsed(fixed_url) && !page.equals("/")
                                 && !page.startsWith("#") && !page.equals(uri)) { //So long as it's not original URL or hasn't been parsed yet
 
-                            if (page.startsWith("/") || page.startsWith(url) || page.contains(fixed_url)) { //Make sure their actual child pages, not links out
+                            if (url != null || page.startsWith("/") || page.startsWith(url) || page.contains(fixed_url)) { //Make sure their actual child pages, not links out
                                 Article child = crawl(fixed_url, depth + 1);
 
                                 if (child != null) {
@@ -438,9 +525,8 @@ public class Parser {
                 Parser.traversable.add(article); //Push new articles to traversable for upload.
                 return article;
 
-            }else{
-                return null;
             }
+            return null;
 
         } catch (IOException e) {
             return null;

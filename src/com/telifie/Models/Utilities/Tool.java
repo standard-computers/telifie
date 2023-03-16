@@ -213,4 +213,17 @@ public class Tool {
         }
         return sb.toString();
     }
+
+    public static boolean equals(char sample, char[] chars){
+
+        for(char ch : chars){
+
+            if(sample == ch){
+
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

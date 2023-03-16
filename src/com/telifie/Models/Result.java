@@ -3,12 +3,13 @@ package com.telifie.Models;
 import com.telifie.Models.Utilities.CommonObject;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class Result implements Serializable {
 
     public static final String APPLICATION_JSON = "application/json", TEXT_PLAIN = "text/plain";
 
-    private String type = APPLICATION_JSON, query = "", object = "results", results = "";
+    private String id = UUID.randomUUID().toString(), type = APPLICATION_JSON, query = "", object = "results", results = "";
     private int statusCode = 200, count = 0;
     private ArrayList<CommonObject> quickResults = new ArrayList<>();
 
@@ -96,6 +97,7 @@ public class Result implements Serializable {
     @Override
     public String toString() {
         return "{\"status_code\" : " + statusCode +
+                ", \"id\" : \"" + id + '\"' +
                 ", \"query\" : \"" + query + '\"' +
                 ", \"count\" : " + count +
                 (quickResults.size() > 0 && quickResults != null ? ", \"quick_results\" : " + quickResults : "") +

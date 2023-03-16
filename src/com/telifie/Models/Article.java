@@ -11,6 +11,7 @@ import java.util.Iterator;
 public class Article implements Serializable {
 
     private String id, title, link, icon, description;
+    private boolean verified = false;
     private String content;
     private ArrayList<String> tags;
     private ArrayList<Image> images = new ArrayList<>();
@@ -29,6 +30,7 @@ public class Article implements Serializable {
 
     public Article(Document document) throws NullPointerException {
         this.id = (document.getString("id") == null ? Tool.md5(Tool.eid()) : document.getString("id"));
+        this.verified = (document.getBoolean("verified") == null ? false : document.getBoolean("verified"));
         this.title = document.getString("title");
         this.link = document.getString("link");
         this.icon = document.getString("icon");
@@ -88,6 +90,14 @@ public class Article implements Serializable {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public boolean isVerified() {
+        return verified;
+    }
+
+    public void setVerified(boolean verified) {
+        this.verified = verified;
     }
 
     public String getTitle() {
@@ -204,6 +214,7 @@ public class Article implements Serializable {
         }
 
         return "{\"id\" : \"" + id + '\"' +
+                ", \"verified\" : " + verified +
                 ", \"title\" : \"" + title + '\"' +
                 (link == null ? "" : ", \"link\" : \"" + link + '\"') +
                 (icon == null ? "" : ", \"icon\" : \"" + icon + '\"') +

@@ -54,10 +54,9 @@ public class Start {
                     configuration_file.delete();
                     Out.console("telifie.configuration deleted.");
                     install();
-                }else{
-
-                    System.exit(1);
                 }
+
+                System.exit(1);
             }else if(args[0].equals("--parser")){
 
                 Out.console("<!---------- Parser Mode ----------!>\n");
@@ -71,11 +70,10 @@ public class Start {
 
                 Out.console("Starting HTTP server...");
                 new Server(false);
-            }else {
-
-                System.err.println("\nInvalid argument provided...\n");
-                System.exit(-1);
             }
+
+            System.err.println("\nInvalid argument provided...\n");
+            System.exit(-1);
         }else{
 
             Out.line();
@@ -85,11 +83,10 @@ public class Start {
                 configuration = (com.telifie.Models.Utilities.Configuration) In.serialized(workingDirectory + "/telifie.configuration");
                 Out.line();
                 console();
-            }else{
-                Out.error("No configuration file found. Use option '--install'");
-                System.exit(-1);
             }
 
+            Out.error("No configuration file found. Use option '--install'");
+            System.exit(-1);
         }
     }
 
