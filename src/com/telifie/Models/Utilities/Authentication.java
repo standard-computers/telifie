@@ -1,5 +1,6 @@
-package com.telifie.Models;
+package com.telifie.Models.Utilities;
 
+import com.telifie.Models.User;
 import com.telifie.Models.Utilities.Tool;
 import org.bson.Document;
 import org.json.JSONObject;

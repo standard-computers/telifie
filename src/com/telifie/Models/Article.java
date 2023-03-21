@@ -1,6 +1,10 @@
 package com.telifie.Models;
 
 import com.telifie.Models.Actions.Event;
+import com.telifie.Models.Articles.Association;
+import com.telifie.Models.Articles.Attribute;
+import com.telifie.Models.Articles.Image;
+import com.telifie.Models.Articles.Source;
 import com.telifie.Models.Utilities.Tool;
 import org.bson.Document;
 import org.json.JSONObject;

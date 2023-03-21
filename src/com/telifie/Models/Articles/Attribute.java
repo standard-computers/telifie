@@ -1,4 +1,4 @@
-package com.telifie.Models;
+package com.telifie.Models.Articles;
 
 import org.json.JSONObject;
 import java.io.Serializable;

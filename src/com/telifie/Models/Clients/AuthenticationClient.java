@@ -1,6 +1,6 @@
 package com.telifie.Models.Clients;
 
-import com.telifie.Models.Authentication;
+import com.telifie.Models.Utilities.Authentication;
 import com.telifie.Models.Domain;
 import org.bson.Document;
 

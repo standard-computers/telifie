@@ -1,7 +1,6 @@
 package com.telifie.Models.Utilities;
 
 import com.telifie.Models.Actions.Out;
-import com.telifie.Models.Authentication;
 import com.telifie.Models.Domain;
 import com.telifie.Models.User;
 import java.io.Serializable;

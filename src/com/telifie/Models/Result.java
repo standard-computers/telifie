@@ -1,6 +1,6 @@
 package com.telifie.Models;
 
-import com.telifie.Models.Utilities.CommonObject;
+import com.telifie.Models.Articles.CommonObject;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.UUID;

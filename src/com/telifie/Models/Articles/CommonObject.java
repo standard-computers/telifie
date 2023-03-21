@@ -1,4 +1,4 @@
-package com.telifie.Models.Utilities;
+package com.telifie.Models.Articles;
 
 import org.bson.Document;
 

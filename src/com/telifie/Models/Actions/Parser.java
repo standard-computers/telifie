@@ -1,13 +1,16 @@
 package com.telifie.Models.Actions;
 
 import com.telifie.Models.*;
+import com.telifie.Models.Articles.Association;
+import com.telifie.Models.Articles.Attribute;
+import com.telifie.Models.Articles.Child;
+import com.telifie.Models.Articles.Source;
 import com.telifie.Models.Utilities.*;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;

@@ -1,8 +1,8 @@
 package com.telifie.Models.Utilities;
 
 import com.telifie.Models.Article;
-import com.telifie.Models.Attribute;
-import com.telifie.Models.Image;
+import com.telifie.Models.Articles.Attribute;
+import com.telifie.Models.Articles.Image;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;

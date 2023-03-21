@@ -7,7 +7,7 @@ import com.telifie.Models.Article;
 import com.telifie.Models.Clients.UsersClient;
 import com.telifie.Models.Result;
 import com.telifie.Models.User;
-import com.telifie.Models.Utilities.CommonObject;
+import com.telifie.Models.Articles.CommonObject;
 import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Tool;
 import org.bson.Document;

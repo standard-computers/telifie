@@ -1,6 +1,5 @@
 package com.telifie.Models.Utilities;
 
-import com.telifie.Models.Authentication;
 import com.telifie.Models.Clients.AuthenticationClient;
 import com.telifie.Models.Clients.ConnectorsClient;
 import com.telifie.Models.Clients.UsersClient;

@@ -1,6 +1,4 @@
-package com.telifie.Models;
-
-import com.telifie.Models.Actions.Out;
+package com.telifie.Models.Actions;
 
 import java.util.List;
 

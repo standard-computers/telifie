@@ -1,7 +1,7 @@
 package com.telifie.Models.Clients;
 
 import com.telifie.Models.Domain;
-import com.telifie.Models.Source;
+import com.telifie.Models.Articles.Source;
 import org.bson.Document;
 
 import java.util.ArrayList;
