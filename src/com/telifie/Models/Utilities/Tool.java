@@ -1,13 +1,21 @@
 package com.telifie.Models.Utilities;
 
 import com.telifie.Models.Actions.Out;
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -87,7 +95,7 @@ public class Tool {
 
     public static String fixLink(String url, String src){
         if(src.startsWith("//")){
-            src = "https:" + src;
+            src = "https:" + src.trim();
         }else if(src.startsWith("/")){
             if(url.endsWith("/")){
                 src = url.substring(0, url.length() - 1) + src;
@@ -95,6 +103,7 @@ public class Tool {
                 src = url + src;
             }
         }
+
         return src;
     }
 
@@ -226,4 +235,87 @@ public class Tool {
         return false;
     }
 
+    public static String removeWords(String text, String[] wordsToRemove) {
+        StringBuilder sb = new StringBuilder();
+        String[] words = text.split("\\s+");
+        for (String word : words) {
+            if (!Arrays.asList(wordsToRemove).contains(word.toLowerCase())) {
+                sb.append(word).append(" ");
+            }
+        }
+        return sb.toString().trim();
+    }
+
+    public static boolean isValidLink(String link, String uri) {
+        if(link.contains("cart") || link.contains("search") || link.contains("account")){ //Audit out pages
+            return false;
+        }
+
+        // Check if the URI has a valid scheme and host, or if it's a relative link
+        if (link.startsWith("tel:")
+                && link.startsWith("mailto:")
+                && link.startsWith("sms:")
+                && link.startsWith("skype:")
+                && link.startsWith("#")) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public static String escape(String string){
+        return  StringEscapeUtils.escapeJson(string);
+    }
+
+    public static String extractBodyContent(String html) {
+        // Remove script tags
+        String bodyHtml = html.replaceAll("<script.*?</script>", "");
+
+        // Remove comments
+        bodyHtml = bodyHtml.replaceAll("<!--.*?-->", "");
+        bodyHtml = bodyHtml.replaceAll("<label.*?</label>", "");
+        bodyHtml = bodyHtml.replaceAll("<form.*?</form>", "");
+        bodyHtml = bodyHtml.replaceAll("<label.*?</label>", "");
+        bodyHtml = bodyHtml.replaceAll("<input.*?>", "");
+
+        // Extract content of the body element
+        Pattern pattern = Pattern.compile("<body>(.*?)</body>", Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(bodyHtml);
+        if (matcher.find()) {
+            String bodyContent = matcher.group(1);
+            return bodyContent;
+        } else {
+            return "";
+        }
+    }
+
+    public static String convertHtmlToMarkdown(String html) {
+        // Replace HTML tags with Markdown syntax
+        String markdown = html.replaceAll("<h1>(.*?)</h1>", "# $1\n")
+                .replaceAll("<h2>(.*?)</h2>", "## $1\n")
+                .replaceAll("<h3>(.*?)</h3>", "### $1\n")
+                .replaceAll("<h4>(.*?)</h4>", "#### $1\n")
+                .replaceAll("<h5>(.*?)</h5>", "##### $1\n")
+                .replaceAll("<h6>(.*?)</h6>", "###### $1\n")
+                .replaceAll("<p>(.*?)</p>", "$1\n\n")
+                .replaceAll("<ul>(.*?)</ul>", "$1\n")
+                .replaceAll("<li>(.*?)</li>", "* $1\n");
+
+        return markdown;
+    }
+
+    public static ArrayList<String> extractLinks(Elements elements, String root){
+        ArrayList<String> links = new ArrayList<>();
+        for(Element el : elements){
+             String link = el.attr("href");
+            if(!link.equals("/") && !link.equals("") & !link.equals(root) && !Tool.containsAnyOf(new String[]{"facebook", "instagram", "spotify", "linkedin", "youtube"}, link)){
+                String fixed = Tool.fixLink(root, link);
+                if(Tool.isValidLink(fixed, root)){
+
+                    links.add(fixed);
+                }
+            }
+        }
+        return links;
+    }
 }

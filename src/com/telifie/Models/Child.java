@@ -2,7 +2,7 @@ package com.telifie.Models;
 
 import org.bson.Document;
 
-class Child {
+public class Child {
 
     private String id, image, title, reference;
 
@@ -56,9 +56,9 @@ class Child {
     public String toString() {
         return "{" +
                 "\"id\" : \"" + id + '\"' +
-                ", \"image\" : \"" + image + '\"' +
-                ", \"title\" : \"" + title + '\"' +
-                ", \"reference\" : \"" + reference + '\"' +
+                (image == null || image.equals("null") ? "" : ", \"image\" : \"" + image + '\"') +
+                (title == null || title.equals("null") ? "" : ", \"title\" : \"" + title + '\"') +
+                (reference == null || reference.equals("null") ? "" : ", \"reference\" : \"" + reference + '\"') +
                 '}';
     }
 }

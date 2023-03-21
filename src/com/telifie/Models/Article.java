@@ -221,7 +221,8 @@ public class Article implements Serializable {
                 (description == null || description.equals("") ? "" : ", \"description\" : \"" + description + '\"') +
                 (content == null ? "" : ", \"content\" : \"" + content + "\"") +
                 ", \"tags\" : " + tags +
-                ", \"images\" : " + images +
+                (images.equals("null") ? "" : ", \"images\" : " + images) +
+//                ", \"images\" : " + images +
                 ", \"attributes\" : " + attributes +
                 ", \"associations\" : " + associations +
                 ", \"source\" : " + source +

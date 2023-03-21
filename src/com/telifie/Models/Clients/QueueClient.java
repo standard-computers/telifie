@@ -2,7 +2,7 @@ package com.telifie.Models.Clients;
 
 import com.telifie.Models.Article;
 import com.telifie.Models.Domain;
-import com.telifie.Models.Parser;
+import com.telifie.Models.Actions.Parser;
 import org.bson.Document;
 
 public class QueueClient extends Client {
@@ -19,9 +19,7 @@ public class QueueClient extends Client {
         if(this.insertOne(Document.parse(parsed.toString()))){
 
            return parsed;
-        }else{
-
-            return null;
         }
+        return null;
     }
 }

@@ -89,10 +89,7 @@ public class DomainsClient extends Client {
 
             return true;
 
-        }else{
-
-            return false;
         }
-
+        return false;
     }
 }

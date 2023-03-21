@@ -2,13 +2,12 @@ package com.telifie.Models;
 
 import com.telifie.Models.Utilities.Tool;
 import com.telifie.Models.Utilities.Vars;
-import org.apache.commons.lang3.ObjectUtils;
 import org.bson.Document;
 import java.util.ArrayList;
 
 public class Group {
 
-    private String id, user, icon, name;
+    private String id, user, icon, name, sort = "A";
     private int origin, permissions = Vars.PRIVATE;
     private ArrayList articles;
     private ArrayList<Article> detailedList;

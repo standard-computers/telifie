@@ -1,18 +1,14 @@
 package com.telifie.Models.Utilities;
 
 import com.telifie.Models.*;
-import com.telifie.Models.Actions.Event;
-import com.telifie.Models.Actions.Out;
-import com.telifie.Models.Actions.Search;
-import com.telifie.Models.Actions.Timeline;
+import com.telifie.Models.Actions.*;
 import com.telifie.Models.Clients.*;
 import com.telifie.Models.Connectors.Available.SGrid;
 import com.telifie.Models.Connectors.Connector;
 import org.bson.Document;
 import org.json.JSONException;
 import org.json.JSONObject;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
+
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -158,13 +154,12 @@ public class Command {
         else if(primarySelector.equals("articles")){
 
             UsersClient users = new UsersClient(config.defaultDomain());
-
             if(this.selectors.length >= 3){ //Provide [ACTION]/[ARTICLE_ID]
 
+                ArticlesClient articles = new ArticlesClient(config.defaultDomain());
                 String articleId = this.get(2);
                 if(objectSelector.equals("id")){ //Specifying Article with ID
 
-                    ArticlesClient articles = new ArticlesClient(config.defaultDomain());
                     try {
 
                         Article article = articles.get(articleId);
@@ -186,7 +181,6 @@ public class Command {
                             content.put("id", articleId);
                         }
                         Article updatedArticle = new Article(content);
-                        ArticlesClient articles = new ArticlesClient(config.defaultDomain());
                         if (config.getUser().getPermissions() >= 12 && this.targetDomain.equals("telifie")) { //Update Article in Public Domain
 
                             Article ogArticle = articles.get(articleId);
@@ -228,6 +222,20 @@ public class Command {
 
                 }else if(objectSelector.equals("move")){
 
+                }else if(objectSelector.equals("verify")){
+
+                    if (config.getUser().getPermissions() >= 12 && this.targetDomain.equals("telifie")) { //Update Article in Public Domain
+
+                        if(articles.verify(articleId)){
+
+                            return new Result(200, this.command, "\"\"");
+                        }
+                        return new Result(505, this.command, "\"Failed to update Article\"");
+                    }
+
+                    //Check permissions of user in Domains
+                    //TODO, share changes with data team for approval and change status on Article
+                    return new Result(401, this.command, "\"Insufficient permissions to update Article in Public Domain\"");
                 }
 
                 return new Result(404, this.command, "\"Unknown Articles action command\"");
@@ -545,6 +553,8 @@ public class Command {
 
                     String wikiTitle = this.get(2);
                     Article wikiArticle = Parser.connectors.wikipedia(wikiTitle);
+                    ArticlesClient articles = new ArticlesClient(config.defaultDomain());
+                    articles.create(wikiArticle);
                     return new Result(
                             this.command,
                             "article",
@@ -554,18 +564,25 @@ public class Command {
                 }else if(objectSelector.equals("uri")){ //Parsing URL or file with URI
 
                     //A uri has been appended to the request URL. Parse that.
-                    try {
+                    String uri = this.command.replaceFirst("parser/uri/", "");
 
-                        String uri = this.command.replaceFirst("parser/uri/", "");
+                    Parser parser = new Parser();
+                    Article parsed = Parser.engines.parse(uri);
+
+                    if(parser.getTraversable().size() > 1){
                         return new Result(
                                 this.command,
-                                "article",
-                                Parser.engines.parse(uri).toString(),
-                                1
+                                "articles",
+                                parser.getTraversable().toString(),
+                                parser.getTraversable().size()
                         );
-                    }catch(NullPointerException n){
-                        return new Result(505, this.command, "\"Failed to parse Wikipedia article into article\"");
                     }
+                    return new Result(
+                            this.command,
+                            "article",
+                            parsed.toString(),
+                            1
+                    );
                 }
             }
 
@@ -705,7 +722,6 @@ public class Command {
 
                             return new Result(505, this.command, "\"Failed to lock users account\"");
                         }
-
                         return new Result(410, "\"Please create SendGrid Connector information\"");
                     }else if(user.getPermissions() >= 1){ //Phone needs verified
 

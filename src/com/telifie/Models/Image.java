@@ -61,9 +61,9 @@ public class Image implements Serializable {
     @Override
     public String toString() {
         return "{" +
-                "\"url\" : \"" + url + '\"' +
-                ", \"caption\" : \"" + caption + '\"' +
-                ", \"source\" : \"" + source + '\"' +
+                (url == null || url.equals("null") ? "" : "\"url\" : \"" + url + "\",") +
+                (caption == null || caption.equals("null") ? "" : "\"caption\" : \"" + caption + "\",") +
+                (source == null || source.equals("null") ? "" : "\"url\" : \"" + source + '\"') +
                 '}';
     }
 }

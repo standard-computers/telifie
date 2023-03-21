@@ -28,15 +28,22 @@ public class ArticlesClient extends Client {
         if(super.insertOne(document)){
 
             return true;
-        }else{
-
-            return false;
         }
+        return false;
     }
 
     public Article get(String articleId){
 
         return new Article(this.findOne(new Document("id", articleId)));
+    }
+
+    public boolean verify(String articleId){
+        return this.updateOne(new Document("id", articleId),
+                new Document("$set", Arrays.asList(
+                    new Document("verified", true)
+                )
+            )
+        );
     }
 
     public ArrayList<Article> get(Document filter){

@@ -62,10 +62,8 @@ public class GroupsClient extends Client {
         if(super.insertOne( Document.parse(group.toString()) )){
 
             return group;
-        }else{
-
-            return null;
         }
+        return null;
     }
 
     public Group create(String userId, String name){
@@ -85,10 +83,8 @@ public class GroupsClient extends Client {
         if(super.insertOne( Document.parse(group.toString()) )){
 
             return group;
-        }else{
-
-            return null;
         }
+        return null;
     }
 
     public boolean save(String userId, String groupId, String articleId){

@@ -127,9 +127,8 @@ public class User implements Serializable {
     public boolean hasToken(String attempt){
         if(attempt.equals(this.token)){
             return true;
-        }else{
-            return false;
         }
+        return false;
     }
 
     public boolean lock(){
