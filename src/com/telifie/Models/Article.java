@@ -1,10 +1,7 @@
 package com.telifie.Models;
 
 import com.telifie.Models.Actions.Event;
-import com.telifie.Models.Articles.Association;
-import com.telifie.Models.Articles.Attribute;
-import com.telifie.Models.Articles.Image;
-import com.telifie.Models.Articles.Source;
+import com.telifie.Models.Articles.*;
 import com.telifie.Models.Utilities.Tool;
 import org.bson.Document;
 import org.json.JSONObject;
@@ -21,6 +18,7 @@ public class Article implements Serializable {
     private ArrayList<Image> images = new ArrayList<>();
     private ArrayList<Attribute> attributes = new ArrayList<>();
     private ArrayList<Association> associations = new ArrayList<>();
+    private ArrayList<DataSet> dataSets = new ArrayList<DataSet>();
     private Source source;
     private int origin;
 
@@ -69,6 +67,15 @@ public class Article implements Serializable {
             for (Document doc : iterable3) {
 
                 this.addAssociation(new Association(doc));
+            }
+        }
+
+        ArrayList<Document> iterable4 = (ArrayList<Document>) document.getList("data_sets", Document.class);
+        if(iterable4 != null){
+
+            for(Document doc : iterable4){
+
+                this.addDataSet(new DataSet(doc));
             }
         }
 
@@ -188,6 +195,18 @@ public class Article implements Serializable {
         this.associations.add(ass);
     }
 
+    public ArrayList<DataSet> getDataSets() {
+        return dataSets;
+    }
+
+    public void setDataSets(ArrayList<DataSet> dataSets) {
+        this.dataSets = dataSets;
+    }
+
+    public void addDataSet(DataSet dataSet){
+        this.dataSets.add(dataSet);
+    }
+
     public Source getSource() {
         return source;
     }
@@ -229,6 +248,7 @@ public class Article implements Serializable {
 //                ", \"images\" : " + images +
                 ", \"attributes\" : " + attributes +
                 ", \"associations\" : " + associations +
+                ", \"data_sets\" : " + dataSets +
                 ", \"source\" : " + source +
                 ", \"origin\" : " + origin +
                 '}';
