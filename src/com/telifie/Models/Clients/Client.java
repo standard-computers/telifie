@@ -5,28 +5,32 @@ import com.mongodb.client.*;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.UpdateResult;
 import com.telifie.Models.Actions.Out;
-import com.telifie.Models.Domain;
+import com.telifie.Models.Utilities.Configuration;
 import org.bson.Document;
 import java.util.ArrayList;
 
 public class Client {
 
     private final String mongoUri;
-    protected Domain domain;
     protected String collection;
+    protected Configuration config;
 
     protected Client(String mongoUri) {
         this.mongoUri = mongoUri;
     }
 
-    protected Client(Domain domain){
-        this.domain = domain;
-        this.mongoUri = domain.getUri();
+    protected Client(Configuration config){
+        this.config = config;
+        this.mongoUri = config.getDomain().getUri();
+    }
+
+    public Configuration getConfig() {
+        return config;
     }
 
     protected ArrayList<Document> find(Document filter){
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
-            MongoDatabase database = mongoClient.getDatabase("telifie");
+            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getName());
             MongoCollection<Document> collection = database.getCollection(this.collection);
             FindIterable<Document> iter = collection.find(filter);
             ArrayList<Document> documents = new ArrayList<>();
@@ -42,7 +46,7 @@ public class Client {
 
     protected Document findOne(Document filter){
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
-            MongoDatabase database = mongoClient.getDatabase("telifie");
+            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getName());
             MongoCollection<Document> collection = database.getCollection(this.collection);
             return collection.find(filter).first();
         }catch(MongoException e){
@@ -58,7 +62,7 @@ public class Client {
 
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
 
-            MongoDatabase database = mongoClient.getDatabase("telifie");
+            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getName());
             MongoCollection<Document> collection = database.getCollection(this.collection);
             UpdateResult result = collection.updateOne(filter, update);
 
@@ -75,7 +79,7 @@ public class Client {
 
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
 
-            MongoDatabase database = mongoClient.getDatabase("telifie");
+            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getName());
             MongoCollection<Document> collection = database.getCollection(this.collection);
             UpdateResult result = collection.updateOne(filter, update, options);
             return result.getModifiedCount() > 0;
@@ -91,7 +95,7 @@ public class Client {
 
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
 
-            MongoDatabase database = mongoClient.getDatabase("telifie");
+            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getName());
             MongoCollection<Document> collection = database.getCollection(this.collection);
             return collection.updateMany(filter, update);
 
@@ -104,7 +108,7 @@ public class Client {
     protected boolean insertOne(Document document){
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
 
-            MongoDatabase database = mongoClient.getDatabase("telifie");
+            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getName());
             MongoCollection<Document> collection = database.getCollection(this.collection);
             collection.insertOne(document);
             return true;
@@ -126,7 +130,7 @@ public class Client {
 
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
 
-            MongoDatabase database = mongoClient.getDatabase("telifie");
+            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getName());
             MongoCollection<Document> collection = database.getCollection(this.collection);
             collection.deleteOne(filter);
             return true;

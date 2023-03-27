@@ -1,5 +1,6 @@
 package com.telifie.Models.Utilities;
 
+import com.telifie.Models.Actions.Command;
 import com.telifie.Models.Clients.AuthenticationClient;
 import com.telifie.Models.Clients.ConnectorsClient;
 import com.telifie.Models.Clients.UsersClient;
@@ -56,10 +57,15 @@ public class Server {
             if (auth == null) {
 
                 result.setStatusCode(406);
-                result.setResults("\"No Authentication credentials provided\"");
+                result.setResult("result", "No Authentication credentials provided");
             } else {
 
-                AuthenticationClient authenticationClient = new AuthenticationClient(new Domain("telifie", "mongodb://137.184.70.9:27017"));
+                Configuration requestConfiguration = new Configuration();
+                requestConfiguration.setDomain(new Domain("telifie", "mongodb://137.184.70.9:27017"));
+
+                //TODO make sure to import from file.
+                //new Domain("telifie", "mongodb://137.184.70.9:27017")
+                AuthenticationClient authenticationClient = new AuthenticationClient(requestConfiguration);
                 if (authenticationClient.isAuthenticated(auth)) {
 
                     String contentType = (request.getFirstHeader("Content-Type") == null ? "" : request.getFirstHeader("Content-Type").getValue());
@@ -116,11 +122,8 @@ public class Server {
                             HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
                             body = EntityUtils.toString(entity);
                         }
-
-                        Configuration requestConfiguration = new Configuration();
-                        requestConfiguration.addDomain(new Domain("telifie", "mongodb://137.184.70.9:27017"));
                         requestConfiguration.setAuthentication(auth);
-                        UsersClient users = new UsersClient(requestConfiguration.defaultDomain()); //Ini UsersClient to find requesting user
+                        UsersClient users = new UsersClient(requestConfiguration); //Ini UsersClient to find requesting user
                         requestConfiguration.setUser(users.getUserWithId(auth.getUser())); //Set Configuration User as requesting user
                         result = processRequest(requestConfiguration, method, query, body);
                     }
@@ -131,7 +134,7 @@ public class Server {
             }
 
             response.setStatusCode(result.getStatusCode());
-            response.setHeader("Content-Type", result.getType());
+            response.setHeader("Content-Type", "application/json");
             response.setEntity(new StringEntity(result.toString()));
         };
 

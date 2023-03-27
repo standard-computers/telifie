@@ -10,7 +10,6 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -443,7 +442,6 @@ public class Parser {
     public static class encoder {
 
         private static List<String>  sentences;
-        private static List<String[]> tokens;
 
         /**
          * Tokenizes provided text to be encoded
@@ -451,6 +449,7 @@ public class Parser {
          */
         public static List<String[]> tokenize(String text){
             sentences = new ArrayList<String>();
+            List<String[]> tokens = new ArrayList<>();
             StringBuilder currentSentence = new StringBuilder();
             for (int i = 0; i < text.length(); i++) {
                 char c = text.charAt(i);

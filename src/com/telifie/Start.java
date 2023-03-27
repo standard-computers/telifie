@@ -1,6 +1,7 @@
 package com.telifie;
 
 import com.telifie.Models.*;
+import com.telifie.Models.Actions.Command;
 import com.telifie.Models.Actions.In;
 import com.telifie.Models.Actions.Out;
 import com.telifie.Models.Actions.Parser;
@@ -150,7 +151,7 @@ public class Start {
             configuration.setUser(user); //Add user to configuration file
         }
 
-        configuration.addDomain(domain); //Add domain to configuration file
+        configuration.setDomain(domain); //Add domain to configuration file
         configuration.setLicense(In.string("Paste License -> ")); //Add license to configuration file. Must copy and paste.
 
         if(configuration.save(workingDirectory)){

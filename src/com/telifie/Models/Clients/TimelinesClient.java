@@ -4,14 +4,16 @@ import com.mongodb.client.model.UpdateOptions;
 import com.telifie.Models.Actions.Event;
 import com.telifie.Models.Actions.Timeline;
 import com.telifie.Models.Domain;
+import com.telifie.Models.Utilities.Configuration;
 import org.bson.Document;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class TimelinesClient extends Client {
 
-    public TimelinesClient(Domain domain){
-        super(domain);
+    public TimelinesClient(Configuration config){
+
+        super(config);
         super.collection = "timelines";
     }
 

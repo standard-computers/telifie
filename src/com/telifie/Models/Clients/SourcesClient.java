@@ -2,6 +2,7 @@ package com.telifie.Models.Clients;
 
 import com.telifie.Models.Domain;
 import com.telifie.Models.Articles.Source;
+import com.telifie.Models.Utilities.Configuration;
 import org.bson.Document;
 
 import java.util.ArrayList;
@@ -9,8 +10,9 @@ import java.util.regex.Pattern;
 
 public class SourcesClient extends Client {
 
-    public SourcesClient(Domain domain) {
-        super(domain);
+    public SourcesClient(Configuration config) {
+
+        super(config);
         super.collection = "sources";
     }
 

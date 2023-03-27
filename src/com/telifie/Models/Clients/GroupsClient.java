@@ -3,17 +3,17 @@ package com.telifie.Models.Clients;
 import com.telifie.Models.Article;
 import com.telifie.Models.Domain;
 import com.telifie.Models.Group;
+import com.telifie.Models.Utilities.Configuration;
 import org.bson.Document;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class GroupsClient extends Client {
 
-    public GroupsClient(Domain domain){
+    public GroupsClient(Configuration config){
 
-        super(domain);
+        super(config);
         super.collection = "groups";
-
     }
 
     public Group get(String userId, String id){
@@ -29,7 +29,7 @@ public class GroupsClient extends Client {
             }
         }
         ArrayList<Article> articles = new ArrayList<Article>();
-        ArticlesClient articlesClient = new ArticlesClient(this.domain);
+        ArticlesClient articlesClient = new ArticlesClient(super.getConfig());
         if(group.getArticles() != null){
 
             for (String articleId : group.getArticles()) {

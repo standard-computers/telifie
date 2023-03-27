@@ -1,9 +1,8 @@
 package com.telifie.Models.Actions;
 
 import com.fathzer.soft.javaluator.DoubleEvaluator;
-import com.mongodb.MongoException;
-import com.mongodb.client.*;
 import com.telifie.Models.Article;
+import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Clients.UsersClient;
 import com.telifie.Models.Result;
 import com.telifie.Models.User;
@@ -18,83 +17,37 @@ import java.util.regex.Pattern;
 
 public class Search {
 
-    private String query, targetDomain, domainArticles;
-    private Parameters parameters;
-    private Result result;
+    public static Result execute(Configuration config, String query, Parameters params){
 
-    public Search(Configuration configuration, String query) {
-
-        this.query = URLDecoder.decode(query, StandardCharsets.UTF_8).toLowerCase().trim();
-        this.result = new Result(this.query);
-        this.targetDomain = (configuration.defaultDomain().getName().equals("telifie") || configuration.defaultDomain().getName().equals("") || configuration.defaultDomain().getName() == null ? "telifie" : "domains-articles");
-        this.domainArticles = (configuration.defaultDomain().getName().equals("telifie") || configuration.defaultDomain().getName().equals("") || configuration.defaultDomain().getName() == null ? "articles" : configuration.defaultDomain().getName());
-        //TODO integrate ArticlesClient
-
-        if(this.query.matches("(\\d+\\.?\\d*|\\.\\d+)([\\+\\-\\*\\/](\\d+\\.?\\d*|\\.\\d+))*") || Tool.containsAnyOf(new String[] {"+", "-", "*", "/", "^"}, this.query)){ //Asking math expression
-
-            try {
-                Double mathResult = new DoubleEvaluator().evaluate(this.query.replaceAll("\\$", ""));
-                this.result.addQuickResult(
-                        new CommonObject("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/wwdb/calculate.gif",
-                                Tool.formatNumber(mathResult),
-                                "", "Calculation")
-                );
-            }catch(IllegalArgumentException e){
-
-            }
-        }else if(this.query.matches("^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$")){
-
-            UsersClient users = new UsersClient(configuration.getDomain(0));
-            User user = users.getUserWithEmail(this.query);
-            this.result.addQuickResult(
-                new CommonObject(
-                    "",
-                    user.getName(),
-                    "",
-                    user.getEmail()
-                )
+        query = URLDecoder.decode(query, StandardCharsets.UTF_8).toLowerCase().trim();
+        Result result = new Result(
+                query,
+                Search.quickResults(config, query),
+                Search.executeQuery(config, query, params)
             );
-        }else if(this.query.equals("how many articles are there")){
-            //TODO if query is LIKE
 
-        }else if(Tool.isHexColor(this.query) || Tool.isHSLColor(this.query) || Tool.isRGBColor(this.query)){
+        return result;
+    }
 
-            this.result.addQuickResult(
-                new CommonObject(
-                    "COLOR_ICON",
-                    query,
-                    "",
-                    query
-                )
-            );
-        }else if(this.query.contains("random") && this.query.contains("color")){
+    private static ArrayList executeQuery(Configuration config, String query, Parameters params){
 
-            //TODO https://www.thecolorapi.com/
-
+        ArrayList<Document> filters = new ArrayList<>();
+        if(generalFilter(query) != null){
+            filters.add(generalFilter(query));
         }
 
-        try(MongoClient mongoClient = MongoClients.create(configuration.getDomain(0).getUri())){
+        filters.add(new Document("title", pattern(query) ) );
+        filters.add(new Document("link", pattern(query) ) );
+        filters.add(new Document("description", pattern(query) ) );
+        filters.add(new Document("tags", new Document("$in", Arrays.asList(query)) ) );
 
-            MongoDatabase database = mongoClient.getDatabase(targetDomain);
-            MongoCollection<Document> collection = database.getCollection(domainArticles);
-            FindIterable<Document> iterable = collection.find(generateFilter()).limit(100);
+        ArticlesClient articles = new ArticlesClient(config);
+        ArrayList<Article> results = articles.search(config, params, Search.filter(filters));
 
-            ArrayList<Article> results = new ArrayList<>();
-            for (Document document : iterable) {
-                results.add(new Article(document));
-            }
-            this.result.setObject("articles");
-            this.result.setCount(results.size());
-
-            //Sort for query & name relevance
-            Collections.sort(results, new RelevanceComparator(this.query));
-            Collections.reverse(results);
-
-            this.result.setResults(results.toString());
-
-        }catch(MongoException e){
-
-        }
+        //Sort for query & name relevance
+        Collections.sort(results, new RelevanceComparator(query));
+        Collections.reverse(results);
+        return results;
     }
 
     /**
@@ -102,31 +55,32 @@ public class Search {
      * Returns Document used for .find in for MongoCollection
      * @return Document
      */
-    private Document generateFilter(){
+    private static Document generalFilter(String query){
 
-        if(this.query.matches("^id\\s*:\\s*.*")){ //Return articles with id
+        if(query.matches("^id\\s*:\\s*.*")){ //Return articles with id
 
-            String[] spl = this.query.split(":");
+            String[] spl = query.split(":");
             if(spl.length >= 2) {
 
-                return new Document("id", spl[1]);
+                return new Document("id", spl[1].trim());
             }
-            return generalFilter();
-        }else if(this.query.matches("^description\\s*:\\s*.*")){ //Return Articles with requested description
+        }else if(query.matches("^description\\s*:\\s*.*")){ //Return Articles with requested description
 
-            return new Document("description", pattern(this.query.split(":")[1]));
+            String[] spl = query.split(":");
+            if(spl.length >= 2) {
 
-        }else if(this.query.matches("^title\\s*:\\s*.*")){ //Return Articles with requested description
+                return new Document("description", pattern(spl[1].trim()));
+            }
+        }else if(query.matches("^title\\s*:\\s*.*")){ //Return Articles with requested description
 
-            String[] spl = this.query.split(":");
+            String[] spl = query.split(":");
             if(spl.length >= 2){
 
-                return new Document("title", pattern(this.query.split(":")[1]));
+                return new Document("title", pattern(query.split(":")[1]));
             }
-            return generalFilter();
-        }else if(this.query.matches("^attribute\\s*:\\s*.*")){
+        }else if(query.matches("^attribute\\s*:\\s*.*")){
 
-            String[] spl = this.query.split(":"), spl2 = spl[1].split("=");
+            String[] spl = query.split(":"), spl2 = spl[1].split("=");
             if(spl[1].contains("&")){ //Has multiple attribute requirements
 
                 String[] attrReqs = spl[1].split("&");
@@ -138,7 +92,6 @@ public class Search {
                     andFilters.add(new Document("attributes.key", pattern(key)));
                     andFilters.add(new Document("attributes.value", pattern(value)));
                 }
-
                 return new Document("$and", andFilters);
             }else{
 
@@ -151,35 +104,77 @@ public class Search {
                 );
             }
 
-        }else if(this.query.startsWith("define ")) {
+        }else if(query.startsWith("define ")) {
 
             return new Document("$and",
                     Arrays.asList(
                             new Document("description", pattern("definition")),
-                            new Document("title", pattern(this.query.replaceFirst("define ", "")))
+                            new Document("title", query.replaceFirst("define ", ""))
                     )
             );
         }
-        return generalFilter();
+        return null;
     }
 
-    private Document generalFilter(){
-        Pattern pattern = Pattern.compile(Pattern.quote(this.query), Pattern.CASE_INSENSITIVE);
-        return new Document("$or",
-                Arrays.asList(
-                        new Document("title", pattern),
-                        new Document("link", pattern),
-                        new Document("description", pattern),
-                        new Document("tags", new Document("$in", Arrays.asList(this.query)))
-                )
-        );
+    /**
+     * Wrapper method for building document filters
+     * @param filters
+     * @return
+     */
+    private static Document filter(ArrayList filters){
+        return new Document("$or", filters);
     }
 
-    public Result result(){
-        return result;
+    private static ArrayList<CommonObject> quickResults(Configuration config, String query){
+
+        ArrayList<CommonObject> quickResults = new ArrayList<>();
+        if(query.matches("(\\d+\\.?\\d*|\\.\\d+)([\\+\\-\\*\\/](\\d+\\.?\\d*|\\.\\d+))*") || Tool.containsAnyOf(new String[] {"+", "-", "*", "/", "^"}, query)){ //Asking math expression
+
+            try {
+                Double mathResult = new DoubleEvaluator().evaluate(query.replaceAll("\\$", ""));
+                quickResults.add(
+                        new CommonObject("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/wwdb/calculate.gif",
+                                Tool.formatNumber(mathResult),
+                                "", "Calculation")
+                );
+            }catch(IllegalArgumentException e){}
+        }
+        if(query.matches("^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$")){
+
+            UsersClient users = new UsersClient(config);
+            User user = users.getUserWithEmail(query);
+            quickResults.add(
+                    new CommonObject(
+                            "",
+                            user.getName(),
+                            "",
+                            user.getEmail()
+                    )
+            );
+        }
+        if(query.equals("how many articles are there")){
+            //TODO if query is LIKE
+        }
+        if(Tool.isHexColor(query) || Tool.isHSLColor(query) || Tool.isRGBColor(query)){
+
+            quickResults.add(
+                    new CommonObject(
+                            "COLOR_ICON",
+                            query,
+                            "",
+                            query
+                    )
+            );
+        }
+
+        if(query.contains("random") && query.contains("color")){
+
+            //TODO https://www.thecolorapi.com/
+        }
+        return quickResults;
     }
 
-    private Pattern pattern(String value){
+    private static Pattern pattern(String value){
         return Pattern.compile(Pattern.quote(value), Pattern.CASE_INSENSITIVE);
     }
 

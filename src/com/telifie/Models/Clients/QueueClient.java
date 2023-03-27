@@ -3,13 +3,14 @@ package com.telifie.Models.Clients;
 import com.telifie.Models.Article;
 import com.telifie.Models.Domain;
 import com.telifie.Models.Actions.Parser;
+import com.telifie.Models.Utilities.Configuration;
 import org.bson.Document;
 
 public class QueueClient extends Client {
 
-    public QueueClient(Domain domain) {
+    public QueueClient(Configuration config) {
 
-        super(domain);
+        super(config);
         super.collection = "queue";
     }
 

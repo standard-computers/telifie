@@ -10,9 +10,11 @@ public class Theme implements Serializable {
     class Color {
 
         private String name, color, light;
+        private boolean alwaysDark = false;
 
         public Color(Document document){
             this.name = document.getString("name");
+            this.alwaysDark = (document.getBoolean("always_dark") == null ? false : document.getBoolean("always_dark"));
             this.color = document.getString("color");
             this.light = document.getString("light");
         }
@@ -23,6 +25,14 @@ public class Theme implements Serializable {
 
         public void setName(String name) {
             this.name = name;
+        }
+
+        public boolean isAlwaysDark() {
+            return alwaysDark;
+        }
+
+        public void setAlwaysDark(boolean alwaysDark) {
+            this.alwaysDark = alwaysDark;
         }
 
         public String getColor() {
@@ -43,17 +53,12 @@ public class Theme implements Serializable {
 
         @Override
         public String toString() {
-            return "{" +
-                    "\"name\" : \"" + name + '\"' +
+            return "{\"name\" : \"" + name + '\"' +
+                    ", \"always_dark\" : " + alwaysDark +
                     ", \"color\" : \"" + color + '\"' +
                     ", \"light\" : \"" + light + '\"' +
                     '}';
         }
-
-        public JSONObject toJson(){
-            return new JSONObject(this.toString());
-        }
-
     }
 
     private String name, background;
@@ -101,16 +106,10 @@ public class Theme implements Serializable {
 
     @Override
     public String toString() {
-        return "{" +
-                "\"name\" : \"" + name + '\"' +
+        return "{\"name\" : \"" + name + '\"' +
                 ", \"background\" : \"" + background + '\"' +
                 ", \"corner_radius\" : " + cornerRadius +
                 ", \"color\" : " + color +
                 '}';
     }
-
-    public JSONObject toJson(){
-        return new JSONObject(this.toString());
-    }
-
 }

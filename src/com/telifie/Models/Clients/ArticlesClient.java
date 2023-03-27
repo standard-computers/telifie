@@ -1,16 +1,20 @@
 package com.telifie.Models.Clients;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.MongoException;
+import com.mongodb.client.*;
 import com.telifie.Models.Actions.Out;
+import com.telifie.Models.Actions.Parameters;
 import com.telifie.Models.Article;
-import com.telifie.Models.Domain;
+import com.telifie.Models.Utilities.Configuration;
 import org.bson.Document;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class ArticlesClient extends Client {
 
-    public ArticlesClient(Domain domain){
-        super(domain);
+    public ArticlesClient(Configuration config){
+        super(config);
         super.collection = "articles";
     }
 
@@ -38,12 +42,7 @@ public class ArticlesClient extends Client {
     }
 
     public boolean verify(String articleId){
-        return this.updateOne(new Document("id", articleId),
-                new Document("$set", Arrays.asList(
-                    new Document("verified", true)
-                )
-            )
-        );
+        return this.updateOne(new Document("id", articleId), new Document("$set", new Document("verified", true)));
     }
 
     public ArrayList<Article> get(Document filter){
@@ -72,13 +71,29 @@ public class ArticlesClient extends Client {
         return articles;
     }
 
-    /**
-     * Returns total count of Articles in Domain
-     * @return int count of articles
-     */
-    public int count(){
-        //TODO
-        return 0;
-    }
+    public ArrayList<Article> search(Configuration config, Parameters params, Document filter){
 
+        String domainName = config.getDomain().getName();
+        String targetDomain = (domainName.equals("telifie") || domainName.equals("") ? "telifie" : "domains-articles");
+        String domainArticles = (domainName.equals("telifie") || domainName.equals("") ? "articles" : config.getDomain().getName());
+        try(MongoClient mongoClient = MongoClients.create(config.getDomain().getUri())){
+
+            MongoDatabase database = mongoClient.getDatabase(targetDomain);
+            MongoCollection<Document> collection = database.getCollection(domainArticles);
+            FindIterable<Document> iterable = collection.find(filter)
+                    .sort(new BasicDBObject("priority", -1))
+                    .skip(params.getSkip())
+                    .limit(params.getResultsPerPage());
+
+            ArrayList<Article> results = new ArrayList<>();
+            for (Document document : iterable) {
+                results.add(new Article(document));
+            }
+
+            return results;
+        }catch(MongoException e){
+
+            return null;
+        }
+    }
 }

@@ -1,15 +1,14 @@
-package com.telifie.Models.Utilities;
+package com.telifie.Models.Actions;
 
 import com.telifie.Models.*;
-import com.telifie.Models.Actions.*;
 import com.telifie.Models.Articles.Source;
 import com.telifie.Models.Clients.*;
 import com.telifie.Models.Connectors.Available.SGrid;
 import com.telifie.Models.Connectors.Connector;
+import com.telifie.Models.Utilities.*;
 import org.bson.Document;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -54,25 +53,17 @@ public class Command {
 
                 if(objectSelector.equals("owner")){ //Get domains for owner /domains/owner/[USER_ID]
 
-                    DomainsClient domains = new DomainsClient(config.defaultDomain());
+                    DomainsClient domains = new DomainsClient(config);
                     ArrayList<Domain> foundDomains = domains.getOwnedDomains(this.get(2));
-                    return new Result(
-                            this.command,
-                            "domains",
-                            foundDomains.toString(),
-                            foundDomains.size()
-                    );
+                    return new Result(this.command, "domains", foundDomains);
+
                 }else if(objectSelector.equals("member")){ //Get domains for user /domains/member/[USER_ID]
 
                     //TODO get domains that user is attached too
-                    DomainsClient domains = new DomainsClient(config.defaultDomain());
+                    DomainsClient domains = new DomainsClient(config);
                     ArrayList<Domain> foundDomains = domains.getDomainsForUser(this.get(2));
-                    return new Result(
-                            this.command,
-                            "domains",
-                            foundDomains.toString(),
-                            foundDomains.size()
-                    );
+                    return new Result(this.command, "domains", foundDomains);
+
                 }else if(objectSelector.equals("create")){
 
                     if(content != null){
@@ -81,29 +72,22 @@ public class Command {
                         if((domainName = content.getString("name")) != null && (domainIcon = content.getString("icon")) != null && content.getInteger("permissions") != null){
 
                             Domain newDomain = new Domain(config.getAuthentication().getUser(), domainName, domainIcon, content.getInteger("permissions"));
-                            DomainsClient domains = new DomainsClient(config.defaultDomain());
+                            DomainsClient domains = new DomainsClient(config);
 
                             if(domains.create(newDomain)){
 
-                                return new Result(
-                                        this.command,
-                                        "domain",
-                                        newDomain.toString(),
-                                        1
-                                );
+                                return new Result(this.command, "domain", newDomain);
                             }
-
                             return new Result(505, this.command, "\"Failed to make domain\"");
                         }
-
                         return new Result(428, this.command, "\"Required JSON properties not provided\"");
                     }
-
                     return new Result(428, this.command, "\"JSON body expected\"");
+
                 }else if(objectSelector.equals("delete")){
 
                     String domainId = this.get(2);
-                    DomainsClient domains = new DomainsClient(config.defaultDomain());
+                    DomainsClient domains = new DomainsClient(config);
                     Domain subjectDomain = domains.getWithId(domainId);
 
                     if(subjectDomain.getOwner().equals(config.getAuthentication().getUser())){ //Requesting user is owning user
@@ -112,11 +96,10 @@ public class Command {
 
                             return new Result(200, this.command, "\"Successfully deleted the domain\"");
                         }
-
                         return new Result(505, this.command, "\"Failed to delete domain\"");
                     }
-
                     return new Result(401, this.command, "\"This is not your domain!!!!!\"");
+
                 }else if(objectSelector.equals("public")){ //Get public domains
 
                     //TODO get public domains
@@ -128,48 +111,37 @@ public class Command {
                 if(this.get(1) != null){
 
                     String domainId = this.get(1);
-                    DomainsClient domains = new DomainsClient(config.defaultDomain());
+                    DomainsClient domains = new DomainsClient(config);
                     try{
 
                         Domain selectedDomain = domains.getWithId(domainId);
-                        return new Result(
-                                this.command,
-                                "domain",
-                                selectedDomain.toString(),
-                                1
-                        );
+                        return new Result(this.command, "domain", selectedDomain);
                     }catch(NullPointerException n){
 
                         return new Result(404, this.command, "\"Domain with id '" + domainId + "' not found\"");
                     }
                 }
-
                 return new Result(404, this.command, "\"Invalid domains selector\"");
             }
-
             return new Result(200, this.command, "\"Invalid command for domains\"");
+
         }
         /*
          * Accessing Articles
          */
         else if(primarySelector.equals("articles")){
 
-            UsersClient users = new UsersClient(config.defaultDomain());
+            UsersClient users = new UsersClient(config);
             if(this.selectors.length >= 3){ //Provide [ACTION]/[ARTICLE_ID]
 
-                ArticlesClient articles = new ArticlesClient(config.defaultDomain());
-                String articleId = this.get(2);
+                ArticlesClient articles = new ArticlesClient(config);
+                String articleId = this.get(2).trim();
                 if(objectSelector.equals("id")){ //Specifying Article with ID
 
                     try {
 
                         Article article = articles.get(articleId);
-                        return new Result(
-                                this.command,
-                                "article",
-                                article.toString(),
-                                1
-                        );
+                        return new Result(this.command, "article", article);
                     }catch(NullPointerException n){
 
                         return new Result(404, this.command, "\"Article not found\"");
@@ -196,18 +168,12 @@ public class Command {
 
                             if (articles.update(ogArticle, updatedArticle)) {
 
-                                TimelinesClient timelines = new TimelinesClient(config.defaultDomain());
+                                TimelinesClient timelines = new TimelinesClient(config);
                                 timelines.addEvents(articleId, events);
 
                                 //TODO Decide to return changes made to article or return new article
-                                return new Result(
-                                        this.command,
-                                        "events",
-                                        events.toString(),
-                                        events.size()
-                                );
+                                return new Result(this.command, "events", events.toString());
                             }
-
                             return new Result(505, this.command, "\"Failed to update Article\"");
                         }
 
@@ -215,8 +181,8 @@ public class Command {
                         //TODO, share changes with data team for approval and change status on Article
                         return new Result(401, this.command, "\"Insufficient permissions to update Article in Public Domain\"");
                     }
-
                     return new Result(428, "\"No new Article JSON data provided\"");
+
                 }else if(objectSelector.equals("delete")){
 
 
@@ -252,17 +218,11 @@ public class Command {
                     try {
 
                         Article newArticle = new Article(content);
-                        ArticlesClient articles = new ArticlesClient(config.defaultDomain());
+                        ArticlesClient articles = new ArticlesClient(config);
                         if(articles.create(newArticle)){
 
-                            return new Result(
-                                    this.command,
-                                    "article",
-                                    newArticle.toString(),
-                                    1
-                            );
+                            return new Result(this.command, "article", newArticle);
                         }
-
                         return new Result(505, "Failed to create Article");
                     }catch(JSONException e){
 
@@ -273,7 +233,7 @@ public class Command {
                 return new Result(428, "\"Precondition Failed. No new Article provided (JSON.article) as body\"");
             }else if(objectSelector.equals("")){ //Return stats of Articles in domain (summary)
 
-                return new Result(this.command,"stats", "", 0);
+                return new Result(this.command,"stats", "");
             }
 
             return new Result(404, "\"No Article ID provided\"");
@@ -288,7 +248,7 @@ public class Command {
             if(this.selectors.length >= 4){ //Ensure correct argument count
 
                 String groupId = this.get(2), articleId = this.get(3);
-                GroupsClient groups = new GroupsClient(config.defaultDomain());
+                GroupsClient groups = new GroupsClient(config);
 
                 //Saves Article to Group given /groups/save/[GROUP_ID]/[ARTICLE_ID]
                 if(objectSelector.equals("save")){
@@ -327,7 +287,7 @@ public class Command {
                             return new Result(304, this.command, "\"'Pinned' is a reserved Group name\"");
                         }
 
-                        GroupsClient groups = new GroupsClient(config.defaultDomain());
+                        GroupsClient groups = new GroupsClient(config);
                         if(groups.update(groupId, content)){
 
                             return new Result(200, this.command, "\"Group Update\"");
@@ -347,16 +307,11 @@ public class Command {
                 if(content != null){ //Creating Group with JSON content
 
                     Group newGroup = new Group(content);
-                    GroupsClient groups = new GroupsClient(config.defaultDomain());
+                    GroupsClient groups = new GroupsClient(config);
                     Group createdGroup = groups.create(config.getAuthentication().getUser(), newGroup);
                     if(createdGroup != null){
 
-                        return new Result(
-                                this.command,
-                                "group",
-                                createdGroup.toString(),
-                                1
-                        );
+                        return new Result(this.command, "group", createdGroup);
                     }
 
                     return new Result(505, this.command, "\"Failed to make Group with JSON\"");
@@ -370,7 +325,7 @@ public class Command {
                 String groupId = (this.selectors.length == 3 ? this.get(2) : null);
                 if(groupId != null){
 
-                    GroupsClient groups = new GroupsClient(config.defaultDomain());
+                    GroupsClient groups = new GroupsClient(config);
                     if(groups.delete(config.getAuthentication().getUser(), groupId)){
 
                         return new Result(200, this.command, "\"Group '" + groupId + "' deleted\"");
@@ -387,42 +342,31 @@ public class Command {
             else if(objectSelector.equals("id")){
 
                 String groupId = this.get(2);
-                GroupsClient groups = new GroupsClient(config.defaultDomain());
+                GroupsClient groups = new GroupsClient(config);
                 if(groupId != null){
 
                     try{
 
                         Group group = groups.get(config.getAuthentication().getUser(), groupId);
-                        return new Result(
-                                this.command,
-                                "group",
-                                group.toString(),
-                                1
-                        );
+                        return new Result(this.command, "group", group);
                     }catch(NullPointerException n){
 
                         return new Result(404, this.command, "\"Group not found with ID '" + groupId + "'\"");
                     }
                 }
-
                 return new Result(428, this.command, "\"Group ID is required to get\"");
             }
 
-            GroupsClient groups = new GroupsClient(config.defaultDomain());
+            GroupsClient groups = new GroupsClient(config);
             ArrayList<Group> usersGroups = groups.groupsForUser(config.getAuthentication().getUser());
-            return new Result(
-                    this.command,
-                    "groups",
-                    usersGroups.toString(),
-                    usersGroups.size()
-            );
+            return new Result(this.command, "groups", usersGroups);
         }
         /*
          * Accessing Users
          */
         else if(primarySelector.equals("users")){
 
-            UsersClient users = new UsersClient(config.defaultDomain());
+            UsersClient users = new UsersClient(config);
             if(this.selectors.length >= 3){
 
                 if(objectSelector.equals("update") && content != null){
@@ -433,38 +377,30 @@ public class Command {
 
                         if(users.updateUserTheme(users.getUserWithEmail(userEmail), content)){
 
-                            return new Result(
-                                    this.command,
-                                    "user",
-                                    changedUser.toString(),
-                                    1
-                            );
+                            return new Result(this.command, "user", changedUser);
                         }
                         return new Result(400, "\"Bad Request\"");
+
                     }else if(this.get(2).equals("photo")){
                         
                         if(content != null){
                             
-                            if(content.getString("photo") != null){
-                                
+                            if(content.getString("photo") != null) {
+
                                 String photoUri = content.getString("photo");
-                                if(users.updateUserPhoto(changedUser, photoUri)){
-                                    
+                                if (users.updateUserPhoto(changedUser, photoUri)) {
+
                                     return new Result(200, this.command, "\"User photo updated\"");
                                 }
-                                
+
                                 return new Result(505, this.command, "\"Failed to update user photo\"");
                             }
-                            
                             return new Result(428, this.command, "\"JSON parameter 'photo' expected\"");
                         }
-                        
                         return new Result(428, this.command, "\"JSON request body expected\"");
                     }
-                    
                     return new Result(404, this.command, "\"Invalid users update command\"");
                 }
-                
                 return new Result(404, this.command, "\"Invalid command received\"");
             }else if(objectSelector.equals("create")){ //Creating User
 
@@ -475,29 +411,20 @@ public class Command {
                             content.getString("name"),
                             content.getString("phone")
                     );
-                    if(newUser.getPermissions() == 0 && !newUser.getName().equals("") && !newUser.getEmail().equals("") && newUser.getName() != null && newUser.getEmail() != null){ //0 is permissions of new user
+                    if(newUser.getPermissions() == 0 && !newUser.getName().equals("") && !newUser.getEmail().equals("") && newUser.getName() != null && newUser.getEmail() != null) { //0 is permissions of new user
 
-                        if(!users.userExistsWithEmail(newUser.getEmail())){
+                        if (!users.userExistsWithEmail(newUser.getEmail())) {
 
-                            if(users.createUser(newUser)){
+                            if (users.createUser(newUser)) {
 
-                                return new Result(
-                                        this.command,
-                                        "user",
-                                        newUser.toString(),
-                                        1
-                                );
+                                return new Result(this.command, "user", newUser);
                             }
-
                             return new Result(505, this.command, "\"Failed making user for email '" + newUser.getEmail() + "'\"");
                         }
-
                         return new Result(410, this.command, "\"User already exists for email '" + newUser.getEmail() + "'\"");
                     }
-
                     return new Result(428, this.command, "\"Name, email, phone number, and permissions are required to create a User\"");
                 }
-
                 return new Result(428, this.command, "\"New User details expected with JSON request body.\"");
             }
             
@@ -507,12 +434,7 @@ public class Command {
                 if(users.userExistsWithEmail(this.get(1))){ //Check if user with email, return user
 
                     User found = users.getUserWithEmail(this.get(1));
-                    return new Result(
-                            this.command,
-                            "user",
-                            found.toString(),
-                            1
-                    );
+                    return new Result(this.command, "user", found);
                 }else { //No valid user action command provided
 
                     return new Result(404, this.command, "\"User not found\"");
@@ -529,15 +451,10 @@ public class Command {
 
                     if(extractedArticles != null){
 
-                        return new Result(
-                                this.command,
-                                "articles",
-                                extractedArticles.toString(),
-                                extractedArticles.size()
-                        );
+                        return new Result(this.command, "articles", extractedArticles);
                     }
-
                     return new Result(404, this.command, "\"No articles from batch upload\"");
+
                 }else if(objectSelector.equals("dictionary")){ //Managing index dictionary for parsing
 
                     if(content != null && content.getString("words") != null){
@@ -546,22 +463,17 @@ public class Command {
                         Parser.index index = new Parser.index();
                         Parser.index.dictionary dict = new Parser.index.dictionary(Vars.Languages.ENGLISH);
                         dict.add(words);
-                        return new Result(200, this.command, "\"Words added to dictionary\"").setCount(dict.getSize());
+                        return new Result(200, this.command, "\"Words added to dictionary\"");
                     }
-
                     return new Result(428, this.command, "\"JSON http request body expected\"");
+
                 }else if(objectSelector.equals("wikipedia")){
 
                     String wikiTitle = this.get(2);
                     Article wikiArticle = Parser.connectors.wikipedia(wikiTitle);
-                    ArticlesClient articles = new ArticlesClient(config.defaultDomain());
+                    ArticlesClient articles = new ArticlesClient(config);
                     articles.create(wikiArticle);
-                    return new Result(
-                            this.command,
-                            "article",
-                            wikiArticle.toString(),
-                            1
-                    );
+                    return new Result(this.command, "article", wikiArticle);
                 }else if(objectSelector.equals("uri")){ //Parsing URL or file with URI
 
                     //A uri has been appended to the request URL. Parse that.
@@ -571,22 +483,12 @@ public class Command {
                     Article parsed = Parser.engines.parse(uri);
 
                     if(parser.getTraversable().size() > 1){
-                        return new Result(
-                                this.command,
-                                "articles",
-                                parser.getTraversable().toString(),
-                                parser.getTraversable().size()
-                        );
+
+                        return new Result(this.command, "articles", parser.getTraversable());
                     }
-                    return new Result(
-                            this.command,
-                            "article",
-                            parsed.toString(),
-                            1
-                    );
+                    return new Result(this.command, "article", parsed);
                 }
             }
-
             return new Result(404, this.command, "\"Parser action command required\"");
         }else if(primarySelector.equals("queue")){
 
@@ -605,23 +507,18 @@ public class Command {
                         return new Result(410, this.command, "\"No URI provided as {\"uri\" : \"URI\"}\"");
                     }
                     //Check if an article exists for this already
-                    ArticlesClient articles = new ArticlesClient(config.defaultDomain());
+                    ArticlesClient articles = new ArticlesClient(config);
                     if(articles.get(new Document("link", uri)).size() > 0){
 
 
 
                     }else{
 
-                        QueueClient queue = new QueueClient(config.defaultDomain());
+                        QueueClient queue = new QueueClient(config);
                         Article queued = queue.add(uri);
                         if(queued != null){
 
-                            return new Result(
-                                    this.command,
-                                    "article",
-                                    queued.toString(),
-                                    1
-                            );
+                            return new Result(this.command, "article", queued);
                         }
 
                         return new Result(505, "\"There was an error parsing the queue request\"");
@@ -638,12 +535,24 @@ public class Command {
         }else if(primarySelector.equals("search")){
 
             String query = this.selectorsString.replaceFirst("search/", "");
-            if(!this.targetDomain.equals("telifie") && !this.targetDomain.equals("")){
+            if(content != null){
 
-                config.setDefaultDomain(config.defaultDomain().setName(this.targetDomain));
+                try {
+
+                    Parameters params = new Parameters(content);
+                    return Search.execute(config, query, params);
+                }catch(NullPointerException n){
+
+                    return new Result(428, this.command, "\"JSON http request body expected\"");
+                }
             }
 
-            return new Search(config, query).result();
+            if(!this.targetDomain.equals("telifie") && !this.targetDomain.equals("")){
+
+                config.setDomain(config.getDomain().setName(this.targetDomain));
+            }
+            return Search.execute(config, query, new Parameters(100, 0, "articles") );
+
         }else if(primarySelector.equals("server")){ //Accessing server
 
             if(this.selectors.length >= 2){
@@ -684,7 +593,7 @@ public class Command {
 
                 String appId = this.get(2);
                 Authentication auth = new Authentication(appId);
-                AuthenticationClient authentications = new AuthenticationClient(config.defaultDomain());
+                AuthenticationClient authentications = new AuthenticationClient(config);
                 if(authentications.authenticate(auth)){
 
                     //TODO
@@ -700,7 +609,7 @@ public class Command {
             if(this.selectors.length >= 2){
 
                 String email = this.get(1);
-                UsersClient usersClient = new UsersClient(config.defaultDomain());
+                UsersClient usersClient = new UsersClient(config);
                 if(usersClient.userExistsWithEmail(email)){
 
                     User user = usersClient.getUserWithEmail(email);
@@ -742,7 +651,7 @@ public class Command {
             if(this.selectors.length >= 3){
 
                 String email = this.get(1), code = Tool.md5(this.get(2));
-                UsersClient users = new UsersClient(config.defaultDomain());
+                UsersClient users = new UsersClient(config);
                 User user = users.getUserWithEmail(email);
                 if(user.hasToken(code)){ //Check if user has the right code
 
@@ -753,38 +662,27 @@ public class Command {
                     }
 
                     Authentication auth = new Authentication(user);
-                    AuthenticationClient auths = new AuthenticationClient(config.defaultDomain());
+                    AuthenticationClient auths = new AuthenticationClient(config);
                     auths.authenticate(auth);
                     JSONObject json = new JSONObject(user.toString());
                     json.put("authentication", auth.toJson());
 
-                    return new Result(
-                            this.command,
-                            "user",
-                            json.toString(),
-                            1
-                    );
+                    return new Result(this.command, "user", json);
                 }
 
                 return new Result(403, "\"Invalid verification code provided\"");
             }
-
             return new Result(404, this.command, "\"Invalid command received\"");
         }else if(primarySelector.equals("timelines")){
 
             if(this.selectors.length >= 2){
 
                 String objectId = this.get(1);
-                TimelinesClient timelines = new TimelinesClient(config.defaultDomain());
+                TimelinesClient timelines = new TimelinesClient(config);
                 Timeline timeline = timelines.getTimeline(objectId);
                 if(timeline != null){
 
-                    return new Result(
-                            this.command,
-                            "timeline",
-                            timeline.toString(),
-                            1
-                    );
+                    return new Result(this.command, "timeline", timeline);
                 }
 
                 return new Result(404, this.command, "\"No timeline found for " + objectId + "\"");
@@ -813,8 +711,7 @@ public class Command {
                             return new Result(
                                     this.command,
                                     "connector",
-                                    newConnector.toString(),
-                                    1
+                                    newConnector
                             );
                         }
 
@@ -831,29 +728,19 @@ public class Command {
             //TODO Do not get files everytime, do this once when the server starts
             ConnectorsClient connectors = new ConnectorsClient();
             ArrayList<Connector> all = connectors.getConnectors();
-            return new Result(
-                    this.command,
-                    "connectors",
-                    all.toString(),
-                    all.size()
-            );
+            return new Result(this.command, "connectors", all);
         }else if(primarySelector.equals("sources")){
 
             if(this.selectors.length >= 2){
 
-                SourcesClient sources = new SourcesClient(config.defaultDomain());
+                SourcesClient sources = new SourcesClient(config);
                 if (objectSelector.equals("id")){ //Getting source by ID
 
                     String sourceId = this.get(2);
                     try{
 
                         Source source = sources.get(sourceId);
-                        return new Result(
-                                this.command,
-                                "source",
-                                source.toString(),
-                                1
-                        );
+                        return new Result(this.command, "source", source);
                     }catch(NullPointerException n){
 
                         return new Result(404, this.command, "\"No source found\"");
@@ -866,12 +753,7 @@ public class Command {
                         Source newSource = new Source(content);
                         if(sources.create(newSource)){
 
-                            return new Result(
-                                    this.command,
-                                    "source",
-                                    newSource.toString(),
-                                    1
-                            );
+                            return new Result(this.command, "source", newSource);
                         }
 
                         return new Result(505, this.command, "\"Failed to make source\"");
@@ -884,16 +766,10 @@ public class Command {
                 ArrayList<Source> foundSources = sources.find(search);
                 if(foundSources.size() > 0){
 
-                    return new Result(
-                            this.command,
-                            "sources",
-                            foundSources.toString(),
-                            foundSources.size()
-                    );
+                    return new Result(this.command, "sources", foundSources);
                 }
 
                 return new Result(404, this.command, "\"No sources found\"");
-
             }
 
             //TODO return all Sources if nothing is set

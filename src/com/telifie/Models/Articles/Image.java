@@ -63,7 +63,7 @@ public class Image implements Serializable {
         return "{" +
                 (url == null || url.equals("null") ? "" : "\"url\" : \"" + url + "\",") +
                 (caption == null || caption.equals("null") ? "" : "\"caption\" : \"" + caption + "\",") +
-                (source == null || source.equals("null") ? "" : "\"url\" : \"" + source + '\"') +
+                (source == null || source.equals("null") ? "" : "\"source\" : \"" + source + '\"') +
                 '}';
     }
 }

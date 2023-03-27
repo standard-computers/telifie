@@ -12,6 +12,7 @@ import java.util.Iterator;
 public class Article implements Serializable {
 
     private String id, title, link, icon, description;
+    private double priority = 1.01;
     private boolean verified = false;
     private String content;
     private ArrayList<String> tags;
@@ -37,7 +38,7 @@ public class Article implements Serializable {
         this.link = document.getString("link");
         this.icon = document.getString("icon");
         this.description = document.getString("description");
-
+        this.priority = (document.getDouble("priority") == null ? 1.01 : document.getDouble("priority"));
         String contentString = (document.getString("content") != null ? document.getString("content").replaceAll("\\s+|\\r?\\n", " ") : "");
         this.content = contentString.replaceAll("\"", "&quot;");
         this.origin = (document.getInteger("origin") == null ? 0 : document.getInteger("origin"));
@@ -143,6 +144,14 @@ public class Article implements Serializable {
         this.description = description;
     }
 
+    public double getPriority() {
+        return priority;
+    }
+
+    public void setPriority(double priority) {
+        this.priority = priority;
+    }
+
     public String getContent() {
         return content;
     }
@@ -242,10 +251,10 @@ public class Article implements Serializable {
                 (link == null ? "" : ", \"link\" : \"" + link + '\"') +
                 (icon == null ? "" : ", \"icon\" : \"" + icon + '\"') +
                 (description == null || description.equals("") ? "" : ", \"description\" : \"" + description + '\"') +
+                (priority == 0 ? "" : ", \"priority\" : " + priority) +
                 (content == null ? "" : ", \"content\" : \"" + content + "\"") +
                 ", \"tags\" : " + tags +
                 (images.equals("null") ? "" : ", \"images\" : " + images) +
-//                ", \"images\" : " + images +
                 ", \"attributes\" : " + attributes +
                 ", \"associations\" : " + associations +
                 ", \"data_sets\" : " + dataSets +

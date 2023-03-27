@@ -12,7 +12,7 @@ public class Configuration implements Serializable {
     private User user;
     private Authentication authentication = null;
     private String license = null;
-    private ArrayList<Domain> domains = new ArrayList<>();
+    private Domain domain;
 
     public User getUser() {
         return user;
@@ -38,20 +38,12 @@ public class Configuration implements Serializable {
         this.license = license;
     }
 
-    public Domain defaultDomain(){
-        return this.domains.get(0);
+    public Domain getDomain() {
+        return domain;
     }
 
-    public void setDefaultDomain(Domain domain){
-        this.domains.add(0, domain);
-    }
-
-    public void addDomain(Domain domain){
-        this.domains.add(domain);
-    }
-
-    public Domain getDomain(int index){
-        return this.domains.get(index);
+    public void setDomain(Domain domain) {
+        this.domain = domain;
     }
 
     public boolean save(String systemDir){
@@ -62,11 +54,10 @@ public class Configuration implements Serializable {
 
     @Override
     public String toString() {
-        return "{" +
-                "user : " + user +
+        return "{user : " + user +
                 ", authentication : " + authentication +
                 ", license : '" + license + '\'' +
-                ", domains : " + domains +
+                ", domain : " + domain +
                 '}';
     }
 }

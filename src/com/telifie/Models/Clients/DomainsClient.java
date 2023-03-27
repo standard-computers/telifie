@@ -6,6 +6,7 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.telifie.Models.Domain;
+import com.telifie.Models.Utilities.Configuration;
 import org.bson.Document;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,11 +15,10 @@ import java.util.List;
 public class DomainsClient extends Client {
 
     /**
-     * Creates a DomainsClient for interfacing with domains in database.
-     * @param domain Working domain that contains to domains to interface with
+     *
      */
-    public DomainsClient(Domain domain){
-        super(domain);
+    public DomainsClient(Configuration config){
+        super(config);
         this.collection = "domains";
     }
 
@@ -77,7 +77,7 @@ public class DomainsClient extends Client {
         if(this.insertOne(Document.parse(domain.toString()))){
 
             //Now setup collections in the databases to be prepared for use.
-            try(MongoClient mongoClient = MongoClients.create(super.domain.getUri())){
+            try(MongoClient mongoClient = MongoClients.create(super.config.getDomain().getUri())){
 
                 MongoDatabase database = mongoClient.getDatabase("domains-articles");
                 database.createCollection(domain.getAlt());

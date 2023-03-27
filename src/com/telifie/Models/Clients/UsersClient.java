@@ -2,6 +2,7 @@ package com.telifie.Models.Clients;
 
 import com.telifie.Models.Domain;
 import com.telifie.Models.User;
+import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Tool;
 import org.bson.Document;
 
@@ -12,8 +13,8 @@ public class UsersClient extends Client {
         super.collection = "users";
     }
 
-    public UsersClient(Domain domain) {
-        super(domain);
+    public UsersClient(Configuration config) {
+        super(config);
         super.collection = "users";
     }
 
