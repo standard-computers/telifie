@@ -318,6 +318,8 @@ public class Parser {
 
             return wikiArticle;
         }
+
+
     }
 
     /**
@@ -447,7 +449,7 @@ public class Parser {
          * Tokenizes provided text to be encoded
          * @param text
          */
-        public static List<String[]> tokenize(String text){
+        public static List<String[]> tokenize(String text, boolean cleaned){
             sentences = new ArrayList<String>();
             List<String[]> tokens = new ArrayList<>();
             StringBuilder currentSentence = new StringBuilder();
@@ -464,10 +466,26 @@ public class Parser {
             }
 
             for(String sentence : sentences){
+                if(cleaned){
+                    sentence = clean(sentence);
+                }
                 tokens.add(sentence.split("\\s"));
             }
 
             return tokens;
+        }
+
+        public static List<String[]> tokenize(String text){
+            return tokenize(text, false);
+        }
+
+        /**
+         * Cleans text for TNN
+         * @param text
+         * @return
+         */
+        public static String clean(String text){
+            return clean(text, true, true, true);
         }
 
         public static String clean(String text, boolean removeNumbers, boolean removeStopwords, boolean removePunctuation){

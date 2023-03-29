@@ -20,33 +20,57 @@ public class Search {
     public static Result execute(Configuration config, String query, Parameters params){
 
         query = URLDecoder.decode(query, StandardCharsets.UTF_8).toLowerCase().trim();
-        Result result = new Result(
+        return new Result(
                 query,
                 Search.quickResults(config, query),
                 Search.executeQuery(config, query, params)
-            );
-
-        return result;
+        );
     }
 
     private static ArrayList executeQuery(Configuration config, String query, Parameters params){
 
+        String[] tokens = Parser.encoder.tokenize(query, true).get(0);
+        String cleaned = Parser.encoder.clean(query);
+
+        //Filters to search by, making it flexible ladies
         ArrayList<Document> filters = new ArrayList<>();
+
+        //Always search by titles and links
+        filters.add(new Document("title", new Document("$in",
+                Arrays.asList(
+                        pattern(cleaned),
+                        pattern(query))
+                )
+            )
+        );
+        filters.add(new Document("link", new Document("$in",
+                Arrays.asList(
+                        pattern(cleaned),
+                        pattern(query))
+                )
+            )
+        );
+
+        //Do specialize query filters for uncleaned query ONLY
         if(generalFilter(query) != null){
             filters.add(generalFilter(query));
         }
-
-        filters.add(new Document("title", pattern(query) ) );
-        filters.add(new Document("link", pattern(query) ) );
-        filters.add(new Document("description", pattern(query) ) );
-        filters.add(new Document("tags", new Document("$in", Arrays.asList(query)) ) );
+        for(String token : tokens){
+            String[] properties = {"link", "title", "description"};
+            for(String property : properties){
+                filters.add(new Document(property, pattern(token) ) );
+            }
+        }
+        filters.add(new Document("tags", new Document("$in", Arrays.asList(tokens)) ) );
 
         ArticlesClient articles = new ArticlesClient(config);
         ArrayList<Article> results = articles.search(config, params, Search.filter(filters));
 
         //Sort for query & name relevance
-        Collections.sort(results, new RelevanceComparator(query));
-        Collections.reverse(results);
+        if(results != null && results.size() > 3){
+            Collections.sort(results, new RelevanceComparator(cleaned));
+            Collections.reverse(results);
+        }
         return results;
     }
 
@@ -80,28 +104,43 @@ public class Search {
             }
         }else if(query.matches("^attribute\\s*:\\s*.*")){
 
-            String[] spl = query.split(":"), spl2 = spl[1].split("=");
-            if(spl[1].contains("&")){ //Has multiple attribute requirements
+            String[] spl = query.split(":");
+            if(spl.length >= 2){
 
-                String[] attrReqs = spl[1].split("&");
-                List<Document> andFilters = new ArrayList<>();
-                for (String attr : attrReqs) {
+                String[] spl2 = spl[1].split("=");
+                if(spl2.length < 2){
 
-                    String[] args = attr.split("=");
-                    String key = args[0].trim(), value = args[1].trim();
-                    andFilters.add(new Document("attributes.key", pattern(key)));
-                    andFilters.add(new Document("attributes.value", pattern(value)));
+                    if(query.contains("&")){ //Has multiple attribute requirements
+
+                        String[] attrReqs = spl[1].split("&");
+                        List<Document> andFilters = new ArrayList<>();
+                        for (String attr : attrReqs) {
+
+                            String[] args = attr.split("=");
+                            String key = args[0].trim(), value = args[1].trim();
+                            andFilters.add(new Document("attributes.key", pattern(key)));
+                            andFilters.add(new Document("attributes.value", pattern(value)));
+                        }
+                        return new Document("$and", andFilters);
+
+                    }else{
+
+                        String key = spl2[0].trim();
+                        if(spl2.length >= 2){
+
+                            String value = spl2[1].trim();
+                            return new Document("$and",
+                                    Arrays.asList(
+                                            new Document("attributes.key", pattern( key ) ),
+                                            new Document("attributes.value", pattern( value ) )
+                                    )
+                            );
+                        }else{
+
+                            return new Document("attributes.key", pattern( key ) );
+                        }
+                    }
                 }
-                return new Document("$and", andFilters);
-            }else{
-
-                String key = spl2[0].trim(), value = spl2[1].trim();
-                return new Document("$and",
-                        Arrays.asList(
-                                new Document("attributes.key", pattern( key ) ),
-                                new Document("attributes.value", pattern( value ) )
-                        )
-                );
             }
 
         }else if(query.startsWith("define ")) {
@@ -119,7 +158,7 @@ public class Search {
     /**
      * Wrapper method for building document filters
      * @param filters
-     * @return
+     * @return Document filter for actual Search query
      */
     private static Document filter(ArrayList filters){
         return new Document("$or", filters);
@@ -175,7 +214,8 @@ public class Search {
     }
 
     private static Pattern pattern(String value){
-        return Pattern.compile(Pattern.quote(value), Pattern.CASE_INSENSITIVE);
+        String regex = "\\b" + Pattern.quote(value) + "\\w*\\b";
+        return Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
     }
 
     private static class RelevanceComparator implements Comparator<Article> {

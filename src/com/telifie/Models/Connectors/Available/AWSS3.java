@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.UUID;
 
 public class AWSS3 {
 
@@ -43,7 +44,7 @@ public class AWSS3 {
         if(!temps.exists()){
             temps.mkdirs();
         }
-        String tempFileName = Tool.md5(Tool.eid()) + "." + director.split("\\.")[director.split("\\.").length - 1];
+        String tempFileName = UUID.randomUUID().toString() + "." + director.split("\\.")[director.split("\\.").length - 1];
         Out.console("Writing file -> " +this.workingDirectory + "temps/" + tempFileName);
         File tempFile = new File(this.workingDirectory + "temps/" + tempFileName);
         FileOutputStream fos = null;

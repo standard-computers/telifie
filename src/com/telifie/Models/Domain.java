@@ -3,6 +3,7 @@ package com.telifie.Models;
 import com.telifie.Models.Utilities.Tool;
 import org.bson.Document;
 import java.io.Serializable;
+import java.util.UUID;
 
 public class Domain implements Serializable {
 
@@ -21,8 +22,8 @@ public class Domain implements Serializable {
     
     public Domain(String owner, String name, String icon, int permissions){
         this.owner = owner;
-        this.id = Tool.md5(Tool.shortEid());
-        this.alt = Tool.eid();
+        this.id = UUID.randomUUID().toString();
+        this.alt = Tool.randomReferenceCode();
         this.name = name;
         this.icon = icon;
         this.origin = Tool.epochTime();
@@ -30,7 +31,7 @@ public class Domain implements Serializable {
     }
 
     public Domain(Document document) throws NullPointerException {
-        this.id = (document.getString("id") == null ? Tool.md5(Tool.eid()) : document.getString("id"));
+        this.id = (document.getString("id") == null ? UUID.randomUUID().toString() : document.getString("id"));
         this.alt = document.getString("alt");
         this.icon = document.getString("icon");
         this.owner = document.getString("owner");

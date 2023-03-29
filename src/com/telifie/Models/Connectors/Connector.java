@@ -4,6 +4,7 @@ import com.telifie.Models.Utilities.*;
 import org.bson.Document;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class Connector implements Serializable {
 
@@ -17,7 +18,7 @@ public class Connector implements Serializable {
                 && (this.name = document.getString("name")) != null
                 && (this.refreshToken = document.getString("refresh_token")) != null) {
 
-            this.id = (document.getString("id") != null ? document.getString("id") : Tool.md5(Tool.eid()));
+            this.id = (document.getString("id") != null ? document.getString("id") : UUID.randomUUID().toString());
             ArrayList<Document> eps = (ArrayList<Document>) document.getList("endpoints", Document.class);
             if (eps != null) {
 

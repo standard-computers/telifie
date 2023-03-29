@@ -1,6 +1,6 @@
 package com.telifie.Models.Clients;
 
-import com.telifie.Models.Domain;
+import com.telifie.Models.Connectors.Available.TwilioSMS;
 import com.telifie.Models.User;
 import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Tool;
@@ -33,9 +33,16 @@ public class UsersClient extends Client {
         return this.findOne(new Document("email", email)) != null;
     }
 
-    public boolean lockUser(User user, String code){
+    public boolean lock(User user, String code){
 
         return this.updateOne(new Document("email", user.getEmail()), new Document("$set", new Document("token", Tool.md5(code))));
+    }
+
+    public boolean sendCode(User user){
+        String code = Tool.simpleCode();
+        TwilioSMS messenger = new TwilioSMS();
+        messenger.send(user.getPhone(), "+12243476722", "Welcome back! Your login code is " + code);
+        return this.lock(user, code);
     }
 
     public boolean updateUserTheme(User user, Document update){

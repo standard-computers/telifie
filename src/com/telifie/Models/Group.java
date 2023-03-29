@@ -4,6 +4,7 @@ import com.telifie.Models.Utilities.Tool;
 import com.telifie.Models.Utilities.Vars;
 import org.bson.Document;
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class Group {
 
@@ -13,14 +14,14 @@ public class Group {
     private ArrayList<Article> detailedList;
 
     public Group(String user, String name){
-        this.id = Tool.md5(Tool.eid());
+        this.id = UUID.randomUUID().toString();
         this.user = user;
         this.name = name;
         this.origin = Tool.epochTime();
     }
 
     public Group(String user, String icon, String name) {
-        this.id = Tool.md5(Tool.eid());
+        this.id = UUID.randomUUID().toString();
         this.user = user;
         this.icon = icon;
         this.name = name;
@@ -28,7 +29,7 @@ public class Group {
     }
 
     public Group(Document document) throws NullPointerException {
-        this.id = (document.getString("id") == null ? Tool.md5(Tool.eid()) : document.getString("id") );
+        this.id = (document.getString("id") == null ? Tool.md5(Tool.randomReferenceCode()) : document.getString("id") );
         this.user = document.getString("user");
         this.icon = document.getString("icon");
         this.name = document.getString("name");

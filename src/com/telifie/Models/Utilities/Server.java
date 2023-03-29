@@ -27,11 +27,12 @@ import java.net.Socket;
 
 public class Server {
 
-    private boolean running = true;
+    private boolean running = true, threaded = false;
     private ServerSocket serverSocket;
 
     public Server(boolean threaded){
 
+        this.threaded = threaded;
         if(threaded){
 
             Thread thread = new Thread(this::server);
@@ -156,7 +157,18 @@ public class Server {
                 connection.bind(socket);
                 httpService.handleRequest(connection, new BasicHttpContext());
             }
-        } catch (IOException | HttpException e) {
+        } catch(ConnectionClosedException e){
+
+            try {
+
+                serverSocket.close();
+                Server srv = new Server(false);
+
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+
+        }catch (IOException | HttpException e) {
             throw new RuntimeException(e);
         }
     }

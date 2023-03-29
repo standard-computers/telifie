@@ -3,6 +3,7 @@ package com.telifie.Models.Articles;
 import com.telifie.Models.Utilities.Tool;
 import org.bson.Document;
 import java.io.Serializable;
+import java.util.UUID;
 
 public class Source implements Serializable {
 
@@ -16,7 +17,7 @@ public class Source implements Serializable {
     }
 
     public Source(Document document) throws NullPointerException {
-        this.id = (document.getString("id") == null ? Tool.md5(Tool.eid()) : document.getString("id") );
+        this.id = (document.getString("id") == null ? UUID.randomUUID().toString() : document.getString("id") );
         this.icon = document.getString("icon");
         this.name = document.getString("name");
         this.url = document.getString("url");

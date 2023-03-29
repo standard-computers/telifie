@@ -1,7 +1,6 @@
 package com.telifie.Models.Utilities;
 
 import com.telifie.Models.User;
-import com.telifie.Models.Utilities.Tool;
 import org.bson.Document;
 import org.json.JSONObject;
 
@@ -12,8 +11,8 @@ public class Authentication {
 
     public Authentication(String user) {
         this.user = user;
-        this.token = Tool.md5(Tool.eid());
-        this.refreshToken = Tool.md5(Tool.eid());
+        this.token = Tool.md5(Tool.randomReferenceCode());
+        this.refreshToken = Tool.md5(Tool.randomReferenceCode());
         this.origin = (int) (System.currentTimeMillis() / 1000);
         this.expiration = this.origin + 2419000; //28 Days until expiration
     }

@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class User implements Serializable {
 
@@ -40,7 +41,7 @@ public class User implements Serializable {
      * @param phone
      */
     public User(String email, String name, String phone) {
-        this.id = Tool.md5(Tool.eid());
+        this.id = UUID.randomUUID().toString();
         this.email = email;
         this.name = name;
         this.phone = phone;
@@ -129,16 +130,6 @@ public class User implements Serializable {
             return true;
         }
         return false;
-    }
-
-    public boolean lock(){
-        //TODO Twilio sdk
-        String code = Tool.simpleCode();
-        TwilioSMS messenger = new TwilioSMS();
-        messenger.send(this.getPhone(), "+12243476722", "Welcome back! Your login code is " + code);
-        //TODO ini UsersClient class with domain to fix OOP issue
-        UsersClient users = new UsersClient("mongodb://137.184.70.9:27017");
-        return users.lockUser(this, code);
     }
 
     public boolean requestAuthenticationCode(){

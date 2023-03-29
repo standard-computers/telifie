@@ -8,6 +8,7 @@ import org.json.JSONObject;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.UUID;
 
 public class Article implements Serializable {
 
@@ -25,14 +26,14 @@ public class Article implements Serializable {
 
     public Article(){
 
-        this.id = Tool.md5(Tool.eid());
+        this.id = UUID.randomUUID().toString();
         this.title = title;
         this.link = link;
         this.origin = (int) (System.currentTimeMillis() / 1000);
     }
 
     public Article(Document document) throws NullPointerException {
-        this.id = (document.getString("id") == null ? Tool.md5(Tool.eid()) : document.getString("id"));
+        this.id = (document.getString("id") == null ? UUID.randomUUID().toString() : document.getString("id"));
         this.verified = (document.getBoolean("verified") == null ? false : document.getBoolean("verified"));
         this.title = document.getString("title");
         this.link = document.getString("link");
@@ -89,7 +90,7 @@ public class Article implements Serializable {
 
     public Article(String title, String link, String icon, String description) {
 
-        this.id = Tool.eid();
+        this.id = UUID.randomUUID().toString();
         this.title = title;
         this.link = link;
         this.icon = icon;

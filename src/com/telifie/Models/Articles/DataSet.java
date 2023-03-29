@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public class DataSet {
 
-    private String id = UUID.randomUUID().toString(), title, source;
+    private String id, title, source;
     private ArrayList<String[]> rows;
 
     public DataSet(Document document){

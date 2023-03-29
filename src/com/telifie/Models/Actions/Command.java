@@ -47,6 +47,9 @@ public class Command {
 
         String objectSelector = (this.selectors.length > 1 ? this.get(1) : "");
 
+        /*
+         * Accessing Domains
+         */
         if(primarySelector.equals("domains")){
 
             if(this.selectors.length >= 2){
@@ -238,7 +241,6 @@ public class Command {
 
             return new Result(404, "\"No Article ID provided\"");
         }
-
         /*
          * Accessing Groups
          * Save, unsave, create, delete, update,
@@ -392,7 +394,6 @@ public class Command {
 
                                     return new Result(200, this.command, "\"User photo updated\"");
                                 }
-
                                 return new Result(505, this.command, "\"Failed to update user photo\"");
                             }
                             return new Result(428, this.command, "\"JSON parameter 'photo' expected\"");
@@ -402,6 +403,7 @@ public class Command {
                     return new Result(404, this.command, "\"Invalid users update command\"");
                 }
                 return new Result(404, this.command, "\"Invalid command received\"");
+
             }else if(objectSelector.equals("create")){ //Creating User
 
                 if(content != null){
@@ -440,7 +442,11 @@ public class Command {
                     return new Result(404, this.command, "\"User not found\"");
                 }
             }
-        }else if(primarySelector.equals("parser")){ //Accessing parser
+        }
+        /*
+         * Accessing Parser
+         */
+        else if(primarySelector.equals("parser")){ //Accessing parser
 
             if(this.selectors.length >= 2){
 
@@ -474,14 +480,13 @@ public class Command {
                     ArticlesClient articles = new ArticlesClient(config);
                     articles.create(wikiArticle);
                     return new Result(this.command, "article", wikiArticle);
+
                 }else if(objectSelector.equals("uri")){ //Parsing URL or file with URI
 
                     //A uri has been appended to the request URL. Parse that.
                     String uri = this.command.replaceFirst("parser/uri/", "");
-
                     Parser parser = new Parser();
                     Article parsed = Parser.engines.parse(uri);
-
                     if(parser.getTraversable().size() > 1){
 
                         return new Result(this.command, "articles", parser.getTraversable());
@@ -490,49 +495,48 @@ public class Command {
                 }
             }
             return new Result(404, this.command, "\"Parser action command required\"");
-        }else if(primarySelector.equals("queue")){
+        }
+        /*
+         * Accessing Queue
+         */
+        else if(primarySelector.equals("queue")){
 
-            if(this.selectors.length >= 2){
-
-            }else if(content != null){
+            if(this.selectors.length >= 2) {
 
                 //User is uploading content to queue
                 String uri = content.getString("uri");
                 String connector = (content.getString("connector") == null ? null : content.getString("connector"));
-                if(connector == null || connector.equals("")){
+                if (connector == null || connector.equals("")) {
 
                     //TODO return draft article
-                    if(uri == null || uri.equals("")){
+                    if (uri == null || uri.equals("")) {
 
                         return new Result(410, this.command, "\"No URI provided as {\"uri\" : \"URI\"}\"");
                     }
                     //Check if an article exists for this already
                     ArticlesClient articles = new ArticlesClient(config);
-                    if(articles.get(new Document("link", uri)).size() > 0){
+                    if (articles.get(new Document("link", uri)).size() > 0) {
 
-
-
-                    }else{
+                    } else {
 
                         QueueClient queue = new QueueClient(config);
                         Article queued = queue.add(uri);
-                        if(queued != null){
+                        if (queued != null) {
 
                             return new Result(this.command, "article", queued);
                         }
-
                         return new Result(505, "\"There was an error parsing the queue request\"");
                     }
-
                     return new Result(200, uri, "\"Queued\"");
                 }
-
-                //TODO Queue from connector
-                return new Result(200, this.command, "\"Queued from connector\"");
             }
-
             return new Result(404, "\"Invalid queue command\"");
-        }else if(primarySelector.equals("search")){
+
+        }
+        /*
+         * Accessing Search
+         */
+        else if(primarySelector.equals("search")){
 
             String query = this.selectorsString.replaceFirst("search/", "");
             if(content != null){
@@ -551,43 +555,39 @@ public class Command {
 
                 config.setDomain(config.getDomain().setName(this.targetDomain));
             }
-            return Search.execute(config, query, new Parameters(100, 0, "articles") );
+            return Search.execute(config, query, new Parameters(10, 0, "articles") );
 
-        }else if(primarySelector.equals("server")){ //Accessing server
+        }
+        /*
+         * Accessing Server
+         */
+        else if(primarySelector.equals("server")){ //Accessing server
 
             if(this.selectors.length >= 2){
 
                 boolean threaded = false;
                 if(this.get(2).equals("threaded") && this.get(3).equals("true")){
-
                     threaded = true;
                 }
-
-                if(this.get(1).equals("https")){
-
-                    Out.console("Starting HTTPS server...");
-                    new HttpsServer(config, threaded);
-                }else if(this.get(1).equals("http")){
-
-                    Out.console("Starting HTTP server...");
-                    new Server(threaded);
-                }
+                Out.console("Starting HTTP server...");
+                new Server(threaded);
             }
 
             Out.console("Starting HTTP server...");
             boolean threaded = false;
             if(this.get(2).equals("threaded") && this.get(3).equals("true")){
-
                 threaded = true;
             }
             try{
-
                 new Server(threaded);
             }catch(Exception e){
-
                 new Server(threaded);
             }
-        }else if(primarySelector.equals("authenticate")){ //authentication
+        }
+        /*
+         * Authenticate an app for backend use to facilitate user authentication
+         */
+        else if(primarySelector.equals("authenticate")){ //authentication
 
             if(this.selectors.length >= 3 && this.get(1).equals("app")){
 
@@ -596,23 +596,30 @@ public class Command {
                 AuthenticationClient authentications = new AuthenticationClient(config);
                 if(authentications.authenticate(auth)){
 
-                    //TODO
-
+                    Out.console("App authenticated with ID: " + appId);
+                    Out.console("One-time see authentication information below:");
+                    Out.console("==============================================");
+                    Out.console(auth.toJson().toString(4));
+                    Out.console("==============================================");
+                    return new Result(this.command, "authentication", auth.toJson());
                 }else{
 
-                    Out.error("Failed to authorize app with ID: " + appId);
+                    return new Result(505, "\"Failed creating app authentication\"");
                 }
             }
-
-        }else if(primarySelector.equals("connect")){
+        }
+        /*
+         * Connect: Creating or logging in user
+         */
+        else if(primarySelector.equals("connect")){
 
             if(this.selectors.length >= 2){
 
                 String email = this.get(1);
-                UsersClient usersClient = new UsersClient(config);
-                if(usersClient.userExistsWithEmail(email)){
+                UsersClient users = new UsersClient(config);
+                if(users.userExistsWithEmail(email)){
 
-                    User user = usersClient.getUserWithEmail(email);
+                    User user = users.getUserWithEmail(email);
                     if(user.getPermissions() == 0){ //Email needs verified
 
                         ConnectorsClient connectors = new ConnectorsClient();
@@ -621,32 +628,34 @@ public class Command {
 
                             SGrid sg = new SGrid(sendgrid);
                             String code = Tool.shortEid();
-                            if(usersClient.lockUser(user, code)){
+                            if(users.lock(user, code)){
 
                                 if(sg.sendAuthenticationCode(user.getEmail(), code)){
 
                                 }
-
                                 return new Result(505, this.command, "\"Failed to email code through SendGrid\"");
                             }
-
                             return new Result(505, this.command, "\"Failed to lock users account\"");
                         }
                         return new Result(410, "\"Please create SendGrid Connector information\"");
+
                     }else if(user.getPermissions() >= 1){ //Phone needs verified
 
-                        if(user.lock()){
+                        if(users.sendCode(user)){
 
                             return new Result(200, "\"Authentication code sent\"");
                         }
-
                         return new Result(501, "\"Failed to send code\"");
                     }
                 }
-
                 return new Result(404, "\"Account not found\"");
             }
-        }else if(primarySelector.startsWith("verify")){ //Provided /verify/[USER_EMAIL]/[VERIFICATION_CODE]
+            return new Result(428, "\"Need more params\"");
+        }
+        /*
+         * Verify: Unlocking account using one-time 2fa token
+         */
+        else if(primarySelector.startsWith("verify")){ //Provided /verify/[USER_EMAIL]/[VERIFICATION_CODE]
 
             if(this.selectors.length >= 3){
 
@@ -669,11 +678,14 @@ public class Command {
 
                     return new Result(this.command, "user", json);
                 }
-
                 return new Result(403, "\"Invalid verification code provided\"");
             }
             return new Result(404, this.command, "\"Invalid command received\"");
-        }else if(primarySelector.equals("timelines")){
+        }
+        /*
+         * Timelines: Accessing the timelines (history) of objects
+         */
+        else if(primarySelector.equals("timelines")){
 
             if(this.selectors.length >= 2){
 
@@ -684,11 +696,10 @@ public class Command {
 
                     return new Result(this.command, "timeline", timeline);
                 }
-
                 return new Result(404, this.command, "\"No timeline found for " + objectId + "\"");
             }
-
             return new Result(428, this.command, "\"Please provide object ID to get timeline\"");
+
         }else if(primarySelector.equals("messaging")){
 
             //TODO sending/receiving messages
@@ -714,13 +725,10 @@ public class Command {
                                     newConnector
                             );
                         }
-
                         return new Result(505, this.command, "\"Failed to create Connector\"");
                     }
-
                     return new Result(428, this.command, "\"JSON body expected to create connector\"");
                 }
-
                 new Result(404, this.command, "\"Invalid connectors action provided\"");
             }
 
@@ -729,7 +737,11 @@ public class Command {
             ConnectorsClient connectors = new ConnectorsClient();
             ArrayList<Connector> all = connectors.getConnectors();
             return new Result(this.command, "connectors", all);
-        }else if(primarySelector.equals("sources")){
+        }
+        /*
+         * Interacting with sources
+         */
+        else if(primarySelector.equals("sources")){
 
             if(this.selectors.length >= 2){
 
@@ -755,26 +767,21 @@ public class Command {
 
                             return new Result(this.command, "source", newSource);
                         }
-
                         return new Result(505, this.command, "\"Failed to make source\"");
                     }
-
                     return new Result(428, this.command, "\"JSON request body expected\"");
-                } //Searching sources by title
+                }
 
+                //Searching for sources by name
                 String search = this.get(1);
                 ArrayList<Source> foundSources = sources.find(search);
                 if(foundSources.size() > 0){
 
                     return new Result(this.command, "sources", foundSources);
                 }
-
                 return new Result(404, this.command, "\"No sources found\"");
             }
-
-            //TODO return all Sources if nothing is set
         }
-
         return new Result(200, this.command, "\"No command received\"");
     }
 }
