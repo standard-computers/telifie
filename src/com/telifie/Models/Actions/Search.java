@@ -61,14 +61,14 @@ public class Search {
                 filters.add(new Document(property, pattern(token) ) );
             }
         }
-        filters.add(new Document("tags", new Document("$in", Arrays.asList(tokens)) ) );
+//        filters.add(new Document("tags", new Document("$in", Arrays.asList(tokens)) ) );
 
         ArticlesClient articles = new ArticlesClient(config);
         ArrayList<Article> results = articles.search(config, params, Search.filter(filters));
 
         //Sort for query & name relevance
         if(results != null && results.size() > 3){
-            Collections.sort(results, new RelevanceComparator(cleaned));
+            Collections.sort(results, new RelevanceComparator(query));
             Collections.reverse(results);
         }
         return results;

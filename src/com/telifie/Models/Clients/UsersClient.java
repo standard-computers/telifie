@@ -3,15 +3,11 @@ package com.telifie.Models.Clients;
 import com.telifie.Models.Connectors.Available.TwilioSMS;
 import com.telifie.Models.User;
 import com.telifie.Models.Utilities.Configuration;
+import com.telifie.Models.Utilities.Theme;
 import com.telifie.Models.Utilities.Tool;
 import org.bson.Document;
 
 public class UsersClient extends Client {
-
-    public UsersClient(String mongoUri) {
-        super(mongoUri);
-        super.collection = "users";
-    }
 
     public UsersClient(Configuration config) {
         super(config);
@@ -45,18 +41,16 @@ public class UsersClient extends Client {
         return this.lock(user, code);
     }
 
-    public boolean updateUserTheme(User user, Document update){
-
+    public boolean updateUserTheme(User user, Theme theme){
         return super.updateOne(
             new Document("id", user.getId()),
             new Document("$set",
-                    new Document("theme", update)
+                    new Document("theme", Document.parse(theme.toString()))
             )
         );
     }
 
     public boolean updateUserPhoto(User user, String photoUri){
-
         return super.updateOne(
                 new Document("id", user.getId()),
                 new Document("$set",
@@ -66,12 +60,10 @@ public class UsersClient extends Client {
     }
 
     public boolean createUser(User user){
-
         return super.insertOne(Document.parse(user.toString()));
     }
 
     public boolean upgradePermissions(User user){
-
         return super.updateOne(
             new Document("email", user.getEmail()),
                 new Document("$set",

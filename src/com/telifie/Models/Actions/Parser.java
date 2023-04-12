@@ -57,14 +57,14 @@ public class Parser {
             }
             parsed.add(url);
             try {
-
-                Connection.Response response = Jsoup.connect(url).execute();
+                Connection.Response response = Jsoup.connect(url)
+                        .userAgent("telifie/1.0")
+                        .execute();
                 if(response.statusCode() == 200){
 
                     Document root = response.parse();
                     DocumentExtract extractor = new DocumentExtract(root);
                     Article article = extractor.extract(url);
-
                     ArrayList<String> links = Tool.extractLinks(root.getElementsByTag("a"), uri);
                     if(links.size() > 0){
 
@@ -74,16 +74,13 @@ public class Parser {
                             boolean isNotParsed = !isParsed(link);
                             //Link can't have been parsed and must be parsable as website
                             if(isNotParsed) {
-
                                 Article child = website(link, depth + 1);
                                 if (child != null) { //Then should be making an association
                                     String referenceString = child.getTitle();
-
-                                        Child child_association = new Child(child.getId(), child.getIcon(), referenceString, "Page");
-                                        child_association.setId(child.getId());
-                                        pages.addArticle(child_association);
+                                    Child child_association = new Child(child.getId(), child.getIcon(), referenceString, "Page");
+                                    child_association.setId(child.getId());
+                                    pages.addArticle(child_association);
                                 }
-
                             }else{
                                 if(Tool.containsAnyOf(new String[]{"facebook", "instagram", "spotify", "linkedin", "youtube"}, link)){
 
@@ -97,26 +94,19 @@ public class Parser {
                                     article.addAttribute(new Attribute(capitalizedDomain, value));
                                 }
                             } //Not link that belongs to parent
-
                         } //End for loop
-
                         if(pages.size() >= 1){
                             article.addAssociation(pages);
                         }
-
                     } //End if links > 0
-
-//                    Out.console(article.toJson().toString(4));
+                    Out.console(article.toJson().toString(4));
                     if(article.getLink().contains(new URL(uri).getHost())) {
                         Parser.traversable.add(article); //Push new articles to traversable for upload.
                     }
                     return article;
-                } //End if 200
-
+                }
                 return null;
-
             } catch (IOException e) {
-
                 return null;
             }
         }

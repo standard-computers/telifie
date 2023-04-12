@@ -1,11 +1,38 @@
 package com.telifie.Models.Utilities;
 
 import org.bson.Document;
-import org.json.JSONObject;
-
 import java.io.Serializable;
 
 public class Theme implements Serializable {
+
+    private String name, font, background, darkBackground, borderColor;
+    private int cornerRadius;
+    private Color color;
+    private boolean alwaysDark = false;
+
+    public Theme(Document document){
+        this.name = document.getString("name");
+        this.background = document.getString("background");
+        this.cornerRadius = document.getInteger("corner_radius");
+        this.color = new Color(document.get("color", Document.class));
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return "{\"name\" : \"" + name + '\"' +
+                ", \"background\" : \"" + background + '\"' +
+                ", \"corner_radius\" : " + cornerRadius +
+                ", \"color\" : " + color +
+                '}';
+    }
 
     class Color {
 
@@ -59,57 +86,5 @@ public class Theme implements Serializable {
                     ", \"light\" : \"" + light + '\"' +
                     '}';
         }
-    }
-
-    private String name, background;
-    private int cornerRadius;
-    private Color color;
-
-    public Theme(Document document){
-        this.name = document.getString("name");
-        this.background = document.getString("background");
-        this.cornerRadius = document.getInteger("corner_radius");
-        this.color = new Color(document.get("color", Document.class));
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getBackground() {
-        return background;
-    }
-
-    public void setBackground(String background) {
-        this.background = background;
-    }
-
-    public int getCornerRadius() {
-        return cornerRadius;
-    }
-
-    public void setCornerRadius(int cornerRadius) {
-        this.cornerRadius = cornerRadius;
-    }
-
-    public Color getColor() {
-        return color;
-    }
-
-    public void setColor(Color color) {
-        this.color = color;
-    }
-
-    @Override
-    public String toString() {
-        return "{\"name\" : \"" + name + '\"' +
-                ", \"background\" : \"" + background + '\"' +
-                ", \"corner_radius\" : " + cornerRadius +
-                ", \"color\" : " + color +
-                '}';
     }
 }

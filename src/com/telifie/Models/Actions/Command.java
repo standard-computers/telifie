@@ -1,7 +1,6 @@
 package com.telifie.Models.Actions;
 
 import com.telifie.Models.*;
-import com.telifie.Models.Articles.Source;
 import com.telifie.Models.Clients.*;
 import com.telifie.Models.Connectors.Available.SGrid;
 import com.telifie.Models.Connectors.Connector;
@@ -376,8 +375,8 @@ public class Command {
                     String userEmail = config.getUser().getEmail();
                     User changedUser = users.getUserWithEmail(userEmail);
                     if(this.get(2).equals("theme")){
-
-                        if(users.updateUserTheme(users.getUserWithEmail(userEmail), content)){
+                        Theme theme = new Theme(content);
+                        if(users.updateUserTheme(users.getUserWithEmail(userEmail), theme)){
 
                             return new Result(this.command, "user", changedUser);
                         }
@@ -386,12 +385,9 @@ public class Command {
                     }else if(this.get(2).equals("photo")){
                         
                         if(content != null){
-                            
                             if(content.getString("photo") != null) {
-
                                 String photoUri = content.getString("photo");
                                 if (users.updateUserPhoto(changedUser, photoUri)) {
-
                                     return new Result(200, this.command, "\"User photo updated\"");
                                 }
                                 return new Result(505, this.command, "\"Failed to update user photo\"");
@@ -448,53 +444,59 @@ public class Command {
          */
         else if(primarySelector.equals("parser")){ //Accessing parser
 
-            if(this.selectors.length >= 2){
+            if(content != null){
 
-                if(objectSelector.equals("batch")){ //Importing CSV as batch of Articles
+                String mode = content.getString("mode");
+                if(mode != null){
 
-                    String uri = this.command.replaceFirst("parser/batch", "");
-                    ArrayList<Article> extractedArticles = Parser.engines.batch(uri, ",");
+                    if(mode.equals("batch")){ //Importing CSV as batch of Articles
 
-                    if(extractedArticles != null){
+                        String uri = this.command.replaceFirst("parser/batch", "");
+                        ArrayList<Article> extractedArticles = Parser.engines.batch(uri, ",");
+                        if(extractedArticles != null){
 
-                        return new Result(this.command, "articles", extractedArticles);
+                            return new Result(this.command, "articles", extractedArticles);
+                        }
+                        return new Result(404, this.command, "\"No articles from batch upload\"");
+
+                    }else if(mode.equals("dictionary")){ //Managing index dictionary for parsing
+
+                        if(content != null && content.getString("words") != null){
+
+                            String[] words = content.getString("words").split(" ");
+                            new Parser.index();
+                            Parser.index.dictionary dict = new Parser.index.dictionary(Vars.Languages.ENGLISH);
+                            dict.add(words);
+                            return new Result(200, this.command, "\"Words added to dictionary\"");
+                        }
+                        return new Result(428, this.command, "\"JSON http request body expected\"");
+
+                    }else if(mode.equals("wikipedia")){
+
+                        String wikiTitle = this.get(2);
+                        Article wikiArticle = Parser.connectors.wikipedia(wikiTitle);
+                        ArticlesClient articles = new ArticlesClient(config);
+                        articles.create(wikiArticle);
+                        return new Result(this.command, "article", wikiArticle);
+
+                    }else if(mode.equals("uri")){ //Parsing URL or file with URI
+
+                        String uri = content.getString("uri");
+                        if(uri != null && !uri.equals("")){
+
+                            Parser parser = new Parser();
+                            Article parsed = Parser.engines.parse(uri);
+                            if(parser.getTraversable().size() > 1){
+                                return new Result(this.command, "articles", parser.getTraversable());
+                            }
+                            return new Result(this.command, "article", parsed);
+                        }
+                        return new Result(428, this.command, "\"URI is required to parse in URI mode\"");
                     }
-                    return new Result(404, this.command, "\"No articles from batch upload\"");
-
-                }else if(objectSelector.equals("dictionary")){ //Managing index dictionary for parsing
-
-                    if(content != null && content.getString("words") != null){
-
-                        String[] words = content.getString("words").split(" ");
-                        Parser.index index = new Parser.index();
-                        Parser.index.dictionary dict = new Parser.index.dictionary(Vars.Languages.ENGLISH);
-                        dict.add(words);
-                        return new Result(200, this.command, "\"Words added to dictionary\"");
-                    }
-                    return new Result(428, this.command, "\"JSON http request body expected\"");
-
-                }else if(objectSelector.equals("wikipedia")){
-
-                    String wikiTitle = this.get(2);
-                    Article wikiArticle = Parser.connectors.wikipedia(wikiTitle);
-                    ArticlesClient articles = new ArticlesClient(config);
-                    articles.create(wikiArticle);
-                    return new Result(this.command, "article", wikiArticle);
-
-                }else if(objectSelector.equals("uri")){ //Parsing URL or file with URI
-
-                    //A uri has been appended to the request URL. Parse that.
-                    String uri = this.command.replaceFirst("parser/uri/", "");
-                    Parser parser = new Parser();
-                    Article parsed = Parser.engines.parse(uri);
-                    if(parser.getTraversable().size() > 1){
-
-                        return new Result(this.command, "articles", parser.getTraversable());
-                    }
-                    return new Result(this.command, "article", parsed);
                 }
+                return new Result(428, this.command, "\"Please select a parser mode\"");
             }
-            return new Result(404, this.command, "\"Parser action command required\"");
+            return new Result(428, this.command, "\"JSON http request body expected\"");
         }
         /*
          * Accessing Queue
@@ -537,51 +539,39 @@ public class Command {
          * Accessing Search
          */
         else if(primarySelector.equals("search")){
-
             String query = this.selectorsString.replaceFirst("search/", "");
             if(content != null){
-
                 try {
-
                     Parameters params = new Parameters(content);
                     return Search.execute(config, query, params);
                 }catch(NullPointerException n){
-
                     return new Result(428, this.command, "\"JSON http request body expected\"");
                 }
             }
-
             if(!this.targetDomain.equals("telifie") && !this.targetDomain.equals("")){
-
                 config.setDomain(config.getDomain().setName(this.targetDomain));
             }
             return Search.execute(config, query, new Parameters(10, 0, "articles") );
-
         }
         /*
-         * Accessing Server
+         * Accessing HttpServer
          */
         else if(primarySelector.equals("server")){ //Accessing server
-
             if(this.selectors.length >= 2){
-
-                boolean threaded = false;
-                if(this.get(2).equals("threaded") && this.get(3).equals("true")){
-                    threaded = true;
+                  if(this.get(2).equals("http")){
+                    Out.console("Starting HTTP server [TESTING PURPOSES ONLY]...");
+                    try{
+                        new HttpServer();
+                    }catch(Exception e){
+                        throw new RuntimeException(e);
+                    }
+                    return new Result(this.command, "server", "HTTP");
                 }
-                Out.console("Starting HTTP server...");
-                new Server(threaded);
-            }
-
-            Out.console("Starting HTTP server...");
-            boolean threaded = false;
-            if(this.get(2).equals("threaded") && this.get(3).equals("true")){
-                threaded = true;
             }
             try{
-                new Server(threaded);
+                new Server();
             }catch(Exception e){
-                new Server(threaded);
+                throw new RuntimeException(e);
             }
         }
         /*
@@ -737,50 +727,6 @@ public class Command {
             ConnectorsClient connectors = new ConnectorsClient();
             ArrayList<Connector> all = connectors.getConnectors();
             return new Result(this.command, "connectors", all);
-        }
-        /*
-         * Interacting with sources
-         */
-        else if(primarySelector.equals("sources")){
-
-            if(this.selectors.length >= 2){
-
-                SourcesClient sources = new SourcesClient(config);
-                if (objectSelector.equals("id")){ //Getting source by ID
-
-                    String sourceId = this.get(2);
-                    try{
-
-                        Source source = sources.get(sourceId);
-                        return new Result(this.command, "source", source);
-                    }catch(NullPointerException n){
-
-                        return new Result(404, this.command, "\"No source found\"");
-                    }
-
-                }else if(objectSelector.equals("create")){
-
-                    if(content != null){
-
-                        Source newSource = new Source(content);
-                        if(sources.create(newSource)){
-
-                            return new Result(this.command, "source", newSource);
-                        }
-                        return new Result(505, this.command, "\"Failed to make source\"");
-                    }
-                    return new Result(428, this.command, "\"JSON request body expected\"");
-                }
-
-                //Searching for sources by name
-                String search = this.get(1);
-                ArrayList<Source> foundSources = sources.find(search);
-                if(foundSources.size() > 0){
-
-                    return new Result(this.command, "sources", foundSources);
-                }
-                return new Result(404, this.command, "\"No sources found\"");
-            }
         }
         return new Result(200, this.command, "\"No command received\"");
     }

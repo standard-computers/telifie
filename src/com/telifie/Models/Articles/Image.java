@@ -23,30 +23,6 @@ public class Image implements Serializable {
         this.source = document.getString("source");
     }
 
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public String getCaption() {
-        return caption;
-    }
-
-    public void setCaption(String caption) {
-        this.caption = caption;
-    }
-
-    public String getSource() {
-        return source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
-
     public void identify(){
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
         // Load the image file

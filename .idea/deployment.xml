@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" autoUpload="Always" serverName="telifie-net-sv1" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false" autoUploadExternalChanges="true">
+    <option name="confirmBeforeUploading" value="false" />
+    <serverData>
+      <paths name="telifie-net-sv1">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/" local="$PROJECT_DIR$/target" web="/" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/target/archive-tmp" />
+            <excludedPath local="true" path="$PROJECT_DIR$/target/classes" />
+            <excludedPath local="true" path="$PROJECT_DIR$/target/generated-sources" />
+            <excludedPath local="true" path="$PROJECT_DIR$/target/maven-status" />
+            <excludedPath local="true" path="$PROJECT_DIR$/target/telifie-1.0.jar" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
+    </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
+  </component>
+</project>

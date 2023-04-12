@@ -27,17 +27,10 @@ public class ArticlesClient extends Client {
     }
 
     public boolean create(Article article){
-
-        Document document = Document.parse(article.toString());
-        if(super.insertOne(document)){
-
-            return true;
-        }
-        return false;
+        return super.insertOne(Document.parse(article.toString()));
     }
 
     public Article get(String articleId){
-
         return new Article(this.findOne(new Document("id", articleId)));
     }
 
@@ -72,27 +65,22 @@ public class ArticlesClient extends Client {
     }
 
     public ArrayList<Article> search(Configuration config, Parameters params, Document filter){
-
         String domainName = config.getDomain().getName();
         String targetDomain = (domainName.equals("telifie") || domainName.equals("") ? "telifie" : "domains-articles");
         String domainArticles = (domainName.equals("telifie") || domainName.equals("") ? "articles" : config.getDomain().getName());
         try(MongoClient mongoClient = MongoClients.create(config.getDomain().getUri())){
-
             MongoDatabase database = mongoClient.getDatabase(targetDomain);
             MongoCollection<Document> collection = database.getCollection(domainArticles);
             FindIterable<Document> iterable = collection.find(filter)
                     .sort(new BasicDBObject("priority", -1))
                     .skip(params.getSkip())
                     .limit(params.getResultsPerPage());
-
             ArrayList<Article> results = new ArrayList<>();
             for (Document document : iterable) {
                 results.add(new Article(document));
             }
-
             return results;
         }catch(MongoException e){
-
             return null;
         }
     }

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="07708bdb-c2dd-4e2c-b52a-a76b309a8516" name="telifie-net-sv1" url="http://telifie.net">
+        <fileTransfer rootFolder="/home" accessType="SFTP" host="142.93.241.209" port="22" sshConfigId="64e03afc-6337-4236-8e11-021e62d26444" sshConfig="root@142.93.241.209:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

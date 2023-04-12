@@ -18,30 +18,6 @@ public class DataSet {
         this.rows = (ArrayList<String[]>) document.get("rows", ArrayList.class);
     }
 
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getSource() {
-        return source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
-
-    public ArrayList<String[]> getRows() {
-        return rows;
-    }
-
-    public void setRows(ArrayList<String[]> rows) {
-        this.rows = rows;
-    }
-
     @Override
     public String toString() {
         ObjectMapper objectMapper = new ObjectMapper();

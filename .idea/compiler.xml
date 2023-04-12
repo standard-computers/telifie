@@ -9,8 +9,5 @@
         <module name="telifie" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="telifie" target="16" />
-    </bytecodeTargetLevel>
   </component>
 </project>

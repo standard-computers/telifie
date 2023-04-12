@@ -1,6 +1,5 @@
 package com.telifie.Models.Articles;
 
-import org.json.JSONObject;
 import java.io.Serializable;
 
 public class Attribute implements Serializable {
@@ -19,10 +18,4 @@ public class Attribute implements Serializable {
                 ", \"value\" : \"" + value + '\"' +
                 '}';
     }
-
-    public JSONObject toJson(){
-        JSONObject json = new JSONObject(this.toString());
-        return json;
-    }
-
 }

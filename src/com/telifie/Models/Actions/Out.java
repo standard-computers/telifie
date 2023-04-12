@@ -39,4 +39,16 @@ public class Out {
     public static void consoleJson(String input){
     }
 
+    public static void telifie() {
+        System.out.println("\n");
+        System.out.println("||===========================================================||");
+        System.out.println("||                                                           ||");
+        System.out.println("||  ,--------. ,------. ,--.    ,--. ,------. ,--. ,------.  ||");
+        System.out.println("||  '--.  .--' |  .---' |  |    |  | |  .---' |  | |  .---'  ||");
+        System.out.println("||     |  |    |  `--,  |  |    |  | |  `--,  |  | |  `--,   ||");
+        System.out.println("||     |  |    |  `---. |  '--. |  | |  |`    |  | |  `---.  ||");
+        System.out.println("||     `--'    `------' `-----' `--' `--'     `--' `------'  ||");
+        System.out.println("||                                                           ||");
+        System.out.println("||===========================================================||\n");
+    }
 }

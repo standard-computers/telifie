@@ -1,13 +1,11 @@
-package com.telifie.Models.Utilities;
+package com.telifie.Models.Actions;
 
-import com.telifie.Models.Actions.Command;
 import com.telifie.Models.Clients.AuthenticationClient;
-import com.telifie.Models.Clients.ConnectorsClient;
 import com.telifie.Models.Clients.UsersClient;
-import com.telifie.Models.Connectors.Available.AWSS3;
-import com.telifie.Models.Connectors.Connector;
 import com.telifie.Models.Domain;
 import com.telifie.Models.Result;
+import com.telifie.Models.Utilities.Authentication;
+import com.telifie.Models.Utilities.Configuration;
 import org.apache.http.*;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.StringEntity;
@@ -25,25 +23,12 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class Server {
+public class HttpServer {
 
-    private boolean running = true, threaded = false;
+    private boolean running = true;
     private ServerSocket serverSocket;
 
-    public Server(boolean threaded){
-
-        this.threaded = threaded;
-        if(threaded){
-
-            Thread thread = new Thread(this::server);
-            thread.start();
-        }else{
-
-            server();
-        }
-    }
-
-    private void server() {
+    public HttpServer() {
 
         HttpRequestHandler requestHandler = (request, response, context) -> {
 
@@ -69,65 +54,16 @@ public class Server {
                 AuthenticationClient authenticationClient = new AuthenticationClient(requestConfiguration);
                 if (authenticationClient.isAuthenticated(auth)) {
 
-                    String contentType = (request.getFirstHeader("Content-Type") == null ? "" : request.getFirstHeader("Content-Type").getValue());
-                    if (contentType.equals("application/octet-stream")
-                            || contentType.startsWith("multipart/form-data")) { //File upload
+                    String body = null;
+                    if (request instanceof HttpEntityEnclosingRequest) {
 
-                        String director = request.getRequestLine().getUri(); //Where the file should go
-                        ConnectorsClient connectors = new ConnectorsClient();
-                        Connector awss3 = connectors.getConnector("AWS");
-
-                        if (awss3 != null) {
-
-                            if (request instanceof HttpEntityEnclosingRequest) {
-
-                                HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
-                                InputStream inputStream = entity.getContent();
-                                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-                                try {
-                                    byte[] buffer = new byte[4096];
-                                    int bytesRead;
-                                    while ((bytesRead = inputStream.read(buffer)) != -1) {
-                                        outputStream.write(buffer, 0, bytesRead);
-                                    }
-                                } finally {
-                                    inputStream.close();
-                                    outputStream.close();
-                                    EntityUtils.consume(entity);
-                                }
-
-
-                                byte[] fileContents = outputStream.toByteArray();
-                                AWSS3 aws = new AWSS3(awss3);
-                                if (aws.upload(director, fileContents, false)) {
-
-                                    result = new Result(200, director, "\"" + awss3.getEndpoints().get(0).getUrl() + director + "\"");
-                                } else {
-
-                                    result = new Result(505, director, "\"Failed to upload file to provided director (AWS S3)\"");
-                                }
-                            }
-
-                        } else {
-
-                            result = new Result(505, director, "\"Please set AWS S3 Connector\"");
-                        }
-
-                    } else {
-
-                        //Check if request has a body
-                        String body = null;
-                        if (request instanceof HttpEntityEnclosingRequest) {
-
-                            HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
-                            body = EntityUtils.toString(entity);
-                        }
-                        requestConfiguration.setAuthentication(auth);
-                        UsersClient users = new UsersClient(requestConfiguration); //Ini UsersClient to find requesting user
-                        requestConfiguration.setUser(users.getUserWithId(auth.getUser())); //Set Configuration User as requesting user
-                        result = processRequest(requestConfiguration, method, query, body);
+                        HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
+                        body = EntityUtils.toString(entity);
                     }
+                    requestConfiguration.setAuthentication(auth);
+                    UsersClient users = new UsersClient(requestConfiguration); //Ini UsersClient to find requesting user
+                    requestConfiguration.setUser(users.getUserWithId(auth.getUser())); //Set Configuration User as requesting user
+                    result = processRequest(requestConfiguration, method, query, body);
                 } else {
 
                     result = new Result(403, "\"Invalid Auth Credentials\"");
@@ -162,7 +98,7 @@ public class Server {
             try {
 
                 serverSocket.close();
-                Server srv = new Server(false);
+                new HttpServer();
 
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
