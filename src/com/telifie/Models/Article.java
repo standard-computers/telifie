@@ -5,12 +5,11 @@ import com.telifie.Models.Articles.*;
 import com.telifie.Models.Utilities.Tool;
 import org.bson.Document;
 import org.json.JSONObject;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.UUID;
 
-public class Article implements Serializable {
+public class Article {
 
     private String id, title, link, icon, description;
     private double priority = 1.01;
@@ -25,10 +24,7 @@ public class Article implements Serializable {
     private int origin;
 
     public Article(){
-
         this.id = UUID.randomUUID().toString();
-        this.title = title;
-        this.link = link;
         this.origin = (int) (System.currentTimeMillis() / 1000);
     }
 
@@ -47,54 +43,32 @@ public class Article implements Serializable {
 
         ArrayList<Document> iterable = (ArrayList<Document>) document.getList("images", Document.class);
         if (iterable != null && iterable.size() >= 1) {
-
             for (Document doc : iterable) {
-
                 this.addImage(new Image(doc));
             }
         }
-
-        ArrayList<Document> iterable2 = (ArrayList<Document>) document.getList("attributes", Document.class);
-        if (iterable2 != null) {
-
-            for (Document doc : iterable2) {
-
+        ArrayList<Document> it2 = (ArrayList<Document>) document.getList("attributes", Document.class);
+        if (it2 != null) {
+            for (Document doc : it2) {
                 this.addAttribute(new Attribute(doc.getString("key"), doc.getString("value")));
             }
         }
-
-        ArrayList<Document> iterable3 = (ArrayList<Document>) document.getList("associations", Document.class);
-        if (iterable3 != null) {
-
-            for (Document doc : iterable3) {
-
+        ArrayList<Document> it3 = (ArrayList<Document>) document.getList("associations", Document.class);
+        if (it3 != null) {
+            for (Document doc : it3) {
                 this.addAssociation(new Association(doc));
             }
         }
-
-        ArrayList<Document> iterable4 = (ArrayList<Document>) document.getList("data_sets", Document.class);
-        if(iterable4 != null){
-
-            for(Document doc : iterable4){
-
+        ArrayList<Document> it4 = (ArrayList<Document>) document.getList("data_sets", Document.class);
+        if(it4 != null){
+            for(Document doc : it4){
                 this.addDataSet(new DataSet(doc));
             }
         }
-
         Document sourceDocument = document.get("source", Document.class);
         if (sourceDocument != null) {
-
             this.source = new Source(sourceDocument);
         }
-    }
-
-    public Article(String title, String link, String icon, String description) {
-
-        this.id = UUID.randomUUID().toString();
-        this.title = title;
-        this.link = link;
-        this.icon = icon;
-        this.description = description;
     }
 
     public String getId() {
@@ -103,14 +77,6 @@ public class Article implements Serializable {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public boolean isVerified() {
-        return verified;
-    }
-
-    public void setVerified(boolean verified) {
-        this.verified = verified;
     }
 
     public String getTitle() {
@@ -137,20 +103,8 @@ public class Article implements Serializable {
         this.icon = icon;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public double getPriority() {
-        return priority;
-    }
-
-    public void setPriority(double priority) {
-        this.priority = priority;
     }
 
     public String getContent() {
@@ -161,10 +115,6 @@ public class Article implements Serializable {
         this.content = content;
     }
 
-    public ArrayList<String> getTags() {
-        return tags;
-    }
-
     public void setTags(ArrayList<String> tags) {
         this.tags = tags;
     }
@@ -173,52 +123,29 @@ public class Article implements Serializable {
         return images;
     }
 
-    public void setImages(ArrayList<Image> images) {
-        this.images = images;
-    }
-
     public void addImage(Image image){
         this.images.add(image);
-    }
-
-    public ArrayList<Attribute> getAttributes() {
-        return attributes;
-    }
-
-    public void setAttributes(ArrayList<Attribute> attributes) {
-        this.attributes = attributes;
     }
 
     public void addAttribute(Attribute attr){
         this.attributes.add(attr);
     }
 
-    public ArrayList<Association> getAssociations() {
-        return associations;
-    }
-
-    public void setAssociations(ArrayList<Association> associations) {
-        this.associations = associations;
+    public boolean hasAttribute(String key){
+        for(Attribute attr : this.attributes){
+            if(attr.getKey().toLowerCase().trim().equals(key)){
+                return true;
+            }
+        }
+        return false;
     }
 
     public void addAssociation(Association ass){
         this.associations.add(ass);
     }
 
-    public ArrayList<DataSet> getDataSets() {
-        return dataSets;
-    }
-
-    public void setDataSets(ArrayList<DataSet> dataSets) {
-        this.dataSets = dataSets;
-    }
-
     public void addDataSet(DataSet dataSet){
         this.dataSets.add(dataSet);
-    }
-
-    public Source getSource() {
-        return source;
     }
 
     public void setSource(Source source) {
@@ -228,9 +155,7 @@ public class Article implements Serializable {
     @Override
     public String toString() {
         String tags = "[]";
-
         if(this.tags != null){
-
             StringBuilder sb = new StringBuilder();
             sb.append("[");
             for (int i = 0; i < this.tags.size(); i++) {
@@ -245,7 +170,6 @@ public class Article implements Serializable {
             tags = sb.toString();
 
         }
-
         return "{\"id\" : \"" + id + '\"' +
                 ", \"verified\" : " + verified +
                 ", \"title\" : \"" + title + '\"' +
@@ -270,17 +194,12 @@ public class Article implements Serializable {
     }
 
     public ArrayList<Event> compare(Article old){
-
         ArrayList<Event> changes = new ArrayList<>();
-
         Iterator<String> newKeys = this.toJson().keys();
         while (newKeys.hasNext()) {
-
             String key = newKeys.next();
             if(this.toJson().get(key) instanceof String){
-
                 if(old.toJson().has(key) && !this.toJson().getString(key.toString()).equals(old.toJson().getString(key.toString()))){ //If the value at key HAS changed
-
                     //i.e. {"title", "old_title_value", "new_title_value"}
                     changes.add(
                             new Event(
@@ -291,7 +210,6 @@ public class Article implements Serializable {
                             )
                     );
                 }else if(!old.toJson().has(key)){
-
                     changes.add(
                             new Event(
                                     Event.Type.PUT,
@@ -302,13 +220,11 @@ public class Article implements Serializable {
                     );
                 }
             }else if(this.toJson().get(key) instanceof ArrayList<?>){
-
                 if(!this.toJson().get(key).toString().equals(old.toJson().get(key).toString())){
 
                 }
             }
         }
-
         return changes;
     }
 }

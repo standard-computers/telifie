@@ -1,11 +1,10 @@
 package com.telifie.Models;
 
 import com.telifie.Models.Articles.CommonObject;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class Result implements Serializable {
+public class Result {
 
     private String id = UUID.randomUUID().toString(), query = "", object = "results";
     private Object results;

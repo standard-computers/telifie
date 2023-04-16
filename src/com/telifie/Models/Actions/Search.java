@@ -2,6 +2,7 @@ package com.telifie.Models.Actions;
 
 import com.fathzer.soft.javaluator.DoubleEvaluator;
 import com.telifie.Models.Article;
+import com.telifie.Models.Articles.Image;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Clients.UsersClient;
 import com.telifie.Models.Result;
@@ -20,11 +21,38 @@ public class Search {
     public static Result execute(Configuration config, String query, Parameters params){
 
         query = URLDecoder.decode(query, StandardCharsets.UTF_8).toLowerCase().trim();
-        return new Result(
-                query,
-                Search.quickResults(config, query),
-                Search.executeQuery(config, query, params)
-        );
+        ArrayList results = Search.executeQuery(config, query, params);
+        ArrayList<Article> articles = new ArrayList();
+        if(params.getIndex().equals("images")) {
+            ArrayList<Image> images = new ArrayList();
+            for(Object result : results){
+                Article article = (Article) result;
+                ArrayList<Image> articleImages = article.getImages();
+                if(articleImages != null && articleImages.size() > 0){
+                    for(Image image : articleImages){
+                        images.add(image);
+                    }
+                }
+            }
+            return new Result(query, "images", images);
+        }else if(params.getIndex().equals("locations")){
+            for(Object result : results){
+                Article article = (Article) result;
+                if((article.hasAttribute("latitude") && article.hasAttribute("longitude")) || article.hasAttribute("postal code") || article.hasAttribute("address") || article.hasAttribute("zip code")){
+                    articles.add(article);
+                }
+            }
+            return new Result(query, "articles", articles);
+        }else if(params.getIndex().equals("shopping")){
+            for(Object result : results){
+                Article article = (Article) result;
+                if(article.hasAttribute("cost") || article.hasAttribute("price") || article.hasAttribute("value")){
+                    articles.add(article);
+                }
+            }
+            return new Result(query, "articles", articles);
+        }
+        return new Result(query, Search.quickResults(config, query), results);
     }
 
     private static ArrayList executeQuery(Configuration config, String query, Parameters params){
@@ -36,20 +64,8 @@ public class Search {
         ArrayList<Document> filters = new ArrayList<>();
 
         //Always search by titles and links
-        filters.add(new Document("title", new Document("$in",
-                Arrays.asList(
-                        pattern(cleaned),
-                        pattern(query))
-                )
-            )
-        );
-        filters.add(new Document("link", new Document("$in",
-                Arrays.asList(
-                        pattern(cleaned),
-                        pattern(query))
-                )
-            )
-        );
+        filters.add(new Document("title", new Document("$in", Arrays.asList(pattern(cleaned), pattern(query)))));
+        filters.add(new Document("link", new Document("$in", Arrays.asList(pattern(cleaned), pattern(query)))));
 
         //Do specialize query filters for uncleaned query ONLY
         if(generalFilter(query) != null){
@@ -62,11 +78,8 @@ public class Search {
             }
         }
 //        filters.add(new Document("tags", new Document("$in", Arrays.asList(tokens)) ) );
-
         ArticlesClient articles = new ArticlesClient(config);
         ArrayList<Article> results = articles.search(config, params, Search.filter(filters));
-
-        //Sort for query & name relevance
         if(results != null && results.size() > 3){
             Collections.sort(results, new RelevanceComparator(query));
             Collections.reverse(results);
@@ -172,7 +185,7 @@ public class Search {
             try {
                 Double mathResult = new DoubleEvaluator().evaluate(query.replaceAll("\\$", ""));
                 quickResults.add(
-                        new CommonObject("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/wwdb/calculate.gif",
+                        new CommonObject("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/images/results/calculate.gif",
                                 Tool.formatNumber(mathResult),
                                 "", "Calculation")
                 );

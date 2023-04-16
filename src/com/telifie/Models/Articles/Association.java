@@ -1,10 +1,9 @@
 package com.telifie.Models.Articles;
 
 import org.bson.Document;
-import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Association implements Serializable {
+public class Association {
 
     private String icon, name;
     private ArrayList<Child> articles = new ArrayList<>();

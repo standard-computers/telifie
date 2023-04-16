@@ -1,13 +1,8 @@
 package com.telifie.Models.Articles;
 
-import java.io.Serializable;
-
 import org.bson.Document;
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.imgcodecs.Imgcodecs;
 
-public class Image implements Serializable {
+public class Image {
 
     private String url, caption, source;
 
@@ -21,17 +16,6 @@ public class Image implements Serializable {
         this.url = document.getString("url");
         this.caption = document.getString("caption");
         this.source = document.getString("source");
-    }
-
-    public void identify(){
-        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-        // Load the image file
-        Mat image = Imgcodecs.imread("image.jpg");
-        if (image.empty()) {
-            System.out.println("Error: Could not load image");
-        }else{
-
-        }
     }
 
     @Override

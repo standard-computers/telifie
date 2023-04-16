@@ -43,10 +43,6 @@ public class Domain implements Serializable {
         return uri;
     }
 
-    public void setUri(String uri) {
-        this.uri = uri;
-    }
-
     public String getId() {
         return id;
     }
@@ -59,24 +55,8 @@ public class Domain implements Serializable {
         return alt;
     }
 
-    public void setAlt(String alt) {
-        this.alt = alt;
-    }
-
-    public String getIcon() {
-        return icon;
-    }
-
-    public void setIcon(String icon) {
-        this.icon = icon;
-    }
-
     public String getOwner() {
         return owner;
-    }
-
-    public void setOwner(String owner) {
-        this.owner = owner;
     }
 
     public String getName() {
@@ -86,30 +66,6 @@ public class Domain implements Serializable {
     public Domain setName(String name) {
         this.name = name;
         return this;
-    }
-
-    public int getOrigin() {
-        return origin;
-    }
-
-    public int getPermissions() {
-        return permissions;
-    }
-
-    public void setPermissions(int permissions) {
-        this.permissions = permissions;
-    }
-
-    public void makePrivate(){
-        this.permissions = 0;
-    }
-
-    public void makePublic(){
-        this.permissions = 1;
-    }
-
-    public void makeProtected(){
-        this.permissions = 2;
     }
 
     @Override

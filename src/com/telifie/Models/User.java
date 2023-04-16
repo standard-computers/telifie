@@ -1,7 +1,5 @@
 package com.telifie.Models;
 
-import com.telifie.Models.Clients.UsersClient;
-import com.telifie.Models.Connectors.Available.TwilioSMS;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Network;
 import com.telifie.Models.Actions.Out;
@@ -13,7 +11,6 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.bson.Document;
-import org.json.JSONObject;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -69,10 +66,6 @@ public class User implements Serializable {
         return email;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
     public String getName() {
         return name;
     }
@@ -81,24 +74,8 @@ public class User implements Serializable {
         this.name = name;
     }
 
-    public String getPhoto() {
-        return photo;
-    }
-
-    public void setPhoto(String photo) {
-        this.photo = photo;
-    }
-
     public String getPhone() {
         return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public int getOrigin() {
-        return origin;
     }
 
     public int getPermissions() {
@@ -107,22 +84,6 @@ public class User implements Serializable {
 
     public void setPermissions(int permissions) {
         this.permissions = permissions;
-    }
-
-    public Theme getTheme() {
-        return theme;
-    }
-
-    public void setTheme(Theme theme) {
-        this.theme = theme;
-    }
-
-    public String getCustomerId() {
-        return customerId;
-    }
-
-    public void setCustomerId(String customerId) {
-        this.customerId = customerId;
     }
 
     public boolean hasToken(String attempt){

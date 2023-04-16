@@ -20,14 +20,6 @@ public class Group {
         this.origin = Tool.epochTime();
     }
 
-    public Group(String user, String icon, String name) {
-        this.id = UUID.randomUUID().toString();
-        this.user = user;
-        this.icon = icon;
-        this.name = name;
-        this.origin = Tool.epochTime();
-    }
-
     public Group(Document document) throws NullPointerException {
         this.id = (document.getString("id") == null ? Tool.md5(Tool.randomReferenceCode()) : document.getString("id") );
         this.user = document.getString("user");
@@ -50,14 +42,6 @@ public class Group {
         this.user = user;
     }
 
-    public String getIcon() {
-        return icon;
-    }
-
-    public void setIcon(String icon) {
-        this.icon = icon;
-    }
-
     public String getName() {
         return name;
     }
@@ -66,16 +50,8 @@ public class Group {
         this.name = name;
     }
 
-    public int getOrigin() {
-        return origin;
-    }
-
     public int getPermissions() {
         return permissions;
-    }
-
-    public void setPermissions(int permissions) {
-        this.permissions = permissions;
     }
 
     public ArrayList<String> getArticles() {
@@ -84,10 +60,6 @@ public class Group {
 
     public void setArticles(ArrayList articles) {
         this.articles = articles;
-    }
-
-    public ArrayList<Article> getDetailedList() {
-        return detailedList;
     }
 
     public void setDetailedList(ArrayList<Article> detailedList) {

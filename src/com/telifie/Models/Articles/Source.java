@@ -1,10 +1,9 @@
 package com.telifie.Models.Articles;
 
 import org.bson.Document;
-import java.io.Serializable;
 import java.util.UUID;
 
-public class Source implements Serializable {
+public class Source {
 
     private String id, icon, name, url;
 
