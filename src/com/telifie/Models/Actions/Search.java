@@ -30,6 +30,7 @@ public class Search {
                 ArrayList<Image> articleImages = article.getImages();
                 if(articleImages != null && articleImages.size() > 0){
                     for(Image image : articleImages){
+                        image.setId(article.getId());
                         images.add(image);
                     }
                 }
@@ -52,7 +53,11 @@ public class Search {
             }
             return new Result(query, "articles", articles);
         }
-        return new Result(query, Search.quickResults(config, query), results);
+        ArrayList<CommonObject> qr = new ArrayList<>();
+        if(!params.isDisableQuickResults()){
+            qr = Search.quickResults(config, query);
+        }
+        return new Result(query, qr, results);
     }
 
     private static ArrayList executeQuery(Configuration config, String query, Parameters params){

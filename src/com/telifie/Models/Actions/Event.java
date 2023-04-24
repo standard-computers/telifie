@@ -27,20 +27,12 @@ public class Event {
         this.content = document.getString("content");
     }
 
-    public Type getType() {
-        return type;
-    }
-
     public String getUser() {
         return user;
     }
 
     public void setUser(String user) {
         this.user = user;
-    }
-
-    public int getOrigin() {
-        return origin;
     }
 
     public String getContent() {
@@ -55,9 +47,4 @@ public class Event {
                 ", \"content\" : \"" + content + '\"' +
                 '}';
     }
-
-    public JSONObject toJson(){
-        return new JSONObject(this.toString());
-    }
-
 }

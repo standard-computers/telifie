@@ -52,18 +52,6 @@ public class Result {
         return this;
     }
 
-    public String getQuery() {
-        return query;
-    }
-
-    public String getObject() {
-        return object;
-    }
-
-    public int getCount() {
-        return count;
-    }
-
     public void setResult(String object, Object results){
         this.object = object;
         this.results = results;

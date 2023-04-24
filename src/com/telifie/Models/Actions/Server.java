@@ -110,7 +110,7 @@ public class Server {
                     // Set the content type of the response to "application/json"
                     PrintWriter out = new PrintWriter(clientSocket.getOutputStream());
                     out.println("HTTP/1.1 200 OK");
-                    out.println("Content-Type: application/json");
+                    out.println("Content-Type: application/json; charset=utf-8");
                     out.println("Access-Control-Allow-Origin: *"); // Allow all origins
                     out.println("Access-Control-Allow-Headers: Authorization");
                     out.println("Connection: close");

@@ -23,14 +23,6 @@ public class Association {
         }
     }
 
-    public String getIcon() {
-        return icon;
-    }
-
-    public void setIcon(String icon) {
-        this.icon = icon;
-    }
-
     public String getName() {
         return name;
     }
@@ -51,19 +43,6 @@ public class Association {
         this.articles.add(article);
     }
 
-    public void removeArticle(int index){
-        this.articles.remove(index);
-    }
-
-    public Child getArticle(String id){
-        for(int i = 0; i < this.articles.size(); i++){
-            if(this.articles.get(i).getId().equals(id)){
-                return this.articles.get(i);
-            }
-        }
-        return null;
-    }
-
     public int size(){
         return this.articles.size();
     }
@@ -75,5 +54,4 @@ public class Association {
                 ", \"articles\" : " + articles +
                 '}';
     }
-
 }

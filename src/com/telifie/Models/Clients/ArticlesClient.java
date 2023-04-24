@@ -84,4 +84,8 @@ public class ArticlesClient extends Client {
             return null;
         }
     }
+
+    public boolean delete(String articleId) {
+        return super.deleteOne(new Document("id", articleId));
+    }
 }

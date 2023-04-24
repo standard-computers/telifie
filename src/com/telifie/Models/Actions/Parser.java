@@ -61,7 +61,6 @@ public class Parser {
                         .userAgent("telifie/1.0")
                         .execute();
                 if(response.statusCode() == 200){
-
                     Document root = response.parse();
                     DocumentExtract extractor = new DocumentExtract(root);
                     Article article = extractor.extract(url);

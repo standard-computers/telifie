@@ -45,39 +45,31 @@ public class Command {
     public Result parseCommand(Configuration config, Document content){
 
         String objectSelector = (this.selectors.length > 1 ? this.get(1) : "");
-
         /*
          * Accessing Domains
          */
         if(primarySelector.equals("domains")){
 
             if(this.selectors.length >= 2){
-
                 if(objectSelector.equals("owner")){ //Get domains for owner /domains/owner/[USER_ID]
 
                     DomainsClient domains = new DomainsClient(config);
                     ArrayList<Domain> foundDomains = domains.getOwnedDomains(this.get(2));
                     return new Result(this.command, "domains", foundDomains);
-
                 }else if(objectSelector.equals("member")){ //Get domains for user /domains/member/[USER_ID]
 
                     //TODO get domains that user is attached too
                     DomainsClient domains = new DomainsClient(config);
                     ArrayList<Domain> foundDomains = domains.getDomainsForUser(this.get(2));
                     return new Result(this.command, "domains", foundDomains);
-
                 }else if(objectSelector.equals("create")){
 
                     if(content != null){
-
                         String domainName, domainIcon;
                         if((domainName = content.getString("name")) != null && (domainIcon = content.getString("icon")) != null && content.getInteger("permissions") != null){
-
                             Domain newDomain = new Domain(config.getAuthentication().getUser(), domainName, domainIcon, content.getInteger("permissions"));
                             DomainsClient domains = new DomainsClient(config);
-
                             if(domains.create(newDomain)){
-
                                 return new Result(this.command, "domain", newDomain);
                             }
                             return new Result(505, this.command, "\"Failed to make domain\"");
@@ -93,9 +85,7 @@ public class Command {
                     Domain subjectDomain = domains.getWithId(domainId);
 
                     if(subjectDomain.getOwner().equals(config.getAuthentication().getUser())){ //Requesting user is owning user
-
                         if(domains.delete(config.getAuthentication().getUser(), domainId)){
-
                             return new Result(200, this.command, "\"Successfully deleted the domain\"");
                         }
                         return new Result(505, this.command, "\"Failed to delete domain\"");
@@ -115,18 +105,15 @@ public class Command {
                     String domainId = this.get(1);
                     DomainsClient domains = new DomainsClient(config);
                     try{
-
                         Domain selectedDomain = domains.getWithId(domainId);
                         return new Result(this.command, "domain", selectedDomain);
                     }catch(NullPointerException n){
-
                         return new Result(404, this.command, "\"Domain with id '" + domainId + "' not found\"");
                     }
                 }
                 return new Result(404, this.command, "\"Invalid domains selector\"");
             }
             return new Result(200, this.command, "\"Invalid command for domains\"");
-
         }
         /*
          * Accessing Articles
@@ -135,13 +122,11 @@ public class Command {
 
             UsersClient users = new UsersClient(config);
             if(this.selectors.length >= 3){ //Provide [ACTION]/[ARTICLE_ID]
-
                 ArticlesClient articles = new ArticlesClient(config);
                 String articleId = this.get(2).trim();
                 if(objectSelector.equals("id")){ //Specifying Article with ID
 
                     try {
-
                         Article article = articles.get(articleId);
                         return new Result(this.command, "article", article);
                     }catch(NullPointerException n){
@@ -151,25 +136,17 @@ public class Command {
                 }else if(objectSelector.equals("update")){
 
                     if(content != null) {
-
                         if (content.getString("id") == null) {
                             content.put("id", articleId);
                         }
                         Article updatedArticle = new Article(content);
                         if (config.getUser().getPermissions() >= 12 && this.targetDomain.equals("telifie")) { //Update Article in Public Domain
-
                             Article ogArticle = articles.get(articleId);
                             ArrayList<Event> events = updatedArticle.compare(ogArticle);
-
-//                            if(events.size() > 0){
-
                             for (int i = 0; i < events.size(); i++) {
-
                                 events.get(i).setUser(config.getUser().getId());
                             }
-
                             if (articles.update(ogArticle, updatedArticle)) {
-
                                 TimelinesClient timelines = new TimelinesClient(config);
                                 timelines.addEvents(articleId, events);
 
@@ -178,7 +155,6 @@ public class Command {
                             }
                             return new Result(505, this.command, "\"Failed to update Article\"");
                         }
-
                         //Check permissions of user in Domains
                         //TODO, share changes with data team for approval and change status on Article
                         return new Result(401, this.command, "\"Insufficient permissions to update Article in Public Domain\"");
@@ -187,16 +163,23 @@ public class Command {
 
                 }else if(objectSelector.equals("delete")){
 
+                    if(config.getUser().getPermissions() >= 12 && this.targetDomain.equals("telifie")){ //Update Article in Public Domain
+                        if(articles.delete(articleId)){
+                            return new Result(200, this.command, "\"\"");
+                        }
+                        return new Result(505, this.command, "\"Failed to delete Article\"");
+                    }
 
+                    //Check permissions of user in Domains
+                    //TODO, share changes with data team for approval and change status on Article
+                    return new Result(401, this.command, "\"Insufficient permissions to delete Article in Public Domain\"");
 
                 }else if(objectSelector.equals("move")){
 
                 }else if(objectSelector.equals("verify")){
 
                     if (config.getUser().getPermissions() >= 12 && this.targetDomain.equals("telifie")) { //Update Article in Public Domain
-
                         if(articles.verify(articleId)){
-
                             return new Result(200, this.command, "\"\"");
                         }
                         return new Result(505, this.command, "\"Failed to update Article\"");
@@ -211,30 +194,24 @@ public class Command {
             }else if(objectSelector.equals("create")){
 
                 if(content != null){
-
                     User user = config.getUser();
                     if(this.targetDomain.equals("telifie") && user.getPermissions() < 12){ //Make sure that the user has the permissions
-
                         return new Result(403, this.command, "\"No sufficient permissions to publish to public domain\"");
                     }
                     try {
-
                         Article newArticle = new Article(content);
                         ArticlesClient articles = new ArticlesClient(config);
                         if(articles.create(newArticle)){
-
                             return new Result(this.command, "article", newArticle);
                         }
                         return new Result(505, "Failed to create Article");
                     }catch(JSONException e){
-
                         return new Result(505, this.command, "\"Malformed Article JSON data provided\"");
                     }
                 }
 
                 return new Result(428, "\"Precondition Failed. No new Article provided (JSON.article) as body\"");
             }else if(objectSelector.equals("")){ //Return stats of Articles in domain (summary)
-
                 return new Result(this.command,"stats", "");
             }
 
@@ -255,23 +232,18 @@ public class Command {
                 if(objectSelector.equals("save")){
 
                     if(groups.save(config.getAuthentication().getUser(), groupId, articleId)){
-
                         return new Result(200, this.command, "\"Saved Article\"");
                     }
-
                     return new Result(505, this.command, "\"Failed to save Article\"");
                 }
                 //Removes article from group given /groups/unsave/[GROUP_NAME]/[ARTICLE_ID]
                 else if(objectSelector.equals("unsave")){
 
                     if(groups.unsave(config.getAuthentication().getUser(), groupId, articleId)){
-
                         return new Result(200, this.command, "\"Unsaved Article\"");
                     }
-
                     return new Result(505, this.command, "\"Failed to unsave Article\"");
                 }
-
                 return new Result(404, this.command, "\"Invalid favorites command\"");
             }
             //Updates Group given JSON POST. See reference
@@ -281,43 +253,33 @@ public class Command {
                 if(groupId != null){
 
                     if(content != null){
-
                         //Cannot make a folder named $pinned as its reserved
                         if(content.getString("name") != null && content.getString("name").equals("Pinned")){
-
                             return new Result(304, this.command, "\"'Pinned' is a reserved Group name\"");
                         }
 
                         GroupsClient groups = new GroupsClient(config);
                         if(groups.update(groupId, content)){
-
                             return new Result(200, this.command, "\"Group Update\"");
                         }
-
                         return new Result(505, this.command, "\"Failed to update Group\"");
                     }
-
                     return new Result(428, this.command, "\"Update content for Group not provided\"");
                 }
-
                 return new Result(428, "\"ID of Group required to update\"");
             }
             //Creates Group given /groups/create/[GROUP_NAME]
             else if(objectSelector.equals("create")){
 
                 if(content != null){ //Creating Group with JSON content
-
                     Group newGroup = new Group(content);
                     GroupsClient groups = new GroupsClient(config);
                     Group createdGroup = groups.create(config.getAuthentication().getUser(), newGroup);
                     if(createdGroup != null){
-
                         return new Result(this.command, "group", createdGroup);
                     }
-
                     return new Result(505, this.command, "\"Failed to make Group with JSON\"");
                 }
-
                 return new Result(428, "\"JSON request body expected\"");
             }
             // Deletes folder given /groups/delete/[GROUP_ID]
@@ -325,16 +287,12 @@ public class Command {
 
                 String groupId = (this.selectors.length == 3 ? this.get(2) : null);
                 if(groupId != null){
-
                     GroupsClient groups = new GroupsClient(config);
                     if(groups.delete(config.getAuthentication().getUser(), groupId)){
-
                         return new Result(200, this.command, "\"Group '" + groupId + "' deleted\"");
                     }
-
                     return new Result(505, this.command, "\"Failed to delete group '" + groupId + "'\"");
                 }
-
                 return new Result(428, "Name of new group required.");
             }
             /*
@@ -345,19 +303,15 @@ public class Command {
                 String groupId = this.get(2);
                 GroupsClient groups = new GroupsClient(config);
                 if(groupId != null){
-
                     try{
-
                         Group group = groups.get(config.getAuthentication().getUser(), groupId);
                         return new Result(this.command, "group", group);
                     }catch(NullPointerException n){
-
                         return new Result(404, this.command, "\"Group not found with ID '" + groupId + "'\"");
                     }
                 }
                 return new Result(428, this.command, "\"Group ID is required to get\"");
             }
-
             GroupsClient groups = new GroupsClient(config);
             ArrayList<Group> usersGroups = groups.groupsForUser(config.getAuthentication().getUser());
             return new Result(this.command, "groups", usersGroups);
@@ -377,11 +331,9 @@ public class Command {
                     if(this.get(2).equals("theme")){
                         Theme theme = new Theme(content);
                         if(users.updateUserTheme(users.getUserWithEmail(userEmail), theme)){
-
                             return new Result(this.command, "user", changedUser);
                         }
                         return new Result(400, "\"Bad Request\"");
-
                     }else if(this.get(2).equals("photo")){
                         
                         if(content != null){
@@ -399,22 +351,17 @@ public class Command {
                     return new Result(404, this.command, "\"Invalid users update command\"");
                 }
                 return new Result(404, this.command, "\"Invalid command received\"");
-
             }else if(objectSelector.equals("create")){ //Creating User
 
                 if(content != null){
-
                     User newUser = new User(
                             content.getString("email"),
                             content.getString("name"),
                             content.getString("phone")
                     );
                     if(newUser.getPermissions() == 0 && !newUser.getName().equals("") && !newUser.getEmail().equals("") && newUser.getName() != null && newUser.getEmail() != null) { //0 is permissions of new user
-
                         if (!users.userExistsWithEmail(newUser.getEmail())) {
-
                             if (users.createUser(newUser)) {
-
                                 return new Result(this.command, "user", newUser);
                             }
                             return new Result(505, this.command, "\"Failed making user for email '" + newUser.getEmail() + "'\"");
@@ -425,16 +372,12 @@ public class Command {
                 }
                 return new Result(428, this.command, "\"New User details expected with JSON request body.\"");
             }
-            
             Matcher matcher = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", Pattern.CASE_INSENSITIVE).matcher(this.get(1));
             if (matcher.matches()) {
-
                 if(users.userExistsWithEmail(this.get(1))){ //Check if user with email, return user
-
                     User found = users.getUserWithEmail(this.get(1));
                     return new Result(this.command, "user", found);
                 }else { //No valid user action command provided
-
                     return new Result(404, this.command, "\"User not found\"");
                 }
             }
@@ -445,16 +388,13 @@ public class Command {
         else if(primarySelector.equals("parser")){ //Accessing parser
 
             if(content != null){
-
                 String mode = content.getString("mode");
                 if(mode != null){
-
                     if(mode.equals("batch")){ //Importing CSV as batch of Articles
 
                         String uri = this.command.replaceFirst("parser/batch", "");
                         ArrayList<Article> extractedArticles = Parser.engines.batch(uri, ",");
                         if(extractedArticles != null){
-
                             return new Result(this.command, "articles", extractedArticles);
                         }
                         return new Result(404, this.command, "\"No articles from batch upload\"");
@@ -462,7 +402,6 @@ public class Command {
                     }else if(mode.equals("dictionary")){ //Managing index dictionary for parsing
 
                         if(content != null && content.getString("words") != null){
-
                             String[] words = content.getString("words").split(" ");
                             new Parser.index();
                             Parser.index.dictionary dict = new Parser.index.dictionary(Vars.Languages.ENGLISH);
@@ -483,7 +422,6 @@ public class Command {
 
                         String uri = content.getString("uri");
                         if(uri != null && !uri.equals("")){
-
                             Parser parser = new Parser();
                             Article parsed = Parser.engines.parse(uri);
                             if(parser.getTraversable().size() > 1){
@@ -512,7 +450,6 @@ public class Command {
 
                     //TODO return draft article
                     if (uri == null || uri.equals("")) {
-
                         return new Result(410, this.command, "\"No URI provided as {\"uri\" : \"URI\"}\"");
                     }
                     //Check if an article exists for this already
@@ -524,7 +461,6 @@ public class Command {
                         QueueClient queue = new QueueClient(config);
                         Article queued = queue.add(uri);
                         if (queued != null) {
-
                             return new Result(this.command, "article", queued);
                         }
                         return new Result(505, "\"There was an error parsing the queue request\"");
@@ -551,7 +487,7 @@ public class Command {
             if(!this.targetDomain.equals("telifie") && !this.targetDomain.equals("")){
                 config.setDomain(config.getDomain().setName(this.targetDomain));
             }
-            return Search.execute(config, query, new Parameters(10, 0, "articles") );
+            return Search.execute(config, query, new Parameters(25, 0, "articles") );
         }
         /*
          * Accessing HttpServer

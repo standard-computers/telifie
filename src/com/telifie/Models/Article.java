@@ -44,6 +44,8 @@ public class Article {
         ArrayList<Document> iterable = (ArrayList<Document>) document.getList("images", Document.class);
         if (iterable != null && iterable.size() >= 1) {
             for (Document doc : iterable) {
+                Image ni = new Image(doc);
+                ni.setId(this.getId());
                 this.addImage(new Image(doc));
             }
         }

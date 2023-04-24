@@ -15,10 +15,6 @@ public class Client {
     protected String collection;
     protected Configuration config;
 
-    protected Client(String mongoUri) {
-        this.mongoUri = mongoUri;
-    }
-
     protected Client(Configuration config){
         this.config = config;
         this.mongoUri = config.getDomain().getUri();
@@ -59,46 +55,34 @@ public class Client {
     }
 
     protected boolean updateOne(Document filter, Document update){
-
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
-
             MongoDatabase database = mongoClient.getDatabase(config.getDomain().getName());
             MongoCollection<Document> collection = database.getCollection(this.collection);
             UpdateResult result = collection.updateOne(filter, update);
-
             return result.getModifiedCount() > 0;
         }catch(MongoException e){
-
             System.out.println("Couldn't process updateOne MongoDB request :(");
         }
-
         return false;
     }
 
     protected boolean updateOne(Document filter, Document update, UpdateOptions options){
-
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
-
             MongoDatabase database = mongoClient.getDatabase(config.getDomain().getName());
             MongoCollection<Document> collection = database.getCollection(this.collection);
             UpdateResult result = collection.updateOne(filter, update, options);
             return result.getModifiedCount() > 0;
         }catch(MongoException e){
-
             System.out.println("Couldn't process updateOne MongoDB request :(");
         }
-
         return false;
     }
 
     protected UpdateResult updateMany(Document filter, Document update){
-
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
-
             MongoDatabase database = mongoClient.getDatabase(config.getDomain().getName());
             MongoCollection<Document> collection = database.getCollection(this.collection);
             return collection.updateMany(filter, update);
-
         }catch(MongoException e){
             System.out.println("Couldn't process MongoDB request :(");
         }
@@ -107,12 +91,10 @@ public class Client {
 
     protected boolean insertOne(Document document){
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
-
             MongoDatabase database = mongoClient.getDatabase(config.getDomain().getName());
             MongoCollection<Document> collection = database.getCollection(this.collection);
             collection.insertOne(document);
             return true;
-
         }catch(MongoException e){
             System.out.println("Couldn't process MongoDB request :(");
         }
@@ -120,28 +102,19 @@ public class Client {
     }
 
     protected boolean exists(Document filter){
-
         Document data = this.findOne(filter);
         return data != null;
-
     }
 
     protected boolean deleteOne(Document filter){
-
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
-
             MongoDatabase database = mongoClient.getDatabase(config.getDomain().getName());
             MongoCollection<Document> collection = database.getCollection(this.collection);
             collection.deleteOne(filter);
             return true;
-
         }catch(MongoException e){
-
             System.out.println("Couldn't process deleteOne MongoDB request :(");
-
         }
         return false;
-
     }
-
 }
