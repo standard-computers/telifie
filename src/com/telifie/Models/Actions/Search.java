@@ -1,6 +1,5 @@
 package com.telifie.Models.Actions;
 
-import com.fathzer.soft.javaluator.DoubleEvaluator;
 import com.telifie.Models.Article;
 import com.telifie.Models.Articles.Image;
 import com.telifie.Models.Clients.ArticlesClient;
@@ -9,7 +8,8 @@ import com.telifie.Models.Result;
 import com.telifie.Models.User;
 import com.telifie.Models.Articles.CommonObject;
 import com.telifie.Models.Utilities.Configuration;
-import com.telifie.Models.Utilities.Tool;
+import com.telifie.Models.Utilities.Parameters;
+import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -148,10 +148,7 @@ public class Search {
 
                             String value = spl2[1].trim();
                             return new Document("$and",
-                                    Arrays.asList(
-                                            new Document("attributes.key", pattern( key ) ),
-                                            new Document("attributes.value", pattern( value ) )
-                                    )
+                                    Arrays.asList(new Document("attributes.key", pattern( key ) ), new Document("attributes.value", pattern( value ) ))
                             );
                         }else{
 
@@ -185,43 +182,16 @@ public class Search {
     private static ArrayList<CommonObject> quickResults(Configuration config, String query){
 
         ArrayList<CommonObject> quickResults = new ArrayList<>();
-        if(query.matches("(\\d+\\.?\\d*|\\.\\d+)([\\+\\-\\*\\/](\\d+\\.?\\d*|\\.\\d+))*") || Tool.containsAnyOf(new String[] {"+", "-", "*", "/", "^"}, query)){ //Asking math expression
-
-            try {
-                Double mathResult = new DoubleEvaluator().evaluate(query.replaceAll("\\$", ""));
-                quickResults.add(
-                        new CommonObject("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/images/results/calculate.gif",
-                                Tool.formatNumber(mathResult),
-                                "", "Calculation")
-                );
-            }catch(IllegalArgumentException e){}
-        }
         if(query.matches("^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$")){
-
             UsersClient users = new UsersClient(config);
             User user = users.getUserWithEmail(query);
-            quickResults.add(
-                    new CommonObject(
-                            "",
-                            user.getName(),
-                            "",
-                            user.getEmail()
-                    )
-            );
+            quickResults.add(new CommonObject("", user.getName(), "", user.getEmail()));
         }
         if(query.equals("how many articles are there")){
             //TODO if query is LIKE
         }
-        if(Tool.isHexColor(query) || Tool.isHSLColor(query) || Tool.isRGBColor(query)){
-
-            quickResults.add(
-                    new CommonObject(
-                            "COLOR_ICON",
-                            query,
-                            "",
-                            query
-                    )
-            );
+        if(Telifie.tools.detector.isHexColor(query) || Telifie.tools.detector.isHSLColor(query) || Telifie.tools.detector.isRGBColor(query)){
+            quickResults.add(new CommonObject("COLOR_ICON",query, "", query));
         }
 
         if(query.contains("random") && query.contains("color")){

@@ -6,6 +6,8 @@ import com.telifie.Models.Articles.Image;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import com.vladsch.flexmark.html.HtmlRenderer;
+import com.vladsch.flexmark.parser.Parser;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 
@@ -77,29 +79,27 @@ public class DocumentExtract {
         Elements images = document.getElementsByTag("img");
         for(Element image : images){
 
-            String src = Tool.fixLink(url, image.attr("src"));
-            String srcset = Tool.fixLink(url, image.attr("srcset"));
-            if(!src.equals("") && !src.equals("null") && Tool.getType(src).equals("image")){
+            String src = Telifie.tools.detector.fixLink(url, image.attr("src"));
+            String srcset = Telifie.tools.detector.fixLink(url, image.attr("srcset"));
+            if(!src.equals("") && !src.equals("null") && Telifie.tools.detector.getType(src).equals("image") && !image.attr("src").trim().toLowerCase().startsWith("data:")){
 
-                String caption =  image.attr("alt");
+                String caption = Telifie.tools.strings.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
                 Image img = new Image(src, caption, url);
                 article.addImage(img);
-            }else if(srcset != null && !srcset.equals("")){
+            }else if(srcset != null && !srcset.equals("") && !srcset.startsWith("data:")){
 
                 String link = "https://" + srcset.split("\\s")[0];
-                String caption =  image.attr("alt");
+                String caption =  Telifie.tools.strings.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
                 Image img = new Image(src, caption, url);
                 article.addImage(img);
             }
         }
-        article.setTitle(Tool.escape(document.title()));
+        article.setTitle(Telifie.tools.strings.escape(document.title()));
         article.setLink(url);
-
-
-        String whole_text = Tool.escape(document.text().replaceAll("[\n\r]", " "));
+        String whole_text = Telifie.tools.strings.escape(document.text().replaceAll("[\n\r]", " "));
         //Work on possible attributes
         //.replaceAll("\\s+", " ")
-        Matcher phone_numbers = Tool.findPhoneNumbers(whole_text);
+        Matcher phone_numbers = Telifie.tools.detector.findPhoneNumbers(whole_text);
         while(phone_numbers.find()){
 
             String phone_number = phone_numbers.group().trim().replaceAll("[^0-9]", "").replaceFirst("(\\d{3})(\\d{3})(\\d+)", "($1) $2 – $3");
@@ -108,7 +108,7 @@ public class DocumentExtract {
         }
 
         //Pulling emails
-        Matcher emails = Tool.findEmails(whole_text);
+        Matcher emails = Telifie.tools.detector.findEmails(whole_text);
         while(emails.find()){
 
             Attribute attr = new Attribute("Email", emails.group().toLowerCase());
@@ -116,27 +116,24 @@ public class DocumentExtract {
         }
 
         //Pulling addresses
-        Matcher addresses = Tool.findAddresses(whole_text);
+        Matcher addresses = Telifie.tools.detector.findAddresses(whole_text);
         while(addresses.find()){
 
             Attribute attr = new Attribute("Address", addresses.group().toLowerCase());
             article.addAttribute(attr);
         }
 
-
+        Parser parser = Parser.builder().build();
+        HtmlRenderer renderer = HtmlRenderer.builder().build();
+        String markdown;
         if(article.getContent() == null || article.getContent().equals("")){
             Element body = document.getElementsByTag("body").get(0);
-            body.getElementsByTag("aside").remove();
-            Element main = (body.getElementsByTag("main") == null || body.getElementsByTag("main").size() < 1 ? null : body.getElementsByTag("main").get(0));
-            if(main == null){
-
-                // Convert HTML to Markdown
-                article.setContent(Tool.convertHtmlToMarkdown(Tool.extractBodyContent(body.toString())));
-            }else{
-
-                article.setContent(Tool.convertHtmlToMarkdown(Tool.extractBodyContent(main.toString())));
-            }
+            body.select("script, style, img, svg, button, label, form, input, aside, li, ul").remove();
+            markdown = renderer.render(parser.parse(body.wholeText()));
+        }else{
+            markdown = renderer.render(parser.parse(article.getContent()));
         }
+        article.setContent(markdown);
         return article;
     }
 }

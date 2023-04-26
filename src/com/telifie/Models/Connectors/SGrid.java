@@ -1,4 +1,4 @@
-package com.telifie.Models.Connectors.Available;
+package com.telifie.Models.Connectors;
 
 import com.sendgrid.Method;
 import com.sendgrid.Request;
@@ -7,8 +7,9 @@ import com.sendgrid.SendGrid;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
-import com.telifie.Models.Actions.Out;
 import com.telifie.Models.Connectors.Connector;
+import com.telifie.Models.Utilities.Telifie;
+
 import java.io.IOException;
 
 public class SGrid {
@@ -43,8 +44,8 @@ public class SGrid {
                 return true;
             } else {
 
-                Out.console("Failed to send email. Status code: " + response.getStatusCode());
-                Out.console(response.getBody());
+                Telifie.console.out.string("Failed to send email. Status code: " + response.getStatusCode());
+                Telifie.console.out.string(response.getBody());
                 return false;
             }
         } catch (IOException e) {

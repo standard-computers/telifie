@@ -2,7 +2,6 @@ package com.telifie.Models;
 
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Network;
-import com.telifie.Models.Actions.Out;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -101,7 +100,7 @@ public class User implements Serializable {
         data.add(new BasicNameValuePair("app_id", "main.java.telifie.User.requestAuthenticationCode"));
         data.add(new BasicNameValuePair("auth_token", "an9f7moqw8fhx387fhcwomr"));
         CloseableHttpResponse response = get2fa.post("http://telifie.net/connect", data);
-        Out.console("[ HTTP RESPONSE CODE / CONNECT ] " + response);
+        Telifie.console.out.string("[ HTTP RESPONSE CODE / CONNECT ] " + response);
         if(get2fa.getStatusCode() == 200){
             return true;
         }else{
@@ -117,7 +116,7 @@ public class User implements Serializable {
         data.add(new BasicNameValuePair("auth_token", "asdukhflaisuhdfpas9d8fy"));
         data.add(new BasicNameValuePair("app_id", "main.java.telifie.Start.install"));
         CloseableHttpResponse response = get2fa.post("http://telifie.net/verify", data);
-        Out.console("[ HTTP RESPONSE CODE / VERIFY ] " + get2fa.getStatusCode());
+        Telifie.console.out.string("[ HTTP RESPONSE CODE / VERIFY ] " + get2fa.getStatusCode());
         if(get2fa.getStatusCode() == 200){
             String jsonResponse = null;
             try {

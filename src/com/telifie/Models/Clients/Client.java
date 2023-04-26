@@ -4,8 +4,8 @@ import com.mongodb.MongoException;
 import com.mongodb.client.*;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.UpdateResult;
-import com.telifie.Models.Actions.Out;
 import com.telifie.Models.Utilities.Configuration;
+import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import java.util.ArrayList;
 
@@ -47,8 +47,8 @@ public class Client {
             return collection.find(filter).first();
         }catch(MongoException e){
 
-            Out.console(e.toString());
-            Out.console("Couldn't process MongoDB request :(");
+            Telifie.console.out.string(e.toString());
+            Telifie.console.out.string("Couldn't process MongoDB request :(");
 
         }
         return null;

@@ -1,6 +1,6 @@
 package com.telifie.Models;
 
-import com.telifie.Models.Utilities.Tool;
+import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import java.io.Serializable;
 import java.util.UUID;
@@ -23,10 +23,10 @@ public class Domain implements Serializable {
     public Domain(String owner, String name, String icon, int permissions){
         this.owner = owner;
         this.id = UUID.randomUUID().toString();
-        this.alt = Tool.randomReferenceCode();
+        this.alt = Telifie.tools.make.randomReferenceCode();
         this.name = name;
         this.icon = icon;
-        this.origin = Tool.epochTime();
+        this.origin = Telifie.getEpochTime();
         this.permissions = (permissions <= 2 && permissions >= 0 ? permissions : 0); //Private is default mode if none
     }
 

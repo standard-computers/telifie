@@ -1,10 +1,8 @@
 package com.telifie.Models.Utilities;
 
-import com.telifie.Models.Actions.Out;
 import com.telifie.Models.Domain;
 import com.telifie.Models.User;
 import java.io.Serializable;
-import java.util.ArrayList;
 
 public class Configuration implements Serializable {
 
@@ -48,7 +46,7 @@ public class Configuration implements Serializable {
 
     public boolean save(String systemDir){
         String dir = systemDir + "/telifie.configuration";
-        Out.serialized(dir, this);
+        Telifie.files.serialized(dir, this);
         return true;
     }
 

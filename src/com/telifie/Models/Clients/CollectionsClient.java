@@ -1,72 +1,71 @@
 package com.telifie.Models.Clients;
 
 import com.telifie.Models.Article;
-import com.telifie.Models.Domain;
-import com.telifie.Models.Group;
+import com.telifie.Models.Collection;
 import com.telifie.Models.Utilities.Configuration;
 import org.bson.Document;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class GroupsClient extends Client {
+public class CollectionsClient extends Client {
 
-    public GroupsClient(Configuration config){
+    public CollectionsClient(Configuration config){
 
         super(config);
         super.collection = "groups";
     }
 
-    public Group get(String userId, String id){
+    public Collection get(String userId, String id){
 
-        Group group = new Group(
+        Collection collection = new Collection(
             this.findOne(
                     new Document("id", id)
             )
         );
-        if(group.getPermissions() == 0){ //Group is
-            if(!group.getUser().equals(userId)){
+        if(collection.getPermissions() == 0){ //Collection is
+            if(!collection.getUser().equals(userId)){
                 return null;
             }
         }
         ArrayList<Article> articles = new ArrayList<Article>();
         ArticlesClient articlesClient = new ArticlesClient(super.getConfig());
-        if(group.getArticles() != null){
+        if(collection.getArticles() != null){
 
-            for (String articleId : group.getArticles()) {
+            for (String articleId : collection.getArticles()) {
 
                 articles.add(articlesClient.get(articleId));
             }
 
-            group.setDetailedList(articles);
-            return group;
+            collection.setDetailedList(articles);
+            return collection;
         }else{
 
             return null;
         }
     }
 
-    public ArrayList<Group> groupsForUser(String userId){
+    public ArrayList<Collection> groupsForUser(String userId){
 
         ArrayList<Document> groups = this.find(new Document("user", userId));
-        ArrayList<Group> found = new ArrayList<>();
+        ArrayList<Collection> found = new ArrayList<>();
         for (Document doc : groups) {
-            found.add(new Group(doc));
+            found.add(new Collection(doc));
         }
 
         return found;
     }
 
-    public Group create(String userId, Group group){
+    public Collection create(String userId, Collection collection){
         //TODO Install checks to ensure that proper information was provided by JSON
-        group.setUser(userId);
-        if(super.insertOne( Document.parse(group.toString()) )){
+        collection.setUser(userId);
+        if(super.insertOne( Document.parse(collection.toString()) )){
 
-            return group;
+            return collection;
         }
         return null;
     }
 
-    public Group create(String userId, String name){
+    public Collection create(String userId, String name){
 
         if(this.exists(
             new Document("$and",
@@ -79,10 +78,10 @@ public class GroupsClient extends Client {
             return null;
         }
 
-        Group group = new Group(userId, name);
-        if(super.insertOne( Document.parse(group.toString()) )){
+        Collection collection = new Collection(userId, name);
+        if(super.insertOne( Document.parse(collection.toString()) )){
 
-            return group;
+            return collection;
         }
         return null;
     }

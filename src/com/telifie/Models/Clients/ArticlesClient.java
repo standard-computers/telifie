@@ -3,10 +3,10 @@ package com.telifie.Models.Clients;
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoException;
 import com.mongodb.client.*;
-import com.telifie.Models.Actions.Out;
-import com.telifie.Models.Actions.Parameters;
+import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Article;
 import com.telifie.Models.Utilities.Configuration;
+import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,7 +19,7 @@ public class ArticlesClient extends Client {
     }
 
     public boolean update(Article article, Article newArticle){
-        Out.console(newArticle.toString());
+        Telifie.console.out.string(newArticle.toString());
         return super.updateOne(
                 new Document("id", article.getId()),
                 new Document("$set", Document.parse(newArticle.toString()))
@@ -87,5 +87,9 @@ public class ArticlesClient extends Client {
 
     public boolean delete(String articleId) {
         return super.deleteOne(new Document("id", articleId));
+    }
+
+    public boolean existsWithId(String id){
+        return super.exists(new Document("id", id));
     }
 }

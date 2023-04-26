@@ -1,4 +1,4 @@
-package com.telifie.Models.Connectors.Available;
+package com.telifie.Models.Connectors;
 
 import com.twilio.Twilio;
 import com.twilio.base.ResourceSet;

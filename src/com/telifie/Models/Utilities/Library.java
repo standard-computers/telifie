@@ -9,7 +9,6 @@ public class Library extends ArrayList<Asset> {
     }
 
     public String toJSON(){
-
         StringBuilder json = new StringBuilder(); //Prep for JSON exporting
         for(int i = 0; i < this.size(); i++){
             if (i == (this.size() - 1)) {
@@ -25,5 +24,4 @@ public class Library extends ArrayList<Asset> {
         super.add(asset);
         return false;
     }
-
 }

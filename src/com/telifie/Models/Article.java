@@ -2,7 +2,7 @@ package com.telifie.Models;
 
 import com.telifie.Models.Actions.Event;
 import com.telifie.Models.Articles.*;
-import com.telifie.Models.Utilities.Tool;
+import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import org.json.JSONObject;
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ public class Article {
     private double priority = 1.01;
     private boolean verified = false;
     private String content;
-    private ArrayList<String> tags;
+    private ArrayList<String> tags = new ArrayList<>();
     private ArrayList<Image> images = new ArrayList<>();
     private ArrayList<Attribute> attributes = new ArrayList<>();
     private ArrayList<Association> associations = new ArrayList<>();
@@ -180,12 +180,12 @@ public class Article {
                 (description == null || description.equals("") ? "" : ", \"description\" : \"" + description + '\"') +
                 (priority == 0 ? "" : ", \"priority\" : " + priority) +
                 (content == null ? "" : ", \"content\" : \"" + content + "\"") +
-                ", \"tags\" : " + tags +
-                (images.equals("null") ? "" : ", \"images\" : " + images) +
-                ", \"attributes\" : " + attributes +
-                ", \"associations\" : " + associations +
-                ", \"data_sets\" : " + dataSets +
-                ", \"source\" : " + source +
+                (this.tags == null || this.tags.size() == 0 ? "" : ", \"tags\" : " + tags) +
+                (images.equals("null") || images == null || images.size() == 0 ? "" : ", \"images\" : " + images) +
+                (attributes.size() == 0 ? "" : ", \"attributes\" : " + attributes) +
+                (associations.size() == 0 ? "" : ", \"associations\" : " + associations) +
+                (dataSets.size() == 0 ? "" : ", \"data_sets\" : " + dataSets) +
+                (source == null ? "" : ", \"source\" : " + source) +
                 ", \"origin\" : " + origin +
                 '}';
     }
@@ -206,7 +206,7 @@ public class Article {
                     changes.add(
                             new Event(
                                     Event.Type.UPDATE,
-                                    Tool.epochTime(),
+                                    Telifie.getEpochTime(),
                                     "GUEST",
                                     key + " : " + old.toJson().getString(key) + " => " + key + " : " + this.toJson().getString(key)
                             )
@@ -215,7 +215,7 @@ public class Article {
                     changes.add(
                             new Event(
                                     Event.Type.PUT,
-                                    Tool.epochTime(),
+                                    Telifie.getEpochTime(),
                                     "GUEST",
                                     key + " : " + this.toJson().getString(key)
                             )
@@ -228,5 +228,9 @@ public class Article {
             }
         }
         return changes;
+    }
+
+    public void addTag(String tag) {
+        this.tags.add(tag.toLowerCase().trim());
     }
 }

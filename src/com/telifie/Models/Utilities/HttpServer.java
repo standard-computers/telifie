@@ -1,11 +1,10 @@
-package com.telifie.Models.Actions;
+package com.telifie.Models.Utilities;
 
+import com.telifie.Models.Actions.Command;
 import com.telifie.Models.Clients.AuthenticationClient;
 import com.telifie.Models.Clients.UsersClient;
 import com.telifie.Models.Domain;
 import com.telifie.Models.Result;
-import com.telifie.Models.Utilities.Authentication;
-import com.telifie.Models.Utilities.Configuration;
 import org.apache.http.*;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.StringEntity;

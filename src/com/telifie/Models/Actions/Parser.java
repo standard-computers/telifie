@@ -1,12 +1,17 @@
 package com.telifie.Models.Actions;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.telifie.Models.*;
-import com.telifie.Models.Articles.Association;
-import com.telifie.Models.Articles.Attribute;
-import com.telifie.Models.Articles.Child;
-import com.telifie.Models.Articles.Source;
+import com.telifie.Models.Articles.*;
+import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Utilities.*;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -14,6 +19,10 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 public class Parser {
@@ -28,8 +37,8 @@ public class Parser {
         public static Article parse(String uri){
 
             Parser.uri = uri;
-            Out.console("Parser URI Attempt on -> " + uri);
-            if(Tool.isUrl(uri)){ //Crawl website if url
+            Telifie.console.out.string("Parser URI Attempt on -> " + uri);
+            if(Telifie.tools.detector.isUrl(uri)){ //Crawl website if url
 
                 try {
                     host = new URL(uri).getHost();
@@ -37,9 +46,9 @@ public class Parser {
                     throw new RuntimeException(e);
                 }
                 Article crawled = Parser.engines.website(uri, 0);
-                Out.console(traversable.toString());
+                Telifie.console.out.string(traversable.toString());
                 return crawled;
-            }else if(Tool.isFile(uri)){ //Parsing a file
+            }else if(Telifie.tools.detector.isFile(uri)){ //Parsing a file
 
                 File file = new File(uri);
                 if(file.exists()){
@@ -64,7 +73,8 @@ public class Parser {
                     Document root = response.parse();
                     DocumentExtract extractor = new DocumentExtract(root);
                     Article article = extractor.extract(url);
-                    ArrayList<String> links = Tool.extractLinks(root.getElementsByTag("a"), uri);
+                    article.addAttribute(new Attribute("*batch", Telifie.tools.make.shortEid()));
+                    ArrayList<String> links = Telifie.tools.make.extractLinks(root.getElementsByTag("a"), uri);
                     if(links.size() > 0){
 
                         Association pages = new Association("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/images/associations/pages.png", "Pages");
@@ -81,13 +91,13 @@ public class Parser {
                                     pages.addArticle(child_association);
                                 }
                             }else{
-                                if(Tool.containsAnyOf(new String[]{"facebook", "instagram", "spotify", "linkedin", "youtube"}, link)){
+                                if(Telifie.tools.strings.containsAnyOf(new String[]{"facebook", "instagram", "spotify", "linkedin", "youtube"}, link)){
 
                                     String value = link;
                                     String[] parts = host.split("\\.");
                                     String domain = parts[parts.length - 2];
                                     String capitalizedDomain = domain.substring(0, 1).toUpperCase() + domain.substring(1);
-                                    if(Tool.isUrl(value)){
+                                    if(Telifie.tools.detector.isUrl(value)){
                                         value = "@" + value;
                                     }
                                     article.addAttribute(new Attribute(capitalizedDomain, value));
@@ -98,7 +108,8 @@ public class Parser {
                             article.addAssociation(pages);
                         }
                     } //End if links > 0
-                    Out.console(article.toJson().toString(4));
+                    Telifie.console.out.string(article.toString());
+                    Telifie.console.out.string(article.toJson().toString(4));
                     if(article.getLink().contains(new URL(uri).getHost())) {
                         Parser.traversable.add(article); //Push new articles to traversable for upload.
                     }
@@ -118,68 +129,63 @@ public class Parser {
          * @return ArrayList<Article> List of Articles
          */
         public static ArrayList<Article> batch(String uri, String delimiter){
-            if(!new File(uri).exists()){
-                return null;
-            }
 
-            if(uri.endsWith("csv")){
+            if(uri.endsWith("csv")) {
 
-                ArrayList<String[]> lines = new ArrayList<>();
-                try (BufferedReader br = new BufferedReader(new FileReader(uri))) {
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        String[] fields = line.split(delimiter);
-                        lines.add(fields);
+                try {
+                    URL url = new URL(uri);
+                    InputStream inputStream = url.openStream();
+                    Files.copy(inputStream, Paths.get(Telifie.getConfigDirectory() + "/" + url.getPath()), StandardCopyOption.REPLACE_EXISTING);
+                    ArrayList<String[]> lines = new ArrayList<>();
+                    try (BufferedReader br = new BufferedReader(new FileReader(Telifie.getConfigDirectory() + "/" + url.getPath()))) {
+                        String line;
+                        while ((line = br.readLine()) != null) {
+                            String[] fields = line.split(delimiter);
+                            lines.add(fields);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
+                    ArrayList<Article> articles = new ArrayList<>();
+                    String[] headers = lines.get(0);
+                    int titleIndex = 0, descriptionIndex = 0, linkIndex = 0, contentIndex = 0;
+                    for (int i = 0; i < headers.length; i++) {
+                        String hV = lines.get(0)[i].toLowerCase().trim();
+                        switch (hV) {
+                            case "title" -> titleIndex = i;
+                            case "description" -> descriptionIndex = i;
+                            case "link" -> linkIndex = i;
+                            case "content" -> contentIndex = i;
+                        }
+                    }
+                    for (int i = 1; i < lines.size(); i++) {
+                        String[] articleData = lines.get(i);
+                        Article article = new Article();
+                        for (int g = 0; g < articleData.length; g++) {
+                            String value = articleData[g];
+                            if (g == titleIndex) {
+                                article.setTitle(value);
+                            } else if (g == descriptionIndex) {
+                                article.setDescription(value);
+                            } else if (g == linkIndex) {
+                                article.setLink(value);
+                            } else if (g == contentIndex) {
+                                article.setContent(value);
+                            } else { //Not specified value
+
+                                //Do special stuff with attributes
+                                article.addAttribute(new Attribute(headers[g], value));
+                            }
+                        }
+                        articles.add(article);
+                    }
+                    return articles;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
 
-                ArrayList<Article> articles = new ArrayList<>();
-                String[] headers = lines.get(0);
-                int titleIndex = 0, descriptionIndex = 0, linkIndex = 0, contentIndex = 0;
-                for (int i = 0; i < headers.length; i++){
-                    String hV = lines.get(0)[i].toLowerCase().trim();
-                    switch (hV) {
-                        case "title" -> titleIndex = i;
-                        case "description" -> descriptionIndex = i;
-                        case "link" -> linkIndex = i;
-                        case "content" -> contentIndex = i;
-                    }
-                }
-                for (int i = 1; i < lines.size(); i++) {
-
-                    String[] articleData = lines.get(i);
-                    Article article = new Article();
-                    for(int g = 0; g < articleData.length; g++){
-
-                        String value = articleData[g];
-                        if(g == titleIndex){
-
-                            article.setTitle(value);
-                        }else if(g == descriptionIndex){
-
-                            article.setDescription(value);
-                        }else if(g == linkIndex){
-
-                            article.setLink(value);
-                        }else if(g == contentIndex){
-
-                            article.setContent(value);
-                        }else{ //Not specified value
-
-                            //Do special stuff with attributes
-                            article.addAttribute(new Attribute(headers[g], value));
-                        }
-                    }
-                    articles.add(article);
-                }
-
-                return articles;
-            }else{
-
-                return null;
             }
+            return null;
         }
 
         /**
@@ -299,7 +305,7 @@ public class Parser {
                     System.out.println("No pages found for the search query.");
                 }
             } catch (IOException e) {
-                Out.error("Failed to get Wikipedia article");
+                Telifie.console.out.error("Failed to get Wikipedia article");
                 return null;
             }
 
@@ -308,7 +314,102 @@ public class Parser {
             return wikiArticle;
         }
 
-
+        public static ArrayList<Article> yelp(String[] zips, Configuration config) throws UnsupportedEncodingException {
+            ArticlesClient articlesClient = new ArticlesClient(config);
+            ArrayList<Article> articles = new ArrayList<>();
+            String batchId = Telifie.tools.make.shortEid();
+            String API_KEY = "IyhStCFRvjRbjE51NyND1w4JyKIiZ-3r4Qf1g-DquKCgi8bNJcqK0-EjNoxCen1y0H57JJxmteYzpj8uZ78LLAlMn3Ea0S8bjioBm_5CMYK-TnHwzQ0jC0UN-0tHZHYx";
+            int total_count = 0, saved = 0;
+            for(String zip : zips){
+                Telifie.console.out.line();
+                Telifie.console.out.string("On zip code: " + zip);
+                Telifie.console.out.line();
+                String url = "https://api.yelp.com/v3/businesses/search?sort_by=best_match&limit=50&location=" + URLEncoder.encode(zip, "UTF-8");
+                HttpGet httpGet = new HttpGet(url);
+                httpGet.addHeader("Authorization", "Bearer " + API_KEY);
+                try (CloseableHttpClient httpClient = HttpClients.createDefault(); CloseableHttpResponse httpResponse = httpClient.execute(httpGet)) {
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    JsonNode rootNode = objectMapper.readTree(httpResponse.getEntity().getContent());
+                    JsonNode businessesNode = rootNode.path("businesses");
+                    Telifie.console.out.line();
+                    Telifie.console.out.string("Found " + businessesNode.size() + " businesses");
+                    Telifie.console.out.line();
+                    int i = 0;
+                    total_count += businessesNode.size();
+                    for (JsonNode businessNode : businessesNode) {
+                        i++;
+                        Article article = new Article();
+                        article.setId(Telifie.tools.make.md5(businessNode.path("id").asText()));
+                        if(!articlesClient.existsWithId(article.getId())){
+                            Telifie.console.out.string("On business " + i + " of " + businessesNode.size());
+                            article.setIcon(businessNode.path("image_url").asText());
+                            article.addAttribute(new Attribute("*batch", batchId));
+                            article.addAttribute(new Attribute("Phone", businessNode.path("display_phone").asText()));
+                            article.addAttribute(new Attribute("Rating", businessNode.path("rating").asText()));
+                            article.addAttribute(new Attribute("Price", businessNode.path("price").asText()));
+                            article.addAttribute(new Attribute("Reviews", businessNode.path("review_count").asText()));
+                            article.addAttribute(new Attribute("Latitude", businessNode.path("coordinates").path("latitude").asText()));
+                            article.addAttribute(new Attribute("Longitude", businessNode.path("coordinates").path("longitude").asText()));
+                            String name = Telifie.tools.strings.htmlEscape(businessNode.path("name").asText());
+                            article.setTitle(name);
+                            String street = businessNode.path("location").path("address1").asText();
+                            String city = businessNode.path("location").path("city").asText();
+                            article.addAttribute(new Attribute("City", city));
+                            article.addTag(city);
+                            String state = businessNode.path("location").path("state").asText();
+                            article.addAttribute(new Attribute("State", state));
+                            String zipCode = businessNode.path("location").path("zip_code").asText();
+                            article.addAttribute(new Attribute("Zip Code", zipCode));
+                            article.addTag(zipCode);
+                            article.addAttribute(new Attribute("Address", street + ", " + city + ", " + state + " " + zipCode));
+                            article.setContent(name + " is located at " + street + ", " + city + ", " + state + " " + zipCode + ".");
+                            businessNode.path("categories").forEach(category -> {
+                                article.addTag(Telifie.tools.strings.htmlEscape(category.path("title").asText()));
+                                article.setDescription(Telifie.tools.strings.sentenceCase(category.path("title").asText()));
+                            });
+                            article.setSource(new Source(
+                                    "6a9aaefa90c5edc50d678cca8c78e520",
+                                    "https://telifie-static.nyc3.cdn.digitaloceanspaces.com/wwdb-index-storage/yelp.png",
+                                    "Yelp",
+                                    businessNode.path("url").asText()
+                            ));
+                            String businessId = businessNode.path("id").asText();
+                            String photosUrl = "https://api.yelp.com/v3/businesses/" + businessId;
+                            HttpGet photosHttpGet = new HttpGet(photosUrl);
+                            photosHttpGet.addHeader("Authorization", "Bearer " + API_KEY);
+                            try (CloseableHttpClient photosHttpClient = HttpClients.createDefault();
+                                 CloseableHttpResponse photosHttpResponse = photosHttpClient.execute(photosHttpGet)) {
+                                ObjectMapper photosObjectMapper = new ObjectMapper();
+                                JsonNode photosRootNode = photosObjectMapper.readTree(photosHttpResponse.getEntity().getContent());
+                                JsonNode photosNode = photosRootNode.path("photos");
+                                for (JsonNode photoNode : photosNode) {
+                                    String photoUrl = photoNode.asText();
+                                    article.addImage(new Image(photoUrl, "", businessNode.path("url").asText()));
+                                }
+                            } catch (ClientProtocolException e) {
+                                throw new RuntimeException(e);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                            saved += 1;
+                            articlesClient.create(article);
+                            articles.add(article);
+                        }else{
+                            Telifie.console.out.message("Article already exists in database");
+                        }
+                    }
+                } catch (ClientProtocolException e) {
+                    throw new RuntimeException(e);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            Telifie.console.out.line();
+            Telifie.console.out.string("Total articles found: " + total_count);
+            Telifie.console.out.string("Total articles saved: " + saved);
+            Telifie.console.out.line();
+            return articles;
+        }
     }
 
     /**
@@ -321,20 +422,10 @@ public class Parser {
         private static String workingDirectory;
 
         public index(){
-            String operatingSystem = System.getProperty("os.name");
-            if(operatingSystem.equals("Mac OS X")){
-
-                workingDirectory = Out.MAC_SYSTEM_DIR;
-            }else if(operatingSystem.startsWith("Windows")){
-
-                workingDirectory = Out.WINDOWS_SYSTEM_DIR;
-            }else{
-
-                workingDirectory = Out.UNIX_SYSTEM_DIR;
-            }
+            workingDirectory = Telifie.getConfigDirectory();
         }
 
-        public static void add(Vars.Languages language){
+        public static void add(Telifie.Languages language){
 
         }
 
@@ -347,10 +438,10 @@ public class Parser {
             private static List<String> words = new ArrayList<>();
 
             /**
-             * Select the dictionary using preferred language Vars.Language.LANGUAGE
+             * Select the dictionary using preferred language Telifie.Language.LANGUAGE
              * @param language
              */
-            public dictionary(Vars.Languages language){
+            public dictionary(Telifie.Languages language){
                 File dictionaryDir = new File(index.workingDirectory + "/dictionary/");
                 if(!dictionaryDir.exists()){
                     dictionaryDir.mkdirs();
@@ -358,14 +449,14 @@ public class Parser {
                 dictionaryFile = new File(index.workingDirectory + "/dictionary/" + language + ".txt");
 
                 //Load words already in dictionary
-                String dict = Tool.fileToString(dictionaryFile.getAbsolutePath());
+                String dict = Telifie.tools.detector.fileToString(dictionaryFile.getAbsolutePath());
                 String[] dictWords = dict.split("\\s+");
                 for(String word : dictWords){
                     if(!word.trim().equals("")){
                         words.add(word);
                     }
                 }
-                Out.console("Read In -> " + words.toString());
+                Telifie.console.out.string("Read In -> " + words.toString());
             }
 
             /**
@@ -409,9 +500,9 @@ public class Parser {
                     fileWriter.write(dict);
                     fileWriter.close();
 //                    words.removeAll(words);
-                    Out.console("Dictionary updated");
+                    Telifie.console.out.string("Dictionary updated");
                 } catch (IOException e) {
-                    Out.console("Failed to update dictionary");
+                    Telifie.console.out.string("Failed to update dictionary");
                     e.printStackTrace();
                 }
             }
@@ -445,7 +536,7 @@ public class Parser {
             for (int i = 0; i < text.length(); i++) {
                 char c = text.charAt(i);
                 currentSentence.append(c);
-                if (Tool.equals(c, new char[] {'.', '!', '?'})) {
+                if (Telifie.tools.strings.equals(c, new char[] {'.', '!', '?'})) {
                     sentences.add(currentSentence.toString().trim());
                     currentSentence = new StringBuilder();
                 }
@@ -485,7 +576,7 @@ public class Parser {
             }
             if(removeStopwords){
 
-                cleanedText = Tool.removeWords(cleanedText, Vars.stopWords);
+                cleanedText = Telifie.tools.strings.removeWords(cleanedText, Telifie.stopWords);
             }
             if(removePunctuation){
                 cleanedText = cleanedText.replaceAll("[^a-zA-Z0-9 ]", "");

@@ -1,10 +1,10 @@
 package com.telifie.Models.Clients;
 
-import com.telifie.Models.Connectors.Available.TwilioSMS;
+import com.telifie.Models.Connectors.TwilioSMS;
 import com.telifie.Models.User;
 import com.telifie.Models.Utilities.Configuration;
+import com.telifie.Models.Utilities.Telifie;
 import com.telifie.Models.Utilities.Theme;
-import com.telifie.Models.Utilities.Tool;
 import org.bson.Document;
 
 public class UsersClient extends Client {
@@ -31,11 +31,11 @@ public class UsersClient extends Client {
 
     public boolean lock(User user, String code){
 
-        return this.updateOne(new Document("email", user.getEmail()), new Document("$set", new Document("token", Tool.md5(code))));
+        return this.updateOne(new Document("email", user.getEmail()), new Document("$set", new Document("token", Telifie.tools.make.md5(code))));
     }
 
     public boolean sendCode(User user){
-        String code = Tool.simpleCode();
+        String code = Telifie.tools.make.simpleCode();
         TwilioSMS messenger = new TwilioSMS();
         messenger.send(user.getPhone(), "+12243476722", "Welcome back! Your login code is " + code);
         return this.lock(user, code);

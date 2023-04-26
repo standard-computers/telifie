@@ -33,7 +33,6 @@ public class Network {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             this.statusCode = response.statusCode();
         } catch (IOException | InterruptedException | URISyntaxException e) {
-
             throw new RuntimeException(e);
         }
     }
@@ -52,16 +51,7 @@ public class Network {
         return null;
     }
 
-    public String getUrl() {
-        return url;
-    }
-
     public int getStatusCode() {
         return statusCode;
     }
-
-    public void crawl(){
-
-    }
-
 }

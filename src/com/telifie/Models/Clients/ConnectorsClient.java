@@ -3,16 +3,15 @@ package com.telifie.Models.Clients;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import com.telifie.Models.Actions.Out;
 import com.telifie.Models.Connectors.Connector;
-import com.telifie.Models.Utilities.Tool;
+import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import java.io.*;
 import java.util.ArrayList;
 
 public class ConnectorsClient {
 
-    private final String workingDirectory = Tool.getWorkingDirectory();
+    private final String workingDirectory = Telifie.getConnectorsDirectory();
     private ArrayList<Connector> connectors = new ArrayList<>();
 
     public ConnectorsClient(){
@@ -30,7 +29,7 @@ public class ConnectorsClient {
 
             try {
 
-                Out.console("Importing Connector ->" + file.getPath());
+                Telifie.console.out.string("Importing Connector ->" + file.getPath());
                 if(!file.getPath().contains(".DS_Store") && !file.isDirectory()) {
 
                     String json = new String(Files.readAllBytes(Paths.get(file.getPath())));

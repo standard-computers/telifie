@@ -2,12 +2,14 @@ package com.telifie.Models.Actions;
 
 import com.telifie.Models.*;
 import com.telifie.Models.Clients.*;
-import com.telifie.Models.Connectors.Available.SGrid;
+import com.telifie.Models.Connectors.SGrid;
 import com.telifie.Models.Connectors.Connector;
 import com.telifie.Models.Utilities.*;
+import com.telifie.Models.Utilities.Parameters;
 import org.bson.Document;
 import org.json.JSONException;
 import org.json.JSONObject;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -83,7 +85,6 @@ public class Command {
                     String domainId = this.get(2);
                     DomainsClient domains = new DomainsClient(config);
                     Domain subjectDomain = domains.getWithId(domainId);
-
                     if(subjectDomain.getOwner().equals(config.getAuthentication().getUser())){ //Requesting user is owning user
                         if(domains.delete(config.getAuthentication().getUser(), domainId)){
                             return new Result(200, this.command, "\"Successfully deleted the domain\"");
@@ -172,7 +173,7 @@ public class Command {
 
                     //Check permissions of user in Domains
                     //TODO, share changes with data team for approval and change status on Article
-                    return new Result(401, this.command, "\"Insufficient permissions to delete Article in Public Domain\"");
+                    return new Result(401, this.command, "\"Insufficient permissions to delete article in domain\"");
 
                 }else if(objectSelector.equals("move")){
 
@@ -187,7 +188,7 @@ public class Command {
 
                     //Check permissions of user in Domains
                     //TODO, share changes with data team for approval and change status on Article
-                    return new Result(401, this.command, "\"Insufficient permissions to update Article in Public Domain\"");
+                    return new Result(401, this.command, "\"Insufficient permissions to update in domain\"");
                 }
 
                 return new Result(404, this.command, "\"Unknown Articles action command\"");
@@ -196,7 +197,7 @@ public class Command {
                 if(content != null){
                     User user = config.getUser();
                     if(this.targetDomain.equals("telifie") && user.getPermissions() < 12){ //Make sure that the user has the permissions
-                        return new Result(403, this.command, "\"No sufficient permissions to publish to public domain\"");
+                        return new Result(403, this.command, "\"Insufficient permissions to publish to domain\"");
                     }
                     try {
                         Article newArticle = new Article(content);
@@ -209,13 +210,10 @@ public class Command {
                         return new Result(505, this.command, "\"Malformed Article JSON data provided\"");
                     }
                 }
-
                 return new Result(428, "\"Precondition Failed. No new Article provided (JSON.article) as body\"");
-            }else if(objectSelector.equals("")){ //Return stats of Articles in domain (summary)
-                return new Result(this.command,"stats", "");
             }
-
-            return new Result(404, "\"No Article ID provided\"");
+            //Return stats of Articles in domain (summary)
+            return new Result(this.command,"stats", "");
         }
         /*
          * Accessing Groups
@@ -226,9 +224,9 @@ public class Command {
             if(this.selectors.length >= 4){ //Ensure correct argument count
 
                 String groupId = this.get(2), articleId = this.get(3);
-                GroupsClient groups = new GroupsClient(config);
+                CollectionsClient groups = new CollectionsClient(config);
 
-                //Saves Article to Group given /groups/save/[GROUP_ID]/[ARTICLE_ID]
+                //Saves Article to Collection given /groups/save/[GROUP_ID]/[ARTICLE_ID]
                 if(objectSelector.equals("save")){
 
                     if(groups.save(config.getAuthentication().getUser(), groupId, articleId)){
@@ -246,7 +244,7 @@ public class Command {
                 }
                 return new Result(404, this.command, "\"Invalid favorites command\"");
             }
-            //Updates Group given JSON POST. See reference
+            //Updates Collection given JSON POST. See reference
             else if(objectSelector.equals("update")){
 
                 String groupId = (this.selectors.length == 3 ? this.get(2) : null);
@@ -255,30 +253,30 @@ public class Command {
                     if(content != null){
                         //Cannot make a folder named $pinned as its reserved
                         if(content.getString("name") != null && content.getString("name").equals("Pinned")){
-                            return new Result(304, this.command, "\"'Pinned' is a reserved Group name\"");
+                            return new Result(304, this.command, "\"'Pinned' is a reserved Collection name\"");
                         }
 
-                        GroupsClient groups = new GroupsClient(config);
+                        CollectionsClient groups = new CollectionsClient(config);
                         if(groups.update(groupId, content)){
-                            return new Result(200, this.command, "\"Group Update\"");
+                            return new Result(200, this.command, "\"Collection Update\"");
                         }
-                        return new Result(505, this.command, "\"Failed to update Group\"");
+                        return new Result(505, this.command, "\"Failed to update Collection\"");
                     }
-                    return new Result(428, this.command, "\"Update content for Group not provided\"");
+                    return new Result(428, this.command, "\"Update content for Collection not provided\"");
                 }
-                return new Result(428, "\"ID of Group required to update\"");
+                return new Result(428, "\"ID of Collection required to update\"");
             }
-            //Creates Group given /groups/create/[GROUP_NAME]
+            //Creates Collection given /groups/create/[GROUP_NAME]
             else if(objectSelector.equals("create")){
 
-                if(content != null){ //Creating Group with JSON content
-                    Group newGroup = new Group(content);
-                    GroupsClient groups = new GroupsClient(config);
-                    Group createdGroup = groups.create(config.getAuthentication().getUser(), newGroup);
-                    if(createdGroup != null){
-                        return new Result(this.command, "group", createdGroup);
+                if(content != null){ //Creating Collection with JSON content
+                    Collection newCollection = new Collection(content);
+                    CollectionsClient groups = new CollectionsClient(config);
+                    Collection createdCollection = groups.create(config.getAuthentication().getUser(), newCollection);
+                    if(createdCollection != null){
+                        return new Result(this.command, "group", createdCollection);
                     }
-                    return new Result(505, this.command, "\"Failed to make Group with JSON\"");
+                    return new Result(505, this.command, "\"Failed to make Collection with JSON\"");
                 }
                 return new Result(428, "\"JSON request body expected\"");
             }
@@ -287,34 +285,34 @@ public class Command {
 
                 String groupId = (this.selectors.length == 3 ? this.get(2) : null);
                 if(groupId != null){
-                    GroupsClient groups = new GroupsClient(config);
+                    CollectionsClient groups = new CollectionsClient(config);
                     if(groups.delete(config.getAuthentication().getUser(), groupId)){
-                        return new Result(200, this.command, "\"Group '" + groupId + "' deleted\"");
+                        return new Result(200, this.command, "\"Collection '" + groupId + "' deleted\"");
                     }
                     return new Result(505, this.command, "\"Failed to delete group '" + groupId + "'\"");
                 }
                 return new Result(428, "Name of new group required.");
             }
             /*
-             * Returns Group given /groups/id/[GROUP_ID]
+             * Returns Collection given /groups/id/[GROUP_ID]
              */
             else if(objectSelector.equals("id")){
 
                 String groupId = this.get(2);
-                GroupsClient groups = new GroupsClient(config);
+                CollectionsClient groups = new CollectionsClient(config);
                 if(groupId != null){
                     try{
-                        Group group = groups.get(config.getAuthentication().getUser(), groupId);
-                        return new Result(this.command, "group", group);
+                        Collection collection = groups.get(config.getAuthentication().getUser(), groupId);
+                        return new Result(this.command, "collection", collection);
                     }catch(NullPointerException n){
-                        return new Result(404, this.command, "\"Group not found with ID '" + groupId + "'\"");
+                        return new Result(404, this.command, "\"Collection not found with ID '" + groupId + "'\"");
                     }
                 }
-                return new Result(428, this.command, "\"Group ID is required to get\"");
+                return new Result(428, this.command, "\"Collection ID is required to get\"");
             }
-            GroupsClient groups = new GroupsClient(config);
-            ArrayList<Group> usersGroups = groups.groupsForUser(config.getAuthentication().getUser());
-            return new Result(this.command, "groups", usersGroups);
+            CollectionsClient groups = new CollectionsClient(config);
+            ArrayList<Collection> usersCollections = groups.groupsForUser(config.getAuthentication().getUser());
+            return new Result(this.command, "groups", usersCollections);
         }
         /*
          * Accessing Users
@@ -387,9 +385,11 @@ public class Command {
          */
         else if(primarySelector.equals("parser")){ //Accessing parser
 
+            ArticlesClient articles = new ArticlesClient(config);
             if(content != null){
                 String mode = content.getString("mode");
                 if(mode != null){
+
                     if(mode.equals("batch")){ //Importing CSV as batch of Articles
 
                         String uri = this.command.replaceFirst("parser/batch", "");
@@ -404,7 +404,7 @@ public class Command {
                         if(content != null && content.getString("words") != null){
                             String[] words = content.getString("words").split(" ");
                             new Parser.index();
-                            Parser.index.dictionary dict = new Parser.index.dictionary(Vars.Languages.ENGLISH);
+                            Parser.index.dictionary dict = new Parser.index.dictionary(Telifie.Languages.ENGLISH);
                             dict.add(words);
                             return new Result(200, this.command, "\"Words added to dictionary\"");
                         }
@@ -414,16 +414,25 @@ public class Command {
 
                         String wikiTitle = this.get(2);
                         Article wikiArticle = Parser.connectors.wikipedia(wikiTitle);
-                        ArticlesClient articles = new ArticlesClient(config);
                         articles.create(wikiArticle);
                         return new Result(this.command, "article", wikiArticle);
 
+                    }else if(mode.equals("yelp")){
+                        String[] zips = content.getString("zips").split(",");
+                        ArrayList<Article> yelps = null;
+                        try {
+                            yelps = Parser.connectors.yelp(zips, config);
+                        } catch (UnsupportedEncodingException e) {
+                            return new Result(505, this.command, "\"Failed to parse Yelp\"");
+                        }
+                        return new Result(this.command, "articles", yelps);
+
                     }else if(mode.equals("uri")){ //Parsing URL or file with URI
 
-                        String uri = content.getString("uri");
-                        if(uri != null && !uri.equals("")){
+                        String url = content.getString("url");
+                        if(url != null && !url.equals("")){
                             Parser parser = new Parser();
-                            Article parsed = Parser.engines.parse(uri);
+                            Article parsed = Parser.engines.parse(url);
                             if(parser.getTraversable().size() > 1){
                                 return new Result(this.command, "articles", parser.getTraversable());
                             }
@@ -442,12 +451,10 @@ public class Command {
         else if(primarySelector.equals("queue")){
 
             if(this.selectors.length >= 2) {
-
                 //User is uploading content to queue
                 String uri = content.getString("uri");
                 String connector = (content.getString("connector") == null ? null : content.getString("connector"));
                 if (connector == null || connector.equals("")) {
-
                     //TODO return draft article
                     if (uri == null || uri.equals("")) {
                         return new Result(410, this.command, "\"No URI provided as {\"uri\" : \"URI\"}\"");
@@ -457,7 +464,6 @@ public class Command {
                     if (articles.get(new Document("link", uri)).size() > 0) {
 
                     } else {
-
                         QueueClient queue = new QueueClient(config);
                         Article queued = queue.add(uri);
                         if (queued != null) {
@@ -495,7 +501,7 @@ public class Command {
         else if(primarySelector.equals("server")){ //Accessing server
             if(this.selectors.length >= 2){
                   if(this.get(2).equals("http")){
-                    Out.console("Starting HTTP server [TESTING PURPOSES ONLY]...");
+                    Telifie.console.out.string("Starting HTTP server [TESTING PURPOSES ONLY]...");
                     try{
                         new HttpServer();
                     }catch(Exception e){
@@ -516,20 +522,17 @@ public class Command {
         else if(primarySelector.equals("authenticate")){ //authentication
 
             if(this.selectors.length >= 3 && this.get(1).equals("app")){
-
                 String appId = this.get(2);
                 Authentication auth = new Authentication(appId);
                 AuthenticationClient authentications = new AuthenticationClient(config);
                 if(authentications.authenticate(auth)){
-
-                    Out.console("App authenticated with ID: " + appId);
-                    Out.console("One-time see authentication information below:");
-                    Out.console("==============================================");
-                    Out.console(auth.toJson().toString(4));
-                    Out.console("==============================================");
+                    Telifie.console.out.string("App authenticated with ID: " + appId);
+                    Telifie.console.out.string("One-time see authentication information below:");
+                    Telifie.console.out.string("==============================================");
+                    Telifie.console.out.string(auth.toJson().toString(4));
+                    Telifie.console.out.string("==============================================");
                     return new Result(this.command, "authentication", auth.toJson());
                 }else{
-
                     return new Result(505, "\"Failed creating app authentication\"");
                 }
             }
@@ -540,22 +543,17 @@ public class Command {
         else if(primarySelector.equals("connect")){
 
             if(this.selectors.length >= 2){
-
                 String email = this.get(1);
                 UsersClient users = new UsersClient(config);
                 if(users.userExistsWithEmail(email)){
-
                     User user = users.getUserWithEmail(email);
                     if(user.getPermissions() == 0){ //Email needs verified
-
                         ConnectorsClient connectors = new ConnectorsClient();
                         Connector sendgrid = connectors.getConnector("SendGrid");
                         if(sendgrid != null){
-
                             SGrid sg = new SGrid(sendgrid);
-                            String code = Tool.shortEid();
+                            String code = Telifie.tools.make.shortEid();
                             if(users.lock(user, code)){
-
                                 if(sg.sendAuthenticationCode(user.getEmail(), code)){
 
                                 }
@@ -568,7 +566,6 @@ public class Command {
                     }else if(user.getPermissions() >= 1){ //Phone needs verified
 
                         if(users.sendCode(user)){
-
                             return new Result(200, "\"Authentication code sent\"");
                         }
                         return new Result(501, "\"Failed to send code\"");
@@ -584,14 +581,11 @@ public class Command {
         else if(primarySelector.startsWith("verify")){ //Provided /verify/[USER_EMAIL]/[VERIFICATION_CODE]
 
             if(this.selectors.length >= 3){
-
-                String email = this.get(1), code = Tool.md5(this.get(2));
+                String email = this.get(1), code = Telifie.tools.make.md5(this.get(2));
                 UsersClient users = new UsersClient(config);
                 User user = users.getUserWithEmail(email);
                 if(user.hasToken(code)){ //Check if user has the right code
-
                     if(user.getPermissions() == 0 || user.getPermissions() == 1){ //User was verifying email
-
                         users.upgradePermissions(user);
                         user.setPermissions(user.getPermissions() + 1); //For request return purposes. It has been updated
                     }
@@ -614,12 +608,10 @@ public class Command {
         else if(primarySelector.equals("timelines")){
 
             if(this.selectors.length >= 2){
-
                 String objectId = this.get(1);
                 TimelinesClient timelines = new TimelinesClient(config);
                 Timeline timeline = timelines.getTimeline(objectId);
                 if(timeline != null){
-
                     return new Result(this.command, "timeline", timeline);
                 }
                 return new Result(404, this.command, "\"No timeline found for " + objectId + "\"");

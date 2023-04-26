@@ -1,32 +1,31 @@
 package com.telifie.Models;
 
-import com.telifie.Models.Utilities.Tool;
-import com.telifie.Models.Utilities.Vars;
+import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class Group {
+public class Collection {
 
     private String id, user, icon, name, sort = "A";
-    private int origin, permissions = Vars.PRIVATE;
+    private int origin, permissions = Telifie.PRIVATE;
     private ArrayList articles;
     private ArrayList<Article> detailedList;
 
-    public Group(String user, String name){
+    public Collection(String user, String name){
         this.id = UUID.randomUUID().toString();
         this.user = user;
         this.name = name;
-        this.origin = Tool.epochTime();
+        this.origin = Telifie.getEpochTime();
     }
 
-    public Group(Document document) throws NullPointerException {
-        this.id = (document.getString("id") == null ? Tool.md5(Tool.randomReferenceCode()) : document.getString("id") );
+    public Collection(Document document) throws NullPointerException {
+        this.id = (document.getString("id") == null ? Telifie.tools.make.md5(Telifie.tools.make.randomReferenceCode()) : document.getString("id") );
         this.user = document.getString("user");
         this.icon = document.getString("icon");
         this.name = document.getString("name");
         this.articles = document.get("articles", ArrayList.class);
-        this.origin = Tool.epochTime();
+        this.origin = Telifie.getEpochTime();
         this.permissions = document.getInteger("permissions");
     }
 

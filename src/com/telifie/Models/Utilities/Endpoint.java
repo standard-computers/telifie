@@ -12,12 +12,6 @@ public class Endpoint {
         this.description = document.getString("description");
     }
 
-    public Endpoint(String url, String method, String description) {
-        this.url = url;
-        this.method = method;
-        this.description = description;
-    }
-
     public String getUrl() {
         return url;
     }

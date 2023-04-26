@@ -1,12 +1,14 @@
-package com.telifie.Models.Actions;
+package com.telifie.Models.Utilities;
 
 
+import com.telifie.Models.Actions.Command;
 import com.telifie.Models.Clients.AuthenticationClient;
 import com.telifie.Models.Clients.UsersClient;
 import com.telifie.Models.Domain;
 import com.telifie.Models.Result;
 import com.telifie.Models.Utilities.Authentication;
 import com.telifie.Models.Utilities.Configuration;
+import com.telifie.Models.Utilities.Telifie;
 import org.bson.BsonInvalidOperationException;
 import org.bson.Document;
 import javax.net.ssl.*;
@@ -23,7 +25,7 @@ public class Server {
     private static final String KEYSTORE_PASSWORD = "JxBwCQZTHx5suZ8W";
 
     public Server() {
-        Out.console("Starting SSL server...");
+        Telifie.console.out.string("Starting SSL server...");
         // Load keystore
         KeyStore keyStore = null;
         try {
@@ -48,12 +50,12 @@ public class Server {
             serverSocket.setNeedClientAuth(false);
 
             // Listen for client connections
-            Out.console("Attempting SSL server connection on port " + PORT + "...");
+            Telifie.console.out.string("Attempting SSL server connection on port " + PORT + "...");
             while (true) {
-                Out.console("Waiting for client connection...");
+                Telifie.console.out.string("Waiting for client connection...");
                 try {
                     SSLSocket clientSocket = (SSLSocket) serverSocket.accept();
-                    Out.console("Accepting new SSL Client -> " + clientSocket.getInetAddress().getHostAddress());
+                    Telifie.console.out.string("Accepting new SSL Client -> " + clientSocket.getInetAddress().getHostAddress());
 
                     //Handle client request
                     BufferedReader input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -121,12 +123,12 @@ public class Server {
                     clientSocket.close();
 
                 } catch (IOException e) {
-                    Out.console("Failed to accept client connection: " + e.getMessage());
+                    Telifie.console.out.string("Failed to accept client connection: " + e.getMessage());
                     throw new RuntimeException(e);
                 }
             }
         } catch (KeyStoreException e) {
-            Out.error("Failed to ini SSL Server: " + e.getMessage());
+            Telifie.console.out.error("Failed to ini SSL Server: " + e.getMessage());
             throw new RuntimeException(e);
         } catch (UnrecoverableKeyException | CertificateException | NoSuchAlgorithmException | KeyManagementException | IOException e) {
             throw new RuntimeException(e);
