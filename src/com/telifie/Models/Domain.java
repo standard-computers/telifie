@@ -1,14 +1,17 @@
 package com.telifie.Models;
 
+import com.telifie.Models.Articles.Attribute;
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.UUID;
 
 public class Domain implements Serializable {
 
     private String uri, id, alt, icon, owner, name;
     private int origin, permissions;
+    private ArrayList<Member> users = new ArrayList<>();
     //TODO users
 
     public Domain(String uri){
@@ -37,6 +40,12 @@ public class Domain implements Serializable {
         this.owner = document.getString("owner");
         this.name = document.getString("name");
         this.permissions = (document.getInteger("permissions") == null ? 0 : document.getInteger("permissions"));
+        ArrayList<Document> mems = (ArrayList<Document>) document.getList("users", Document.class);
+        if (mems != null) {
+            for (Document doc : mems) {
+                this.addUser(new Member(doc));
+            }
+        }
     }
 
     public String getUri() {
@@ -68,6 +77,15 @@ public class Domain implements Serializable {
         return this;
     }
 
+    public ArrayList<Member> getUsers() {
+        return users;
+    }
+
+    public Domain addUser(Member member){
+        this.users.add(member);
+        return this;
+    }
+
     @Override
     public String toString() {
         return "{" +
@@ -79,6 +97,7 @@ public class Domain implements Serializable {
                 ", \"name\" : \"" + name + '\"' +
                 ", \"origin\" :" + origin +
                 ", \"permissions\" :" + permissions +
+                ", \"users\" :" + users +
                 '}';
     }
 }

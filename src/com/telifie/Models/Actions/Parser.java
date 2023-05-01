@@ -2,6 +2,8 @@ package com.telifie.Models.Actions;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvException;
 import com.telifie.Models.*;
 import com.telifie.Models.Articles.*;
 import com.telifie.Models.Clients.ArticlesClient;
@@ -125,30 +127,30 @@ public class Parser {
          * Parses articles for csv rows
          * Provide csv file location. <a href=''>See template</a>
          * @param uri Location of csv on disk
-         * @param delimiter CSV data delimiter
+         * @param withPriority priority of all articles in batch
          * @return ArrayList<Article> List of Articles
          */
-        public static ArrayList<Article> batch(String uri, String delimiter){
+        public static ArrayList<Article> batch(String uri, Double withPriority){
 
             if(uri.endsWith("csv")) {
 
                 try {
                     URL url = new URL(uri);
                     InputStream inputStream = url.openStream();
-                    Files.copy(inputStream, Paths.get(Telifie.getConfigDirectory() + "/" + url.getPath()), StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(inputStream, Paths.get(Telifie.getConfigDirectory() + "temp/" + url.getPath().split("/")[url.getPath().split("/").length - 1]), StandardCopyOption.REPLACE_EXISTING);
                     ArrayList<String[]> lines = new ArrayList<>();
-                    try (BufferedReader br = new BufferedReader(new FileReader(Telifie.getConfigDirectory() + "/" + url.getPath()))) {
-                        String line;
-                        while ((line = br.readLine()) != null) {
-                            String[] fields = line.split(delimiter);
+                    try (CSVReader reader = new CSVReader(new FileReader(Telifie.getConfigDirectory() + "temp/" + url.getPath().split("/")[url.getPath().split("/").length - 1]))) {
+                        String[] fields;
+                        while ((fields = reader.readNext()) != null) {
                             lines.add(fields);
                         }
-                    } catch (IOException e) {
+                    } catch (IOException | CsvException e) {
                         e.printStackTrace();
                     }
+
                     ArrayList<Article> articles = new ArrayList<>();
                     String[] headers = lines.get(0);
-                    int titleIndex = 0, descriptionIndex = 0, linkIndex = 0, contentIndex = 0;
+                    int titleIndex = 0, descriptionIndex = 0, iconIndex = 0, linkIndex = 0, contentIndex = 0;
                     for (int i = 0; i < headers.length; i++) {
                         String hV = lines.get(0)[i].toLowerCase().trim();
                         switch (hV) {
@@ -156,11 +158,17 @@ public class Parser {
                             case "description" -> descriptionIndex = i;
                             case "link" -> linkIndex = i;
                             case "content" -> contentIndex = i;
+                            case "icon" -> iconIndex = i;
                         }
                     }
-                    for (int i = 1; i < lines.size(); i++) {
+                    String batchId = Telifie.tools.make.shortEid().toLowerCase();
+                    int total = lines.size() - 1;
+                    for (int i = 1; i < lines.size() - 1; i++) {
+                        Telifie.console.out.string("Parsing article " + i + " of " + total);
                         String[] articleData = lines.get(i);
                         Article article = new Article();
+                        article.setPriority(withPriority);
+                        article.addAttribute(new Attribute("*batch", batchId));
                         for (int g = 0; g < articleData.length; g++) {
                             String value = articleData[g];
                             if (g == titleIndex) {
@@ -171,10 +179,14 @@ public class Parser {
                                 article.setLink(value);
                             } else if (g == contentIndex) {
                                 article.setContent(value);
+                            } else if(g == iconIndex){
+                                article.setIcon(value);
                             } else { //Not specified value
 
-                                //Do special stuff with attributes
-                                article.addAttribute(new Attribute(headers[g], value));
+                                //TODO Do special stuff with attributes
+                                if(!value.trim().equals("")){
+                                    article.addAttribute(new Attribute(headers[g], value));
+                                }
                             }
                         }
                         articles.add(article);
@@ -227,6 +239,9 @@ public class Parser {
          */
         public static Article document(String uri){
 
+            if(Telifie.tools.detector.fileExtension(uri).equals("pdf")){
+                //TODO Parse pdf
+            }
             return null;
         }
 

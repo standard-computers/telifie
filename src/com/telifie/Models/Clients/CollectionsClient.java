@@ -12,7 +12,7 @@ public class CollectionsClient extends Client {
     public CollectionsClient(Configuration config){
 
         super(config);
-        super.collection = "groups";
+        super.collection = "collections";
     }
 
     public Collection get(String userId, String id){

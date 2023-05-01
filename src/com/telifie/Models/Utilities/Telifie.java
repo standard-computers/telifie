@@ -6,6 +6,8 @@ import org.jsoup.select.Elements;
 
 import java.io.*;
 import java.math.BigInteger;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -157,6 +159,10 @@ public class Telifie {
                     throw new RuntimeException(e);
                 }
             }
+
+//            public static String download(String get, String put){
+//
+//            }
         }
     }
 
@@ -298,6 +304,18 @@ public class Telifie {
         }
 
         public static class detector {
+
+            public static String fileExtension(String uri) {
+                Path path = Paths.get(uri);
+                String fileName = path.getFileName().toString();
+                int dotIndex = fileName.lastIndexOf(".");
+                if (dotIndex > 0) {
+                    return fileName.substring(dotIndex + 1);
+                } else {
+                    return "";
+                }
+            }
+
             public static Matcher findPhoneNumbers(String text){
                 String regex = "\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b";
                 Pattern pattern = Pattern.compile(regex);
@@ -366,6 +384,8 @@ public class Telifie {
                     return "Unknown";
                 }
             }
+
+
 
             public static String fileToString(String filePath) {
                 File file = new File(filePath);

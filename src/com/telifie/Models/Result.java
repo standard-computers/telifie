@@ -64,7 +64,7 @@ public class Result {
                 ", \"query\" : \"" + query + '\"' +
                 ", \"count\" : " + count +
                 (quickResults.size() > 0 && quickResults != null ? ", \"quick_results\" : " + quickResults : "") +
-                ", \"" + object + "\" : " + results.toString() +
+                ", \"" + object + "\" : " + (results instanceof String ? "\"" + results + "\"" : results.toString()) +
                 "}";
     }
 }

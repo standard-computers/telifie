@@ -233,4 +233,8 @@ public class Article {
     public void addTag(String tag) {
         this.tags.add(tag.toLowerCase().trim());
     }
+
+    public void setPriority(Double priority) {
+        this.priority = priority;
+    }
 }

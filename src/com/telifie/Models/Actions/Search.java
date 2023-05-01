@@ -3,9 +3,7 @@ package com.telifie.Models.Actions;
 import com.telifie.Models.Article;
 import com.telifie.Models.Articles.Image;
 import com.telifie.Models.Clients.ArticlesClient;
-import com.telifie.Models.Clients.UsersClient;
 import com.telifie.Models.Result;
-import com.telifie.Models.User;
 import com.telifie.Models.Articles.CommonObject;
 import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Parameters;
@@ -22,7 +20,6 @@ public class Search {
 
         query = URLDecoder.decode(query, StandardCharsets.UTF_8).toLowerCase().trim();
         ArrayList results = Search.executeQuery(config, query, params);
-        ArrayList<Article> articles = new ArrayList();
         if(params.getIndex().equals("images")) {
             ArrayList<Image> images = new ArrayList();
             for(Object result : results){
@@ -37,14 +34,16 @@ public class Search {
             }
             return new Result(query, "images", images);
         }else if(params.getIndex().equals("locations")){
+            ArrayList<Article> articles = new ArrayList();
             for(Object result : results){
                 Article article = (Article) result;
-                if((article.hasAttribute("latitude") && article.hasAttribute("longitude")) || article.hasAttribute("postal code") || article.hasAttribute("address") || article.hasAttribute("zip code")){
+                if(article.hasAttribute("latitude") && article.hasAttribute("longitude")){
                     articles.add(article);
                 }
             }
             return new Result(query, "articles", articles);
         }else if(params.getIndex().equals("shopping")){
+            ArrayList<Article> articles = new ArrayList();
             for(Object result : results){
                 Article article = (Article) result;
                 if(article.hasAttribute("cost") || article.hasAttribute("price") || article.hasAttribute("value")){
@@ -54,9 +53,6 @@ public class Search {
             return new Result(query, "articles", articles);
         }
         ArrayList<CommonObject> qr = new ArrayList<>();
-        if(!params.isDisableQuickResults()){
-            qr = Search.quickResults(config, query);
-        }
         return new Result(query, qr, results);
     }
 
@@ -64,31 +60,32 @@ public class Search {
 
         String[] tokens = Parser.encoder.tokenize(query, true).get(0);
         String cleaned = Parser.encoder.clean(query);
-
-        //Filters to search by, making it flexible ladies
         ArrayList<Document> filters = new ArrayList<>();
+        Document generalFilter = generalFilter(query);
+        ArticlesClient articles = new ArticlesClient(config);
+        ArrayList<Article> results;
+        if(generalFilter != null){
 
-        //Always search by titles and links
-        filters.add(new Document("title", new Document("$in", Arrays.asList(pattern(cleaned), pattern(query)))));
-        filters.add(new Document("link", new Document("$in", Arrays.asList(pattern(cleaned), pattern(query)))));
-
-        //Do specialize query filters for uncleaned query ONLY
-        if(generalFilter(query) != null){
-            filters.add(generalFilter(query));
-        }
-        for(String token : tokens){
-            String[] properties = {"link", "title", "description"};
-            for(String property : properties){
-                filters.add(new Document(property, pattern(token) ) );
+            Telifie.console.out.line();
+            Telifie.console.out.line();
+            Telifie.console.out.line();
+            results = articles.search(config, params, generalFilter);
+            if(results != null && results.size() > 3){
+                Collections.sort(results, new RelevanceComparator(query));
+                Collections.reverse(results);
             }
+        }else{
+            filters.add(new Document("title", new Document("$in", Arrays.asList(pattern(cleaned), pattern(query)))));
+//            filters.add(new Document("link", new Document("$in", Arrays.asList(pattern(cleaned), pattern(query)))));
+            for(String token : tokens){
+                String[] properties = {"link", "title", "description"};
+                for(String property : properties){
+                    filters.add(new Document(property, pattern(token) ) );
+                }
+            }
+            results = articles.search(config, params, Search.filter(filters));
         }
 //        filters.add(new Document("tags", new Document("$in", Arrays.asList(tokens)) ) );
-        ArticlesClient articles = new ArticlesClient(config);
-        ArrayList<Article> results = articles.search(config, params, Search.filter(filters));
-        if(results != null && results.size() > 3){
-            Collections.sort(results, new RelevanceComparator(query));
-            Collections.reverse(results);
-        }
         return results;
     }
 
@@ -103,22 +100,19 @@ public class Search {
 
             String[] spl = query.split(":");
             if(spl.length >= 2) {
-
                 return new Document("id", spl[1].trim());
             }
         }else if(query.matches("^description\\s*:\\s*.*")){ //Return Articles with requested description
 
             String[] spl = query.split(":");
             if(spl.length >= 2) {
-
-                return new Document("description", pattern(spl[1].trim()));
+                return new Document("description", ignoreCase(spl[1].trim()));
             }
         }else if(query.matches("^title\\s*:\\s*.*")){ //Return Articles with requested description
 
             String[] spl = query.split(":");
             if(spl.length >= 2){
-
-                return new Document("title", pattern(query.split(":")[1]));
+                return new Document("title", ignoreCase(query.split(":")[1]));
             }
         }else if(query.matches("^attribute\\s*:\\s*.*")){
 
@@ -133,78 +127,44 @@ public class Search {
                         String[] attrReqs = spl[1].split("&");
                         List<Document> andFilters = new ArrayList<>();
                         for (String attr : attrReqs) {
-
                             String[] args = attr.split("=");
                             String key = args[0].trim(), value = args[1].trim();
-                            andFilters.add(new Document("attributes.key", pattern(key)));
-                            andFilters.add(new Document("attributes.value", pattern(value)));
+                            andFilters.add(new Document("attributes.key", ignoreCase(key)));
+                            andFilters.add(new Document("attributes.value", ignoreCase(value)));
                         }
                         return new Document("$and", andFilters);
-
                     }else{
 
                         String key = spl2[0].trim();
                         if(spl2.length >= 2){
-
                             String value = spl2[1].trim();
-                            return new Document("$and",
-                                    Arrays.asList(new Document("attributes.key", pattern( key ) ), new Document("attributes.value", pattern( value ) ))
-                            );
-                        }else{
-
-                            return new Document("attributes.key", pattern( key ) );
+                            return new Document("$and", Arrays.asList(new Document("attributes.key", pattern( key ) ), new Document("attributes.value", pattern( value ) )));
                         }
+                        return new Document("attributes.key", pattern( key ) );
                     }
                 }
             }
-
         }else if(query.startsWith("define ")) {
-
-            return new Document("$and",
-                    Arrays.asList(
-                            new Document("description", pattern("definition")),
-                            new Document("title", query.replaceFirst("define ", ""))
-                    )
-            );
+            String term = query.replaceFirst("define", "").trim();
+            return new Document("$and", Arrays.asList(new Document("description", ignoreCase("definition")), new Document("title", term)));
         }
         return null;
     }
 
-    /**
-     * Wrapper method for building document filters
-     * @param filters
-     * @return Document filter for actual Search query
-     */
     private static Document filter(ArrayList filters){
         return new Document("$or", filters);
-    }
-
-    private static ArrayList<CommonObject> quickResults(Configuration config, String query){
-
-        ArrayList<CommonObject> quickResults = new ArrayList<>();
-        if(query.matches("^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$")){
-            UsersClient users = new UsersClient(config);
-            User user = users.getUserWithEmail(query);
-            quickResults.add(new CommonObject("", user.getName(), "", user.getEmail()));
-        }
-        if(query.equals("how many articles are there")){
-            //TODO if query is LIKE
-        }
-        if(Telifie.tools.detector.isHexColor(query) || Telifie.tools.detector.isHSLColor(query) || Telifie.tools.detector.isRGBColor(query)){
-            quickResults.add(new CommonObject("COLOR_ICON",query, "", query));
-        }
-
-        if(query.contains("random") && query.contains("color")){
-
-            //TODO https://www.thecolorapi.com/
-        }
-        return quickResults;
     }
 
     private static Pattern pattern(String value){
         String regex = "\\b" + Pattern.quote(value) + "\\w*\\b";
         return Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
     }
+
+    private static Pattern ignoreCase(String value) {
+        String regex = "\\b" + Pattern.quote(value) + "\\b";
+        return Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+    }
+
 
     private static class RelevanceComparator implements Comparator<Article> {
 
