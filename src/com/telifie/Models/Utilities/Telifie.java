@@ -132,6 +132,10 @@ public class Telifie {
                 System.out.println("||     `--'    `------' `-----' `--' `--'     `--' `------'  ||");
                 System.out.println("||                                                           ||");
                 System.out.println("||===========================================================||\n");
+                String operatingSystem = System.getProperty("os.name");
+                Telifie.console.out.string("Operating System : " + operatingSystem);
+                Telifie.console.out.string("System Architecture : " + System.getProperty("os.arch"));
+                Telifie.console.out.line();
             }
         }
 
@@ -154,9 +158,9 @@ public class Telifie {
                     Object obj = in.readObject();
                     return obj;
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    return null;
                 } catch (ClassNotFoundException e) {
-                    throw new RuntimeException(e);
+                    return null;
                 }
             }
 

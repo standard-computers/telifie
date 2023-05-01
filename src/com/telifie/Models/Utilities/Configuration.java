@@ -27,11 +27,7 @@ public class Configuration implements Serializable {
     public void setAuthentication(Authentication authentication) {
         this.authentication = authentication;
     }
-
-    public String getLicense() {
-        return license;
-    }
-
+    
     public void setLicense(String license) {
         this.license = license;
     }
@@ -52,10 +48,9 @@ public class Configuration implements Serializable {
 
     @Override
     public String toString() {
-        return "{user : " + user +
-                ", authentication : " + authentication +
-                ", license : '" + license + '\'' +
-                ", domain : " + domain +
-                '}';
+        return "{\"user\" : \"" + user + "\"" +
+                ", \"authentication\" : \"" + authentication + "\"" +
+                ", \"license\" : \"" + license + "\"" +
+                ", \"domain\" : \"" + domain + "\"}";
     }
 }

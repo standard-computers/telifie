@@ -9,19 +9,21 @@ import java.io.File;
 
 public class Start {
 
-    private static String wrkDir;
-    private static Configuration configuration = null;
-    private static File config;
+    private static String wrkDir = Telifie.getConfigDirectory();
+    private static Configuration config = null;
+    private static File configFile = new File(wrkDir + "/telifie.configuration");
 
     public static void main(String[] args){
 
         Telifie.console.out.telifie();
-        String operatingSystem = System.getProperty("os.name");
-        Telifie.console.out.string("Operating System : " + operatingSystem);
-        Telifie.console.out.string("System Architecture : " + System.getProperty("os.arch"));
-        wrkDir = Telifie.getConfigDirectory();
-        config = new File(wrkDir + "/telifie.configuration");
-
+        if(configFile.exists()){
+            Telifie.console.out.string("Configuration file found :)");
+            Telifie.console.out.line();
+            config = (com.telifie.Models.Utilities.Configuration) Telifie.console.in.serialized(wrkDir + "/telifie.configuration");
+        }else{
+            Telifie.console.out.message("No configuration file found. Use option '--install'");
+            System.exit(-1);
+        }
         if (args.length > 0) {
 
             String mode = args[0].trim().toLowerCase();
@@ -32,7 +34,7 @@ public class Start {
 
                 Telifie.console.out.string("<!----------- Purge Mode -----------!>\n");
                 if(Telifie.console.in.string("Confirm purge and fresh install (y/n) -> ").equals("y")){
-                    config.delete();
+                    configFile.delete();
                     Telifie.console.out.string("telifie.configuration deleted");
                     install();
                 }
@@ -47,7 +49,7 @@ public class Start {
                 }
             }else if(mode.equals("--server")){
                 try{
-                    new Server();
+                    new Server(config);
                 }catch(Exception e){
                     Telifie.console.out.error("Failed to start HTTPS server...");
                     e.printStackTrace();
@@ -55,30 +57,18 @@ public class Start {
             }else if(mode.equals("--http")){
                 try {
                     Telifie.console.out.string("Starting HTTP server [CONSIDER HTTPS FOR SECURITY]...");
-                    new HttpServer();
+                    new HttpServer(config);
                 } catch (Exception e) {
                     Telifie.console.out.error("Failed to start HTTP server...");
                     e.printStackTrace();
                 }
             }
-        }else{
-
-            Telifie.console.out.line();
-            Telifie.console.out.string("Searching for telifie.configuration file...");
-            if(config.exists()){
-                Telifie.console.out.string("Configuration file found :)");
-                configuration = (com.telifie.Models.Utilities.Configuration) Telifie.console.in.serialized(wrkDir + "/telifie.configuration");
-                Telifie.console.out.line();
-                console();
-            }
-            Telifie.console.out.message("No configuration file found. Use option '--install'");
-            System.exit(-1);
         }
     }
 
     private static void install(){
         File working_dir = new File(wrkDir);
-        if(config.exists()){
+        if(configFile.exists()){
             Telifie.console.out.error("telifie.configuration file already set");
             Telifie.console.out.error("Run with --purge or run normally...");
             System.exit(-1);
@@ -96,6 +86,7 @@ public class Start {
         Telifie.console.out.line();
         String mongo_uri = Telifie.console.in.string("MongoDB URI -> ");
         Domain domain = new Domain(mongo_uri);
+        domain.setName("telifie");
 
         if(Telifie.console.in.string("Local install? (y/n) -> ").equals("y")){
             String email = Telifie.console.in.string("Email -> ");
@@ -148,7 +139,7 @@ public class Start {
             String targetDomain = "telifie";
             String input = Telifie.console.in.string(targetDomain + "://");
             Command command = new Command(targetDomain + "://" + input);
-            command.parseCommand(configuration);
+            command.parseCommand(config);
         }
     }
 }

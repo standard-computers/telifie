@@ -65,12 +65,9 @@ public class ArticlesClient extends Client {
     }
 
     public ArrayList<Article> search(Configuration config, Parameters params, Document filter){
-        String domainName = config.getDomain().getName();
-        String targetDomain = (domainName.equals("telifie") || domainName.equals("") ? "telifie" : "domains-articles");
-        String domainArticles = (domainName.equals("telifie") || domainName.equals("") ? "articles" : config.getDomain().getName());
         try(MongoClient mongoClient = MongoClients.create(config.getDomain().getUri())){
-            MongoDatabase database = mongoClient.getDatabase(targetDomain);
-            MongoCollection<Document> collection = database.getCollection(domainArticles);
+            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getAlt());
+            MongoCollection<Document> collection = database.getCollection("articles");
             FindIterable<Document> iterable = collection.find(filter)
                     .sort(new BasicDBObject("priority", -1))
                     .skip(params.getSkip())

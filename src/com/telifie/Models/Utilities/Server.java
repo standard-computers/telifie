@@ -24,7 +24,7 @@ public class Server {
     private static final String KEYSTORE_PATH = "/opt/telifie/ssl/telifie.jks";
     private static final String KEYSTORE_PASSWORD = "JxBwCQZTHx5suZ8W";
 
-    public Server() {
+    public Server(Configuration config) {
         Telifie.console.out.string("Starting SSL server...");
         // Load keystore
         KeyStore keyStore = null;
@@ -96,7 +96,7 @@ public class Server {
                         }
 
                         Configuration requestConfiguration = new Configuration();
-                        requestConfiguration.setDomain(new Domain("telifie", "mongodb://137.184.70.9:27017"));
+                        requestConfiguration.setDomain(config.getDomain());
                         AuthenticationClient authenticationClient = new AuthenticationClient(requestConfiguration);
                         if (authenticationClient.isAuthenticated(auth)) {
 

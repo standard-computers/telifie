@@ -56,8 +56,11 @@ public class DomainsClient extends Client {
     public boolean create(Domain domain){
         if(this.insertOne(Document.parse(domain.toString()))){
             try(MongoClient mongoClient = MongoClients.create(super.config.getDomain().getUri())){
-                MongoDatabase database = mongoClient.getDatabase("domains-articles");
-                database.createCollection(domain.getAlt());
+                MongoDatabase database = mongoClient.getDatabase(domain.getAlt());
+                database.createCollection("articles");
+                database.createCollection("collections");
+                database.createCollection("timelines");
+                database.createCollection("queue");
             }catch(MongoException e){
                 return true;
             }
@@ -74,5 +77,14 @@ public class DomainsClient extends Client {
     public boolean removeUsers(String domain, ArrayList<Member> members){
         members.forEach(member -> super.updateOne(new Document("id", domain), new Document("$pull", new Document("users", Document.parse(member.toString())))));
         return true;
+    }
+
+    public boolean updateUsers(String domain, ArrayList<Member> members){
+        members.forEach(member -> super.updateOne(new Document("id", domain), new Document("$set", new Document("users", Document.parse(member.toString())))));
+        return true;
+    }
+
+    public Domain withAltId(String altId){
+        return new Domain(super.findOne(new Document("alt", altId)));
     }
 }

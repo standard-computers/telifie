@@ -26,7 +26,7 @@ public class Client {
 
     protected ArrayList<Document> find(Document filter){
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
-            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getName());
+            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getAlt());
             MongoCollection<Document> collection = database.getCollection(this.collection);
             FindIterable<Document> iter = collection.find(filter);
             ArrayList<Document> documents = new ArrayList<>();
@@ -42,21 +42,19 @@ public class Client {
 
     protected Document findOne(Document filter){
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
-            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getName());
+            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getAlt());
             MongoCollection<Document> collection = database.getCollection(this.collection);
             return collection.find(filter).first();
         }catch(MongoException e){
-
             Telifie.console.out.string(e.toString());
             Telifie.console.out.string("Couldn't process MongoDB request :(");
-
         }
         return null;
     }
 
     protected boolean updateOne(Document filter, Document update){
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
-            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getName());
+            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getAlt());
             MongoCollection<Document> collection = database.getCollection(this.collection);
             UpdateResult result = collection.updateOne(filter, update);
             return result.getModifiedCount() > 0;
@@ -68,7 +66,7 @@ public class Client {
 
     protected boolean updateOne(Document filter, Document update, UpdateOptions options){
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
-            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getName());
+            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getAlt());
             MongoCollection<Document> collection = database.getCollection(this.collection);
             UpdateResult result = collection.updateOne(filter, update, options);
             return result.getModifiedCount() > 0;
@@ -80,7 +78,7 @@ public class Client {
 
     protected UpdateResult updateMany(Document filter, Document update){
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
-            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getName());
+            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getAlt());
             MongoCollection<Document> collection = database.getCollection(this.collection);
             return collection.updateMany(filter, update);
         }catch(MongoException e){
@@ -91,7 +89,7 @@ public class Client {
 
     protected boolean insertOne(Document document){
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
-            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getName());
+            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getAlt());
             MongoCollection<Document> collection = database.getCollection(this.collection);
             collection.insertOne(document);
             return true;
@@ -108,7 +106,7 @@ public class Client {
 
     protected boolean deleteOne(Document filter){
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
-            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getName());
+            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getAlt());
             MongoCollection<Document> collection = database.getCollection(this.collection);
             collection.deleteOne(filter);
             return true;

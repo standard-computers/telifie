@@ -1,6 +1,5 @@
 package com.telifie.Models;
 
-import com.telifie.Models.Articles.Attribute;
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import java.io.Serializable;
@@ -9,20 +8,14 @@ import java.util.UUID;
 
 public class Domain implements Serializable {
 
-    private String uri, id, alt, icon, owner, name;
+    private String uri, id, alt = "telifie", icon, owner, name;
     private int origin, permissions;
     private ArrayList<Member> users = new ArrayList<>();
-    //TODO users
 
     public Domain(String uri){
         this.uri = uri;
     }
 
-    public Domain(String name, String uri){
-        this.name = name;
-        this.uri = uri;
-    }
-    
     public Domain(String owner, String name, String icon, int permissions){
         this.owner = owner;
         this.id = UUID.randomUUID().toString();
@@ -50,6 +43,10 @@ public class Domain implements Serializable {
 
     public String getUri() {
         return uri;
+    }
+
+    public void setUri(String uri){
+        this.uri = uri;
     }
 
     public String getId() {

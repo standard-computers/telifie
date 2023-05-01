@@ -109,7 +109,6 @@ public class Command {
                     if(command.equals("users")){
 
                         if(this.selectors.length >= 4){
-
                             String action = this.get(3);
                             if(content != null){
 
@@ -126,23 +125,32 @@ public class Command {
                                 if(action.equals("add")){
 
                                     if(domains.addUsers(domainId, members)){
-                                        return new Result(200, this.command, "Successfully added user to domain");
+                                        return new Result(200, this.command, "Added " + members.size() + " user(s) to domain");
                                     }
-                                    return new Result(505, this.command, "Failed to add user to domain");
+                                    return new Result(505, this.command, "Failed adding " + members.size() + " user(s) to domain");
                                 }else if(action.equals("remove")){
 
                                     if(domains.removeUsers(domainId, members)){
-                                        return new Result(200, this.command, "Successfully removed user from domain");
+                                        return new Result(200, this.command, "Removed " + members.size() + " user(s) from domain");
                                     }
-                                    return new Result(505, this.command, "Failed to remove user from domain");
+                                    return new Result(505, this.command, "Failed removing " + members.size() + " user(s) from domain");
+                                }else if(action.equals("update")) {
+
+                                    if (domains.updateUsers(domainId, members)) {
+                                        return new Result(200, this.command, "Updated " + members.size() + " user(s) in domain");
+                                    }
+                                    return new Result(505, this.command, "Failed to update user in domain");
                                 }
                                 return new Result(428, this.command, "Bad domain user action");
                             }
                             return new Result(428, this.command, "JSON body expected");
                         }
                         return new Result(this.command, "users", domain.getUsers());
+                    }else if(command.equals("transfer")){
+
+                        //TODO Transfer domain given usersEmail and ID given in JSON body
                     }else{
-                        Domain selectedDomain = domains.withId(domainId);
+                        Domain selectedDomain = domains.withId(command);
                         return new Result(this.command, "domain", selectedDomain);
                     }
                 }
@@ -226,8 +234,18 @@ public class Command {
 
                 if(content != null){
                     User user = config.getUser();
-                    if(this.targetDomain.equals("telifie") && user.getPermissions() < 12){ //Make sure that the user has the permissions
-                        return new Result(403, this.command, "Insufficient permissions to publish to domain");
+                    if(this.targetDomain.equals("telifie")){ //Make sure that the user has the permissions
+                        if(user.getPermissions() < 12){
+                            return new Result(403, this.command, "Insufficient permissions to publish to domain");
+                        }
+                    }else{
+                        DomainsClient domains = new DomainsClient(config);
+                        Domain domain = domains.withAltId(this.targetDomain);
+                        if(domain == null){
+                            return new Result(404, this.command, "Domain not found");
+                        }
+                        domain.setUri(config.getDomain().getUri());
+                        config.setDomain(domain);
                     }
                     try {
                         Article newArticle = new Article(content);
@@ -489,6 +507,13 @@ public class Command {
          */
         else if(primarySelector.equals("search")){
             String query = this.selectorsString.replaceFirst("search/", "");
+            DomainsClient domains = new DomainsClient(config);
+            Domain domain = domains.withAltId(this.targetDomain);
+            if(domain == null){
+                return new Result(404, this.command, "Domain not found");
+            }
+            domain.setUri(config.getDomain().getUri());
+            config.setDomain(domain);
             if(content != null){
                 try {
                     Parameters params = new Parameters(content);
@@ -501,27 +526,6 @@ public class Command {
                 config.setDomain(config.getDomain().setName(this.targetDomain));
             }
             return Search.execute(config, query, new Parameters(25, 0, "articles") );
-        }
-        /*
-         * Accessing HttpServer
-         */
-        else if(primarySelector.equals("server")){
-            if(this.selectors.length >= 2){
-                  if(this.get(2).equals("http")){
-                    Telifie.console.out.string("Starting HTTP server [TESTING PURPOSES ONLY]...");
-                    try{
-                        new HttpServer();
-                    }catch(Exception e){
-                        throw new RuntimeException(e);
-                    }
-                    return new Result(this.command, "server", "HTTP");
-                }
-            }
-            try{
-                new Server();
-            }catch(Exception e){
-                throw new RuntimeException(e);
-            }
         }
         /*
          * Authenticate an app for backend use to facilitate user authentication

@@ -27,7 +27,7 @@ public class HttpServer {
     private boolean running = true;
     private ServerSocket serverSocket;
 
-    public HttpServer() {
+    public HttpServer(Configuration config) {
 
         HttpRequestHandler requestHandler = (request, response, context) -> {
 
@@ -46,7 +46,7 @@ public class HttpServer {
             } else {
 
                 Configuration requestConfiguration = new Configuration();
-                requestConfiguration.setDomain(new Domain("telifie", "mongodb://137.184.70.9:27017"));
+                requestConfiguration.setDomain(config.getDomain());
 
                 //TODO make sure to import from file.
                 //new Domain("telifie", "mongodb://137.184.70.9:27017")
@@ -97,7 +97,7 @@ public class HttpServer {
             try {
 
                 serverSocket.close();
-                new HttpServer();
+                new HttpServer(config);
 
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
