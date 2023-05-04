@@ -7,7 +7,6 @@ import com.sendgrid.SendGrid;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
-import com.telifie.Models.Connectors.Connector;
 import com.telifie.Models.Utilities.Telifie;
 
 import java.io.IOException;
@@ -18,7 +17,7 @@ public class SGrid {
 
     public SGrid(Connector connector){
 
-        sg = new SendGrid(connector.getToken());
+        sg = new SendGrid(connector.getSecret());
     }
 
     public boolean sendAuthenticationCode(String email, String string){

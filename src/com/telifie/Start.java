@@ -6,6 +6,8 @@ import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Server;
 import com.telifie.Models.Utilities.HttpServer;
 import java.io.File;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Start {
 
@@ -16,6 +18,8 @@ public class Start {
     public static void main(String[] args){
 
         Telifie.console.out.telifie();
+
+        Logger.getLogger("org.mongodb.driver").setLevel(Level.INFO);
         if(configFile.exists()){
             Telifie.console.out.string("Configuration file found :)");
             Telifie.console.out.line();

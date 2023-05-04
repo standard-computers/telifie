@@ -2,33 +2,87 @@ package com.telifie.Models.Connectors;
 
 import com.telifie.Models.Utilities.*;
 import org.bson.Document;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class Connector implements Serializable {
+public class Connector {
 
-    private String id, name, client, token, refreshToken;
+    private String id, name, clientId, accessToken, secret, refreshToken;
+    private String user, userId; //User ID of the user in the connector, not Telifie's User ID
     private ArrayList<Endpoint> endpoints = new ArrayList<>();
+    private int origin;
 
-    public Connector(Document document){
-
-        if((this.client = document.getString("client")) != null
-                && (this.token = document.getString("token")) != null
-                && (this.name = document.getString("name")) != null
-                && (this.refreshToken = document.getString("refresh_token")) != null) {
-
+    public Connector(Document document) {
+        if (document != null) {
             this.id = (document.getString("id") != null ? document.getString("id") : UUID.randomUUID().toString());
+            this.name = (document.getString("name") != null ? document.getString("name") : UUID.randomUUID().toString());
+            this.accessToken = (document.getString("access_token") != null ? document.getString("access_token") : UUID.randomUUID().toString());
+            this.secret = (document.getString("secret") != null ? document.getString("secret") : UUID.randomUUID().toString());
+            this.refreshToken = (document.getString("refresh_token") != null ? document.getString("refresh_token") : UUID.randomUUID().toString());
+            this.user = (document.getString("user") != null ? document.getString("user") : "com.telifie.system.garbage"); //Garbage for collection if no user set
+            this.userId = (document.getString("user_id") != null ? document.getString("user_id") : null);
+            this.clientId = (document.getString("client_id") != null ? document.getString("client_id") : UUID.randomUUID().toString());
+            this.origin = (document.getInteger("origin") != null ? document.getInteger("origin") : Telifie.getEpochTime());
             ArrayList<Document> eps = (ArrayList<Document>) document.getList("endpoints", Document.class);
             if (eps != null) {
-
                 endpoints = new ArrayList<>();
                 for (Document d : eps) {
-
                     endpoints.add(new Endpoint(d));
                 }
             }
         }
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
+    }
+
+    public void setSecret(String secret) {
+        this.secret = secret;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public ArrayList<Endpoint> getEndpoints() {
+        return endpoints;
+    }
+
+    public void setEndpoints(ArrayList<Endpoint> endpoints) {
+        this.endpoints = endpoints;
     }
 
     public String getId() {
@@ -43,51 +97,18 @@ public class Connector implements Serializable {
         this.name = name;
     }
 
-    public String getClient() {
-        return client;
-    }
-
-    public void setClient(String client) {
-        this.client = client;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
-    }
-
-    public ArrayList<Endpoint> getEndpoints() {
-        return endpoints;
-    }
-
-    public void setEndpoints(ArrayList<Endpoint> endpoints) {
-        this.endpoints = endpoints;
-    }
-
-    public void addEndpoint(Endpoint endpoint) {
-        this.endpoints.add(endpoint);
+    public String getSecret() {
+        return secret;
     }
 
     @Override
     public String toString() {
         return "{\"id\" : \"" + id + '\"' +
                 ", \"name\" : \"" + name + '\"' +
-                ", \"client\" : \"" + client + '\"' +
-                ", \"token\" : \"" + token + '\"' +
+                ", \"client_id\" : \"" + clientId + '\"' +
+                ", \"secret\" : \"" + secret + '\"' +
                 ", \"refresh_token\" : \"" + refreshToken + '\"' +
                 ", \"endpoints\" : " + endpoints +
                 '}';
     }
-
 }

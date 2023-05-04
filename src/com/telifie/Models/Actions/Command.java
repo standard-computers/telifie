@@ -4,6 +4,7 @@ import com.telifie.Models.*;
 import com.telifie.Models.Clients.*;
 import com.telifie.Models.Connectors.SGrid;
 import com.telifie.Models.Connectors.Connector;
+import com.telifie.Models.Connectors.Spotify;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Parameters;
 import org.bson.Document;
@@ -559,20 +560,23 @@ public class Command {
                 if(users.userExistsWithEmail(email)){
                     User user = users.getUserWithEmail(email);
                     if(user.getPermissions() == 0){
-                        ConnectorsClient connectors = new ConnectorsClient();
-                        Connector sendgrid = connectors.getConnector("SendGrid");
-                        if(sendgrid != null){
-                            SGrid sg = new SGrid(sendgrid);
-                            String code = Telifie.tools.make.shortEid();
-                            if(users.lock(user, code)){
-                                if(sg.sendAuthenticationCode(user.getEmail(), code)){
 
-                                }
-                                return new Result(505, this.command, "Failed to email code through SendGrid");
-                            }
-                            return new Result(505, this.command, "Failed to lock users account");
-                        }
-                        return new Result(410, "Please create SendGrid Connector information");
+//                        ConnectorsClient connectors = new ConnectorsClient(config);
+//                        Connector sendgrid = connectors.getConnector("com.telifie.connectors.SendGrid");
+//                        if(sendgrid != null){
+//                            SGrid sg = new SGrid(sendgrid);
+//                            String code = Telifie.tools.make.shortEid();
+//                            if(users.lock(user, code)){
+//                                if(sg.sendAuthenticationCode(user.getEmail(), code)){
+//
+//                                }
+//                                return new Result(505, this.command, "Failed to email code through SendGrid");
+//                            }
+//                            return new Result(505, this.command, "Failed to lock users account");
+//                        }
+//                        return new Result(410, "Please create SendGrid Connector information");
+
+
 
                     }else if(user.getPermissions() >= 1){
 
@@ -639,25 +643,25 @@ public class Command {
 
         }else if(primarySelector.equals("connectors")){
 
-            if(this.selectors.length > 1){
-                if(objectSelector.equals("create")){
-                    if(content != null){
-                        Connector newConnector = new Connector(content);
-                        if(new ConnectorsClient().create(newConnector)){
-                            return new Result(this.command, "connector", newConnector);
-                        }
-                        return new Result(505, this.command, "Failed to create Connector");
-                    }
-                    return new Result(428, this.command, "JSON body expected to create connector");
-                }
-                new Result(404, this.command, "Invalid connectors action provided");
-            }
+            ConnectorsClient connectors = new ConnectorsClient(config);
+            if(content != null){
 
-            //Gets all available Connectors for use
-            //TODO Do not get files everytime, do this once when the server starts
-            ConnectorsClient connectors = new ConnectorsClient();
-            ArrayList<Connector> all = connectors.getConnectors();
-            return new Result(this.command, "connectors", all);
+                Connector connector = new Connector(content);
+                if(connector != null){ //User providing credentials with connector request to parse
+                    connector.setUser(config.getAuthentication().getUser());
+                    boolean connectorUsed = connectors.exists(connector);
+                    if(!connectorUsed){ //User hasn't used this connector before
+                        connectors.create(connector);
+                    }
+                    if(connector.getId().equals("com.telifie.connectors.spotify")){
+                        Spotify spotify = new Spotify(content);
+                        return new Result(this.command, "spotify", spotify.parse(config));
+                    }
+                }
+                return new Result(428, this.command, "JSON body expected to create connector");
+            }
+            //TODO adjust this area for creating, updating, and deleting connectors
+            return new Result(428, this.command, "Please provide connector name to get");
         }
         return new Result(200, this.command, "No command received");
     }

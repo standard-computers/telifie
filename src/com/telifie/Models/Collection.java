@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public class Collection {
 
-    private String id, user, icon, name, sort = "A";
+    private String id, user, icon, name, sort = "A", connector = "";
     private int origin, permissions = Telifie.PRIVATE;
     private ArrayList articles;
     private ArrayList<Article> detailedList;
@@ -24,6 +24,7 @@ public class Collection {
         this.user = document.getString("user");
         this.icon = document.getString("icon");
         this.name = document.getString("name");
+        this.connector = document.getString("connector");
         this.articles = document.get("articles", ArrayList.class);
         this.origin = Telifie.getEpochTime();
         this.permissions = document.getInteger("permissions");
@@ -91,6 +92,8 @@ public class Collection {
                 ", \"user\" : \"" + user + '\"' +
                 ", \"icon\" : \"" + icon + '\"' +
                 ", \"name\" : \"" + name + '\"' +
+                ", \"sort\" : \"" + sort + '\"' +
+                ", \"connector\" : \"" + connector + '\"' +
                 ", \"origin\" : \"" + origin + '\"' +
                 ", \"permissions\" : " + permissions +
                 (this.detailedList == null ? (this.articles != null ? ", \"articles\" : " + articles : ", \"articles\" : []") : ", \"articles\" : " + detailedList ) +
