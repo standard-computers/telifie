@@ -61,6 +61,10 @@ public class Domain implements Serializable {
         return alt;
     }
 
+    public void setAlt(String alt) {
+        this.alt = alt;
+    }
+
     public String getOwner() {
         return owner;
     }

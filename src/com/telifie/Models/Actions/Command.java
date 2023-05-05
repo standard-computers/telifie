@@ -7,9 +7,13 @@ import com.telifie.Models.Connectors.Connector;
 import com.telifie.Models.Connectors.Spotify;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Parameters;
+import org.apache.hc.core5.http.ParseException;
 import org.bson.Document;
 import org.json.JSONException;
 import org.json.JSONObject;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
+
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
@@ -648,14 +652,24 @@ public class Command {
 
                 Connector connector = new Connector(content);
                 if(connector != null){ //User providing credentials with connector request to parse
-                    connector.setUser(config.getAuthentication().getUser());
+                    connector.setUser(config.getUser().getId());
                     boolean connectorUsed = connectors.exists(connector);
-                    if(!connectorUsed){ //User hasn't used this connector before
-                        connectors.create(connector);
-                    }
                     if(connector.getId().equals("com.telifie.connectors.spotify")){
-                        Spotify spotify = new Spotify(content);
-                        return new Result(this.command, "spotify", spotify.parse(config));
+                        Spotify spotify = null;
+                        try {
+                            spotify = new Spotify(content);
+                            if(!connectorUsed){ //User hasn't used this connector before
+                                connectors.create(spotify.getConnector());
+                            }
+                            ArrayList<Article> fnd = spotify.parse(config);
+                            if(fnd == null || fnd.size() == 0){
+                                return new Result(404, this.command, "No content found in connector");
+                            }else{
+                                return new Result(this.command, "spotify", fnd);
+                            }
+                        } catch (IOException | ParseException | SpotifyWebApiException e) {
+                            return new Result(501, this.command, "Failed to parse Spotify credentials");
+                        }
                     }
                 }
                 return new Result(428, this.command, "JSON body expected to create connector");
