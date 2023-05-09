@@ -76,17 +76,6 @@ public class Client {
         return false;
     }
 
-    protected UpdateResult updateMany(Document filter, Document update){
-        try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
-            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getAlt());
-            MongoCollection<Document> collection = database.getCollection(this.collection);
-            return collection.updateMany(filter, update);
-        }catch(MongoException e){
-            System.out.println("Couldn't process MongoDB request :(");
-        }
-        return null;
-    }
-
     protected boolean insertOne(Document document){
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
             MongoDatabase database = mongoClient.getDatabase(config.getDomain().getAlt());

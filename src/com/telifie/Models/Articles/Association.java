@@ -16,11 +16,8 @@ public class Association {
     public Association(Document document){
         this.icon = document.getString("icon");
         this.name = document.getString("name");
-
         ArrayList<Document> a = (ArrayList<Document>) document.getList("articles", Document.class);
-        for(Document doc : a){
-            this.addArticle(new Child(doc));
-        }
+        a.forEach(doc -> this.addArticle(new Child(doc)));
     }
 
     public String getName() {
@@ -51,7 +48,6 @@ public class Association {
     public String toString() {
         return "{\"icon\" : \"" + icon + '\"' +
                 ", \"name\" : \"" + name + '\"' +
-                ", \"articles\" : " + articles +
-                '}';
+                ", \"articles\" : " + articles + '}';
     }
 }

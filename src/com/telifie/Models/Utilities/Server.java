@@ -106,7 +106,7 @@ public class Server {
                             result = processRequest(requestConfiguration, method, query, requestBody.toString());
                         } else {
 
-                            result = new Result(403, "\"Invalid Auth Credentials\"");
+                            result = new Result(403, "Invalid Auth Credentials");
                         }
                     }
                     // Set the content type of the response to "application/json"

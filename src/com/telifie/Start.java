@@ -12,30 +12,19 @@ import java.util.logging.Logger;
 public class Start {
 
     private static String wrkDir = Telifie.getConfigDirectory();
-    private static Configuration config = null;
+    private static Configuration config;
     private static File configFile = new File(wrkDir + "/telifie.configuration");
 
     public static void main(String[] args){
 
         Telifie.console.out.telifie();
-
-        Logger.getLogger("org.mongodb.driver").setLevel(Level.INFO);
-        if(configFile.exists()){
-            Telifie.console.out.string("Configuration file found :)");
-            Telifie.console.out.line();
-            config = (com.telifie.Models.Utilities.Configuration) Telifie.console.in.serialized(wrkDir + "/telifie.configuration");
-        }else{
-            Telifie.console.out.message("No configuration file found. Use option '--install'");
-            System.exit(-1);
-        }
+        Logger.getLogger("org.mongodb.driver").setLevel(Level.SEVERE);
         if (args.length > 0) {
-
             String mode = args[0].trim().toLowerCase();
             if(mode.equals("--install")){ //First run/install
-
                 install();
             }else if(mode.equals("--purge")){ //Purge Telifie, start from scratch
-
+                checkConfig();
                 Telifie.console.out.string("<!----------- Purge Mode -----------!>\n");
                 if(Telifie.console.in.string("Confirm purge and fresh install (y/n) -> ").equals("y")){
                     configFile.delete();
@@ -44,7 +33,7 @@ public class Start {
                 }
                 System.exit(1);
             }else if(mode.equals("--parser")){
-
+                checkConfig();
                 Telifie.console.out.string("<!---------- Parser Mode ----------!>\n");
                 String in = Telifie.console.in.string("URI/URL -> ");
                 while(!in.equals("q")){
@@ -52,6 +41,7 @@ public class Start {
                     in = Telifie.console.in.string("URI/URL -> ");
                 }
             }else if(mode.equals("--server")){
+                checkConfig();
                 try{
                     new Server(config);
                 }catch(Exception e){
@@ -59,6 +49,7 @@ public class Start {
                     e.printStackTrace();
                 }
             }else if(mode.equals("--http")){
+                checkConfig();
                 try {
                     Telifie.console.out.string("Starting HTTP server [CONSIDER HTTPS FOR SECURITY]...");
                     new HttpServer(config);
@@ -137,13 +128,14 @@ public class Start {
         }
     }
 
-    private static void console(){
-        //TODO Get preferences and user information
-        while(true){
-            String targetDomain = "telifie";
-            String input = Telifie.console.in.string(targetDomain + "://");
-            Command command = new Command(targetDomain + "://" + input);
-            command.parseCommand(config);
+    private static void checkConfig(){
+        if(configFile.exists()){
+            Telifie.console.out.string("Configuration file found :)");
+            Telifie.console.out.line();
+            config = (com.telifie.Models.Utilities.Configuration) Telifie.console.in.serialized(wrkDir + "/telifie.configuration");
+        }else{
+            Telifie.console.out.message("No configuration file found. Use option '--install'");
+            System.exit(-1);
         }
     }
 }

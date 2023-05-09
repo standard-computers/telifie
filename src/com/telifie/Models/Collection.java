@@ -7,20 +7,20 @@ import java.util.UUID;
 
 public class Collection {
 
-    private String id, user, icon, name, sort = "A", connector = "";
+    private String id, domain, user, icon, name, sort = "A", connector = "";
     private int origin, permissions = Telifie.PRIVATE;
     private ArrayList articles;
     private ArrayList<Article> detailedList;
 
-    public Collection(String user, String name){
+    public Collection(String name){
         this.id = UUID.randomUUID().toString();
-        this.user = user;
         this.name = name;
         this.origin = Telifie.getEpochTime();
     }
 
     public Collection(Document document) throws NullPointerException {
         this.id = (document.getString("id") == null ? Telifie.tools.make.md5(Telifie.tools.make.randomReferenceCode()) : document.getString("id") );
+        this.domain = document.getString("domain");
         this.user = document.getString("user");
         this.icon = document.getString("icon");
         this.name = document.getString("name");
@@ -34,12 +34,25 @@ public class Collection {
         return id;
     }
 
+    public String getDomain() {
+        return domain;
+    }
+
+    public Collection setDomain(String domain) {
+        this.domain = domain;
+        return this;
+    }
+
     public String getUser() {
         return user;
     }
 
     public void setUser(String user) {
         this.user = user;
+    }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
     }
 
     public String getName() {
@@ -89,6 +102,7 @@ public class Collection {
 
         return "{" +
                 "\"id\" : \"" + id + '\"' +
+                (this.domain == null ? "" : ", \"domain\" : \"" + domain + '\"') +
                 ", \"user\" : \"" + user + '\"' +
                 ", \"icon\" : \"" + icon + '\"' +
                 ", \"name\" : \"" + name + '\"' +

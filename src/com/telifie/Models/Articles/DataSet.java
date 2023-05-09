@@ -9,13 +9,21 @@ import java.util.UUID;
 public class DataSet {
 
     private String id, title, source;
-    private ArrayList<String[]> rows;
+    private ArrayList<String[]> rows = new ArrayList<>();
 
     public DataSet(Document document){
         this.id = (document.getString("id") == null ?  UUID.randomUUID().toString() : document.getString("id"));
         this.title = document.getString("title");
         this.source = document.getString("source");
         this.rows = (ArrayList<String[]>) document.get("rows", ArrayList.class);
+    }
+
+    public DataSet(String title){
+        this.title = title;
+    }
+
+    public void add(String[] row){
+        this.rows.add(row);
     }
 
     @Override

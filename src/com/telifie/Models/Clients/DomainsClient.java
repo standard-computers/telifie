@@ -10,7 +10,6 @@ import com.telifie.Models.Utilities.Configuration;
 import org.bson.Document;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class DomainsClient extends Client {
 
@@ -20,12 +19,11 @@ public class DomainsClient extends Client {
     }
 
     /**
-     * Returns only the domains the user id owns
-     * @param userId ID of user
+     * Returns only the domains the user id owns provided by Configuration
      * @return ArrayList<Domain>
      */
-    public ArrayList<Domain> ownedDomains(String userId){
-        ArrayList<Document> found = super.find(new Document("owner", userId));
+    public ArrayList<Domain> mine(){
+        ArrayList<Document> found = super.find(new Document("owner", config.getAuthentication().getUser()));
         ArrayList<Domain> domains = new ArrayList<>();
         for(Document doc : found){
             domains.add(new Domain(doc));
@@ -37,8 +35,12 @@ public class DomainsClient extends Client {
         return new Domain(super.findOne(new Document("id", id)));
     }
 
-    public boolean delete(String owner, String id){
-        return super.deleteOne(new Document("$and", Arrays.asList(new Document("owner", owner), new Document("id", id))));
+    public boolean delete(String id){
+        return super.deleteOne(new Document("$and", Arrays.asList(
+                new Document("owner", config.getAuthentication().getUser()),
+                new Document("id", id)
+            )
+        ));
     }
 
     /**
@@ -47,9 +49,14 @@ public class DomainsClient extends Client {
      * @param userId ID of user
      * @return ArrayList<Domain>
      */
-    public ArrayList<Domain> forUser(String userId){
+    public ArrayList<Domain> forMember(String userId){
         ArrayList<Domain> domains = new ArrayList<>();
-        super.find(new Document("$and", List.of(new Document("owner", userId))));
+        super.find(new Document("$or", Arrays.asList(
+                    new Document("owner", userId),
+                    new Document("users.id", userId)
+                )
+            )
+        );
         return domains;
     }
 

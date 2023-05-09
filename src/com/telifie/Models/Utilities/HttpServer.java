@@ -31,28 +31,20 @@ public class HttpServer {
 
         HttpRequestHandler requestHandler = (request, response, context) -> {
 
-            //Set Request variables
             String method = request.getRequestLine().getMethod();
             String query = request.getRequestLine().getUri().substring(1);
             String authString = (request.getFirstHeader("Authorization") == null ? "" : request.getFirstHeader("Authorization").getValue());
             Authentication auth = (authString.equals("") ? null : new Authentication(authString.split(" ")[1].split("\\.")));
             Result result = new Result(200, query, "\"okay\"");
 
-            //Check if authentication is present
             if (auth == null) {
-
                 result.setStatusCode(406);
                 result.setResult("result", "No Authentication credentials provided");
             } else {
-
                 Configuration requestConfiguration = new Configuration();
                 requestConfiguration.setDomain(config.getDomain());
-
-                //TODO make sure to import from file.
-                //new Domain("telifie", "mongodb://137.184.70.9:27017")
                 AuthenticationClient authenticationClient = new AuthenticationClient(requestConfiguration);
                 if (authenticationClient.isAuthenticated(auth)) {
-
                     String body = null;
                     if (request instanceof HttpEntityEnclosingRequest) {
 
@@ -64,58 +56,36 @@ public class HttpServer {
                     requestConfiguration.setUser(users.getUserWithId(auth.getUser())); //Set Configuration User as requesting user
                     result = processRequest(requestConfiguration, method, query, body);
                 } else {
-
-                    result = new Result(403, "\"Invalid Auth Credentials\"");
+                    result = new Result(403, "Invalid Auth Credentials");
                 }
             }
-
             response.setStatusCode(result.getStatusCode());
             response.setHeader("Content-Type", "application/json");
             response.setEntity(new StringEntity(result.toString()));
         };
-
         HttpParams params = new BasicHttpParams();
         HttpConnectionParams.setConnectionTimeout(params, Integer.MAX_VALUE);
         HttpConnectionParams.setSoTimeout(params, Integer.MAX_VALUE);
-
         // Create a request handler registry
         HttpRequestHandlerRegistry registry = new HttpRequestHandlerRegistry();
         registry.register("*", requestHandler);
         HttpService httpService = new HttpService(new BasicHttpProcessor(), new DefaultConnectionReuseStrategy(), new DefaultHttpResponseFactory(), registry, params);
         try {
-
             serverSocket = new ServerSocket(80);
             while (running) {
-
                 Socket socket = serverSocket.accept();
                 DefaultBHttpServerConnection connection = new DefaultBHttpServerConnection(8 * 1024);
                 connection.bind(socket);
                 httpService.handleRequest(connection, new BasicHttpContext());
             }
         } catch(ConnectionClosedException e){
-
             try {
-
                 serverSocket.close();
                 new HttpServer(config);
-
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
-
         }catch (IOException | HttpException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void stop(){
-
-        running = false;
-        try {
-
-            serverSocket.close();
-        } catch (IOException e) {
-
             throw new RuntimeException(e);
         }
     }
@@ -125,19 +95,14 @@ public class HttpServer {
         //TODO log all requests from http to file
         Command command = new Command(request);
         if(method.equals("POST")){
-
             try {
-
                 return command.parseCommand(configuration, Document.parse(requestBody));
             }catch(BsonInvalidOperationException e){
-
                 return new Result(505, "\"Malformed JSON data provided\"");
             }
         }else if(method.equals("GET")){
-
             return command.parseCommand(configuration);
         }
-
-        return new Result(404, request, "\"Invalid command received\"");
+        return new Result(404, request, "\"Invalid method\"");
     }
 }

@@ -20,17 +20,14 @@ public class UsersClient extends Client {
     }
 
     public User getUserWithId(String id){
-
         return new User(this.findOne(new Document("id", id)));
     }
 
     public boolean userExistsWithEmail(String email){
-
         return this.findOne(new Document("email", email)) != null;
     }
 
     public boolean lock(User user, String code){
-
         return this.updateOne(new Document("email", user.getEmail()), new Document("$set", new Document("token", Telifie.tools.make.md5(code))));
     }
 

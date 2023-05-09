@@ -109,7 +109,7 @@ public class Telifie {
 
             public static void message(String message){
                 line();
-                error("\n" + message + "\n");
+                System.out.println("\n" + message + "\n");
                 line();
             }
 

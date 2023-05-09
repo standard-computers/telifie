@@ -2,8 +2,7 @@ package com.telifie.Models.Actions;
 
 import com.telifie.Models.*;
 import com.telifie.Models.Clients.*;
-import com.telifie.Models.Connectors.SGrid;
-import com.telifie.Models.Connectors.Connector;
+import com.telifie.Models.Connector;
 import com.telifie.Models.Connectors.Spotify;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Parameters;
@@ -12,7 +11,6 @@ import org.bson.Document;
 import org.json.JSONException;
 import org.json.JSONObject;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -52,21 +50,19 @@ public class Command {
     public Result parseCommand(Configuration config, Document content){
 
         String objectSelector = (this.selectors.length > 1 ? this.get(1) : "");
-        /*
-         * Accessing Domains
-         */
+
         if(primarySelector.equals("domains")){
 
             if(this.selectors.length >= 2){
                 DomainsClient domains = new DomainsClient(config);
                 if(objectSelector.equals("owner")){
 
-                    ArrayList<Domain> foundDomains = domains.ownedDomains(this.get(2));
+                    ArrayList<Domain> foundDomains = domains.mine();
                     return new Result(this.command, "domains", foundDomains);
-                }else if(objectSelector.equals("member")){
+                }else if(objectSelector.equals("member")){ //Domains they're a member of
 
                     //TODO get domains that user is attached too
-                    ArrayList<Domain> foundDomains = domains.forUser(this.get(2));
+                    ArrayList<Domain> foundDomains = domains.forMember(config.getUser().getEmail());
                     return new Result(this.command, "domains", foundDomains);
                 }else if(objectSelector.equals("create")){
 
@@ -88,7 +84,7 @@ public class Command {
                     String domainId = this.get(2);
                     Domain subjectDomain = domains.withId(domainId);
                     if(subjectDomain.getOwner().equals(config.getAuthentication().getUser())){
-                        if(domains.delete(config.getAuthentication().getUser(), domainId)){
+                        if(domains.delete(domainId)){
                             return new Result(200, this.command, "Successfully deleted the domain");
                         }
                         return new Result(505, this.command, "Failed to delete domain");
@@ -101,7 +97,7 @@ public class Command {
                 }else if(objectSelector.equals("id")){
                     try{
                         String domainId = this.get(2);
-                        Domain selectedDomain = domains.withId(domainId);
+                        Domain selectedDomain = domains.withAltId(domainId);
                         return new Result(this.command, "domain", selectedDomain);
                     }catch(NullPointerException n){
                         return new Result(404, this.command, "Domain not found");
@@ -162,7 +158,6 @@ public class Command {
                 //TODO Get public domains for guests
                 return new Result(404, this.command, "Invalid domains selector");
             }
-
             return new Result(200, this.command, "Invalid command for domains");
         }
         /*
@@ -244,6 +239,7 @@ public class Command {
                             return new Result(403, this.command, "Insufficient permissions to publish to domain");
                         }
                     }else{
+                        //TODO User blocking when they shouldn't be putting into domain
                         DomainsClient domains = new DomainsClient(config);
                         Domain domain = domains.withAltId(this.targetDomain);
                         if(domain == null){
@@ -281,13 +277,13 @@ public class Command {
                 String articleId = this.get(3);
                 if(objectSelector.equals("save")){
 
-                    if(collections.save(config.getAuthentication().getUser(), articleId, articleId)){
+                    if(collections.save(articleId, articleId)){
                         return new Result(200, this.command, "Saved Article");
                     }
                     return new Result(505, this.command, "Failed to save Article");
                 } else if(objectSelector.equals("unsave")){
 
-                    if(collections.unsave(config.getAuthentication().getUser(), articleId, articleId)){
+                    if(collections.unsave(articleId, articleId)){
                         return new Result(200, this.command, "Unsaved Article");
                     }
                     return new Result(505, this.command, "Failed to unsave Article");
@@ -314,7 +310,7 @@ public class Command {
 
                 if(content != null){ //Creating Collection with JSON content
                     Collection newCollection = new Collection(content);
-                    Collection createdCollection = collections.create(config.getAuthentication().getUser(), newCollection);
+                    Collection createdCollection = collections.create(newCollection);
                     if(createdCollection != null){
                         return new Result(this.command, "collection", createdCollection);
                     }
@@ -324,7 +320,7 @@ public class Command {
             } else if(objectSelector.equals("delete")){
 
                 if(collectionId != null){
-                    if(collections.delete(config.getAuthentication().getUser(), collectionId)){
+                    if(collections.delete(collectionId)){
                         return new Result(200, this.command, "Collection '" + collectionId + "' deleted");
                     }
                     return new Result(505, this.command, "Failed to delete group '" + collectionId + "'");
@@ -342,7 +338,7 @@ public class Command {
                 }
                 return new Result(428, this.command, "Collection ID is required to get");
             }
-            ArrayList<Collection> usersCollections = collections.groupsForUser(config.getAuthentication().getUser());
+            ArrayList<Collection> usersCollections = collections.forUser(config.getAuthentication().getUser());
             return new Result(this.command, "collections", usersCollections);
         }
         /*
@@ -402,9 +398,8 @@ public class Command {
                 if(users.userExistsWithEmail(this.get(1))){
                     User found = users.getUserWithEmail(this.get(1));
                     return new Result(this.command, "user", found);
-                }else {
-                    return new Result(404, this.command, "User not found");
                 }
+                return new Result(404, this.command, "User not found");
             }
         }
         /*
@@ -482,30 +477,23 @@ public class Command {
         else if(primarySelector.equals("queue")){
 
             if(this.selectors.length >= 2) {
-                //User is uploading content to queue
-                String uri = content.getString("uri");
-                String connector = (content.getString("connector") == null ? null : content.getString("connector"));
-                if (connector == null || connector.equals("")) {
-                    //TODO return draft article
-                    if (uri == null || uri.equals("")) {
-                        return new Result(410, this.command, "No URI provided as {uri : URI}");
-                    }
-                    ArticlesClient articles = new ArticlesClient(config);
-                    if (articles.get(new Document("link", uri)).size() > 0) {
 
-                    } else {
-                        QueueClient queue = new QueueClient(config);
-                        Article queued = queue.add(uri);
-                        if (queued != null) {
-                            return new Result(this.command, "article", queued);
-                        }
-                        return new Result(505, "There was an error parsing the queue request");
-                    }
-                    return new Result(200, uri, "Queued");
+                ArticlesClient articles = new ArticlesClient(config);
+                String uri = content.getString("uri");
+                if (uri == null || uri.equals("")) {
+                    return new Result(410, this.command, "No URI provided as {uri : URI}");
                 }
+                if (articles.get(new Document("link", uri)).size() > 0) { //Article already exists
+                    return new Result(410, this.command, "Article already exists");
+                }
+                QueueClient queue = new QueueClient(config);
+                Article queued = queue.add(uri);
+                if (queued != null) {
+                    return new Result(this.command, "article", queued);
+                }
+                return new Result(505, "There was an error parsing the queue request");
             }
             return new Result(404, "Invalid queue command");
-
         }
         /*
          * Accessing Search
@@ -580,8 +568,6 @@ public class Command {
 //                        }
 //                        return new Result(410, "Please create SendGrid Connector information");
 
-
-
                     }else if(user.getPermissions() >= 1){
 
                         if(users.sendCode(user)){
@@ -608,13 +594,11 @@ public class Command {
                         users.upgradePermissions(user);
                         user.setPermissions(user.getPermissions() + 1);
                     }
-
                     Authentication auth = new Authentication(user);
                     AuthenticationClient auths = new AuthenticationClient(config);
                     auths.authenticate(auth);
                     JSONObject json = new JSONObject(user.toString());
                     json.put("authentication", auth.toJson());
-
                     return new Result(this.command, "user", json);
                 }
                 return new Result(403, "Invalid verification code provided");
@@ -652,21 +636,17 @@ public class Command {
 
                 Connector connector = new Connector(content);
                 if(connector != null){ //User providing credentials with connector request to parse
-                    connector.setUser(config.getUser().getId());
+                    connector.setUser(config.getAuthentication().getUser());
                     boolean connectorUsed = connectors.exists(connector);
                     if(connector.getId().equals("com.telifie.connectors.spotify")){
                         Spotify spotify = null;
                         try {
-                            spotify = new Spotify(content);
+                            spotify = new Spotify(connector);
                             if(!connectorUsed){ //User hasn't used this connector before
                                 connectors.create(spotify.getConnector());
                             }
-                            ArrayList<Article> fnd = spotify.parse(config);
-                            if(fnd == null || fnd.size() == 0){
-                                return new Result(404, this.command, "No content found in connector");
-                            }else{
-                                return new Result(this.command, "spotify", fnd);
-                            }
+                            spotify.parse(config);
+                            return new Result(this.command, "spotify", "done");
                         } catch (IOException | ParseException | SpotifyWebApiException e) {
                             return new Result(501, this.command, "Failed to parse Spotify credentials");
                         }
@@ -674,7 +654,17 @@ public class Command {
                 }
                 return new Result(428, this.command, "JSON body expected to create connector");
             }
-            //TODO adjust this area for creating, updating, and deleting connectors
+            if(this.selectors.length >= 2){
+                String connectorId = this.get(1);
+                if(connectorId.equals("connected")){
+                    return new Result(this.command, "connectors", connectors.mine());
+                }
+                Connector connector = connectors.getConnector(connectorId);
+                if(connector != null){
+                    return new Result(this.command, "connector", connector);
+                }
+                return new Result(404, this.command, "No connector found for " + connectorId + "");
+            }
             return new Result(428, this.command, "Please provide connector name to get");
         }
         return new Result(200, this.command, "No command received");

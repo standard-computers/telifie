@@ -7,6 +7,7 @@ import com.sendgrid.SendGrid;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
+import com.telifie.Models.Connector;
 import com.telifie.Models.Utilities.Telifie;
 
 import java.io.IOException;

@@ -31,7 +31,7 @@ public class Article {
     public Article(Document document) throws NullPointerException {
         this.id = (document.getString("id") == null ? UUID.randomUUID().toString() : document.getString("id"));
         this.verified = (document.getBoolean("verified") == null ? false : document.getBoolean("verified"));
-        this.title = document.getString("title");
+        this.title = Telifie.tools.strings.escape(document.getString("title"));
         this.link = document.getString("link");
         this.icon = document.getString("icon");
         this.description = document.getString("description");
@@ -51,21 +51,15 @@ public class Article {
         }
         ArrayList<Document> it2 = (ArrayList<Document>) document.getList("attributes", Document.class);
         if (it2 != null) {
-            for (Document doc : it2) {
-                this.addAttribute(new Attribute(doc.getString("key"), doc.getString("value")));
-            }
+            it2.forEach(doc -> this.addAttribute(new Attribute(doc.getString("key"), doc.getString("value"))));
         }
         ArrayList<Document> it3 = (ArrayList<Document>) document.getList("associations", Document.class);
         if (it3 != null) {
-            for (Document doc : it3) {
-                this.addAssociation(new Association(doc));
-            }
+            it3.forEach(doc -> this.addAssociation(new Association(doc)));
         }
         ArrayList<Document> it4 = (ArrayList<Document>) document.getList("data_sets", Document.class);
         if(it4 != null){
-            for(Document doc : it4){
-                this.addDataSet(new DataSet(doc));
-            }
+            it4.forEach(doc -> this.addDataSet(new DataSet(doc)));
         }
         Document sourceDocument = document.get("source", Document.class);
         if (sourceDocument != null) {
