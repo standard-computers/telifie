@@ -57,9 +57,6 @@ public class Spotify extends Connector {
         Collection playlistsCollection = new Collection("Spotify Playlists").setDomain(config.getAuthentication().getUser());
         playlistsCollection.setIcon("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/images/connectors/spotify.png");
         collections.create(playlistsCollection);
-        Collection tracksCollection = new Collection("Spotify Songs").setDomain(config.getAuthentication().getUser());
-        tracksCollection.setIcon("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/images/connectors/spotify.png");
-        collections.create(tracksCollection);
 
         GetListOfUsersPlaylistsRequest getListOfUsersPlaylistsRequest = spotifyApi.getListOfUsersPlaylists(super.getUserId()).build();
         Paging<PlaylistSimplified> plsts = getListOfUsersPlaylistsRequest.execute();
@@ -73,6 +70,7 @@ public class Spotify extends Connector {
             playlistArticle.setLink(plsts.getItems()[i].getExternalUrls().get("spotify"));
             playlistArticle.setIcon(plsts.getItems()[i].getImages()[0].getUrl());
             playlistArticle.setDescription("Spotify Playlist");
+            DataSet tracks = new DataSet("Tracks");
 
             //Create playlist collection
             Collection playlistCollection = new Collection(plsts.getItems()[i].getName());
@@ -83,7 +81,6 @@ public class Spotify extends Connector {
                 Track track = (Track) playlistTrack.getTrack();
 
                 //Prepare playlist tracks as data set and add to playlist article
-                DataSet tracks = new DataSet("Tracks");
                 String trackName = Telifie.tools.strings.escape(track.getName());
                 String trackLink = track.getExternalUrls().get("spotify");
                 String trackIcon = track.getAlbum().getImages()[0].getUrl();
@@ -111,8 +108,8 @@ public class Spotify extends Connector {
                 trackArticle.setContent(trackName + " is a track by " + artists + " from " + trackAlbumName + ". It's " + trackDuration + " in length. It was added on " + formattedAddedAt + ".");
                 articles.create(trackArticle); //Create article for track
                 collections.save(playlistCollection.getId(), trackArticle.getId()); //Add article to this playlist collection
-                collections.save(tracksCollection.getId(), trackArticle.getId()); //Add article to tracks collection
             }
+            playlistArticle.addDataSet(tracks);
             articles.create(playlistArticle); //Create article for playlist
             collections.save(playlistsCollection.getId(), playlistArticle.getId()); //Add article to playlists collection
         }

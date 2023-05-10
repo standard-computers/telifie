@@ -501,9 +501,13 @@ public class Command {
         else if(primarySelector.equals("search")){
             String query = this.selectorsString.replaceFirst("search/", "");
             DomainsClient domains = new DomainsClient(config);
-            Domain domain = domains.withAltId(this.targetDomain);
-            if(domain == null){
-                return new Result(404, this.command, "Domain not found");
+            System.out.println(this.targetDomain);
+            Domain domain;
+            try{
+                domain = domains.withAltId(this.targetDomain.trim());
+            }catch (NullPointerException n){
+                System.out.println("Domain not found");
+                domain = config.getDomain();
             }
             domain.setUri(config.getDomain().getUri());
             config.setDomain(domain);
