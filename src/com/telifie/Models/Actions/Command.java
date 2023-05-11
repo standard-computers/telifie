@@ -654,6 +654,12 @@ public class Command {
                         } catch (IOException | ParseException | SpotifyWebApiException e) {
                             return new Result(501, this.command, "Failed to parse Spotify credentials");
                         }
+                    }else{
+                        if(connectorUsed){
+                            return new Result(409, this.command, "Connector already exists");
+                        }else{
+                            connectors.create(connector);
+                        }
                     }
                 }
                 return new Result(428, this.command, "JSON body expected to create connector");

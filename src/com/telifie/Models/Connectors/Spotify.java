@@ -3,6 +3,7 @@ package com.telifie.Models.Connectors;
 import com.telifie.Models.Article;
 import com.telifie.Models.Articles.Attribute;
 import com.telifie.Models.Articles.DataSet;
+import com.telifie.Models.Articles.Source;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Clients.CollectionsClient;
 import com.telifie.Models.Collection;
@@ -52,6 +53,12 @@ public class Spotify extends Connector {
         personalConfiguration.setDomain(pd);
         ArticlesClient articles = new ArticlesClient(personalConfiguration); //Put found articles in personal domain
         CollectionsClient collections = new CollectionsClient(config); //Put generated collections in personal domain
+        Source primarySource = new Source(
+                "com.telifie.connectors.spotify",
+                "https://telifie-static.nyc3.cdn.digitaloceanspaces.com/images/connectors/spotify.png",
+                "Connector: Spotify",
+                "https://telifie.com/documentation/connectors/spotify"
+        );
 
         //Prepare collections for organizing Spotify content
         Collection playlistsCollection = new Collection("Spotify Playlists").setDomain(config.getAuthentication().getUser());
@@ -71,6 +78,8 @@ public class Spotify extends Connector {
             playlistArticle.setIcon(plsts.getItems()[i].getImages()[0].getUrl());
             playlistArticle.setDescription("Spotify Playlist");
             DataSet tracks = new DataSet("Tracks");
+            tracks.add(new String[]{"Cover", "Track Name", "Artists", "Album", "Duration"});
+            playlistArticle.setSource(primarySource);
 
             //Create playlist collection
             Collection playlistCollection = new Collection(plsts.getItems()[i].getName());
@@ -81,9 +90,9 @@ public class Spotify extends Connector {
                 Track track = (Track) playlistTrack.getTrack();
 
                 //Prepare playlist tracks as data set and add to playlist article
-                String trackName = Telifie.tools.strings.escape(track.getName());
+                String trackName = Telifie.tools.strings.htmlEscape(track.getName());
                 String trackLink = track.getExternalUrls().get("spotify");
-                String trackIcon = track.getAlbum().getImages()[0].getUrl();
+                String trackIcon = Telifie.tools.strings.htmlEscape(track.getAlbum().getImages()[0].getUrl());
                 String trackAlbumName = track.getAlbum().getName();
                 String trackDuration = formatDuration(track.getDurationMs());
                 Date addedAt = playlistTrack.getAddedAt();
@@ -105,9 +114,11 @@ public class Spotify extends Connector {
                 trackArticle.addAttribute(new Attribute("Artist", artists));
                 trackArticle.addAttribute(new Attribute("Album", trackAlbumName));
                 trackArticle.addAttribute(new Attribute("Duration", trackDuration));
+                trackArticle.addAttribute(new Attribute("Added", formattedAddedAt));
                 trackArticle.setContent(trackName + " is a track by " + artists + " from " + trackAlbumName + ". It's " + trackDuration + " in length. It was added on " + formattedAddedAt + ".");
                 articles.create(trackArticle); //Create article for track
                 collections.save(playlistCollection.getId(), trackArticle.getId()); //Add article to this playlist collection
+                trackArticle.setSource(primarySource);
             }
             playlistArticle.addDataSet(tracks);
             articles.create(playlistArticle); //Create article for playlist
