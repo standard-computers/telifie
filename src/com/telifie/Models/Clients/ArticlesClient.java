@@ -3,13 +3,12 @@ package com.telifie.Models.Clients;
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoException;
 import com.mongodb.client.*;
+import com.telifie.Models.Domain;
 import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Article;
 import com.telifie.Models.Utilities.Configuration;
-import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class ArticlesClient extends Client {
 
@@ -19,44 +18,23 @@ public class ArticlesClient extends Client {
     }
 
     public boolean update(Article article, Article newArticle){
-        Telifie.console.out.string(newArticle.toString());
-        return super.updateOne(
-                new Document("id", article.getId()),
-                new Document("$set", Document.parse(newArticle.toString()))
-        );
+        return super.updateOne(new Document("id", article.getId()), new Document("$set", Document.parse(newArticle.toString())));
     }
 
     public boolean create(Article article){
         return super.insertOne(Document.parse(article.toString()));
     }
 
-    public Article get(String articleId){
-        return new Article(this.findOne(new Document("id", articleId)));
-    }
-
     public boolean verify(String articleId){
         return this.updateOne(new Document("id", articleId), new Document("$set", new Document("verified", true)));
     }
 
-    public ArrayList<Article> get(Document filter){
-        ArrayList<Document> found = this.find(filter);
-        ArrayList<Article> articles = new ArrayList<>();
-        for(Document doc : found){
-            articles.add(new Article(doc));
-        }
-        return articles;
+    public Article get(String articleId){
+        return new Article(this.findOne(new Document("id", articleId)));
     }
 
-
-    public ArrayList<Article> getArticlesWithAttribute(String key, String value){
-        ArrayList<Document> found = this.find(
-            new Document("$and",
-                Arrays.asList(
-                        new Document("attributes.key", key ),
-                        new Document("attributes.value", value )
-                )
-            )
-        );
+    public ArrayList<Article> get(Document filter){
+        ArrayList<Document> found = this.find(filter);
         ArrayList<Article> articles = new ArrayList<>();
         for(Document doc : found){
             articles.add(new Article(doc));
@@ -86,7 +64,28 @@ public class ArticlesClient extends Client {
         return super.deleteOne(new Document("id", articleId));
     }
 
-    public boolean existsWithId(String id){
+    public boolean move(String articleId, String domainId){
+        Article article = this.get(articleId);
+        this.delete(article.getId());
+        Configuration config2 = new Configuration();
+        Domain swDomain = new Domain(config.getDomain().getUri());
+        swDomain.setAlt(domainId);
+        config2.setDomain(swDomain);
+        this.config = config2;
+        return this.create(article);
+    }
+
+    public boolean duplicate(String articleId, String domainId){
+        Article article = this.get(articleId);
+        Configuration config2 = new Configuration();
+        Domain swDomain = new Domain(config.getDomain().getUri());
+        swDomain.setAlt(domainId);
+        config2.setDomain(swDomain);
+        this.config = config2;
+        return this.create(article);
+    }
+
+    public boolean exists(String id){
         return super.exists(new Document("id", id));
     }
 }

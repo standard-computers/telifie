@@ -35,12 +35,8 @@ public class Command {
         this.primarySelector = this.get(0).replaceAll("/", "");
     }
 
-    public String getSelector(int index){
-        return this.selectors[index];
-    }
-
     public String get(int index){
-        return this.getSelector(index);
+        return this.selectors[index];
     }
 
     public Result parseCommand(Configuration config){
@@ -54,15 +50,16 @@ public class Command {
         if(primarySelector.equals("domains")){
 
             if(this.selectors.length >= 2){
+
                 DomainsClient domains = new DomainsClient(config);
+                ArrayList<Domain> foundDomains = new ArrayList<>();
                 if(objectSelector.equals("owner")){
 
-                    ArrayList<Domain> foundDomains = domains.mine();
+                    foundDomains = domains.mine();
                     return new Result(this.command, "domains", foundDomains);
                 }else if(objectSelector.equals("member")){ //Domains they're a member of
 
-                    //TODO get domains that user is attached too
-                    ArrayList<Domain> foundDomains = domains.forMember(config.getUser().getEmail());
+                    foundDomains = domains.forMember(config.getUser().getEmail());
                     return new Result(this.command, "domains", foundDomains);
                 }else if(objectSelector.equals("create")){
 
@@ -200,22 +197,32 @@ public class Command {
                         }
                         //Check permissions of user in Domains
                         //TODO, share changes with data team for approval and change status on Article
-                        return new Result(401, this.command, "Insufficient permissions to update Article in Public Domain");
+                        return new Result(401, this.command, "Insufficient permissions");
                     }
                     return new Result(428, "No new Article JSON data provided");
 
                 }else if(objectSelector.equals("delete")){
 
-                    if(config.getUser().getPermissions() >= 12 && this.targetDomain.equals("telifie")){ //Update Article in Public Domain
-                        if(articles.delete(articleId)){
-                            return new Result(200, this.command, "");
-                        }
-                        return new Result(505, this.command, "Failed to delete Article");
+                    if(config.getUser().getPermissions() < 12 && !this.targetDomain.equals("telifie")){ //Update Article in Public Domain
+                        return new Result(401, this.command, "Insufficient permissions");
                     }
-                    //TODO, share changes with data team for approval and change status on Article
-                    return new Result(401, this.command, "Insufficient permissions to delete article in domain");
+                    if(articles.delete(articleId)){
+                        return new Result(200, this.command, "");
+                    }
+                    return new Result(505, this.command, "Failed to delete Article");
 
                 }else if(objectSelector.equals("move")){
+
+                    if(this.selectors.length > 3){
+                        String domainId = this.get(3);
+                        if(config.getUser().getPermissions() >= 12 && this.targetDomain.equals("telifie")){ //Update Article in Public Domain
+                            if(articles.move(articleId, domainId)){
+                                return new Result(200, this.command, "");
+                            }
+                            return new Result(505, this.command, "Failed to move Article");
+                        }
+                        return new Result(401, this.command, "Insufficient permissions");
+                    }
 
                 }else if(objectSelector.equals("verify")){
 
@@ -226,7 +233,7 @@ public class Command {
                         return new Result(505, this.command, "Failed to update Article");
                     }
                     //TODO, share changes with data team for approval and change status on Article
-                    return new Result(401, this.command, "Insufficient permissions to update in domain");
+                    return new Result(401, this.command, "Insufficient permissions");
                 }
 
                 return new Result(404, this.command, "Unknown Articles action command");
@@ -236,7 +243,7 @@ public class Command {
                     User user = config.getUser();
                     if(this.targetDomain.equals("telifie")){ //Make sure that the user has the permissions
                         if(user.getPermissions() < 12){
-                            return new Result(403, this.command, "Insufficient permissions to publish to domain");
+                            return new Result(403, this.command, "Insufficient permissions");
                         }
                     }else{
                         //TODO User blocking when they shouldn't be putting into domain
@@ -259,7 +266,7 @@ public class Command {
                         return new Result(505, this.command, "Malformed Article JSON data provided");
                     }
                 }
-                return new Result(428, "Precondition Failed. No new Article provided (JSON.article) as body");
+                return new Result(428, "Precondition Failed. No new Article provided (JSON) as body");
             }
             //Return stats of Articles in domain (summary)
             return new Result(this.command,"stats", "");
@@ -408,10 +415,11 @@ public class Command {
         else if(primarySelector.equals("parser")){
 
             ArticlesClient articles = new ArticlesClient(config);
+
             if(content != null){
+
                 String mode = content.getString("mode");
                 if(mode != null){
-
                     if(mode.equals("batch")){
 
                         String uri = content.getString("uri");
@@ -424,17 +432,6 @@ public class Command {
                             return new Result(this.command, "articles", extractedArticles);
                         }
                         return new Result(404, this.command, "No articles from batch upload");
-
-                    }else if(mode.equals("dictionary")){
-
-                        if(content != null && content.getString("words") != null){
-                            String[] words = content.getString("words").split(" ");
-                            new Parser.index();
-                            Parser.index.dictionary dict = new Parser.index.dictionary(Telifie.Languages.ENGLISH);
-                            dict.add(words);
-                            return new Result(200, this.command, "Words added to dictionary");
-                        }
-                        return new Result(428, this.command, "JSON http request body expected");
 
                     }else if(mode.equals("wikipedia")){
 
@@ -449,7 +446,7 @@ public class Command {
                         try {
                             yelps = Parser.connectors.yelp(zips, config);
                         } catch (UnsupportedEncodingException e) {
-                            return new Result(505, this.command, "Failed to parse Yelp");
+                            return new Result(505, this.command, "Failed to Yelp");
                         }
                         return new Result(this.command, "articles", yelps);
 
@@ -475,25 +472,21 @@ public class Command {
          * Accessing Queue
          */
         else if(primarySelector.equals("queue")){
-
-            if(this.selectors.length >= 2) {
-
-                ArticlesClient articles = new ArticlesClient(config);
+            QueueClient queue = new QueueClient(config);
+            if(content != null){
                 String uri = content.getString("uri");
-                if (uri == null || uri.equals("")) {
-                    return new Result(410, this.command, "No URI provided as {uri : URI}");
+                if(uri != null && !uri.equals("")){
+                    //TODO parse and then add to queue
+                }else{
+                    if(queue.create(new Article(content))){
+                        return new Result(this.command, "queue", content);
+                    }else{
+                        return new Result(505, this.command, "Failed to create queue");
+                    }
                 }
-                if (articles.get(new Document("link", uri)).size() > 0) { //Article already exists
-                    return new Result(410, this.command, "Article already exists");
-                }
-                QueueClient queue = new QueueClient(config);
-                Article queued = queue.add(uri);
-                if (queued != null) {
-                    return new Result(this.command, "article", queued);
-                }
-                return new Result(505, "There was an error parsing the queue request");
+                return new Result(428, this.command, "URI is required to create a queue");
             }
-            return new Result(404, "Invalid queue command");
+            //TODO return user's queue
         }
         /*
          * Accessing Search
@@ -516,7 +509,7 @@ public class Command {
                     Parameters params = new Parameters(content);
                     return Search.execute(config, query, params);
                 }catch(NullPointerException n){
-                    return new Result(428, this.command, "JSON http request body expected");
+                    return new Result(428, this.command, "JSON request body expected");
                 }
             }
             if(!this.targetDomain.equals("telifie") && !this.targetDomain.equals("")){
@@ -540,9 +533,8 @@ public class Command {
                     Telifie.console.out.string(auth.toJson().toString(4));
                     Telifie.console.out.string("==============================================");
                     return new Result(this.command, "authentication", auth.toJson());
-                }else{
-                    return new Result(505, "Failed creating app authentication");
                 }
+                return new Result(505, "Failed creating app authentication");
             }
         }
         /*
@@ -629,9 +621,10 @@ public class Command {
 
             //TODO sending/receiving messages
 
-        }else if(primarySelector.equals("netstat")){ //Pinging server for status
+        }else if(primarySelector.equals("netstat")){
 
             //TODO diagnostics, logging, system stats, etc.
+            return new Result(this.command, "netstat", "ok");
 
         }else if(primarySelector.equals("connectors")){
 
@@ -657,9 +650,8 @@ public class Command {
                     }else{
                         if(connectorUsed){
                             return new Result(409, this.command, "Connector already exists");
-                        }else{
-                            connectors.create(connector);
                         }
+                        connectors.create(connector);
                     }
                 }
                 return new Result(428, this.command, "JSON body expected to create connector");

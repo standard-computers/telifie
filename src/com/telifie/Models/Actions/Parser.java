@@ -239,9 +239,15 @@ public class Parser {
          */
         public static Article document(String uri){
 
-            if(Telifie.tools.detector.fileExtension(uri).equals("pdf")){
-                //TODO Parse pdf
-            }
+            return null;
+        }
+
+        /**
+         * Parsing pdf files into articles
+         * @return Article representation of asset
+         */
+        public static Article pdf(){
+
             return null;
         }
 
@@ -355,7 +361,7 @@ public class Parser {
                         i++;
                         Article article = new Article();
                         article.setId(Telifie.tools.make.md5(businessNode.path("id").asText()));
-                        if(!articlesClient.existsWithId(article.getId())){
+                        if(!articlesClient.exists(article.getId())){
                             Telifie.console.out.string("On business " + i + " of " + businessesNode.size());
                             article.setIcon(businessNode.path("image_url").asText());
                             article.addAttribute(new Attribute("*batch", batchId));

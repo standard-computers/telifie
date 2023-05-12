@@ -3,7 +3,6 @@ package com.telifie.Models.Utilities;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-
 import java.io.*;
 import java.math.BigInteger;
 import java.nio.file.Path;
@@ -28,20 +27,16 @@ public class Telifie {
 
     public enum Languages {
 
-        ENGLISH("ENGLISH"),
-        SPANISH("SPANISH"),
-        FRENCH("FRENCH"),
-        CHINESE("CHINESE"),
-        GERMAN("GERMAN");
+        ENGLISH("ENGLISH");
 
-        private String displayName = "ENGLISH";
-        private Languages(String displayName){
-            this.displayName = displayName;
+        private String disp = "ENGLISH";
+        Languages(String displayName){
+            this.disp = displayName;
         }
 
         @Override
         public String toString() {
-            return this.displayName;
+            return this.disp;
         }
     }
 
@@ -53,17 +48,6 @@ public class Telifie {
             return Telifie.WINDOWS_SYSTEM_DIR + "/";
         }else{
             return Telifie.UNIX_SYSTEM_DIR + "/";
-        }
-    }
-
-    public static String getConnectorsDirectory(){
-        String operatingSystem = System.getProperty("os.name");
-        if(operatingSystem.equals("Mac OS X")){
-            return Telifie.MAC_SYSTEM_DIR + "/connectors/";
-        }else if(operatingSystem.startsWith("Windows")){
-            return Telifie.WINDOWS_SYSTEM_DIR + "/connectors/";
-        }else{
-            return Telifie.UNIX_SYSTEM_DIR + "/connectors/";
         }
     }
 
@@ -282,16 +266,6 @@ public class Telifie {
                 }
             }
 
-            public static String formatNumber(double number){
-                String numberStr = String.valueOf(number);
-                if (number % 1 == 0) { // check if number is a whole number
-                    if (numberStr.indexOf('.') != -1 && numberStr.endsWith(".0")) {
-                        numberStr = numberStr.substring(0, numberStr.length() - 2);
-                    }
-                }
-                return numberStr;
-            }
-
             public static ArrayList<String> extractLinks(Elements elements, String root){
                 ArrayList<String> links = new ArrayList<>();
                 for(Element el : elements){
@@ -351,18 +325,6 @@ public class Telifie {
                 return src;
             }
 
-            public static boolean isHexColor(String value) {
-                return value.matches("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$");
-            }
-
-            public static boolean isHSLColor(String value) {
-                return value.matches("^hsl\\(\\s*\\d+(\\.\\d+)?\\s*,\\s*\\d+(\\.\\d+)?%\\s*,\\s*\\d+(\\.\\d+)?%\\s*\\)$");
-            }
-
-            public static boolean isRGBColor(String value) {
-                return value.matches("^rgb\\(\\s*\\d+(\\s*,\\s*\\d+){2}\\s*\\)$");
-            }
-
             public static boolean isUrl(String uri){
                 return uri.startsWith("https://") || uri.startsWith("http://") || uri.startsWith("www");
             }
@@ -388,8 +350,6 @@ public class Telifie {
                     return "Unknown";
                 }
             }
-
-
 
             public static String fileToString(String filePath) {
                 File file = new File(filePath);

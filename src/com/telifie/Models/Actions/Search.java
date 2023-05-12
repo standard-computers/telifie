@@ -85,7 +85,7 @@ public class Search {
             }
             results = articles.search(config, params, Search.filter(filters));
         }
-//        filters.add(new Document("tags", new Document("$in", Arrays.asList(tokens)) ) );
+        filters.add(new Document("tags", new Document("$in", Arrays.asList(tokens)) ) );
         return results;
     }
 
