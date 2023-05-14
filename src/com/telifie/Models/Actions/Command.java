@@ -40,7 +40,31 @@ public class Command {
         String secSelector = (this.selectors.length > 2 ? this.get(2) : null);
         String terSelector = (this.selectors.length > 3 ? this.get(3) : null);
         String actingUser = config.getAuthentication().getUser();
-        if(primarySelector.equals("domains")){
+
+        if(primarySelector.equals("search")){
+            String query = this.command.replaceFirst("search/", "");
+            DomainsClient domains = new DomainsClient(config);
+            Domain domain;
+            if(!this.targetDomain.equals("telifie")){
+                query = this.command.replaceFirst(this.targetDomain + "://search/", "");
+                try{
+                    domain = domains.withAltId(this.targetDomain.trim());
+                }catch (NullPointerException n){
+                    domain = config.getDomain();
+                }
+                domain.setUri(config.getDomain().getUri());
+                config.setDomain(domain);
+            }
+            if(content != null){
+                try {
+                    Parameters params = new Parameters(content);
+                    return Search.execute(config, query, params);
+                }catch(NullPointerException n){
+                    return new Result(428, this.command, "Invalid search parameters");
+                }
+            }
+            return Search.execute(config, query, new Parameters(25, 0, "articles") );
+        }else if(primarySelector.equals("domains")){
 
             if(this.selectors.length >= 2){
 
@@ -201,6 +225,31 @@ public class Command {
                                 return new Result(404, this.command, "Domain not found");
                             }
                         }
+                    }catch(NullPointerException n){
+                        return new Result(404, this.command, "Article not found");
+                    }
+
+                }else if(objectSelector.equals("archive")){
+
+                    try{
+                        Article a = articles.withId(secSelector);
+                        if(articles.archive(a)){
+                            return new Result(200, this.command, "Article unarchived");
+                        }
+                        return new Result(505, this.command, "Failed to archive article");
+                    }catch(NullPointerException n){
+                        return new Result(404, this.command, "Article not found");
+                    }
+
+                }else if(objectSelector.equals("unarchive")){
+
+                    try{
+                        ArchiveClient archive = new ArchiveClient(config);
+                        Article a = archive.withId(secSelector);
+                        if(archive.unarchive(a)){
+                            return new Result(200, this.command, "");
+                        }
+                        return new Result(505, this.command, "Failed to unarchive article");
                     }catch(NullPointerException n){
                         return new Result(404, this.command, "Article not found");
                     }
@@ -485,33 +534,6 @@ public class Command {
                 return new Result(428, this.command, "URI is required to create a queue");
             }
             //TODO return user's queue
-        }
-        /*
-         * Accessing Search
-         */
-        else if(primarySelector.equals("search")){
-            String query = this.command.replaceFirst("search/", "");
-            DomainsClient domains = new DomainsClient(config);
-            Domain domain;
-            if(!this.targetDomain.equals("telifie")){
-                query = this.command.replaceFirst(this.targetDomain + "://search/", "");
-                try{
-                    domain = domains.withAltId(this.targetDomain.trim());
-                }catch (NullPointerException n){
-                    domain = config.getDomain();
-                }
-                domain.setUri(config.getDomain().getUri());
-                config.setDomain(domain);
-            }
-            if(content != null){
-                try {
-                    Parameters params = new Parameters(content);
-                    return Search.execute(config, query, params);
-                }catch(NullPointerException n){
-                    return new Result(428, this.command, "Invalid search parameters");
-                }
-            }
-            return Search.execute(config, query, new Parameters(25, 0, "articles") );
         }
         /*
          * Authenticate an app for backend use to facilitate user authentication
