@@ -4,10 +4,8 @@ import com.telifie.Models.Article;
 import com.telifie.Models.Articles.Image;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Result;
-import com.telifie.Models.Articles.CommonObject;
 import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Parameters;
-import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -52,7 +50,7 @@ public class Search {
             }
             return new Result(query, "articles", articles);
         }
-        ArrayList<CommonObject> qr = new ArrayList<>();
+        ArrayList<Article> qr = new ArrayList<>();
         return new Result(query, qr, results);
     }
 
@@ -66,9 +64,6 @@ public class Search {
         ArrayList<Article> results;
         if(generalFilter != null){
 
-            Telifie.console.out.line();
-            Telifie.console.out.line();
-            Telifie.console.out.line();
             results = articles.search(config, params, generalFilter);
             if(results != null && results.size() > 3){
                 Collections.sort(results, new RelevanceComparator(query));
@@ -76,7 +71,6 @@ public class Search {
             }
         }else{
             filters.add(new Document("title", new Document("$in", Arrays.asList(pattern(cleaned), pattern(query)))));
-//            filters.add(new Document("link", new Document("$in", Arrays.asList(pattern(cleaned), pattern(query)))));
             for(String token : tokens){
                 String[] properties = {"link", "title", "description"};
                 for(String property : properties){
@@ -148,6 +142,7 @@ public class Search {
             String term = query.replaceFirst("define", "").trim();
             return new Document("$and", Arrays.asList(new Document("description", ignoreCase("definition")), new Document("title", term)));
         }
+//            filters.add(new Document("link", new Document("$in", Arrays.asList(pattern(cleaned), pattern(query)))));
         return null;
     }
 
@@ -164,7 +159,6 @@ public class Search {
         String regex = "\\b" + Pattern.quote(value) + "\\b";
         return Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
     }
-
 
     private static class RelevanceComparator implements Comparator<Article> {
 

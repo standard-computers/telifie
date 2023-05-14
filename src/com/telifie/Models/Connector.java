@@ -38,28 +38,8 @@ public class Connector {
         return clientId;
     }
 
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
     public String getAccessToken() {
         return accessToken;
-    }
-
-    public void setAccessToken(String accessToken) {
-        this.accessToken = accessToken;
-    }
-
-    public void setSecret(String secret) {
-        this.secret = secret;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
     }
 
     public String getUser() {
@@ -80,10 +60,6 @@ public class Connector {
 
     public ArrayList<Endpoint> getEndpoints() {
         return endpoints;
-    }
-
-    public void setEndpoints(ArrayList<Endpoint> endpoints) {
-        this.endpoints = endpoints;
     }
 
     public String getId() {

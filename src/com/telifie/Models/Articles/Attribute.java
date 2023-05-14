@@ -4,7 +4,8 @@ import com.telifie.Models.Utilities.Telifie;
 
 public class Attribute {
 
-    private String key, value;
+    private final String key;
+    private final String value;
 
     public Attribute(String key, String value) {
         this.key = Telifie.tools.strings.escape(key);

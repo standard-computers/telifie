@@ -1,15 +1,16 @@
 package com.telifie.Models;
 
-import com.telifie.Models.Articles.CommonObject;
 import java.util.ArrayList;
 import java.util.UUID;
 
 public class Result {
 
-    private String id = UUID.randomUUID().toString(), query = "", object = "results";
+    private final String id = UUID.randomUUID().toString();
+    private String query = "";
+    private String object = "results";
     private Object results;
     private int statusCode = 200, count = 0;
-    private ArrayList<CommonObject> quickResults = new ArrayList<>();
+    private ArrayList<Article> quickResults = new ArrayList<>();
 
     public Result(String query, String object, ArrayList results) {
         this.query = query;
@@ -35,7 +36,7 @@ public class Result {
         this.results = results;
     }
 
-    public Result(String query, ArrayList<CommonObject> quickResults, ArrayList<Article> results) {
+    public Result(String query, ArrayList<Article> quickResults, ArrayList<Article> results) {
         this.query = query;
         this.object = "articles";
         this.results = results;

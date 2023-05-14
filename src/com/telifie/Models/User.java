@@ -1,7 +1,6 @@
 package com.telifie.Models;
 
 import com.telifie.Models.Utilities.*;
-import com.telifie.Models.Utilities.Network;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -18,7 +17,13 @@ import java.util.UUID;
 
 public class User implements Serializable {
 
-    private String id, email, name, photo = "", phone, token, customerId;
+    private String id;
+    private final String email;
+    private String name;
+    private String photo = "";
+    private String phone;
+    private String token;
+    private String customerId;
     private final int origin;
     private int permissions;
     private Theme theme;

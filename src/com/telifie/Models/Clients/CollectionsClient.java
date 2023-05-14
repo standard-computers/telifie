@@ -33,7 +33,7 @@ public class CollectionsClient extends Client {
         ArticlesClient articlesClient = new ArticlesClient(super.getConfig());
         if(collection.getArticles() != null){
             for (String articleId : collection.getArticles()) {
-                articles.add(articlesClient.get(articleId));
+                articles.add(articlesClient.withId(articleId));
             }
             collection.setDetailedList(articles);
             return collection;
@@ -68,53 +68,49 @@ public class CollectionsClient extends Client {
         )){
             return null;
         }
-
         Collection collection = new Collection(name);
         if(super.insertOne( Document.parse(collection.toString()) )){
-
             return collection;
         }
         return null;
     }
 
-    public boolean save(String groupId, String articleId){
-
+    public boolean save(Collection collection, Article article){
         return this.updateOne(
             new Document("$and",
                 Arrays.asList(
                     new Document("user", config.getAuthentication().getUser()),
-                    new Document("id", groupId)
+                    new Document("id", collection.getId())
                 )
             ),
-            new Document("$push", new Document("articles", articleId))
+            new Document("$push", new Document("articles", article.getId()))
         );
     }
 
-    public boolean unsave(String groupId, String articleId){
-
+    public boolean unsave(Collection collection, Article article){
         return this.updateOne(
             new Document("$and",
                 Arrays.asList(
                     new Document("user", config.getAuthentication().getUser()),
-                    new Document("id", groupId)
+                    new Document("id", collection.getId())
                 )
             ),
-            new Document("$pull", new Document("articles", articleId))
+            new Document("$pull", new Document("articles", article.getId()))
         );
     }
 
-    public boolean delete(String groupId){
+    public boolean delete(Collection collection){
         return this.deleteOne(
             new Document("$and",
                 Arrays.asList(
                     new Document("user", config.getAuthentication().getUser()),
-                    new Document("id", groupId)
+                    new Document("id", collection.getId())
                 )
             )
         );
     }
 
-    public boolean update(String groupId, Document update){
-        return super.updateOne(new Document("id", groupId), new Document("$set", update));
+    public boolean update(Collection collection, Document update){
+        return super.updateOne(new Document("id", collection.getId()), new Document("$set", update));
     }
 }

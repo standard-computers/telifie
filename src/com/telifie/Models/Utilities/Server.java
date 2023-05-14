@@ -4,7 +4,6 @@ package com.telifie.Models.Utilities;
 import com.telifie.Models.Actions.Command;
 import com.telifie.Models.Clients.AuthenticationClient;
 import com.telifie.Models.Clients.UsersClient;
-import com.telifie.Models.Domain;
 import com.telifie.Models.Result;
 import com.telifie.Models.Utilities.Authentication;
 import com.telifie.Models.Utilities.Configuration;
@@ -33,19 +32,13 @@ public class Server {
             InputStream inputStream = new FileInputStream(KEYSTORE_PATH);
             keyStore.load(inputStream, KEYSTORE_PASSWORD.toCharArray());
 
-            // Initialize key manager factory
             KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
             keyManagerFactory.init(keyStore, KEYSTORE_PASSWORD.toCharArray());
 
-            // Initialize SSL context
             SSLContext sslContext = SSLContext.getInstance("TLS");
             sslContext.init(keyManagerFactory.getKeyManagers(), null, null);
-
-            // Initialize server socket factory
             SSLServerSocketFactory serverSocketFactory = sslContext.getServerSocketFactory();
             SSLServerSocket serverSocket = (SSLServerSocket) serverSocketFactory.createServerSocket(PORT);
-
-            // Set SSL parameters
             serverSocket.setEnabledCipherSuites(serverSocket.getSupportedCipherSuites());
             serverSocket.setNeedClientAuth(false);
 
@@ -57,18 +50,14 @@ public class Server {
                     SSLSocket clientSocket = (SSLSocket) serverSocket.accept();
                     Telifie.console.out.string("Accepting new SSL Client -> " + clientSocket.getInetAddress().getHostAddress());
 
-                    //Handle client request
                     BufferedReader input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                     String requestLine = input.readLine();
 
-                    //Read request headers
-                    String headers = "";
-                    String line;
+                    String headers = "", line;
                     while (!(line = input.readLine()).equals("")) {
                         headers += line + "\r\n";
                     }
 
-                    //Extract authorization header from request headers
                     String authString = "";
                     String[] headerLines = headers.split("\r\n");
                     for (String headerLine : headerLines) {
@@ -82,7 +71,6 @@ public class Server {
                     Result result = new Result(200, query, "\"okay\"");
 
                     if (authString.equals("") || auth == null) {
-
                         result.setStatusCode(406);
                         result.setResult("result", "No Authentication credentials provided");
                     } else {
@@ -109,7 +97,6 @@ public class Server {
                             result = new Result(403, "Invalid Auth Credentials");
                         }
                     }
-                    // Set the content type of the response to "application/json"
                     PrintWriter out = new PrintWriter(clientSocket.getOutputStream());
                     out.println("HTTP/1.1 200 OK");
                     out.println("Content-Type: application/json; charset=utf-8");
@@ -136,16 +123,15 @@ public class Server {
     }
 
     private Result processRequest(Configuration configuration, String method, String request, String requestBody){
-        Command command = new Command(request);
         if(method.equals("POST")){
             try {
-                return command.parseCommand(configuration, Document.parse(requestBody));
+                return new Command(request).parseCommand(configuration, Document.parse(requestBody));
             }catch(BsonInvalidOperationException e){
-                return new Result(505, "\"Malformed JSON data provided\"");
+                return new Result(505, "Malformed JSON data provided");
             }
         }else if(method.equals("GET")){
-            return command.parseCommand(configuration);
+            return new Command(request).parseCommand(configuration, null);
         }
-        return new Result(404, request, "\"Invalid command received\"");
+        return new Result(404, request, "Invalid HTTP request method");
     }
 }

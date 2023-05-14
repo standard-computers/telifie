@@ -3,17 +3,16 @@ package com.telifie;
 import com.telifie.Models.*;
 import com.telifie.Models.Actions.*;
 import com.telifie.Models.Utilities.*;
-import com.telifie.Models.Utilities.Server;
-import com.telifie.Models.Utilities.HttpServer;
+
 import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Start {
 
-    private static String wrkDir = Telifie.getConfigDirectory();
+    private static final String wrkDir = Telifie.getConfigDirectory();
     private static Configuration config;
-    private static File configFile = new File(wrkDir + "/telifie.configuration");
+    private static final File configFile = new File(wrkDir + "/telifie.configuration");
 
     public static void main(String[] args){
 
@@ -21,41 +20,46 @@ public class Start {
         Logger.getLogger("org.mongodb.driver").setLevel(Level.SEVERE);
         if (args.length > 0) {
             String mode = args[0].trim().toLowerCase();
-            if(mode.equals("--install")){ //First run/install
-                install();
-            }else if(mode.equals("--purge")){ //Purge Telifie, start from scratch
-                checkConfig();
-                Telifie.console.out.string("<!----------- Purge Mode -----------!>\n");
-                if(Telifie.console.in.string("Confirm purge and fresh install (y/n) -> ").equals("y")){
-                    configFile.delete();
-                    Telifie.console.out.string("telifie.configuration deleted");
-                    install();
+            switch (mode) {
+                case "--install" ->  //First run/install
+                        install();
+                case "--purge" -> {  //Purge Telifie, start from scratch
+                    checkConfig();
+                    Telifie.console.out.string("<!----------- Purge Mode -----------!>\n");
+                    if (Telifie.console.in.string("Confirm purge and fresh install (y/n) -> ").equals("y")) {
+                        configFile.delete();
+                        Telifie.console.out.string("telifie.configuration deleted");
+                        install();
+                    }
+                    System.exit(1);
                 }
-                System.exit(1);
-            }else if(mode.equals("--parser")){
-                checkConfig();
-                Telifie.console.out.string("<!---------- Parser Mode ----------!>\n");
-                String in = Telifie.console.in.string("URI/URL -> ");
-                while(!in.equals("q")){
-                    Parser.engines.parse(in);
-                    in = Telifie.console.in.string("URI/URL -> ");
+                case "--parser" -> {
+                    checkConfig();
+                    Telifie.console.out.string("<!---------- Parser Mode ----------!>\n");
+                    String in = Telifie.console.in.string("URI/URL -> ");
+                    while (!in.equals("q")) {
+                        Parser.engines.parse(in);
+                        in = Telifie.console.in.string("URI/URL -> ");
+                    }
                 }
-            }else if(mode.equals("--server")){
-                checkConfig();
-                try{
-                    new Server(config);
-                }catch(Exception e){
-                    Telifie.console.out.error("Failed to start HTTPS server...");
-                    e.printStackTrace();
+                case "--server" -> {
+                    checkConfig();
+                    try {
+                        new Server(config);
+                    } catch (Exception e) {
+                        Telifie.console.out.error("Failed to start HTTPS server...");
+                        e.printStackTrace();
+                    }
                 }
-            }else if(mode.equals("--http")){
-                checkConfig();
-                try {
-                    Telifie.console.out.string("Starting HTTP server [CONSIDER HTTPS FOR SECURITY]...");
-                    new HttpServer(config);
-                } catch (Exception e) {
-                    Telifie.console.out.error("Failed to start HTTP server...");
-                    e.printStackTrace();
+                case "--http" -> {
+                    checkConfig();
+                    try {
+                        Telifie.console.out.string("Starting HTTP server [CONSIDER HTTPS FOR SECURITY]...");
+                        new HttpServer(config);
+                    } catch (Exception e) {
+                        Telifie.console.out.error("Failed to start HTTP server...");
+                        e.printStackTrace();
+                    }
                 }
             }
         }

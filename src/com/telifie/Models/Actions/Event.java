@@ -1,13 +1,13 @@
 package com.telifie.Models.Actions;
 
 import org.bson.Document;
-import org.json.JSONObject;
 
 public class Event {
 
-    private Type type;
-    private int origin;
-    private String user = "GUEST", content;
+    private final Type type;
+    private final int origin;
+    private String user;
+    private final String content;
 
     public enum Type {
         UPDATE, POST, GET, PUT, SEARCH, MESSAGE, EMAIL, TEXT, FLAG, DELETE

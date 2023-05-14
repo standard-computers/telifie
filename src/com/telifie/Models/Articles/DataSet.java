@@ -8,7 +8,9 @@ import java.util.UUID;
 
 public class DataSet {
 
-    private String id, title, source;
+    private String id;
+    private final String title;
+    private String source;
     private ArrayList<String[]> rows = new ArrayList<>();
 
     public DataSet(Document document){

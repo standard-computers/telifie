@@ -3,10 +3,8 @@ package com.telifie.Models.Utilities;
 import com.telifie.Models.Actions.Command;
 import com.telifie.Models.Clients.AuthenticationClient;
 import com.telifie.Models.Clients.UsersClient;
-import com.telifie.Models.Domain;
 import com.telifie.Models.Result;
 import org.apache.http.*;
-import org.apache.http.HttpEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.DefaultBHttpServerConnection;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
@@ -30,7 +28,6 @@ public class HttpServer {
     public HttpServer(Configuration config) {
 
         HttpRequestHandler requestHandler = (request, response, context) -> {
-
             String method = request.getRequestLine().getMethod();
             String query = request.getRequestLine().getUri().substring(1);
             String authString = (request.getFirstHeader("Authorization") == null ? "" : request.getFirstHeader("Authorization").getValue());
@@ -66,7 +63,6 @@ public class HttpServer {
         HttpParams params = new BasicHttpParams();
         HttpConnectionParams.setConnectionTimeout(params, Integer.MAX_VALUE);
         HttpConnectionParams.setSoTimeout(params, Integer.MAX_VALUE);
-        // Create a request handler registry
         HttpRequestHandlerRegistry registry = new HttpRequestHandlerRegistry();
         registry.register("*", requestHandler);
         HttpService httpService = new HttpService(new BasicHttpProcessor(), new DefaultConnectionReuseStrategy(), new DefaultHttpResponseFactory(), registry, params);
@@ -91,18 +87,15 @@ public class HttpServer {
     }
 
     private Result processRequest(Configuration configuration, String method, String request, String requestBody){
-
-        //TODO log all requests from http to file
-        Command command = new Command(request);
         if(method.equals("POST")){
             try {
-                return command.parseCommand(configuration, Document.parse(requestBody));
+                return new Command(request).parseCommand(configuration, Document.parse(requestBody));
             }catch(BsonInvalidOperationException e){
-                return new Result(505, "\"Malformed JSON data provided\"");
+                return new Result(505, "Malformed JSON data provided");
             }
         }else if(method.equals("GET")){
-            return command.parseCommand(configuration);
+            return new Command(request).parseCommand(configuration, null);
         }
-        return new Result(404, request, "\"Invalid method\"");
+        return new Result(404, request, "Invalid method");
     }
 }

@@ -185,8 +185,7 @@ public class Article {
     }
 
     public JSONObject toJson(){
-        JSONObject json = new JSONObject(this.toString());
-        return json;
+        return new JSONObject(this.toString());
     }
 
     public ArrayList<Event> compare(Article old){

@@ -35,10 +35,10 @@ public class DomainsClient extends Client {
         return new Domain(super.findOne(new Document("id", id)));
     }
 
-    public boolean delete(String id){
+    public boolean delete(Domain domain){
         return super.deleteOne(new Document("$and", Arrays.asList(
                 new Document("owner", config.getAuthentication().getUser()),
-                new Document("id", id)
+                new Document("id", domain.getId())
             )
         ));
     }
@@ -76,18 +76,18 @@ public class DomainsClient extends Client {
         return false;
     }
 
-    public boolean addUsers(String domain, ArrayList<Member> members){
-        members.forEach(member -> super.updateOne(new Document("id", domain), new Document("$push", new Document("users", Document.parse(member.toString())))));
+    public boolean addUsers(Domain domain, ArrayList<Member> members){
+        members.forEach(member -> super.updateOne(new Document("id", domain.getId()), new Document("$push", new Document("users", Document.parse(member.toString())))));
         return true;
     }
 
-    public boolean removeUsers(String domain, ArrayList<Member> members){
-        members.forEach(member -> super.updateOne(new Document("id", domain), new Document("$pull", new Document("users", Document.parse(member.toString())))));
+    public boolean removeUsers(Domain domain, ArrayList<Member> members){
+        members.forEach(member -> super.updateOne(new Document("id", domain.getId()), new Document("$pull", new Document("users", Document.parse(member.toString())))));
         return true;
     }
 
-    public boolean updateUsers(String domain, ArrayList<Member> members){
-        members.forEach(member -> super.updateOne(new Document("id", domain), new Document("$set", new Document("users", Document.parse(member.toString())))));
+    public boolean updateUsers(Domain domain, ArrayList<Member> members){
+        members.forEach(member -> super.updateOne(new Document("id", domain.getId()), new Document("$set", new Document("users", Document.parse(member.toString())))));
         return true;
     }
 

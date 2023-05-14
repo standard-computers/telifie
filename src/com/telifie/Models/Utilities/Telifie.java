@@ -139,18 +139,13 @@ public class Telifie {
             public static Object serialized(String dir){
                 try {
                     ObjectInputStream in = new ObjectInputStream(new FileInputStream(dir));
-                    Object obj = in.readObject();
-                    return obj;
+                    return in.readObject();
                 } catch (IOException e) {
                     return null;
                 } catch (ClassNotFoundException e) {
                     return null;
                 }
             }
-
-//            public static String download(String get, String put){
-//
-//            }
         }
     }
 

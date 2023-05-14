@@ -4,7 +4,10 @@ import org.bson.Document;
 
 public class Child {
 
-    private String id, image, title, reference;
+    private String id;
+    private final String image;
+    private final String title;
+    private final String reference;
 
     public Child(String id, String image, String title, String reference) {
         this.id = id;

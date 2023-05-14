@@ -7,8 +7,15 @@ import java.util.UUID;
 
 public class Collection {
 
-    private String id, domain, user, icon, name, sort = "A", connector = "";
-    private int origin, permissions = Telifie.PRIVATE;
+    private final String id;
+    private String domain;
+    private String user;
+    private String icon;
+    private String name;
+    private final String sort = "A";
+    private String connector = "";
+    private final int origin;
+    private int permissions = Telifie.PRIVATE;
     private ArrayList articles;
     private ArrayList<Article> detailedList;
 

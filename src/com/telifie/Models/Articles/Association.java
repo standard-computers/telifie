@@ -5,7 +5,8 @@ import java.util.ArrayList;
 
 public class Association {
 
-    private String icon, name;
+    private final String icon;
+    private String name;
     private ArrayList<Child> articles = new ArrayList<>();
 
     public Association(String icon, String name) {

@@ -25,11 +25,11 @@ public class ArticlesClient extends Client {
         return super.insertOne(Document.parse(article.toString()));
     }
 
-    public boolean verify(String articleId){
-        return this.updateOne(new Document("id", articleId), new Document("$set", new Document("verified", true)));
+    public boolean verify(Article article){
+        return this.updateOne(new Document("id", article.getId()), new Document("$set", new Document("verified", true)));
     }
 
-    public Article get(String articleId){
+    public Article withId(String articleId){
         return new Article(this.findOne(new Document("id", articleId)));
     }
 
@@ -60,32 +60,33 @@ public class ArticlesClient extends Client {
         }
     }
 
-    public boolean delete(String articleId) {
-        return super.deleteOne(new Document("id", articleId));
+    public boolean delete(Article article) {
+        return super.deleteOne(new Document("id", article.getId()));
     }
 
-    public boolean move(String articleId, String domainId){
-        Article article = this.get(articleId);
-        this.delete(article.getId());
-        Configuration config2 = new Configuration();
-        Domain swDomain = new Domain(config.getDomain().getUri());
-        swDomain.setAlt(domainId);
-        config2.setDomain(swDomain);
-        this.config = config2;
+    public boolean move(Article article, Domain domain){
+        this.delete(article);
+        Configuration c2 = new Configuration();
+        domain.setUri(config.getDomain().getUri());
+        c2.setDomain(domain);
+        this.config = c2;
         return this.create(article);
     }
 
-    public boolean duplicate(String articleId, String domainId){
-        Article article = this.get(articleId);
-        Configuration config2 = new Configuration();
-        Domain swDomain = new Domain(config.getDomain().getUri());
-        swDomain.setAlt(domainId);
-        config2.setDomain(swDomain);
-        this.config = config2;
+    public boolean duplicate(Article article, Domain domain){
+        Configuration c2 = new Configuration();
+        domain.setUri(config.getDomain().getUri());
+        c2.setDomain(domain);
+        this.config = c2;
         return this.create(article);
     }
 
     public boolean exists(String id){
         return super.exists(new Document("id", id));
+    }
+
+    public String stats(){
+        //TODO
+        return "";
     }
 }

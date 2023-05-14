@@ -5,7 +5,10 @@ import java.util.UUID;
 
 public class Source {
 
-    private String id, icon, name, url;
+    private final String id;
+    private final String icon;
+    private String name;
+    private final String url;
 
     public Source(String id, String icon, String name, String url) {
         this.id = id;

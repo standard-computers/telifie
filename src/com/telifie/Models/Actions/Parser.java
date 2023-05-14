@@ -22,6 +22,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -345,7 +346,7 @@ public class Parser {
                 Telifie.console.out.line();
                 Telifie.console.out.string("On zip code: " + zip);
                 Telifie.console.out.line();
-                String url = "https://api.yelp.com/v3/businesses/search?sort_by=best_match&limit=50&location=" + URLEncoder.encode(zip, "UTF-8");
+                String url = "https://api.yelp.com/v3/businesses/search?sort_by=best_match&limit=50&location=" + URLEncoder.encode(zip, StandardCharsets.UTF_8);
                 HttpGet httpGet = new HttpGet(url);
                 httpGet.addHeader("Authorization", "Bearer " + API_KEY);
                 try (CloseableHttpClient httpClient = HttpClients.createDefault(); CloseableHttpResponse httpResponse = httpClient.execute(httpGet)) {

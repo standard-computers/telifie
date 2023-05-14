@@ -117,12 +117,12 @@ public class Spotify extends Connector {
                 trackArticle.addAttribute(new Attribute("Added", formattedAddedAt));
                 trackArticle.setContent(trackName + " is a track by " + artists + " from " + trackAlbumName + ". It's " + trackDuration + " in length. It was added on " + formattedAddedAt + ".");
                 articles.create(trackArticle); //Create article for track
-                collections.save(playlistCollection.getId(), trackArticle.getId()); //Add article to this playlist collection
+                collections.save(playlistCollection, trackArticle); //Add article to this playlist collection
                 trackArticle.setSource(primarySource);
             }
             playlistArticle.addDataSet(tracks);
             articles.create(playlistArticle); //Create article for playlist
-            collections.save(playlistsCollection.getId(), playlistArticle.getId()); //Add article to playlists collection
+            collections.save(playlistsCollection, playlistArticle); //Add article to playlists collection
         }
     }
 

@@ -10,7 +10,7 @@ public class Domain implements Serializable {
 
     private String uri, id, alt = "telifie", icon, owner, name;
     private int origin, permissions;
-    private ArrayList<Member> users = new ArrayList<>();
+    private final ArrayList<Member> users = new ArrayList<>();
 
     public Domain(String uri){
         this.uri = uri;
@@ -33,11 +33,9 @@ public class Domain implements Serializable {
         this.owner = document.getString("owner");
         this.name = document.getString("name");
         this.permissions = (document.getInteger("permissions") == null ? 0 : document.getInteger("permissions"));
-        ArrayList<Document> mems = (ArrayList<Document>) document.getList("users", Document.class);
-        if (mems != null) {
-            for (Document doc : mems) {
-                this.addUser(new Member(doc));
-            }
+        ArrayList<Document> m = (ArrayList<Document>) document.getList("users", Document.class);
+        if (m != null) {
+            m.forEach(d -> this.addUser(new Member(d)));
         }
     }
 

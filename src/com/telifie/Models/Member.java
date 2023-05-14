@@ -4,8 +4,9 @@ import org.bson.Document;
 
 public class Member {
 
-    private String name = "", email;
-    private int permissions;
+    private final String name;
+    private final String email;
+    private final int permissions;
 
     public Member(Document doc){
         this.name = doc.getString("name");

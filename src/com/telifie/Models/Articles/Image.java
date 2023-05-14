@@ -6,7 +6,10 @@ import java.util.UUID;
 
 public class Image {
 
-    private String id, url, caption, source;
+    private String id;
+    private final String url;
+    private final String caption;
+    private final String source;
 
     public Image(String url, String caption, String source) {
         this.id = UUID.randomUUID().toString();
