@@ -16,8 +16,9 @@ public class Search {
 
     public static Result execute(Configuration config, String query, Parameters params){
 
-        query = URLDecoder.decode(query, StandardCharsets.UTF_8).toLowerCase().trim();
+        query = URLDecoder.decode(query, StandardCharsets.UTF_8);
         ArrayList results = Search.executeQuery(config, query, params);
+
         if(params.getIndex().equals("images")) {
             ArrayList<Image> images = new ArrayList();
             for(Object result : results){
@@ -57,29 +58,32 @@ public class Search {
     private static ArrayList executeQuery(Configuration config, String query, Parameters params){
 
         String[] tokens = Parser.encoder.tokenize(query, true).get(0);
-        String cleaned = Parser.encoder.clean(query);
-        ArrayList<Document> filters = new ArrayList<>();
-        Document generalFilter = generalFilter(query);
+        Document gf = general(query);
         ArticlesClient articles = new ArticlesClient(config);
         ArrayList<Article> results;
-        if(generalFilter != null){
-
-            results = articles.search(config, params, generalFilter);
-            if(results != null && results.size() > 3){
-                Collections.sort(results, new RelevanceComparator(query));
-                Collections.reverse(results);
-            }
+        if(gf != null){
+            results = articles.search(config, params, gf);
         }else{
-            filters.add(new Document("title", new Document("$in", Arrays.asList(pattern(cleaned), pattern(query)))));
+            ArrayList<Document> filters = new ArrayList<>();
+            filters.add(new Document("title", new Document("$in",
+                Arrays.asList(
+                        pattern(Parser.encoder.clean(query)),
+                        pattern(query))
+                ))
+            );
             for(String token : tokens){
                 String[] properties = {"link", "title", "description"};
                 for(String property : properties){
                     filters.add(new Document(property, pattern(token) ) );
                 }
             }
-            results = articles.search(config, params, Search.filter(filters));
+            filters.add(new Document("tags", new Document("$in", Arrays.asList(tokens)) ) );
+            results = articles.search(config, params, new Document("$or", filters));
+            if(results != null && results.size() > 3){
+                Collections.sort(results, new RelevanceComparator(query));
+                Collections.reverse(results);
+            }
         }
-        filters.add(new Document("tags", new Document("$in", Arrays.asList(tokens)) ) );
         return results;
     }
 
@@ -88,7 +92,7 @@ public class Search {
      * Returns Document used for .find in for MongoCollection
      * @return Document
      */
-    private static Document generalFilter(String query){
+    private static Document general(String query){
 
         if(query.matches("^id\\s*:\\s*.*")){ //Return articles with id
 
@@ -102,52 +106,43 @@ public class Search {
             if(spl.length >= 2) {
                 return new Document("description", ignoreCase(spl[1].trim()));
             }
-        }else if(query.matches("^title\\s*:\\s*.*")){ //Return Articles with requested description
+        }else if(query.matches("^title\\s*:\\s*.*")){ //Search only with title
 
             String[] spl = query.split(":");
             if(spl.length >= 2){
-                return new Document("title", ignoreCase(query.split(":")[1]));
+                return new Document("title", pattern(query.split(":")[1].trim() ));
             }
-        }else if(query.matches("^attribute\\s*:\\s*.*")){
+        }else if(query.matches("^attribute\\s*:\\s*.*")){ //Search using attributes
 
             String[] spl = query.split(":");
             if(spl.length >= 2){
-
                 String[] spl2 = spl[1].split("=");
                 if(spl2.length < 2){
-
-                    if(query.contains("&")){ //Has multiple attribute requirements
-
-                        String[] attrReqs = spl[1].split("&");
-                        List<Document> andFilters = new ArrayList<>();
-                        for (String attr : attrReqs) {
-                            String[] args = attr.split("=");
-                            String key = args[0].trim(), value = args[1].trim();
-                            andFilters.add(new Document("attributes.key", ignoreCase(key)));
-                            andFilters.add(new Document("attributes.value", ignoreCase(value)));
-                        }
-                        return new Document("$and", andFilters);
-                    }else{
-
-                        String key = spl2[0].trim();
-                        if(spl2.length >= 2){
-                            String value = spl2[1].trim();
-                            return new Document("$and", Arrays.asList(new Document("attributes.key", pattern( key ) ), new Document("attributes.value", pattern( value ) )));
-                        }
-                        return new Document("attributes.key", pattern( key ) );
+                    String key = spl2[0].trim();
+                    if(spl2.length >= 2){
+                        String value = spl2[1].trim();
+                        return new Document("$and", Arrays.asList(
+                                new Document("attributes.key", pattern(key)),
+                                new Document("attributes.value", pattern(value))
+                        ));
                     }
+                    return new Document("attributes.key", pattern(key));
                 }
             }
-        }else if(query.startsWith("define ")) {
-            String term = query.replaceFirst("define", "").trim();
-            return new Document("$and", Arrays.asList(new Document("description", ignoreCase("definition")), new Document("title", term)));
+        }else if(query.matches("^define\\s*.*")) { //If defining a term
+            Pattern term = wholeWord(query.replaceFirst("define", "").trim());
+            return new Document("$and", Arrays.asList(
+                    new Document("description", "Definition"),
+                    new Document("title", term)
+            ));
+        }else if(query.matches("(?i)\\bhttps?://\\S+\\b")){ //If link
+            return new Document("link", new Document("$in", Arrays.asList(pattern(query), pattern(query))));
         }
-//            filters.add(new Document("link", new Document("$in", Arrays.asList(pattern(cleaned), pattern(query)))));
         return null;
     }
 
-    private static Document filter(ArrayList filters){
-        return new Document("$or", filters);
+    private static Pattern wholeWord(String value){
+        return Pattern.compile(Pattern.quote(value), Pattern.CASE_INSENSITIVE);
     }
 
     private static Pattern pattern(String value){
@@ -175,10 +170,8 @@ public class Search {
             return Integer.compare(relevanceB, relevanceA);
         }
 
-        private int relevance(String title) {
-            // Calculate the Levenshtein distance between the title and the query
+        private int relevance(String title) { // Calc Levenshtein distance between title and query
             int[][] dp = new int[title.length() + 1][query.length() + 1];
-
             for (int i = 0; i <= title.length(); i++) {
                 for (int j = 0; j <= query.length(); j++) {
                     if (i == 0) {
@@ -191,7 +184,6 @@ public class Search {
                     }
                 }
             }
-
             return dp[title.length()][query.length()];
         }
     }

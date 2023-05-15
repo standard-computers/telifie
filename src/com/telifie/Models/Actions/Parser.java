@@ -343,9 +343,6 @@ public class Parser {
             String API_KEY = "IyhStCFRvjRbjE51NyND1w4JyKIiZ-3r4Qf1g-DquKCgi8bNJcqK0-EjNoxCen1y0H57JJxmteYzpj8uZ78LLAlMn3Ea0S8bjioBm_5CMYK-TnHwzQ0jC0UN-0tHZHYx";
             int total_count = 0, saved = 0;
             for(String zip : zips){
-                Telifie.console.out.line();
-                Telifie.console.out.string("On zip code: " + zip);
-                Telifie.console.out.line();
                 String url = "https://api.yelp.com/v3/businesses/search?sort_by=best_match&limit=50&location=" + URLEncoder.encode(zip, StandardCharsets.UTF_8);
                 HttpGet httpGet = new HttpGet(url);
                 httpGet.addHeader("Authorization", "Bearer " + API_KEY);
@@ -353,9 +350,6 @@ public class Parser {
                     ObjectMapper objectMapper = new ObjectMapper();
                     JsonNode rootNode = objectMapper.readTree(httpResponse.getEntity().getContent());
                     JsonNode businessesNode = rootNode.path("businesses");
-                    Telifie.console.out.line();
-                    Telifie.console.out.string("Found " + businessesNode.size() + " businesses");
-                    Telifie.console.out.line();
                     int i = 0;
                     total_count += businessesNode.size();
                     for (JsonNode businessNode : businessesNode) {
@@ -363,7 +357,6 @@ public class Parser {
                         Article article = new Article();
                         article.setId(Telifie.tools.make.md5(businessNode.path("id").asText()));
                         if(!articlesClient.exists(article.getId())){
-                            Telifie.console.out.string("On business " + i + " of " + businessesNode.size());
                             article.setIcon(businessNode.path("image_url").asText());
                             article.addAttribute(new Attribute("*batch", batchId));
                             article.addAttribute(new Attribute("Phone", businessNode.path("display_phone").asText()));
@@ -416,8 +409,6 @@ public class Parser {
                             saved += 1;
                             articlesClient.create(article);
                             articles.add(article);
-                        }else{
-                            Telifie.console.out.message("Article already exists in database");
                         }
                     }
                 } catch (ClientProtocolException e) {
