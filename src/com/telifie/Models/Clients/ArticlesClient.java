@@ -94,9 +94,4 @@ public class ArticlesClient extends Client {
         ArchiveClient archive = new ArchiveClient(config);
         return archive.archive(article);
     }
-
-    public boolean unarchive(Article article){
-        ArchiveClient archive = new ArchiveClient(config);
-        return archive.unarchive(article);
-    }
 }

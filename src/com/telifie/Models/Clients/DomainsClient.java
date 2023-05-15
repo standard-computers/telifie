@@ -51,12 +51,13 @@ public class DomainsClient extends Client {
      */
     public ArrayList<Domain> forMember(String userId){
         ArrayList<Domain> domains = new ArrayList<>();
-        super.find(new Document("$or", Arrays.asList(
+        ArrayList<Document> fnd = super.find(new Document("$or", Arrays.asList(
                     new Document("owner", userId),
-                    new Document("users.id", userId)
+                    new Document("users.email", userId)
                 )
             )
         );
+        fnd.forEach(doc -> domains.add(new Domain(doc)));
         return domains;
     }
 
@@ -65,9 +66,6 @@ public class DomainsClient extends Client {
             try(MongoClient mongoClient = MongoClients.create(super.config.getDomain().getUri())){
                 MongoDatabase database = mongoClient.getDatabase(domain.getAlt());
                 database.createCollection("articles");
-                database.createCollection("collections");
-                database.createCollection("timelines");
-                database.createCollection("queue");
             }catch(MongoException e){
                 return true;
             }
@@ -93,5 +91,9 @@ public class DomainsClient extends Client {
 
     public Domain withAltId(String altId){
         return new Domain(super.findOne(new Document("alt", altId)));
+    }
+
+    public boolean update(Domain domain, Document updates){
+        return super.updateOne(new Document("id", domain.getId()), new Document("$set", updates));
     }
 }

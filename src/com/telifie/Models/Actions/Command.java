@@ -63,14 +63,15 @@ public class Command {
                     return new Result(428, this.command, "Invalid search parameters");
                 }
             }
-            return Search.execute(config, query, new Parameters(25, 0, "articles") );
+            return Search.execute(config, query, new Parameters(25, 0, "articles"));
+
         }else if(primarySelector.equals("domains")){
 
-            if(this.selectors.length >= 2){
+            if(this.selectors.length >= 2){ //telifie.com/domains/{owner|member|create|update}
 
                 DomainsClient domains = new DomainsClient(config);
                 ArrayList<Domain> foundDomains;
-                if(objectSelector.equals("owner")){
+                if(objectSelector.equals("owner")){ //Domains they own
 
                     foundDomains = domains.mine();
                     return new Result(this.command, "domains", foundDomains);
@@ -78,7 +79,7 @@ public class Command {
 
                     foundDomains = domains.forMember(config.getUser().getEmail());
                     return new Result(this.command, "domains", foundDomains);
-                }else if(objectSelector.equals("create")){
+                }else if(objectSelector.equals("create")){ //Creating a new domain
 
                     if(content != null){
                         String domainName, domainIcon;
@@ -87,75 +88,77 @@ public class Command {
                             if(domains.create(newDomain)){
                                 return new Result(this.command, "domain", newDomain);
                             }
-                            return new Result(505, this.command, "Failed to make domain");
+                            return new Result(505, this.command, "Failed to create domain");
                         }
-                        return new Result(428, this.command, "Required JSON properties not provided");
+                        return new Result(428, this.command, "Required domain info not provided");
                     }
                     return new Result(428, this.command, "JSON body expected");
 
-                }else if(objectSelector.equals("delete")){
+                }else if(this.selectors.length == 3){ //telifie.com/domains/{delete|id}/{domainID}
+                    if(secSelector != null){
+                        try{
+                            Domain d = domains.withAltId(secSelector);
+                            if(objectSelector.equals("delete")){
 
-                    try {
-                        Domain d = domains.withId(secSelector);
-                        if (d.getOwner().equals(actingUser)) {
-                            if (domains.delete(d)) {
-                                return new Result(200, this.command, "Successfully deleted the domain");
+                                if (d.getOwner().equals(actingUser)) {
+                                    if (domains.delete(d)) {
+                                        return new Result(200, this.command, "Domain deleted");
+                                    }
+                                    return new Result(505, this.command, "Failed to delete domain");
+                                }
+                                return new Result(401, this.command, "This is not your domain");
+                            }else if(objectSelector.equals("id")){
+                                return new Result(this.command, "domain", d);
+                            }else if(objectSelector.equals("update")){ //Updating domain
+
+                                if(content != null){
+                                    if(domains.update(d, content)){ //TODO content check
+                                        return new Result(this.command, "domain", d);
+                                    }
+                                }
+                                return new Result(428, this.command, "JSON body expected");
                             }
-                            return new Result(505, this.command, "Failed to delete domain");
+                            return new Result(404, this.command, "Bad domains selector");
+                        }catch (NullPointerException n){
+                            return new Result(404, this.command, "Domain not found");
                         }
-                        return new Result(401, this.command, "This is not your domain");
+                    }
+                    return new Result(428, this.command, "Domain ID expected");
+                }else if(this.selectors.length == 4){ //telifie.com/domains/{id}/users/{add|remove}
+                    try{
+                        Domain d = domains.withAltId(objectSelector);
+                        if(content != null){
+
+                            ArrayList<Member> members = new ArrayList<>();
+                            content.getList("users", Document.class).forEach(doc -> members.add(new Member(doc)));
+                            if(terSelector.equals("add")){
+
+                                if(domains.addUsers(d, members)){
+                                    return new Result(200, this.command, "Added " + members.size() + " user(s) to domain");
+                                }
+                                return new Result(505, this.command, "Failed adding " + members.size() + " user(s) to domain");
+                            }else if(terSelector.equals("remove")){
+
+                                if(domains.removeUsers(d, members)){
+                                    return new Result(200, this.command, "Removed " + members.size() + " user(s) from domain");
+                                }
+                                return new Result(505, this.command, "Failed removing " + members.size() + " user(s) from domain");
+                            }else if(terSelector.equals("update")) {
+
+                                if (domains.updateUsers(d, members)) {
+                                    return new Result(200, this.command, "Updated " + members.size() + " user(s) in domain");
+                                }
+                                return new Result(505, this.command, "Failed to update user in domain");
+                            }
+                            return new Result(428, this.command, "Bad domains users selector");
+                        }
+                        return new Result(428, this.command, "JSON body expected");
                     }catch (NullPointerException n){
                         return new Result(404, this.command, "Domain not found");
                     }
-                }else if(objectSelector.equals("id")){
-
-                    try{
-                        Domain d = domains.withAltId(secSelector);
-                        return new Result(this.command, "domain", d);
-                    }catch(NullPointerException n){
-                        return new Result(404, this.command, "Domain not found");
-                    }
-                }else if(this.selectors.length >= 3){
-
-                    try {
-                        Domain d = domains.withId(secSelector);
-                        if(command.equals("users") && this.selectors.length >= 4){
-
-                            if(content != null){
-
-                                ArrayList<Member> members = new ArrayList<>();
-                                content.getList("users", Document.class).forEach(doc -> members.add(new Member(doc)));
-                                if(terSelector.equals("add")){
-
-                                    if(domains.addUsers(d, members)){
-                                        return new Result(200, this.command, "Added " + members.size() + " user(s) to domain");
-                                    }
-                                    return new Result(505, this.command, "Failed adding " + members.size() + " user(s) to domain");
-                                }else if(terSelector.equals("remove")){
-
-                                    if(domains.removeUsers(d, members)){
-                                        return new Result(200, this.command, "Removed " + members.size() + " user(s) from domain");
-                                    }
-                                    return new Result(505, this.command, "Failed removing " + members.size() + " user(s) from domain");
-                                }else if(terSelector.equals("update")) {
-
-                                    if (domains.updateUsers(d, members)) {
-                                        return new Result(200, this.command, "Updated " + members.size() + " user(s) in domain");
-                                    }
-                                    return new Result(505, this.command, "Failed to update user in domain");
-                                }
-                                return new Result(428, this.command, "Bad domain user action");
-                            }
-                            return new Result(428, this.command, "JSON body expected");
-                        }
-                        return new Result(this.command, "domain", d);
-                    }catch(NullPointerException n){
-                        return new Result(404, this.command, "Domain not found");
-                    }
                 }
-                return new Result(404, this.command, "Invalid domains selector");
             }
-            return new Result(200, this.command, "Invalid command for domains");
+            return new Result(200, this.command, "Bad domains selector");
         }
         /*
          * Accessing Articles
@@ -169,22 +172,23 @@ public class Command {
             ArticlesClient articles = new ArticlesClient(config);
 
             if(this.selectors.length >= 3){
-                if(objectSelector.equals("id")){
 
-                    try {
-                        return new Result(this.command, "article", articles.withId(secSelector));
-                    }catch(NullPointerException n){
-                        return new Result(404, this.command, "Article not found");
-                    }
-                }else if(objectSelector.equals("update")){
+                try {
+                    Article a = articles.withId(secSelector);
+                    if(objectSelector.equals("id")){
 
-                    if(content != null) {
-                        if (content.getString("id") == null) {
-                            content.put("id", secSelector);
-                        }
-                        Article updatedArticle = new Article(content);
                         try {
-                            Article a = articles.withId(secSelector);
+                            return new Result(this.command, "article", articles.withId(secSelector));
+                        }catch(NullPointerException n){
+                            return new Result(404, this.command, "Article not found");
+                        }
+                    }else if(objectSelector.equals("update")){
+
+                        if(content != null) {
+                            if (content.getString("id") == null) {
+                                content.put("id", secSelector);
+                            }
+                            Article updatedArticle = new Article(content);
                             ArrayList<Event> events = updatedArticle.compare(a);
                             events.forEach(e -> e.setUser(config.getUser().getId()));
                             if (articles.update(a, updatedArticle)) {
@@ -193,27 +197,16 @@ public class Command {
                                 return new Result(this.command, "events", events.toString());
                             }
                             return new Result(505, this.command, "Failed to update Article");
-                        }catch (NullPointerException n){
-                            return new Result(404, this.command, "Article not found");
                         }
-                    }
-                    return new Result(428, "No new Article JSON data provided");
+                        return new Result(428, "No new Article JSON data provided");
+                    }else if(objectSelector.equals("delete")){
 
-                }else if(objectSelector.equals("delete")){
+                            if(articles.delete(articles.withId(secSelector))){
+                                return new Result(200, this.command, "");
+                            }
+                            return new Result(505, this.command, "Failed to delete article");
+                    }else if(objectSelector.equals("duplicate")){
 
-                    try{
-                        if(articles.delete(articles.withId(secSelector))){
-                            return new Result(200, this.command, "");
-                        }
-                        return new Result(505, this.command, "Failed to delete article");
-                    }catch(NullPointerException n){
-                        return new Result(404, this.command, "Article not found");
-                    }
-
-                }else if(objectSelector.equals("duplicate")){
-
-                    try{
-                        Article a = articles.withId(secSelector);
                         if(this.selectors.length > 3){
                             DomainsClient domains = new DomainsClient(config);
                             try{
@@ -225,39 +218,21 @@ public class Command {
                                 return new Result(404, this.command, "Domain not found");
                             }
                         }
-                    }catch(NullPointerException n){
-                        return new Result(404, this.command, "Article not found");
-                    }
+                    }else if(objectSelector.equals("archive")){
 
-                }else if(objectSelector.equals("archive")){
-
-                    try{
-                        Article a = articles.withId(secSelector);
                         if(articles.archive(a)){
                             return new Result(200, this.command, "Article unarchived");
                         }
                         return new Result(505, this.command, "Failed to archive article");
-                    }catch(NullPointerException n){
-                        return new Result(404, this.command, "Article not found");
-                    }
+                    }else if(objectSelector.equals("unarchive")){
 
-                }else if(objectSelector.equals("unarchive")){
-
-                    try{
                         ArchiveClient archive = new ArchiveClient(config);
-                        Article a = archive.withId(secSelector);
                         if(archive.unarchive(a)){
                             return new Result(200, this.command, "");
                         }
                         return new Result(505, this.command, "Failed to unarchive article");
-                    }catch(NullPointerException n){
-                        return new Result(404, this.command, "Article not found");
-                    }
+                    }else if(objectSelector.equals("move")){
 
-                }else if(objectSelector.equals("move")){
-
-                    try{
-                        Article a = articles.withId(secSelector);
                         if(this.selectors.length > 3){
                             DomainsClient domains = new DomainsClient(config);
                             try{
@@ -269,22 +244,17 @@ public class Command {
                                 return new Result(404, this.command, "Domain not found");
                             }
                         }
-                    }catch(NullPointerException n){
-                        return new Result(404, this.command, "Article not found");
-                    }
+                    }else if(objectSelector.equals("verify")){
 
-                }else if(objectSelector.equals("verify")){
-
-                    try{
                         if(articles.verify(articles.withId(secSelector))){
                             return new Result(200, this.command, "");
                         }
                         return new Result(505, this.command, "Failed to update Article");
-                    }catch (NullPointerException n){
-                        return new Result(404, this.command, "Article not found");
                     }
+                    return new Result(404, this.command, "Unknown articles action");
+                }catch (NullPointerException n){
+                    return new Result(404, this.command, "Article not found");
                 }
-                return new Result(404, this.command, "Unknown articles action");
 
             }else if(objectSelector.equals("create")){
 
