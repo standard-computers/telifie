@@ -1,10 +1,9 @@
-package com.telifie.Models.Actions;
+package com.telifie.Models;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
-import com.telifie.Models.*;
 import com.telifie.Models.Articles.*;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Utilities.*;
@@ -42,7 +41,6 @@ public class Parser {
             Parser.uri = uri;
             Telifie.console.out.string("Parser URI Attempt on -> " + uri);
             if(Telifie.tools.detector.isUrl(uri)){ //Crawl website if url
-
                 try {
                     host = new URL(uri).getHost();
                 } catch (MalformedURLException e) {
@@ -52,13 +50,11 @@ public class Parser {
                 Telifie.console.out.string(traversable.toString());
                 return crawled;
             }else if(Telifie.tools.detector.isFile(uri)){ //Parsing a file
-
                 File file = new File(uri);
                 if(file.exists()){
 
                 }
             }
-
             return null;
         }
 
@@ -69,9 +65,7 @@ public class Parser {
             }
             parsed.add(url);
             try {
-                Connection.Response response = Jsoup.connect(url)
-                        .userAgent("telifie/1.0")
-                        .execute();
+                Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
                 if(response.statusCode() == 200){
                     Document root = response.parse();
                     DocumentExtract extractor = new DocumentExtract(root);
@@ -542,9 +536,9 @@ public class Parser {
          * Tokenizes provided text to be encoded
          * @param text
          */
-        public static List<String[]> tokenize(String text, boolean cleaned){
-            sentences = new ArrayList<String>();
-            List<String[]> tokens = new ArrayList<>();
+        public static List<Andromeda.unit> tokenize(String text, boolean cleaned){
+            sentences = new ArrayList<>();
+            List<Andromeda.unit> tokenized = new ArrayList<>();
             StringBuilder currentSentence = new StringBuilder();
             for (int i = 0; i < text.length(); i++) {
                 char c = text.charAt(i);
@@ -557,18 +551,17 @@ public class Parser {
             if (currentSentence.length() > 0) {
                 sentences.add(currentSentence.toString().trim());
             }
-
             for(String sentence : sentences){
                 if(cleaned){
                     sentence = clean(sentence);
                 }
-                tokens.add(sentence.split("\\s"));
+                System.out.println(new Andromeda.unit(sentence));
+                tokenized.add(new Andromeda.unit(sentence));
             }
-
-            return tokens;
+            return tokenized;
         }
 
-        public static List<String[]> tokenize(String text){
+        public static List<Andromeda.unit> tokenize(String text){
             return tokenize(text, false);
         }
 

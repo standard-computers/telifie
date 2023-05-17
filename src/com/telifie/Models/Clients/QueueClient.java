@@ -1,7 +1,7 @@
 package com.telifie.Models.Clients;
 
 import com.telifie.Models.Article;
-import com.telifie.Models.Actions.Parser;
+import com.telifie.Models.Parser;
 import com.telifie.Models.Utilities.Configuration;
 import org.bson.Document;
 

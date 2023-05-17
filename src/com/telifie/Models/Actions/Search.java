@@ -1,5 +1,7 @@
 package com.telifie.Models.Actions;
 
+import com.telifie.Models.Andromeda;
+import com.telifie.Models.Parser;
 import com.telifie.Models.Article;
 import com.telifie.Models.Articles.Image;
 import com.telifie.Models.Clients.ArticlesClient;
@@ -57,7 +59,7 @@ public class Search {
 
     private static ArrayList executeQuery(Configuration config, String query, Parameters params){
 
-        String[] tokens = Parser.encoder.tokenize(query, true).get(0);
+        Andromeda.unit tokenized = Parser.encoder.tokenize(query, true).get(0);
         Document gf = general(query);
         ArticlesClient articles = new ArticlesClient(config);
         ArrayList<Article> results;
@@ -71,13 +73,13 @@ public class Search {
                         pattern(query))
                 ))
             );
-            for(String token : tokens){
+            for(String token : tokenized.tokens()){
                 String[] properties = {"link", "title", "description"};
                 for(String property : properties){
                     filters.add(new Document(property, pattern(token) ) );
                 }
             }
-            filters.add(new Document("tags", new Document("$in", Arrays.asList(tokens)) ) );
+            filters.add(new Document("tags", new Document("$in", Arrays.asList(tokenized)) ) );
             results = articles.search(config, params, new Document("$or", filters));
             if(results != null && results.size() > 3){
                 Collections.sort(results, new RelevanceComparator(query));

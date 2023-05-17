@@ -1,6 +1,8 @@
 package com.telifie.Models.Actions;
 
 import com.telifie.Models.*;
+import com.telifie.Models.Andromeda;
+import com.telifie.Models.Parser;
 import com.telifie.Models.Clients.*;
 import com.telifie.Models.Connectors.Spotify;
 import com.telifie.Models.Utilities.*;
@@ -12,6 +14,7 @@ import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -433,9 +436,7 @@ public class Command {
         else if(primarySelector.equals("parser")){
 
             ArticlesClient articles = new ArticlesClient(config);
-
             if(content != null){
-
                 String mode = content.getString("mode");
                 if(mode != null){
                     if(mode.equals("batch")){
@@ -479,6 +480,9 @@ public class Command {
                             return new Result(this.command, "article", parsed);
                         }
                         return new Result(428, this.command, "URI is required to parse in URI mode");
+                    }else if(mode.equals("text")){
+                        String text = content.getString("text");
+                        List<Andromeda.unit> tokens = Parser.encoder.tokenize(text);
                     }
                 }
                 return new Result(428, this.command, "Please select a parser mode");
