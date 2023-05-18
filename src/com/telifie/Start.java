@@ -33,15 +33,6 @@ public class Start {
                     }
                     System.exit(1);
                 }
-                case "--parser" -> {
-                    checkConfig();
-                    Telifie.console.out.string("<!---------- Parser Mode ----------!>\n");
-                    String in = Telifie.console.in.string("URI/URL -> ");
-                    while (!in.equals("q")) {
-                        Parser.engines.parse(in);
-                        in = Telifie.console.in.string("URI/URL -> ");
-                    }
-                }
                 case "--server" -> {
                     checkConfig();
                     try {
@@ -87,38 +78,8 @@ public class Start {
         Domain domain = new Domain(mongo_uri);
         domain.setName("telifie");
 
-        if(Telifie.console.in.string("Local install? (y/n) -> ").equals("y")){
-            String email = Telifie.console.in.string("Email -> ");
-            configuration.setUser(new User(email));
-        }else{
-            Network network = new Network();
-            String email = null;
-            while(network.getStatusCode() != 200){
-                email = Telifie.console.in.string("Email -> ");
-                Telifie.console.out.string("Looking up account...");
-                network.get("https://telifie.net/users/search/" + email);
-                //TODO Include information bellow with Bearer
-                // "app_id=com.telifie.Start.install&auth_token=&email=" + email
-                Telifie.console.out.string("[ HTTP RESPONSE CODE / USER / SEARCH ] " + network.getStatusCode());
-            }
-
-            //Authenticate account with auth code. Request 2FA code
-            User user = new User(email);
-            user.requestAuthenticationCode();
-            String psswd = Telifie.console.in.string("One-time Security Code (2FA) -> ");
-
-            while(!user.verify(psswd)){
-                user.requestAuthenticationCode(); //Request new 2FA code
-                Telifie.console.out.string("<!--------- INCORRECT CODE PROVIDED ----------->");
-                Telifie.console.out.string("New code sent to primary method...");
-                Telifie.console.out.line();
-                psswd = Telifie.console.in.string("One-time Security Code (2FA) -> ");
-            }
-            Telifie.console.out.line();
-            //TODO Check license validity with .com
-            configuration.setUser(user); //Add user to configuration file
-        }
-
+        String email = Telifie.console.in.string("Email -> ");
+        configuration.setUser(new User(email));
         configuration.setDomain(domain); //Add domain to configuration file
         configuration.setLicense(Telifie.console.in.string("Paste License -> ")); //Add license to configuration file. Must copy and paste.
         if(configuration.save(wrkDir)){
@@ -137,9 +98,11 @@ public class Start {
             Telifie.console.out.string("Configuration file found :)");
             Telifie.console.out.line();
             config = (com.telifie.Models.Utilities.Configuration) Telifie.console.in.serialized(wrkDir + "/telifie.configuration");
+            //TODO Move Andromeda to a separate thread
+//            Andromeda andromeda = new Andromeda(config, true);
         }else{
             Telifie.console.out.message("No configuration file found. Use option '--install'");
-            System.exit(-1);
+            install();
         }
     }
 }

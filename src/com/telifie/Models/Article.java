@@ -8,6 +8,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class Article {
 
@@ -99,6 +100,10 @@ public class Article {
         this.icon = icon;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
     public void setDescription(String description) {
         this.description = description;
     }
@@ -150,22 +155,6 @@ public class Article {
 
     @Override
     public String toString() {
-        String tags = "[]";
-        if(this.tags != null){
-            StringBuilder sb = new StringBuilder();
-            sb.append("[");
-            for (int i = 0; i < this.tags.size(); i++) {
-                sb.append("\"");
-                sb.append(this.tags.get(i));
-                sb.append("\"");
-                if (i < this.tags.size() - 1) {
-                    sb.append(", ");
-                }
-            }
-            sb.append("]");
-            tags = sb.toString();
-
-        }
         return "{\"id\" : \"" + id + '\"' +
                 ", \"verified\" : " + verified +
                 ", \"title\" : \"" + title + '\"' +
@@ -174,7 +163,7 @@ public class Article {
                 (description == null || description.equals("") ? "" : ", \"description\" : \"" + description + '\"') +
                 (priority == 0 ? "" : ", \"priority\" : " + priority) +
                 (content == null ? "" : ", \"content\" : \"" + content + "\"") +
-                (this.tags == null || this.tags.size() == 0 ? "" : ", \"tags\" : " + tags) +
+                (this.tags == null || this.tags.size() == 0 ? "" : ", \"tags\" : " + tags.stream().map(tag -> "\"" + tag + "\"").collect(Collectors.joining(", ", "[", "]"))) +
                 (images.equals("null") || images == null || images.size() == 0 ? "" : ", \"images\" : " + images) +
                 (attributes.size() == 0 ? "" : ", \"attributes\" : " + attributes) +
                 (associations.size() == 0 ? "" : ", \"associations\" : " + associations) +

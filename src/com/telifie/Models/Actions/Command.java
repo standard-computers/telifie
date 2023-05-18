@@ -452,12 +452,6 @@ public class Command {
                         }
                         return new Result(404, this.command, "No articles from batch upload");
 
-                    }else if(mode.equals("wikipedia")){
-
-                        Article wikiArticle = Parser.connectors.wikipedia(secSelector);
-                        articles.create(wikiArticle);
-                        return new Result(this.command, "article", wikiArticle);
-
                     }else if(mode.equals("yelp")){
                         String[] zips = content.getString("zips").split(",");
                         ArrayList<Article> yelps = null;
@@ -470,10 +464,11 @@ public class Command {
 
                     }else if(mode.equals("uri")){
 
-                        String url = content.getString("url");
+                        String url = content.getString("uri");
+                        int depth = (content.getInteger("depth") == null ? 1 : content.getInteger("depth"));
                         if(url != null && !url.equals("")){
                             Parser parser = new Parser();
-                            Article parsed = Parser.engines.parse(url);
+                            Article parsed = Parser.engines.parse(url, depth);
                             if(parser.getTraversable().size() > 1){
                                 return new Result(this.command, "articles", parser.getTraversable());
                             }
@@ -482,32 +477,12 @@ public class Command {
                         return new Result(428, this.command, "URI is required to parse in URI mode");
                     }else if(mode.equals("text")){
                         String text = content.getString("text");
-                        List<Andromeda.unit> tokens = Parser.encoder.tokenize(text);
+                        List<Andromeda.unit> tokens = Andromeda.encoder.tokenize(text, false);
                     }
                 }
                 return new Result(428, this.command, "Please select a parser mode");
             }
             return new Result(428, this.command, "JSON http request body expected");
-        }
-        /*
-         * Accessing Queue
-         */
-        else if(primarySelector.equals("queue")){
-            QueueClient queue = new QueueClient(config);
-            if(content != null){
-                String uri = content.getString("uri");
-                if(uri != null && !uri.equals("")){
-                    //TODO parse and then add to queue
-                }else{
-                    if(queue.create(new Article(content))){
-                        return new Result(this.command, "queue", content);
-                    }else{
-                        return new Result(505, this.command, "Failed to create queue");
-                    }
-                }
-                return new Result(428, this.command, "URI is required to create a queue");
-            }
-            //TODO return user's queue
         }
         /*
          * Authenticate an app for backend use to facilitate user authentication

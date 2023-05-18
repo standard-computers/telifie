@@ -8,68 +8,43 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
-import java.util.ArrayList;
 import java.util.regex.Matcher;
 
-public class DocumentExtract {
+public class Webpage {
 
     private static Document document;
 
-    public DocumentExtract(Document root){
-        DocumentExtract.document = root;
+    public Webpage(Document root){
+        Webpage.document = root;
     }
-
 
     public static Article extract(String url){
 
         Article article = new Article();
-
-        //Parse header tags
         Elements metaTags = document.getElementsByTag("meta");
         for (Element tag : metaTags){
-
-            String metaTagName = tag.attr("name");
-            String metaTagContent = tag.attr("content");
-
-            //Get description as first content block
-            if(metaTagName.equals("description")){
-
+            String mtn = tag.attr("name");
+            String mtc = tag.attr("content");
+            if(mtn.equals("description")){
                 if(!tag.attr("content").trim().equals("")){
-
-                    article.setContent(metaTagContent);
+                    article.setContent(mtc);
                 }
-            }
-            //Get keywords as first tags if any
-            else if(metaTagName.equals("keywords")){
-
-                ArrayList<String> tags = new ArrayList<>();
-                String[] words = metaTagContent.split(",");
+            }else if(mtn.equals("keywords")){
+                String[] words = mtc.split(",");
                 for(String word : words){
-                    tags.add(word.trim().toLowerCase());
+                    article.addTag(word.trim().toLowerCase());
                 }
-                article.setTags(tags);
-            }
-            //Get icon if possible
-            else if(metaTagName.equals("theme-color")){
-
-                article.addAttribute(new Attribute("Color", metaTagContent));
-            }else if(metaTagName.equals("og:image")){
-
-                article.addImage(new Image(metaTagContent, "", url));
-            }
-            //Is mobile friendly
-            else if(metaTagName.equals("viewport")){
-
-                article.addAttribute(new Attribute("Mobile Friendly", "Yes"));
+            }else if(mtn.equals("og:image")){
+                article.addImage(new Image(mtc, "", url));
+            }else if(!mtn.equals("viewport")){
+                article.addAttribute(new Attribute("Mobile Friendly", "No"));
             }
         }
 
         Elements linkTags = document.getElementsByTag("link");
         for (Element linkTag : linkTags){
-
             String rel = linkTag.attr("rel");
             String href = linkTag.attr("href");
-            String linkType = linkTag.attr("type");
             if(rel.contains("icon")){
                 article.setIcon(href);
             }
@@ -96,29 +71,23 @@ public class DocumentExtract {
         }
         article.setTitle(Telifie.tools.strings.escape(document.title()));
         article.setLink(url);
-        String whole_text = Telifie.tools.strings.escape(document.text().replaceAll("[\n\r]", " "));
-        //Work on possible attributes
-        //.replaceAll("\\s+", " ")
+        String whole_text = document.text().replaceAll("[\n\r]", " ");
+
         Matcher phone_numbers = Telifie.tools.detector.findPhoneNumbers(whole_text);
         while(phone_numbers.find()){
-
             String phone_number = phone_numbers.group().trim().replaceAll("[^0-9]", "").replaceFirst("(\\d{3})(\\d{3})(\\d+)", "($1) $2 – $3");
             Attribute attr = new Attribute("Phone", phone_number);
             article.addAttribute(attr);
         }
 
-        //Pulling emails
         Matcher emails = Telifie.tools.detector.findEmails(whole_text);
         while(emails.find()){
-
             Attribute attr = new Attribute("Email", emails.group().toLowerCase());
             article.addAttribute(attr);
         }
 
-        //Pulling addresses
         Matcher addresses = Telifie.tools.detector.findAddresses(whole_text);
         while(addresses.find()){
-
             Attribute attr = new Attribute("Address", addresses.group().toLowerCase());
             article.addAttribute(attr);
         }

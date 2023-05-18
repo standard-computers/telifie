@@ -12,7 +12,6 @@ public class Collection {
     private String user;
     private String icon;
     private String name;
-    private final String sort = "A";
     private String connector = "";
     private final int origin;
     private int permissions = Telifie.PRIVATE;
@@ -113,7 +112,6 @@ public class Collection {
                 ", \"user\" : \"" + user + '\"' +
                 ", \"icon\" : \"" + icon + '\"' +
                 ", \"name\" : \"" + name + '\"' +
-                ", \"sort\" : \"" + sort + '\"' +
                 ", \"connector\" : \"" + connector + '\"' +
                 ", \"origin\" : \"" + origin + '\"' +
                 ", \"permissions\" : " + permissions +

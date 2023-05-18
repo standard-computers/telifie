@@ -1,75 +1,109 @@
 package com.telifie.Models;
 
+import com.mongodb.client.*;
+import com.telifie.Models.Clients.Client;
+import com.telifie.Models.Utilities.Configuration;
+import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
-public class Andromeda {
+public class Andromeda extends Client{
 
-    private static ArrayList<Andromeda.taxon> taxon = new ArrayList<>();
+    private static ArrayList<taxon> taxon = new ArrayList<>();
+    protected static Configuration config;
 
-    public static class taxon {
+    public Andromeda(Configuration config, boolean index){
+        super(config);
+        this.config = config;
+        super.collection = "taxon";
+        ArrayList<Document> documents = super.find(new Document());
+        documents.forEach(document -> taxon.add(new taxon(document)));
+        if(index){
+            index();
+        }
+    }
 
-        private String name, parent;
-        private String[] children;
-        private String[] items;
+    public Andromeda(Configuration config){
+        this(config, false);
+    }
+
+    private void index(){
+        try (MongoClient mongoClient = MongoClients.create(config.getDomain().getUri())) {
+            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getAlt());
+            MongoCollection<Document> collection = database.getCollection("articles");
+            MongoCursor<Document> cursor = collection.find().iterator();
+            int totalCount = (int) collection.countDocuments();
+            int processedCount = 0;
+            while (cursor.hasNext()) {
+                Document document = cursor.next();
+                String title = (document.getString("title") == null ? null : document.getString("title").toLowerCase());
+                String description = (document.getString("description") == null ? null : document.getString("description").toLowerCase());
+                if(title != null && description != null){
+                    add(description, title);
+                }
+                processedCount++;
+                System.out.println((processedCount / totalCount) + "% indexed (" + processedCount + " / " + totalCount + ")");
+            }
+            cursor.close();
+        }catch (Exception e){
+            Telifie.console.out.string(e.toString());
+        }
+    }
+
+    public static class taxon extends Client{
+
+        private String name;
+        private ArrayList<String> items = new ArrayList<>();
 
         public taxon(String name) {
+            super(Andromeda.config);
+            super.collection = "taxon";
             this.name = name.toLowerCase().trim();
         }
 
         public taxon(Document document){
+            super(Andromeda.config);
+            super.collection = "taxon";
             this.name = document.getString("name");
-            this.parent = document.getString("parent");
-            this.children = document.getString("children").split(",");
-            this.items = document.getString("items").split(",");
+            this.items = document.get("items", ArrayList.class);
         }
 
-        public String get(int index){
-            return items[index];
-        }
-
-        public String[] getItems(){
+        public ArrayList<String> items(){
             return items;
         }
 
         public void add(String string){
-            String[] newItems = new String[items.length + 1];
-            for(int i = 0; i < items.length; i++){
-                newItems[i] = items[i];
-            }
-            newItems[items.length] = string.toLowerCase().trim();
-            items = newItems;
-        }
-
-        public void remove(String string){
-            String[] newItems = new String[items.length - 1];
-            int index = 0;
-            for(int i = 0; i < items.length; i++){
-                if(!items[i].equals(string.toLowerCase().trim())){
-                    newItems[index] = items[i];
-                    index++;
-                }
-            }
-            items = newItems;
+            items.add(string);
         }
 
         @Override
         public String toString() {
             return "{\"name\" : \"" + name + "\"" +
-                    ", \"parent\" : \"" + parent + "\"" +
-                    ", \"children\" : " + Arrays.toString(children) +
-                    ", \"items\" : " + Arrays.toString(items) +
+                    ", \"items\" : " + items.stream().map(tag -> "\"" + tag + "\"").collect(Collectors.joining(", ", "[", "]")) +
                     '}';
         }
+    }
 
-        public static boolean exists(String name){
-            for(taxon taxon : taxon){
-                if(taxon.name.equals(name.toLowerCase().trim())){
-                    return true;
-                }
+    public static taxon taxon(String name) {
+        for (taxon taxon : taxon) {
+            if (taxon.name.equals(name.toLowerCase().trim())) {
+                return taxon;
             }
-            return false;
+        }
+        return null;
+    }
+
+    public static void add(String name, String item){
+        taxon taxon = taxon(name);
+        if(taxon != null){
+            taxon.add(item);
+        }else{
+            taxon = new taxon(name);
+            taxon.add(item);
+            Andromeda.taxon.add(taxon);
         }
     }
 
@@ -96,6 +130,45 @@ public class Andromeda {
             }
             builder.append("]");
             return builder.toString();
+        }
+    }
+
+    public static class encoder {
+
+        private static List<String> sentences;
+
+        public static List<unit> tokenize(String text, boolean cleaned){
+            sentences = new ArrayList<>();
+            List<Andromeda.unit> tokenized = new ArrayList<>();
+            StringBuilder currentSentence = new StringBuilder();
+            for (int i = 0; i < text.length(); i++) {
+                char c = text.charAt(i);
+                currentSentence.append(c);
+                if (Telifie.tools.strings.equals(c, new char[] {'.', '!', '?'})) {
+                    sentences.add(currentSentence.toString().trim());
+                    currentSentence = new StringBuilder();
+                }
+            }
+            if (currentSentence.length() > 0) {
+                sentences.add(currentSentence.toString().trim());
+            }
+            for(String sentence : sentences){
+                if(cleaned){
+                    sentence = clean(sentence);
+                }
+                System.out.println(new Andromeda.unit(sentence));
+                tokenized.add(new Andromeda.unit(sentence));
+            }
+            return tokenized;
+        }
+
+        public static String clean(String text){
+            //Lowercase, trim, remove special characters
+            String cleanedText = text.toLowerCase().trim();
+            cleanedText = cleanedText.replaceAll("[\\d+]", "");
+            cleanedText = Telifie.tools.strings.removeWords(cleanedText, Telifie.stopWords);
+            cleanedText = cleanedText.replaceAll("[^a-zA-Z0-9 ]", "");
+            return cleanedText;
         }
     }
 }

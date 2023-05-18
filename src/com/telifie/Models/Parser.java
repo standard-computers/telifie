@@ -32,13 +32,14 @@ public class Parser {
     private static String uri, host;
     private static final ArrayList<Article> traversable = new ArrayList<>();
     private static final ArrayList<String> parsed = new ArrayList<>();
-    private static final int MAX_DEPTH = 3;
+    private static int MAX_DEPTH = 2;
 
     public static class engines {
 
-        public static Article parse(String uri){
+        public static Article parse(String uri, int depth){
 
             Parser.uri = uri;
+            MAX_DEPTH = depth;
             Telifie.console.out.string("Parser URI Attempt on -> " + uri);
             if(Telifie.tools.detector.isUrl(uri)){ //Crawl website if url
                 try {
@@ -68,9 +69,8 @@ public class Parser {
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
                 if(response.statusCode() == 200){
                     Document root = response.parse();
-                    DocumentExtract extractor = new DocumentExtract(root);
-                    Article article = extractor.extract(url);
-                    article.addAttribute(new Attribute("*batch", Telifie.tools.make.shortEid()));
+                    Article article = new Webpage(root).extract(url);
+
                     ArrayList<String> links = Telifie.tools.make.extractLinks(root.getElementsByTag("a"), uri);
                     if(links.size() > 0){
 
@@ -78,7 +78,7 @@ public class Parser {
                         for(String link : links){
 
                             boolean isNotParsed = !isParsed(link);
-                            //Link can't have been parsed and must be parsable as website
+                            //Link can't have been parsed and must be parsable as different website
                             if(isNotParsed) {
                                 Article child = website(link, depth + 1);
                                 if (child != null) { //Then should be making an association
@@ -106,9 +106,8 @@ public class Parser {
                         }
                     } //End if links > 0
                     Telifie.console.out.string(article.toString());
-                    Telifie.console.out.string(article.toJson().toString(4));
                     if(article.getLink().contains(new URL(uri).getHost())) {
-                        Parser.traversable.add(article); //Push new articles to traversable for upload.
+                        Parser.traversable.add(article);
                     }
                     return article;
                 }
@@ -416,178 +415,6 @@ public class Parser {
             Telifie.console.out.string("Total articles saved: " + saved);
             Telifie.console.out.line();
             return articles;
-        }
-    }
-
-    /**
-     * The index is the knowledge base to parse assets against
-     * Parser.index is an objectification of this
-     * There are separate indexes created for each domain
-     */
-    public static class index {
-
-        private static String workingDirectory;
-
-        public index(){
-            workingDirectory = Telifie.getConfigDirectory();
-        }
-
-        public static void add(Telifie.Languages language){
-
-        }
-
-        /**
-         * Subclass if Parser.index for dictionary of correctly spelled acceptable words
-         */
-        public static class dictionary {
-
-            private static File dictionaryFile;
-            private static List<String> words = new ArrayList<>();
-
-            /**
-             * Select the dictionary using preferred language Telifie.Language.LANGUAGE
-             * @param language
-             */
-            public dictionary(Telifie.Languages language){
-                File dictionaryDir = new File(index.workingDirectory + "/dictionary/");
-                if(!dictionaryDir.exists()){
-                    dictionaryDir.mkdirs();
-                }
-                dictionaryFile = new File(index.workingDirectory + "/dictionary/" + language + ".txt");
-
-                //Load words already in dictionary
-                String dict = Telifie.tools.detector.fileToString(dictionaryFile.getAbsolutePath());
-                String[] dictWords = dict.split("\\s+");
-                for(String word : dictWords){
-                    if(!word.trim().equals("")){
-                        words.add(word);
-                    }
-                }
-                Telifie.console.out.string("Read In -> " + words.toString());
-            }
-
-            /**
-             * Adds array of String words to the onboard dictionary
-             * @param newWords
-             */
-            public static void add(String[] newWords){
-                for(String word : newWords){
-                    if(!words.contains(word.trim().toLowerCase())){
-                        words.add(word.trim().toLowerCase());
-                    }
-                }
-                save();
-            }
-
-            /**
-             * Given a word as String, returns if exists in the provided dictionary
-             * @param req Word
-             * @return boolean True or False if the word exists in the provided dictionary
-             */
-            public static boolean exists(String req){
-                for(String word : words){
-                    if(word.equals(req)){
-                        return true;
-                    }
-                }
-                return false;
-            }
-
-            /**
-             * Saves dictionary
-             */
-            private static void save(){
-                Collections.sort(words);
-                String dict = "";
-                for(String word : words){
-                    dict = dict + word + " ";
-                }
-                try {
-                    FileWriter fileWriter = new FileWriter(dictionaryFile);
-                    fileWriter.write(dict);
-                    fileWriter.close();
-//                    words.removeAll(words);
-                    Telifie.console.out.string("Dictionary updated");
-                } catch (IOException e) {
-                    Telifie.console.out.string("Failed to update dictionary");
-                    e.printStackTrace();
-                }
-            }
-
-            /**
-             * Returns length of dictionary
-             * @return
-             */
-            public static int getSize(){
-
-                return words.size();
-            }
-        }
-    }
-
-    /**
-     * Encodes text for TNN
-     */
-    public static class encoder {
-
-        private static List<String>  sentences;
-
-        /**
-         * Tokenizes provided text to be encoded
-         * @param text
-         */
-        public static List<Andromeda.unit> tokenize(String text, boolean cleaned){
-            sentences = new ArrayList<>();
-            List<Andromeda.unit> tokenized = new ArrayList<>();
-            StringBuilder currentSentence = new StringBuilder();
-            for (int i = 0; i < text.length(); i++) {
-                char c = text.charAt(i);
-                currentSentence.append(c);
-                if (Telifie.tools.strings.equals(c, new char[] {'.', '!', '?'})) {
-                    sentences.add(currentSentence.toString().trim());
-                    currentSentence = new StringBuilder();
-                }
-            }
-            if (currentSentence.length() > 0) {
-                sentences.add(currentSentence.toString().trim());
-            }
-            for(String sentence : sentences){
-                if(cleaned){
-                    sentence = clean(sentence);
-                }
-                System.out.println(new Andromeda.unit(sentence));
-                tokenized.add(new Andromeda.unit(sentence));
-            }
-            return tokenized;
-        }
-
-        public static List<Andromeda.unit> tokenize(String text){
-            return tokenize(text, false);
-        }
-
-        /**
-         * Cleans text for TNN
-         * @param text
-         * @return
-         */
-        public static String clean(String text){
-            return clean(text, true, true, true);
-        }
-
-        public static String clean(String text, boolean removeNumbers, boolean removeStopwords, boolean removePunctuation){
-            //Lowercase, trim, remove special characters
-            String cleanedText = text.toLowerCase().trim();
-            if(removeNumbers){
-                cleanedText = cleanedText.replaceAll("[\\d+]", "");
-            }
-            if(removeStopwords){
-
-                cleanedText = Telifie.tools.strings.removeWords(cleanedText, Telifie.stopWords);
-            }
-            if(removePunctuation){
-                cleanedText = cleanedText.replaceAll("[^a-zA-Z0-9 ]", "");
-            }
-            return cleanedText;
         }
     }
 
