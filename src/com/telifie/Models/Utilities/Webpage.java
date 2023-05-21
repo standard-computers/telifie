@@ -3,22 +3,17 @@ package com.telifie.Models.Utilities;
 import com.telifie.Models.Article;
 import com.telifie.Models.Articles.Attribute;
 import com.telifie.Models.Articles.Image;
+import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import com.vladsch.flexmark.html.HtmlRenderer;
-import com.vladsch.flexmark.parser.Parser;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.regex.Matcher;
 
 public class Webpage {
 
-    private static Document document;
-
-    public Webpage(Document root){
-        Webpage.document = root;
-    }
-
-    public static Article extract(String url){
+    public static Article extract(String url, Document document){
 
         Article article = new Article();
         Elements metaTags = document.getElementsByTag("meta");
@@ -36,8 +31,6 @@ public class Webpage {
                 }
             }else if(mtn.equals("og:image")){
                 article.addImage(new Image(mtc, "", url));
-            }else if(!mtn.equals("viewport")){
-                article.addAttribute(new Attribute("Mobile Friendly", "No"));
             }
         }
 
@@ -46,7 +39,11 @@ public class Webpage {
             String rel = linkTag.attr("rel");
             String href = linkTag.attr("href");
             if(rel.contains("icon")){
-                article.setIcon(href);
+                try {
+                    article.setIcon(Telifie.tools.detector.fixLink("https://" + new URL(url).getHost(), href));
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
 
@@ -61,7 +58,7 @@ public class Webpage {
                 String caption = Telifie.tools.strings.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
                 Image img = new Image(src, caption, url);
                 article.addImage(img);
-            }else if(srcset != null && !srcset.equals("") && !srcset.startsWith("data:")){
+            }else if(!srcset.equals("") && !srcset.startsWith("data:")){
 
                 String link = "https://" + srcset.split("\\s")[0];
                 String caption =  Telifie.tools.strings.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
@@ -80,29 +77,35 @@ public class Webpage {
             article.addAttribute(attr);
         }
 
-        Matcher emails = Telifie.tools.detector.findEmails(whole_text);
-        while(emails.find()){
-            Attribute attr = new Attribute("Email", emails.group().toLowerCase());
-            article.addAttribute(attr);
-        }
+        // Configure the Markdown renderer
+//        MutableDataSet options = new MutableDataSet();
+//        Parser parser = Parser.builder(options).build();
+//        HtmlRenderer renderer = HtmlRenderer.builder(options).build();
 
-        Matcher addresses = Telifie.tools.detector.findAddresses(whole_text);
-        while(addresses.find()){
-            Attribute attr = new Attribute("Address", addresses.group().toLowerCase());
-            article.addAttribute(attr);
-        }
-
-        Parser parser = Parser.builder().build();
-        HtmlRenderer renderer = HtmlRenderer.builder().build();
-        String markdown;
         if(article.getContent() == null || article.getContent().equals("")){
             Element body = document.getElementsByTag("body").get(0);
-            body.select("script, style, img, svg, button, label, form, input, aside, li, ul").remove();
-            markdown = renderer.render(parser.parse(body.wholeText()));
-        }else{
-            markdown = renderer.render(parser.parse(article.getContent()));
+            body.select("table, script, header, style, img, svg, button, label, form, input, aside, code, nav").remove();
+//          TODO Convert tables to datasets
+            if(url.contains("wiki")){
+                body.select("div.mw-jump-link, div#toc, div.navbox, table.infobox, div.vector-body-before-content, div.navigation-not-searchable, div.mw-footer-container, div.reflist, div#See_also, h2#See_also, h2#References, h2#External_links").remove();
+            }
+            // Convert <p> elements to newlines in Markdown
+            StringBuilder markdown = new StringBuilder();
+            Elements paragraphs = body.select("p, h2"); // Select both paragraphs (p) and H2 headers (h2)
+            for (Element element : paragraphs) {
+                if (element.tagName().equalsIgnoreCase("p")) {
+                    String text = element.text().trim();
+                    if(!text.equals("")){
+                        markdown.append(text).append("\\n\\n");
+                    }
+                } else if (element.tagName().equalsIgnoreCase("h2")) {
+                    String headerText = element.text().trim();
+                    markdown.append("### ").append(headerText).append("\\n\\n"); // Append H2 headers as ## Header Text
+                }
+            }
+            String md = Telifie.tools.strings.htmlEscape(markdown.toString().replaceAll("\\s+", " ").replaceAll("\\[\\d+]", "").trim());
+            article.setContent(md);
         }
-        article.setContent(markdown);
         return article;
     }
 }

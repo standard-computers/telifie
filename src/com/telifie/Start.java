@@ -1,9 +1,7 @@
 package com.telifie;
 
 import com.telifie.Models.*;
-import com.telifie.Models.Parser;
 import com.telifie.Models.Utilities.*;
-
 import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;

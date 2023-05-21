@@ -37,8 +37,7 @@ public class Article {
         this.icon = document.getString("icon");
         this.description = document.getString("description");
         this.priority = (document.getDouble("priority") == null ? 1.01 : document.getDouble("priority"));
-        String contentString = (document.getString("content") != null ? document.getString("content").replaceAll("\\s+|\\r?\\n", " ") : "");
-        this.content = contentString.replaceAll("\"", "&quot;");
+        this.content = (document.getString("content") != null ?  MarkdownEscapeUtils.escapeMarkdownForJson(document.getString("content")) : "");
         this.origin = (document.getInteger("origin") == null ? 0 : document.getInteger("origin"));
         this.tags = document.get("tags", ArrayList.class);
 
@@ -218,5 +217,18 @@ public class Article {
 
     public void setPriority(Double priority) {
         this.priority = priority;
+    }
+
+    public class MarkdownEscapeUtils {
+        public static String escapeMarkdownForJson(String markdownText) {
+            String escapedText = markdownText.replace("\\", "\\\\");
+            escapedText = escapedText.replace("\"", "\\\"");
+            escapedText = escapedText.replace("\n", "\\n");
+            escapedText = escapedText.replace("\r", "\\r");
+            escapedText = escapedText.replace("\t", "\\t");
+            escapedText = escapedText.replace("\b", "\\b");
+            escapedText = escapedText.replace("\f", "\\f");
+            return escapedText;
+        }
     }
 }

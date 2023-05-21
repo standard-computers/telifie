@@ -291,7 +291,6 @@ public class Command {
         else if(primarySelector.equals("collections")){
 
             CollectionsClient collections = new CollectionsClient(config);
-
             if(this.selectors.length >= 4){ //Ensure correct argument count
 
                 try{

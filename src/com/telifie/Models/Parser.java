@@ -37,7 +37,7 @@ public class Parser {
     public static class engines {
 
         public static Article parse(String uri, int depth){
-
+            traversable.removeAll(traversable);
             Parser.uri = uri;
             MAX_DEPTH = depth;
             Telifie.console.out.string("Parser URI Attempt on -> " + uri);
@@ -69,7 +69,7 @@ public class Parser {
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
                 if(response.statusCode() == 200){
                     Document root = response.parse();
-                    Article article = new Webpage(root).extract(url);
+                    Article article = Webpage.extract(url, root);
 
                     ArrayList<String> links = Telifie.tools.make.extractLinks(root.getElementsByTag("a"), uri);
                     if(links.size() > 0){
@@ -105,7 +105,6 @@ public class Parser {
                             article.addAssociation(pages);
                         }
                     } //End if links > 0
-                    Telifie.console.out.string(article.toString());
                     if(article.getLink().contains(new URL(uri).getHost())) {
                         Parser.traversable.add(article);
                     }

@@ -296,18 +296,6 @@ public class Telifie {
                 return pattern.matcher(text);
             }
 
-            public static Matcher findEmails(String text){
-                String regex = "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\.[a-zA-Z]{2,}(\\\\s*,\\\\s*[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\.[a-zA-Z]{2,})";
-                Pattern pattern = Pattern.compile(regex);
-                return pattern.matcher(text);
-            }
-
-            public static Matcher findAddresses(String text){
-                String regex = "\\\\d+\\\\s+([A-Za-z]+\\\\s+)+[A-Za-z]+,\\\\s+[A-Z]{2},\\\\s+\\\\d{5}";
-                Pattern pattern = Pattern.compile(regex);
-                return pattern.matcher(text);
-            }
-
             public static String fixLink(String url, String src){
                 if(src.startsWith("//")){
                     src = "https:" + src.trim();
@@ -317,6 +305,9 @@ public class Telifie {
                     }else{
                         src = url + src;
                     }
+                }else if(src.startsWith("./")){
+                    src = url + "/" + src;
+                    return src.replaceFirst("\\./", "");
                 }
                 return src;
             }
