@@ -7,7 +7,6 @@ import com.opencsv.exceptions.CsvException;
 import com.telifie.Models.Articles.*;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Utilities.*;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -17,7 +16,6 @@ import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import java.io.*;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -32,14 +30,13 @@ public class Parser {
     private static String uri, host;
     private static final ArrayList<Article> traversable = new ArrayList<>();
     private static final ArrayList<String> parsed = new ArrayList<>();
-    private static int MAX_DEPTH = 2;
+    private static int MAX_DEPTH = 1;
 
     public static class engines {
 
-        public static Article parse(String uri, int depth){
+        public static Article parse(String uri){
             traversable.removeAll(traversable);
             Parser.uri = uri;
-            MAX_DEPTH = depth;
             Telifie.console.out.string("Parser URI Attempt on -> " + uri);
             if(Telifie.tools.detector.isUrl(uri)){ //Crawl website if url
                 try {
@@ -253,80 +250,12 @@ public class Parser {
 
             return null;
         }
-
-        /**
-         * Parsing code files into article
-         * This could be things like css, html, js, cpp, etc.
-         * @param uri Location of asset on disk
-         * @return Article representation of asset
-         */
-        public static Article code(String uri){
-
-            return null;
-        }
     }
 
     /**
      * Parser.connectors is for parsing content from connectors
      */
     public static class connectors {
-
-        /**
-         * Returns article for wikipedia page given title
-         * Title must be the title for the API reference in the URL
-         * @param title String title of wikipedia article
-         * @return Article of Wikipedia
-         */
-        public static Article wikipedia(String title) throws NullPointerException {
-            Article wikiArticle = new Article();
-            wikiArticle.setTitle(title.replace("_", " "));
-            wikiArticle.setSource(
-                    new Source(
-                            "a3161b589be3b2a7709309342f9ac874",
-                            "https://telifie-static.nyc3.digitaloceanspaces.com/wwdb-index-storage/wikipedia.png",
-                            "Wikipedia",
-                            "https://en.wikipedia.org/wiki/" + title
-                    )
-            );
-
-            //Set article content
-            String apiUrl = "https://en.wikipedia.org/w/api.php?action=query&prop=extracts&format=json&exintro=&titles=" + title;
-            URL url;
-            HttpURLConnection conn = null;
-            try {
-                url = new URL(apiUrl);
-                conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("GET");
-                conn.setRequestProperty("Accept", "application/json");
-
-                BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-
-                StringBuilder json = new StringBuilder();
-                String output;
-                while ((output = br.readLine()) != null) {
-                    json.append(output);
-                }
-                conn.disconnect();
-                org.bson.Document wikiDoc = org.bson.Document.parse(json.toString());
-                org.bson.Document query = wikiDoc.get("query", org.bson.Document.class);
-                org.bson.Document pages = query.get("pages", org.bson.Document.class);
-                if (pages != null && !pages.isEmpty()) {
-                    org.bson.Document firstPage = (org.bson.Document) pages.values().iterator().next();
-                    // Do something with the first page Document object
-                    String text = StringEscapeUtils.escapeJson(Jsoup.parse(firstPage.getString("extract")).text());
-                    wikiArticle.setContent(text);
-                } else {
-                    System.out.println("No pages found for the search query.");
-                }
-            } catch (IOException e) {
-                Telifie.console.out.error("Failed to get Wikipedia article");
-                return null;
-            }
-
-
-
-            return wikiArticle;
-        }
 
         public static ArrayList<Article> yelp(String[] zips, Configuration config) throws UnsupportedEncodingException {
             ArticlesClient articlesClient = new ArticlesClient(config);
@@ -347,6 +276,7 @@ public class Parser {
                     for (JsonNode businessNode : businessesNode) {
                         i++;
                         Article article = new Article();
+                        article.setPriority(0.78);
                         article.setId(Telifie.tools.make.md5(businessNode.path("id").asText()));
                         if(!articlesClient.exists(article.getId())){
                             article.setIcon(businessNode.path("image_url").asText());

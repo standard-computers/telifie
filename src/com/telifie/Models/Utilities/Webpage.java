@@ -77,16 +77,12 @@ public class Webpage {
             article.addAttribute(attr);
         }
 
-        // Configure the Markdown renderer
-//        MutableDataSet options = new MutableDataSet();
-//        Parser parser = Parser.builder(options).build();
-//        HtmlRenderer renderer = HtmlRenderer.builder(options).build();
-
         if(article.getContent() == null || article.getContent().equals("")){
             Element body = document.getElementsByTag("body").get(0);
             body.select("table, script, header, style, img, svg, button, label, form, input, aside, code, nav").remove();
 //          TODO Convert tables to datasets
             if(url.contains("wiki")){
+                article.setTitle(article.getTitle().replaceAll(" - Wikipedia", ""));
                 body.select("div.mw-jump-link, div#toc, div.navbox, table.infobox, div.vector-body-before-content, div.navigation-not-searchable, div.mw-footer-container, div.reflist, div#See_also, h2#See_also, h2#References, h2#External_links").remove();
             }
             // Convert <p> elements to newlines in Markdown
@@ -103,7 +99,7 @@ public class Webpage {
                     markdown.append("### ").append(headerText).append("\\n\\n"); // Append H2 headers as ## Header Text
                 }
             }
-            String md = Telifie.tools.strings.htmlEscape(markdown.toString().replaceAll("\\s+", " ").replaceAll("\\[\\d+]", "").trim());
+            String md = Telifie.tools.strings.htmlEscape(markdown.toString().replaceAll("\\s+", " ").replaceAll("\\[.*?]", "").trim());
             article.setContent(md);
         }
         return article;

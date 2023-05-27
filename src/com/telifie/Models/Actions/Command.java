@@ -464,12 +464,14 @@ public class Command {
                     }else if(mode.equals("uri")){
 
                         String url = content.getString("uri");
-                        int depth = (content.getInteger("depth") == null ? 1 : content.getInteger("depth"));
                         if(url != null && !url.equals("")){
                             Parser parser = new Parser();
-                            Article parsed = Parser.engines.parse(url, depth);
+                            Article parsed = Parser.engines.parse(url);
                             if(parser.getTraversable().size() > 1){
                                 return new Result(this.command, "articles", parser.getTraversable());
+                            }
+                            if(content.getBoolean("insert") != null && content.getBoolean("insert")) {
+                                articles.create(parsed);
                             }
                             return new Result(this.command, "article", parsed);
                         }

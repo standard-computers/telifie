@@ -108,7 +108,7 @@ public class Collection {
 
         return "{" +
                 "\"id\" : \"" + id + '\"' +
-                (this.domain == null ? "" : ", \"domain\" : \"" + domain + '\"') +
+                (this.domain == null ? (", \"domain\" : \"telifie\"") : (", \"domain\" : \"" + domain + '\"')) +
                 ", \"user\" : \"" + user + '\"' +
                 ", \"icon\" : \"" + icon + '\"' +
                 ", \"name\" : \"" + name + '\"' +

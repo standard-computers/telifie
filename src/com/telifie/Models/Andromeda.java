@@ -163,12 +163,29 @@ public class Andromeda extends Client{
         }
 
         public static String clean(String text){
-            //Lowercase, trim, remove special characters
             String cleanedText = text.toLowerCase().trim();
             cleanedText = cleanedText.replaceAll("[\\d+]", "");
             cleanedText = Telifie.tools.strings.removeWords(cleanedText, Telifie.stopWords);
             cleanedText = cleanedText.replaceAll("[^a-zA-Z0-9 ]", "");
             return cleanedText;
         }
+    }
+
+    public static class decoder {
+
+    }
+
+    public static double[] softmax(double[] inputs) {
+        double max = Arrays.stream(inputs).max().orElse(0.0);
+        double sum = 0.0;
+        double[] softmaxOutputs = new double[inputs.length];
+        for (int i = 0; i < inputs.length; i++) {
+            softmaxOutputs[i] = Math.exp(inputs[i] - max);
+            sum += softmaxOutputs[i];
+        }
+        for (int i = 0; i < softmaxOutputs.length; i++) {
+            softmaxOutputs[i] /= sum;
+        }
+        return softmaxOutputs;
     }
 }
