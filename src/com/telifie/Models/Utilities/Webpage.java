@@ -70,12 +70,7 @@ public class Webpage {
         article.setLink(url);
         String whole_text = document.text().replaceAll("[\n\r]", " ");
 
-        Matcher phone_numbers = Telifie.tools.detector.findPhoneNumbers(whole_text);
-        while(phone_numbers.find()){
-            String phone_number = phone_numbers.group().trim().replaceAll("[^0-9]", "").replaceFirst("(\\d{3})(\\d{3})(\\d+)", "($1) $2 – $3");
-            Attribute attr = new Attribute("Phone", phone_number);
-            article.addAttribute(attr);
-        }
+
 
         if(article.getContent() == null || article.getContent().equals("")){
             Element body = document.getElementsByTag("body").get(0);
@@ -84,6 +79,13 @@ public class Webpage {
             if(url.contains("wiki")){
                 article.setTitle(article.getTitle().replaceAll(" - Wikipedia", ""));
                 body.select("div.mw-jump-link, div#toc, div.navbox, table.infobox, div.vector-body-before-content, div.navigation-not-searchable, div.mw-footer-container, div.reflist, div#See_also, h2#See_also, h2#References, h2#External_links").remove();
+            }else{
+                Matcher phone_numbers = Telifie.tools.detector.findPhoneNumbers(whole_text);
+                while(phone_numbers.find()){
+                    String phone_number = phone_numbers.group().trim().replaceAll("[^0-9]", "").replaceFirst("(\\d{3})(\\d{3})(\\d+)", "($1) $2 – $3");
+                    Attribute attr = new Attribute("Phone", phone_number);
+                    article.addAttribute(attr);
+                }
             }
             // Convert <p> elements to newlines in Markdown
             StringBuilder markdown = new StringBuilder();

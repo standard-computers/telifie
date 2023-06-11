@@ -30,7 +30,7 @@ public class Parser {
     private static String uri, host;
     private static final ArrayList<Article> traversable = new ArrayList<>();
     private static final ArrayList<String> parsed = new ArrayList<>();
-    private static int MAX_DEPTH = 1;
+    private static int MAX_DEPTH = 0;
 
     public static class engines {
 

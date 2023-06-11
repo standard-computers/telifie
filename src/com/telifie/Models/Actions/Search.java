@@ -1,5 +1,6 @@
 package com.telifie.Models.Actions;
 
+import com.mongodb.client.model.Filters;
 import com.telifie.Models.Andromeda;
 import com.telifie.Models.Article;
 import com.telifie.Models.Articles.Image;
@@ -8,6 +9,8 @@ import com.telifie.Models.Result;
 import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Parameters;
 import org.bson.Document;
+import org.bson.conversions.Bson;
+
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -62,25 +65,47 @@ public class Search {
         Document gf = general(query);
         ArticlesClient articles = new ArticlesClient(config);
         ArrayList<Article> results;
-        if(gf != null){
+        if(gf != null){ //When specific command is entered, use specific query
             results = articles.search(config, params, gf);
-        }else{
-            ArrayList<Document> filters = new ArrayList<>();
-            filters.add(new Document("title", new Document("$in",
-                Arrays.asList(
-                        pattern(Andromeda.encoder.clean(query)),
-                        pattern(query))
-                ))
-            );
-            for(String token : tokenized.tokens()){
-                String[] properties = {"link", "title", "description"};
-                for(String property : properties){
-                    filters.add(new Document(property, pattern(token) ) );
+        }else{ //General queries, search through most parameters
+//            ArrayList<Document> filters = new ArrayList<>();
+//            filters.add(new Document("title", new Document("$in",
+//                Arrays.asList(
+//                        pattern(Andromeda.encoder.clean(query)),
+//                        pattern(query))
+//                ))
+//            );
+//            for(String token : tokenized.tokens()){
+//                String[] properties = {"link", "title", "description"};
+//                for(String property : properties){
+//                    filters.add(new Document(property, pattern(token) ) );
+//                }
+//            }
+//            filters.add(new Document("tags", new Document("$in", Arrays.asList(tokenized.tokens())) ) );
+//            results = articles.search(config, params, new Document("$or", filters));
+            ArrayList<Bson> filters = new ArrayList<>();
+            Bson[] titleFilters = {
+                    Filters.regex("title", pattern(Andromeda.encoder.clean(query))),
+                    Filters.regex("title", pattern(query))
+            };
+            filters.add(Filters.or(titleFilters));
+
+            String[] properties = {"link", "title"};
+            for (String token : tokenized.tokens()) {
+                for (String property : properties) {
+                    filters.add(Filters.regex(property, pattern(token)));
                 }
             }
-            filters.add(new Document("tags", new Document("$in", Arrays.asList(tokenized.tokens())) ) );
-            results = articles.search(config, params, new Document("$or", filters));
-            if(results != null && results.size() > 3){
+
+            filters.add(Filters.in("tags", tokenized.tokens()));
+            filters.add(Filters.regex("content", pattern(query)));
+            filters.add(Filters.regex("attributes.key", pattern(query)));
+            filters.add(Filters.regex("attributes.value", pattern(query)));
+
+            Document searchFilter = new Document("$or", filters);
+            results = articles.search(config, params, searchFilter);
+
+            if(results != null && results.size() > 3){ //Sort if there is more than three results
                 Collections.sort(results, new RelevanceComparator(query));
                 Collections.reverse(results);
             }

@@ -48,22 +48,32 @@ public class Article {
                 ni.setId(this.getId());
                 this.addImage(new Image(doc));
             }
+        }else{
+            this.images = new ArrayList<>();
         }
         ArrayList<Document> it2 = (ArrayList<Document>) document.getList("attributes", Document.class);
         if (it2 != null) {
             it2.forEach(doc -> this.addAttribute(new Attribute(doc.getString("key"), doc.getString("value"))));
+        }else{
+            this.attributes = new ArrayList<>();
         }
         ArrayList<Document> it3 = (ArrayList<Document>) document.getList("associations", Document.class);
         if (it3 != null) {
             it3.forEach(doc -> this.addAssociation(new Association(doc)));
+        }else{
+            this.associations = new ArrayList<>();
         }
         ArrayList<Document> it4 = (ArrayList<Document>) document.getList("data_sets", Document.class);
         if(it4 != null){
             it4.forEach(doc -> this.addDataSet(new DataSet(doc)));
+        }else{
+            this.dataSets = new ArrayList<>();
         }
         Document sourceDocument = document.get("source", Document.class);
         if (sourceDocument != null) {
             this.source = new Source(sourceDocument);
+        }else{
+            this.source = null;
         }
     }
 
@@ -163,11 +173,11 @@ public class Article {
                 (priority == 0 ? "" : ", \"priority\" : " + priority) +
                 (content == null ? "" : ", \"content\" : \"" + content + "\"") +
                 (this.tags == null || this.tags.size() == 0 ? "" : ", \"tags\" : " + tags.stream().map(tag -> "\"" + tag + "\"").collect(Collectors.joining(", ", "[", "]"))) +
-                (images.equals("null") || images == null || images.size() == 0 ? "" : ", \"images\" : " + images) +
+                (images == null ? "" : ", \"images\" : " + images) +
                 (attributes.size() == 0 ? "" : ", \"attributes\" : " + attributes) +
                 (associations.size() == 0 ? "" : ", \"associations\" : " + associations) +
                 (dataSets.size() == 0 ? "" : ", \"data_sets\" : " + dataSets) +
-                (source == null ? "" : ", \"source\" : " + source) +
+                (source == null ? ", \"source\" : null" : ", \"source\" : " + source) +
                 ", \"origin\" : " + origin +
                 '}';
     }
