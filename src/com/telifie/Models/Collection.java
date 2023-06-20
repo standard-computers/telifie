@@ -41,7 +41,7 @@ public class Collection {
     }
 
     public String getDomain() {
-        return domain;
+        return (domain == null ? "telifie" : domain);
     }
 
     public Collection setDomain(String domain) {

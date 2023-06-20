@@ -1,5 +1,6 @@
 package com.telifie.Models;
 
+import com.telifie.Models.Utilities.Telifie;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -9,6 +10,7 @@ public class Result {
     private String query = "";
     private String object = "results";
     private Object results;
+    private int origin = Telifie.getEpochTime();
     private int statusCode = 200, count = 0;
     private ArrayList<Article> quickResults = new ArrayList<>();
 
@@ -64,6 +66,7 @@ public class Result {
                 ", \"id\" : \"" + id + '\"' +
                 ", \"query\" : \"" + query + '\"' +
                 ", \"count\" : " + count +
+                ", \"origin\" : " + origin +
                 (quickResults.size() > 0 && quickResults != null ? ", \"quick_results\" : " + quickResults : "") +
                 ", \"" + object + "\" : " + (results instanceof String ? "\"" + results + "\"" : results.toString()) +
                 "}";

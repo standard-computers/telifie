@@ -172,9 +172,9 @@ public class Article {
                 (description == null || description.equals("") ? "" : ", \"description\" : \"" + description + '\"') +
                 (priority == 0 ? "" : ", \"priority\" : " + priority) +
                 (content == null ? "" : ", \"content\" : \"" + content + "\"") +
-                (this.tags == null || this.tags.size() == 0 ? "" : ", \"tags\" : " + tags.stream().map(tag -> "\"" + tag + "\"").collect(Collectors.joining(", ", "[", "]"))) +
+                (tags == null ? "" : ", \"tags\" : " + tags.stream().map(tag -> "\"" + tag + "\"").collect(Collectors.joining(", ", "[", "]"))) +
                 (images == null ? "" : ", \"images\" : " + images) +
-                (attributes.size() == 0 ? "" : ", \"attributes\" : " + attributes) +
+                (attributes == null ? "" : ", \"attributes\" : " + attributes) +
                 (associations.size() == 0 ? "" : ", \"associations\" : " + associations) +
                 (dataSets.size() == 0 ? "" : ", \"data_sets\" : " + dataSets) +
                 (source == null ? ", \"source\" : null" : ", \"source\" : " + source) +

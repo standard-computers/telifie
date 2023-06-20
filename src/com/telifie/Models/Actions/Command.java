@@ -321,7 +321,6 @@ public class Command {
             }else if(this.selectors.length >= 2){
 
                 if(secSelector != null) {
-
                     try {
                         Collection c = collections.get(actingUser, secSelector);
                         if(objectSelector.equals("update")){
@@ -479,6 +478,8 @@ public class Command {
                     }else if(mode.equals("text")){
                         String text = content.getString("text");
                         List<Andromeda.unit> tokens = Andromeda.encoder.tokenize(text, false);
+                    }else if(mode.equals("training")){
+                        return new Result(this.command, "articles", new ArticlesClient(config).get(new Document("verified", false)));
                     }
                 }
                 return new Result(428, this.command, "Please select a parser mode");

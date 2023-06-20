@@ -44,9 +44,18 @@ public class Start {
                     checkConfig();
                     try {
                         Telifie.console.out.string("Starting HTTP server [CONSIDER HTTPS FOR SECURITY]...");
-                        new HttpServer(config);
+                        new Http(config);
                     } catch (Exception e) {
                         Telifie.console.out.error("Failed to start HTTP server...");
+                        e.printStackTrace();
+                    }
+                }
+                case "--andromeda" -> {
+                    checkConfig();
+                    try {
+                        new Andromeda(config, true);
+                    } catch (Exception e) {
+                        Telifie.console.out.error("Failed to start Andromeda...");
                         e.printStackTrace();
                     }
                 }
@@ -96,8 +105,6 @@ public class Start {
             Telifie.console.out.string("Configuration file found :)");
             Telifie.console.out.line();
             config = (com.telifie.Models.Utilities.Configuration) Telifie.console.in.serialized(wrkDir + "/telifie.configuration");
-            //TODO Move Andromeda to a separate thread
-//            Andromeda andromeda = new Andromeda(config, true);
         }else{
             Telifie.console.out.message("No configuration file found. Use option '--install'");
             install();

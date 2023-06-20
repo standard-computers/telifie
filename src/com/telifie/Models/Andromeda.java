@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 public class Andromeda extends Client{
 
     private static ArrayList<taxon> taxon = new ArrayList<>();
+    private static List<String> sentences;
+    private static List<unit> tokens = new ArrayList<>();
     protected static Configuration config;
 
     public Andromeda(Configuration config, boolean index){
@@ -38,14 +40,16 @@ public class Andromeda extends Client{
             int totalCount = (int) collection.countDocuments();
             int processedCount = 0;
             while (cursor.hasNext()) {
-                Document document = cursor.next();
-                String title = (document.getString("title") == null ? null : document.getString("title").toLowerCase());
-                String description = (document.getString("description") == null ? null : document.getString("description").toLowerCase());
+                Article a = new Article(cursor.next());
+                String title = (a.getTitle() == null ? null : a.getTitle().toLowerCase());
+                String description = (a.getDescription() == null ? null : a.getDescription());
                 if(title != null && description != null){
                     add(description, title);
                 }
+                Andromeda.encoder.tokenize(a.getContent(), true).forEach(s -> tokens.add(s));
                 processedCount++;
                 System.out.println((processedCount / totalCount) + "% indexed (" + processedCount + " / " + totalCount + ")");
+                System.out.println("Token count: " + tokens.size());
             }
             cursor.close();
         }catch (Exception e){
@@ -135,8 +139,6 @@ public class Andromeda extends Client{
 
     public static class encoder {
 
-        private static List<String> sentences;
-
         public static List<unit> tokenize(String text, boolean cleaned){
             sentences = new ArrayList<>();
             List<Andromeda.unit> tokenized = new ArrayList<>();
@@ -168,6 +170,10 @@ public class Andromeda extends Client{
             cleanedText = Telifie.tools.strings.removeWords(cleanedText, Telifie.stopWords);
             cleanedText = cleanedText.replaceAll("[^a-zA-Z0-9 ]", "");
             return cleanedText;
+        }
+
+        private static int[][] embedding(String content){
+            return new int[0][0];
         }
     }
 
