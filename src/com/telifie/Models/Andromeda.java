@@ -5,9 +5,8 @@ import com.telifie.Models.Clients.Client;
 import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Andromeda extends Client{
@@ -193,5 +192,106 @@ public class Andromeda extends Client{
             softmaxOutputs[i] /= sum;
         }
         return softmaxOutputs;
+    }
+
+    protected class Word2Vec {
+        private Map<String, double[]> wordVectors;
+        private Map<String, Integer> wordFreq;
+        private int vectorSize;
+        private int windowSize;
+        private double learningRate;
+        private int epochs;
+
+        public Word2Vec(int vectorSize, int windowSize, double learningRate, int epochs) {
+            this.vectorSize = vectorSize;
+            this.windowSize = windowSize;
+            this.learningRate = learningRate;
+            this.epochs = epochs;
+            this.wordVectors = new HashMap<>();
+            this.wordFreq = new HashMap<>();
+        }
+
+        public void train(String[] tokens) {
+            for (String token : tokens) {
+                wordFreq.put(token, wordFreq.getOrDefault(token, 0) + 1);
+            }
+
+            int numWords = wordFreq.size();
+            int[][] coocurrenceMatrix = new int[numWords][numWords];
+
+            for (int i = 0; i < tokens.length; i++) {
+                int centerIdx = i;
+                String centerWord = tokens[centerIdx];
+
+                for (int j = Math.max(0, centerIdx - windowSize); j < Math.min(tokens.length, centerIdx + windowSize + 1); j++) {
+                    if (j == centerIdx) {
+                        continue;
+                    }
+                    String contextWord = tokens[j];
+                    coocurrenceMatrix[getIndex(centerWord)][getIndex(contextWord)]++;
+                }
+            }
+
+            initializeWordVectors(numWords);
+
+            for (int epoch = 0; epoch < epochs; epoch++) {
+                for (int i = 0; i < tokens.length; i++) {
+                    int centerIdx = i;
+                    String centerWord = tokens[centerIdx];
+
+                    for (int j = Math.max(0, centerIdx - windowSize); j < Math.min(tokens.length, centerIdx + windowSize + 1); j++) {
+                        if (j == centerIdx) {
+                            continue;
+                        }
+                        String contextWord = tokens[j];
+                        updateWordVectors(centerWord, contextWord, coocurrenceMatrix);
+                    }
+                }
+            }
+        }
+
+        private void initializeWordVectors(int numWords) {
+            for (String word : wordFreq.keySet()) {
+                double[] vector = new double[vectorSize];
+                for (int i = 0; i < vectorSize; i++) {
+                    vector[i] = Math.random();
+                }
+                wordVectors.put(word, vector);
+            }
+        }
+
+        private void updateWordVectors(String centerWord, String contextWord, int[][] coocurrenceMatrix) {
+            double[] centerVector = wordVectors.get(centerWord);
+            double[] contextVector = wordVectors.get(contextWord);
+
+            for (int i = 0; i < vectorSize; i++) {
+                double gradient = 0.0;
+                for (int j = 0; j < vectorSize; j++) {
+                    gradient += centerVector[j] * contextVector[j];
+                }
+
+                gradient -= coocurrenceMatrix[getIndex(centerWord)][getIndex(contextWord)];
+
+                for (int j = 0; j < vectorSize; j++) {
+                    centerVector[j] -= learningRate * gradient * contextVector[j];
+                    contextVector[j] -= learningRate * gradient * centerVector[j];
+                }
+            }
+        }
+
+        public double[] getWordVector(String word) {
+            return wordVectors.get(word);
+        }
+
+        private int getIndex(String word) {
+            int index = 0;
+            for (String key : wordFreq.keySet()) {
+                if (key.equals(word)) {
+                    return index;
+                }
+                index++;
+            }
+            return -1; // Word not found in the wordFreq map
+        }
     }
 }

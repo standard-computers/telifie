@@ -15,6 +15,8 @@ import org.apache.http.impl.client.HttpClients;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -37,7 +39,6 @@ public class Parser {
         public static Article parse(String uri){
             traversable.removeAll(traversable);
             Parser.uri = uri;
-            Telifie.console.out.string("Parser URI Attempt on -> " + uri);
             if(Telifie.tools.detector.isUrl(uri)){ //Crawl website if url
                 try {
                     host = new URL(uri).getHost();
@@ -45,7 +46,6 @@ public class Parser {
                     throw new RuntimeException(e);
                 }
                 Article crawled = Parser.engines.website(uri, 0);
-                Telifie.console.out.string(traversable.toString());
                 return crawled;
             }else if(Telifie.tools.detector.isFile(uri)){ //Parsing a file
                 File file = new File(uri);
@@ -54,6 +54,43 @@ public class Parser {
                 }
             }
             return null;
+        }
+
+        public static Article crawl(String uri){
+            traversable.removeAll(traversable);
+            Parser.uri = uri;
+            try {
+                host = new URL(uri).getHost();
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+            return Parser.engines.fetch(uri);
+        }
+
+        public static Article fetch(String url){
+            try {
+                Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
+                if(response.statusCode() == 200){
+                    Document root = response.parse();
+                    Article article = Webpage.extract(url, root);
+                    ArrayList<Element> links = root.getElementsByTag("a");
+                    for(Element link : links){
+                        String href = Telifie.tools.detector.fixLink("https://" + new URL(url).getHost(), link.attr("href"));
+                        boolean isNotParsed = !isParsed(href);
+                        if(isNotParsed && Telifie.tools.detector.isUrl(href)) {
+                            Telifie.console.out.string("Fetching " + link);
+                            fetch(href);
+                        }
+                    }
+                    if(article.getLink().contains(new URL(uri).getHost())) {
+                        Parser.traversable.add(article);
+                    }
+                    return article;
+                }
+                return null;
+            } catch (IOException e) {
+                return null;
+            }
         }
 
         public static Article website(String url, int depth){
@@ -75,7 +112,6 @@ public class Parser {
                         for(String link : links){
 
                             boolean isNotParsed = !isParsed(link);
-                            //Link can't have been parsed and must be parsable as different website
                             if(isNotParsed) {
                                 Article child = website(link, depth + 1);
                                 if (child != null) { //Then should be making an association

@@ -475,6 +475,17 @@ public class Command {
                             return new Result(this.command, "article", parsed);
                         }
                         return new Result(428, this.command, "URI is required to parse in URI mode");
+                    }else if(mode.equals("crawl")){
+
+                        String url = content.getString("uri");
+                        if(url != null && !url.equals("")){
+                            Parser parser = new Parser();
+                            Parser.engines.crawl(url);
+                            if(content.getBoolean("insert") != null && content.getBoolean("insert")) {
+                            }
+                            return new Result(this.command, "articles", parser.getTraversable());
+                        }
+                        return new Result(428, this.command, "URI is required to parse in URI mode");
                     }else if(mode.equals("text")){
                         String text = content.getString("text");
                         List<Andromeda.unit> tokens = Andromeda.encoder.tokenize(text, false);
