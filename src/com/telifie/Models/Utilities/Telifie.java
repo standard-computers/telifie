@@ -305,6 +305,8 @@ public class Telifie {
                     }else{
                         src = url + src;
                     }
+                }else if(src.startsWith("www")){
+                    src = "https://" + src;
                 }else if(src.startsWith("./")){
                     src = url + "/" + src;
                     return src.replaceFirst("\\./", "");
@@ -313,7 +315,17 @@ public class Telifie {
             }
 
             public static boolean isUrl(String uri){
-                return uri.startsWith("https://") || uri.startsWith("http://") || uri.startsWith("www");
+                String[] imageExtensions = { ".jpg", ".jpeg", ".png", ".gif" };
+                String lowercaseUri = uri.toLowerCase();
+                if (lowercaseUri.startsWith("https://") || lowercaseUri.startsWith("http://") || lowercaseUri.startsWith("www")) {
+                    for (String extension : imageExtensions) {
+                        if (lowercaseUri.endsWith(extension)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+                return false;
             }
 
             public static boolean isFile(String uri){

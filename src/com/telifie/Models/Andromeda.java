@@ -5,7 +5,8 @@ import com.telifie.Models.Clients.Client;
 import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
-
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -38,17 +39,23 @@ public class Andromeda extends Client{
             MongoCursor<Document> cursor = collection.find().iterator();
             int totalCount = (int) collection.countDocuments();
             int processedCount = 0;
+            vectorizer vectorizer = new vectorizer(100, 2, 0.01, 10);
             while (cursor.hasNext()) {
                 Article a = new Article(cursor.next());
                 String title = (a.getTitle() == null ? null : a.getTitle().toLowerCase());
                 String description = (a.getDescription() == null ? null : a.getDescription());
+                String content = (a.getContent() == null ? null : a.getContent());
                 if(title != null && description != null){
                     add(description, title);
                 }
-                Andromeda.encoder.tokenize(a.getContent(), true).forEach(s -> tokens.add(s));
+                if(content != null){
+                    Andromeda.encoder.tokenize(a.getContent(), true).forEach(s -> {
+                        tokens.add(s);
+                        vectorizer.train(s.tokens);
+                    });
+                }
                 processedCount++;
-                System.out.println((processedCount / totalCount) + "% indexed (" + processedCount + " / " + totalCount + ")");
-                System.out.println("Token count: " + tokens.size());
+                System.out.println("Indexed (" + processedCount + " / " + totalCount + ")");
             }
             cursor.close();
         }catch (Exception e){
@@ -171,9 +178,6 @@ public class Andromeda extends Client{
             return cleanedText;
         }
 
-        private static int[][] embedding(String content){
-            return new int[0][0];
-        }
     }
 
     public static class decoder {
@@ -194,7 +198,7 @@ public class Andromeda extends Client{
         return softmaxOutputs;
     }
 
-    protected class Word2Vec {
+    protected static class vectorizer {
         private Map<String, double[]> wordVectors;
         private Map<String, Integer> wordFreq;
         private int vectorSize;
@@ -202,7 +206,7 @@ public class Andromeda extends Client{
         private double learningRate;
         private int epochs;
 
-        public Word2Vec(int vectorSize, int windowSize, double learningRate, int epochs) {
+        public vectorizer(int vectorSize, int windowSize, double learningRate, int epochs) {
             this.vectorSize = vectorSize;
             this.windowSize = windowSize;
             this.learningRate = learningRate;
@@ -292,6 +296,21 @@ public class Andromeda extends Client{
                 index++;
             }
             return -1; // Word not found in the wordFreq map
+        }
+
+        public void exportWordEmbeddings(String filePath) {
+            try (FileWriter writer = new FileWriter(filePath)) {
+                for (String word : wordVectors.keySet()) {
+                    double[] vector = wordVectors.get(word);
+                    writer.write(word + " ");
+                    for (double value : vector) {
+                        writer.write(value + " ");
+                    }
+                    writer.write("\n");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

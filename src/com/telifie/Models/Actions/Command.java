@@ -350,19 +350,19 @@ public class Command {
                     }catch (NullPointerException n){
                         return new Result(404, this.command, "Collection not found");
                     }
+                }else if(objectSelector.equals("create")){
+
+                    if(content != null){
+                        Collection newCollection = new Collection(content);
+                        Collection createdCollection = collections.create(newCollection);
+                        if(createdCollection != null){
+                            return new Result(this.command, "collection", createdCollection);
+                        }
+                        return new Result(505, this.command, "Failed to make Collection with JSON");
+                    }
+                    return new Result(428, "JSON request body expected");
                 }
                 return new Result(428, "ID of Collection required to update");
-            }else if(objectSelector.equals("create")){
-
-                if(content != null){
-                    Collection newCollection = new Collection(content);
-                    Collection createdCollection = collections.create(newCollection);
-                    if(createdCollection != null){
-                        return new Result(this.command, "collection", createdCollection);
-                    }
-                    return new Result(505, this.command, "Failed to make Collection with JSON");
-                }
-                return new Result(428, "JSON request body expected");
             }
             ArrayList<Collection> usersCollections = collections.forUser(actingUser);
             return new Result(this.command, "collections", usersCollections);
@@ -480,8 +480,10 @@ public class Command {
                         String url = content.getString("uri");
                         if(url != null && !url.equals("")){
                             Parser parser = new Parser();
-                            Parser.engines.crawl(url);
+                            int limit = (content.getInteger("limit") == null ? Integer.MAX_VALUE : content.getInteger("limit"));
+                            Parser.engines.crawl(url, limit);
                             if(content.getBoolean("insert") != null && content.getBoolean("insert")) {
+                                parser.getTraversable().forEach(article -> articles.create(article));
                             }
                             return new Result(this.command, "articles", parser.getTraversable());
                         }

@@ -56,7 +56,7 @@ public class Parser {
             return null;
         }
 
-        public static Article crawl(String uri){
+        public static Article crawl(String uri, int limit){
             traversable.removeAll(traversable);
             Parser.uri = uri;
             try {
@@ -64,26 +64,28 @@ public class Parser {
             } catch (MalformedURLException e) {
                 throw new RuntimeException(e);
             }
-            return Parser.engines.fetch(uri);
+            return Parser.engines.fetch(uri, limit);
         }
 
-        public static Article fetch(String url){
+        public static Article fetch(String url, int limit){
             try {
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
                 if(response.statusCode() == 200){
                     Document root = response.parse();
                     Article article = Webpage.extract(url, root);
+                    Parser.traversable.add(article);
                     ArrayList<Element> links = root.getElementsByTag("a");
                     for(Element link : links){
-                        String href = Telifie.tools.detector.fixLink("https://" + new URL(url).getHost(), link.attr("href"));
+                        String href = Telifie.tools.detector.fixLink("https://" + new URL(url).getHost(), link.attr("href").split("\\?")[0]);
                         boolean isNotParsed = !isParsed(href);
                         if(isNotParsed && Telifie.tools.detector.isUrl(href)) {
-                            Telifie.console.out.string("Fetching " + link);
-                            fetch(href);
+                            Telifie.console.out.string("Fetching " + href);
+                            parsed.add(href);
+                            if(parsed.size() >= limit){
+                                return article;
+                            }
+                            fetch(href, limit);
                         }
-                    }
-                    if(article.getLink().contains(new URL(uri).getHost())) {
-                        Parser.traversable.add(article);
                     }
                     return article;
                 }
@@ -195,7 +197,7 @@ public class Parser {
                         Article article = new Article();
                         article.setPriority(withPriority);
                         article.addAttribute(new Attribute("*batch", batchId));
-                        for (int g = 0; g < articleData.length; g++) {
+                        for (int g = 0; g < articleData.length - 1; g++) {
                             String value = articleData[g];
                             if (g == titleIndex) {
                                 article.setTitle(value);
@@ -344,7 +346,7 @@ public class Parser {
                                     "6a9aaefa90c5edc50d678cca8c78e520",
                                     "https://telifie-static.nyc3.cdn.digitaloceanspaces.com/wwdb-index-storage/yelp.png",
                                     "Yelp",
-                                    businessNode.path("url").asText()
+                                    businessNode.path("url").asText().split("\\?")[0]
                             ));
                             String businessId = businessNode.path("id").asText();
                             String photosUrl = "https://api.yelp.com/v3/businesses/" + businessId;

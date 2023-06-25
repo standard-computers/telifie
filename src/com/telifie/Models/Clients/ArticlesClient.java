@@ -22,7 +22,19 @@ public class ArticlesClient extends Client {
     }
 
     public boolean create(Article article){
-        return super.insertOne(Document.parse(article.toString()));
+        if(this.withLink(article.getLink()) != null){
+            return super.insertOne(Document.parse(article.toString()));
+        }
+        return false;
+    }
+
+
+    public Article withLink(String link){
+        try{
+            return new Article(this.findOne(new Document("link", link)));
+        }catch (NullPointerException e){
+            return null;
+        }
     }
 
     public boolean verify(Article article){

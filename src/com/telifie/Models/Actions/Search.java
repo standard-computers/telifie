@@ -68,21 +68,6 @@ public class Search {
         if(gf != null){ //When specific command is entered, use specific query
             results = articles.search(config, params, gf);
         }else{ //General queries, search through most parameters
-//            ArrayList<Document> filters = new ArrayList<>();
-//            filters.add(new Document("title", new Document("$in",
-//                Arrays.asList(
-//                        pattern(Andromeda.encoder.clean(query)),
-//                        pattern(query))
-//                ))
-//            );
-//            for(String token : tokenized.tokens()){
-//                String[] properties = {"link", "title", "description"};
-//                for(String property : properties){
-//                    filters.add(new Document(property, pattern(token) ) );
-//                }
-//            }
-//            filters.add(new Document("tags", new Document("$in", Arrays.asList(tokenized.tokens())) ) );
-//            results = articles.search(config, params, new Document("$or", filters));
             ArrayList<Bson> filters = new ArrayList<>();
             Bson[] titleFilters = {
                     Filters.regex("title", pattern(Andromeda.encoder.clean(query))),
@@ -98,7 +83,7 @@ public class Search {
             }
 
             filters.add(Filters.in("tags", tokenized.tokens()));
-            filters.add(Filters.regex("content", pattern(query)));
+//            filters.add(Filters.regex("content", pattern(query)));
             filters.add(Filters.regex("attributes.key", pattern(query)));
             filters.add(Filters.regex("attributes.value", pattern(query)));
 
@@ -163,6 +148,26 @@ public class Search {
             ));
         }else if(query.matches("(?i)\\bhttps?://\\S+\\b")){ //If link
             return new Document("link", new Document("$in", Arrays.asList(pattern(query), pattern(query))));
+        }else if(query.matches("^(\\d+)\\s+([A-Za-z\\s]+),\\s+([A-Za-z\\s]+),\\s+([A-Za-z]{2})\\s+(\\d{5})$")){
+            return new Document("$and", Arrays.asList(
+                    new Document("attribute.key", "Address"),
+                    new Document("attribute.value", pattern(query))
+            ));
+        }else if(query.matches("^\\+\\d{1,3}\\s*\\(\\d{1,3}\\)\\s*\\d{3}-\\d{4}$")){
+            return new Document("$and", Arrays.asList(
+                    new Document("attribute.key", "Phone"),
+                    new Document("attribute.value", query) //adjust, format query input
+            ));
+        }else if(query.matches("\\b(\\d{4}-\\d{2}-\\d{2}|\\d{2}/\\d{2}/\\d{4}|\\d{2}-[a-zA-Z]{3}-\\d{4}|[a-zA-Z]+ \\d{1,2}, \\d{4})\\b")){
+            return new Document("$and", Arrays.asList(
+                    new Document("attribute.key", new Document("$in", Arrays.asList(
+                            ignoreCase("date"),
+                            ignoreCase("founded"),
+                            ignoreCase("established"),
+                            ignoreCase("started")
+                    ))),
+                    new Document("attribute.value", query) //adjust, format query input
+            ));
         }
         return null;
     }
