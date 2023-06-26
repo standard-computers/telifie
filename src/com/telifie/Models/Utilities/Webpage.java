@@ -3,7 +3,6 @@ package com.telifie.Models.Utilities;
 import com.telifie.Models.Article;
 import com.telifie.Models.Articles.Attribute;
 import com.telifie.Models.Articles.Image;
-import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -14,23 +13,24 @@ import java.util.regex.Matcher;
 public class Webpage {
 
     public static Article extract(String url, Document document){
-
         Article article = new Article();
         Elements metaTags = document.getElementsByTag("meta");
         for (Element tag : metaTags){
             String mtn = tag.attr("name");
             String mtc = tag.attr("content");
-            if(mtn.equals("description")){
-                if(!tag.attr("content").trim().equals("")){
-                    article.setContent(mtc);
+            switch (mtn) {
+                case "description" -> {
+                    if (!tag.attr("content").trim().equals("")) {
+                        article.setContent(mtc);
+                    }
                 }
-            }else if(mtn.equals("keywords")){
-                String[] words = mtc.split(",");
-                for(String word : words){
-                    article.addTag(word.trim().toLowerCase());
+                case "keywords" -> {
+                    String[] words = mtc.split(",");
+                    for (String word : words) {
+                        article.addTag(word.trim().toLowerCase());
+                    }
                 }
-            }else if(mtn.equals("og:image")){
-                article.addImage(new Image(mtc, "", url));
+                case "og:image" -> article.addImage(new Image(mtc, "", url));
             }
         }
 
@@ -60,7 +60,6 @@ public class Webpage {
                 article.addImage(img);
             }else if(!srcset.equals("") && !srcset.startsWith("data:")){
 
-                String link = "https://" + srcset.split("\\s")[0];
                 String caption =  Telifie.tools.strings.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
                 Image img = new Image(src, caption, url);
                 article.addImage(img);

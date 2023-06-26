@@ -16,7 +16,6 @@ import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -39,7 +38,7 @@ public class Parser {
         public static Article parse(String uri){
             traversable.removeAll(traversable);
             Parser.uri = uri;
-            if(Telifie.tools.detector.isUrl(uri)){ //Crawl website if url
+            if(Telifie.tools.detector.isUrl(uri)){
                 try {
                     host = new URL(uri).getHost();
                 } catch (MalformedURLException e) {
@@ -47,7 +46,7 @@ public class Parser {
                 }
                 Article crawled = Parser.engines.website(uri, 0);
                 return crawled;
-            }else if(Telifie.tools.detector.isFile(uri)){ //Parsing a file
+            }else if(Telifie.tools.detector.isFile(uri)){
                 File file = new File(uri);
                 if(file.exists()){
 
@@ -79,7 +78,7 @@ public class Parser {
                         String href = Telifie.tools.detector.fixLink("https://" + new URL(url).getHost(), link.attr("href").split("\\?")[0]);
                         boolean isNotParsed = !isParsed(href);
                         if(isNotParsed && Telifie.tools.detector.isUrl(href)) {
-                            Telifie.console.out.string("Fetching " + href);
+                            System.out.println("Fetching (" + parsed.size() + ")" + href);
                             parsed.add(href);
                             if(parsed.size() >= limit){
                                 return article;
@@ -192,7 +191,7 @@ public class Parser {
                     String batchId = Telifie.tools.make.shortEid().toLowerCase();
                     int total = lines.size() - 1;
                     for (int i = 1; i < lines.size() - 1; i++) {
-                        Telifie.console.out.string("Parsing article " + i + " of " + total);
+                        System.out.println("Parsing article " + i + " of " + total);
                         String[] articleData = lines.get(i);
                         Article article = new Article();
                         article.setPriority(withPriority);
@@ -378,15 +377,16 @@ public class Parser {
                 }
             }
             Telifie.console.out.line();
-            Telifie.console.out.string("Total articles found: " + total_count);
-            Telifie.console.out.string("Total articles saved: " + saved);
-            Telifie.console.out.line();
             return articles;
         }
     }
 
     public ArrayList<Article> getTraversable() {
         return traversable;
+    }
+
+    public void purge(){
+        traversable.clear();
     }
 
     public static boolean isParsed(String uri){

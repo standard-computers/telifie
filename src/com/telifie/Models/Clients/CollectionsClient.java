@@ -18,17 +18,17 @@ public class CollectionsClient extends Client {
     public Collection get(String userId, String id){
         Collection collection = new Collection(this.findOne(new Document("id", id)));
         if(collection.getPermissions() == 0){
-            if(!collection.getUser().equals(userId)){ //Ensure user owns or has right permissions
+            if(!collection.getUser().equals(userId)){
                 return null;
             }
         }
-        if(collection.getDomain().equals(userId)){ //Personal Domain
+        if(collection.getDomain().equals(userId)){
             Domain dm = new Domain(this.config.getDomain().getUri());
             dm.setAlt(userId);
             this.config = new Configuration();
             this.config.setDomain(dm);
         }
-        ArrayList<Article> articles = new ArrayList<Article>();
+        ArrayList<Article> articles = new ArrayList<>();
         ArticlesClient articlesClient = new ArticlesClient(this.getConfig());
         if(collection.getArticles() != null || collection.getArticles().size() > 0){
             for (String articleId : collection.getArticles()) {
@@ -42,9 +42,7 @@ public class CollectionsClient extends Client {
     public ArrayList<Collection> forUser(String userId){
         ArrayList<Document> groups = this.find(new Document("user", userId));
         ArrayList<Collection> found = new ArrayList<>();
-        for (Document doc : groups) {
-            found.add(new Collection(doc));
-        }
+        groups.forEach(g -> found.add(new Collection(g)));
         return found;
     }
 

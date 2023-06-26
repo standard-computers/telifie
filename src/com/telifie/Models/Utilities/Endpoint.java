@@ -4,7 +4,9 @@ import org.bson.Document;
 
 public class Endpoint {
 
-    private String url, method, description;
+    private final String url;
+    private final String method;
+    private final String description;
 
     public Endpoint(Document document){
         this.url = document.getString("url");

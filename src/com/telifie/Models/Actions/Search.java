@@ -74,14 +74,9 @@ public class Search {
                     Filters.regex("title", pattern(query))
             };
             filters.add(Filters.or(titleFilters));
-
-            String[] properties = {"link", "title"};
             for (String token : tokenized.tokens()) {
-                for (String property : properties) {
-                    filters.add(Filters.regex(property, pattern(token)));
-                }
+                filters.add(Filters.regex("link", pattern(token)));
             }
-
             filters.add(Filters.in("tags", tokenized.tokens()));
 //            filters.add(Filters.regex("content", pattern(query)));
             filters.add(Filters.regex("attributes.key", pattern(query)));

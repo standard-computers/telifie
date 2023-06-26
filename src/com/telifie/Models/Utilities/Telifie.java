@@ -98,14 +98,6 @@ public class Telifie {
                 line();
             }
 
-            public static void string(String message){
-                System.out.println(message);
-            }
-
-            public static void error(String message){
-                System.err.println(message);
-            }
-
             public static void telifie() {
                 System.out.println("\n");
                 System.out.println("||===========================================================||");
@@ -118,8 +110,8 @@ public class Telifie {
                 System.out.println("||                                                           ||");
                 System.out.println("||===========================================================||\n");
                 String operatingSystem = System.getProperty("os.name");
-                Telifie.console.out.string("Operating System : " + operatingSystem);
-                Telifie.console.out.string("System Architecture : " + System.getProperty("os.arch"));
+                System.out.println("Operating System : " + operatingSystem);
+                System.out.println("System Architecture : " + System.getProperty("os.arch"));
                 Telifie.console.out.line();
             }
         }
@@ -278,17 +270,6 @@ public class Telifie {
         }
 
         public static class detector {
-
-            public static String fileExtension(String uri) {
-                Path path = Paths.get(uri);
-                String fileName = path.getFileName().toString();
-                int dotIndex = fileName.lastIndexOf(".");
-                if (dotIndex > 0) {
-                    return fileName.substring(dotIndex + 1);
-                } else {
-                    return "";
-                }
-            }
 
             public static Matcher findPhoneNumbers(String text){
                 String regex = "\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b";

@@ -22,12 +22,14 @@ public class ArticlesClient extends Client {
     }
 
     public boolean create(Article article){
-        if(this.withLink(article.getLink()) != null){
+        if(article.getLink() == null || article.getLink().equals("")){
             return super.insertOne(Document.parse(article.toString()));
+        }else if(this.withLink(article.getLink()) == null){
+            return super.insertOne(Document.parse(article.toString()));
+        }else{
+            return false;
         }
-        return false;
     }
-
 
     public Article withLink(String link){
         try{
@@ -74,6 +76,10 @@ public class ArticlesClient extends Client {
 
     public boolean delete(Article article) {
         return super.deleteOne(new Document("id", article.getId()));
+    }
+
+    public ArrayList<Document> getIds(){
+        return super.find(new Document("verified", false));
     }
 
     public boolean move(Article article, Domain domain){

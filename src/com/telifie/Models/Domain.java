@@ -80,9 +80,8 @@ public class Domain implements Serializable {
         return users;
     }
 
-    public Domain addUser(Member member){
+    public void addUser(Member member){
         this.users.add(member);
-        return this;
     }
 
     @Override

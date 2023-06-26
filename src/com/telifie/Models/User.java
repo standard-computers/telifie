@@ -104,8 +104,7 @@ public class User implements Serializable {
         data.add(new BasicNameValuePair("email", this.getEmail()));
         data.add(new BasicNameValuePair("app_id", "main.java.telifie.User.requestAuthenticationCode"));
         data.add(new BasicNameValuePair("auth_token", "an9f7moqw8fhx387fhcwomr"));
-        CloseableHttpResponse response = get2fa.post("http://telifie.net/connect", data);
-        Telifie.console.out.string("[ HTTP RESPONSE CODE / CONNECT ] " + response);
+        get2fa.post("http://telifie.net/connect", data);
         if(get2fa.getStatusCode() == 200){
             return true;
         }else{
@@ -121,7 +120,6 @@ public class User implements Serializable {
         data.add(new BasicNameValuePair("auth_token", "asdukhflaisuhdfpas9d8fy"));
         data.add(new BasicNameValuePair("app_id", "main.java.telifie.Start.install"));
         CloseableHttpResponse response = get2fa.post("http://telifie.net/verify", data);
-        Telifie.console.out.string("[ HTTP RESPONSE CODE / VERIFY ] " + get2fa.getStatusCode());
         if(get2fa.getStatusCode() == 200){
             String jsonResponse = null;
             try {

@@ -59,7 +59,7 @@ public class Andromeda extends Client{
             }
             cursor.close();
         }catch (Exception e){
-            Telifie.console.out.string(e.toString());
+            System.out.println(e);
         }
     }
 

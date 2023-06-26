@@ -15,7 +15,6 @@ public class UsersClient extends Client {
     }
 
     public User getUserWithEmail(String email){
-
         return new User(this.findOne(new Document("email", email)));
     }
 
@@ -60,11 +59,11 @@ public class UsersClient extends Client {
         return super.insertOne(Document.parse(user.toString()));
     }
 
-    public boolean upgradePermissions(User user){
-        return super.updateOne(
-            new Document("email", user.getEmail()),
+    public void upgradePermissions(User user){
+        super.updateOne(
+                new Document("email", user.getEmail()),
                 new Document("$set",
-                    new Document("permissions", user.getPermissions() + 1)
+                        new Document("permissions", user.getPermissions() + 1)
                 )
         );
     }

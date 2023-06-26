@@ -16,11 +16,9 @@ import java.util.List;
 
 public class Network {
 
-    private String url;
     private int statusCode;
 
     public void get(String url){
-        this.url = url;
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request;
         try {

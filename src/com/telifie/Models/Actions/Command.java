@@ -480,6 +480,7 @@ public class Command {
                         String url = content.getString("uri");
                         if(url != null && !url.equals("")){
                             Parser parser = new Parser();
+                            parser.purge();
                             int limit = (content.getInteger("limit") == null ? Integer.MAX_VALUE : content.getInteger("limit"));
                             Parser.engines.crawl(url, limit);
                             if(content.getBoolean("insert") != null && content.getBoolean("insert")) {
@@ -491,8 +492,11 @@ public class Command {
                     }else if(mode.equals("text")){
                         String text = content.getString("text");
                         List<Andromeda.unit> tokens = Andromeda.encoder.tokenize(text, false);
-                    }else if(mode.equals("training")){
-                        return new Result(this.command, "articles", new ArticlesClient(config).get(new Document("verified", false)));
+                    }else if(mode.equals("edit")){
+                        ArrayList<String> ids = new ArrayList<>();
+                        System.out.println("Working lis");
+                        articles.getIds().forEach(a -> ids.add(new Article(a).getId()));
+                        return new Result(this.command, "ids", ids);
                     }
                 }
                 return new Result(428, this.command, "Please select a parser mode");
@@ -508,7 +512,7 @@ public class Command {
                 Authentication auth = new Authentication(secSelector);
                 AuthenticationClient authentications = new AuthenticationClient(config);
                 if(authentications.authenticate(auth)){
-                    Telifie.console.out.string("App authenticated with ID: " + secSelector);
+                    System.out.println("App authenticated with ID: " + secSelector);
                     Telifie.console.out.message(auth.toJson().toString(4));
                     return new Result(this.command, "authentication", auth.toJson());
                 }

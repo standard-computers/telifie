@@ -3,7 +3,6 @@ package com.telifie.Models.Clients;
 import com.telifie.Models.Connector;
 import com.telifie.Models.Utilities.Configuration;
 import org.bson.Document;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -45,9 +44,8 @@ public class ConnectorsClient extends Client{
 
     public ArrayList<Connector> mine(){
         ArrayList<Connector> connectors = new ArrayList<>();
-        for(Document document : super.find(new Document("user", config.getAuthentication().getUser()))){
-            connectors.add(new Connector(document));
-        }
+        ArrayList<Document> docs = super.find(new Document("user", config.getAuthentication().getUser()));
+        docs.forEach(c -> connectors.add(new Connector(c)));
         return connectors;
     }
 }

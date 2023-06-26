@@ -10,7 +10,7 @@ public class Result {
     private String query = "";
     private String object = "results";
     private Object results;
-    private int origin = Telifie.getEpochTime();
+    private final int origin = Telifie.getEpochTime();
     private int statusCode = 200, count = 0;
     private ArrayList<Article> quickResults = new ArrayList<>();
 
@@ -50,9 +50,8 @@ public class Result {
         return statusCode;
     }
 
-    public Result setStatusCode(int statusCode) {
+    public void setStatusCode(int statusCode) {
         this.statusCode = statusCode;
-        return this;
     }
 
     public void setResult(String object, Object results){
@@ -67,7 +66,7 @@ public class Result {
                 ", \"query\" : \"" + query + '\"' +
                 ", \"count\" : " + count +
                 ", \"origin\" : " + origin +
-                (quickResults.size() > 0 && quickResults != null ? ", \"quick_results\" : " + quickResults : "") +
+                (quickResults.size() > 0 ? ", \"quick_results\" : " + quickResults : "") +
                 ", \"" + object + "\" : " + (results instanceof String ? "\"" + results + "\"" : results.toString()) +
                 "}";
     }

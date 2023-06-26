@@ -3,7 +3,6 @@ package com.telifie.Models.Clients;
 import com.telifie.Models.Article;
 import com.telifie.Models.Utilities.Configuration;
 import org.bson.Document;
-
 import java.util.ArrayList;
 
 public class ArchiveClient extends Client {
@@ -32,9 +31,7 @@ public class ArchiveClient extends Client {
     public ArrayList<Article> get(){
         ArrayList<Document> found = this.find(new Document());
         ArrayList<Article> articles = new ArrayList<>();
-        for(Document doc : found){
-            articles.add(new Article(doc));
-        }
+        found.forEach(a -> articles.add(new Article(a)));
         return articles;
     }
 }

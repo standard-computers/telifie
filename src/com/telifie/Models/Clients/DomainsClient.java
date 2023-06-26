@@ -31,10 +31,6 @@ public class DomainsClient extends Client {
         return domains;
     }
 
-    public Domain withId(String id){
-        return new Domain(super.findOne(new Document("id", id)));
-    }
-
     public boolean delete(Domain domain){
         return super.deleteOne(new Document("$and", Arrays.asList(
                 new Document("owner", config.getAuthentication().getUser()),

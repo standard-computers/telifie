@@ -7,7 +7,7 @@ public class Parameters {
     private int resultsPerPage;
     private int pages; // How many pages of search results
     private int page; //Current page of the search results
-    private String index = "articles", postalCode; //Index such as images, maps, developers, articles, etc.
+    private String index, postalCode; //Index such as images, maps, developers, articles, etc.
     private double latitude, longitude;
     private boolean disableQuickResults = true;
 

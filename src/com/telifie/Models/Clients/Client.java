@@ -5,7 +5,6 @@ import com.mongodb.client.*;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.UpdateResult;
 import com.telifie.Models.Utilities.Configuration;
-import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import java.util.ArrayList;
 
@@ -28,16 +27,15 @@ public class Client {
         try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
             MongoDatabase database = mongoClient.getDatabase(config.getDomain().getAlt());
             MongoCollection<Document> collection = database.getCollection(this.collection);
-            FindIterable<Document> iter = collection.find(filter);
+            FindIterable<Document> iter = collection.find(filter).limit(500);
             ArrayList<Document> documents = new ArrayList<>();
             for(Document doc : iter){
                 documents.add(doc);
             }
             return documents;
         }catch(MongoException e){
-            System.out.println("Couldn't process MongoDB request :(");
+            return null;
         }
-        return null;
     }
 
     protected Document findOne(Document filter){
@@ -46,10 +44,8 @@ public class Client {
             MongoCollection<Document> collection = database.getCollection(this.collection);
             return collection.find(filter).first();
         }catch(MongoException e){
-            Telifie.console.out.string(e.toString());
-            Telifie.console.out.string("Couldn't process MongoDB request :(");
+            return null;
         }
-        return null;
     }
 
     protected boolean updateOne(Document filter, Document update){
@@ -59,9 +55,8 @@ public class Client {
             UpdateResult result = collection.updateOne(filter, update);
             return result.getModifiedCount() > 0;
         }catch(MongoException e){
-            System.out.println("Couldn't process updateOne MongoDB request :(");
+            return false;
         }
-        return false;
     }
 
     protected boolean updateOne(Document filter, Document update, UpdateOptions options){
@@ -71,9 +66,8 @@ public class Client {
             UpdateResult result = collection.updateOne(filter, update, options);
             return result.getModifiedCount() > 0;
         }catch(MongoException e){
-            System.out.println("Couldn't process updateOne MongoDB request :(");
+            return false;
         }
-        return false;
     }
 
     protected boolean insertOne(Document document){
@@ -83,9 +77,8 @@ public class Client {
             collection.insertOne(document);
             return true;
         }catch(MongoException e){
-            System.out.println("Couldn't process MongoDB request :(");
+            return false;
         }
-        return false;
     }
 
     protected boolean exists(Document filter){
@@ -100,8 +93,7 @@ public class Client {
             collection.deleteOne(filter);
             return true;
         }catch(MongoException e){
-            System.out.println("Couldn't process deleteOne MongoDB request :(");
+            return false;
         }
-        return false;
     }
 }

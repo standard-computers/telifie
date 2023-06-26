@@ -5,10 +5,10 @@ import java.io.Serializable;
 
 public class Theme implements Serializable {
 
-    private String name, font, background, darkBackground, borderColor;
-    private int cornerRadius;
-    private Color color;
-    private boolean alwaysDark = false;
+    private String name;
+    private final String background;
+    private final int cornerRadius;
+    private final Color color;
 
     public Theme(Document document){
         this.name = document.getString("name");
@@ -34,14 +34,16 @@ public class Theme implements Serializable {
                 '}';
     }
 
-    class Color {
+    static class Color {
 
-        private String name, color, light;
-        private boolean alwaysDark = false;
+        private String name;
+        private final String color;
+        private final String light;
+        private final boolean alwaysDark;
 
         public Color(Document document){
             this.name = document.getString("name");
-            this.alwaysDark = (document.getBoolean("always_dark") == null ? false : document.getBoolean("always_dark"));
+            this.alwaysDark = (document.getBoolean("always_dark") != null && document.getBoolean("always_dark"));
             this.color = document.getString("color");
             this.light = document.getString("light");
         }
@@ -52,30 +54,6 @@ public class Theme implements Serializable {
 
         public void setName(String name) {
             this.name = name;
-        }
-
-        public boolean isAlwaysDark() {
-            return alwaysDark;
-        }
-
-        public void setAlwaysDark(boolean alwaysDark) {
-            this.alwaysDark = alwaysDark;
-        }
-
-        public String getColor() {
-            return color;
-        }
-
-        public void setColor(String color) {
-            this.color = color;
-        }
-
-        public String getLight() {
-            return light;
-        }
-
-        public void setLight(String light) {
-            this.light = light;
         }
 
         @Override

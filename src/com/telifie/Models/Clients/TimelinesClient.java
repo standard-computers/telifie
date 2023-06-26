@@ -6,7 +6,6 @@ import com.telifie.Models.Actions.Timeline;
 import com.telifie.Models.Utilities.Configuration;
 import org.bson.Document;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class TimelinesClient extends Client {
@@ -16,8 +15,8 @@ public class TimelinesClient extends Client {
         super.collection = "timelines";
     }
 
-    public boolean addEvents(String object, ArrayList<Event> events){
-        return this.updateOne(
+    public void addEvents(String object, ArrayList<Event> events){
+        this.updateOne(
                 new Document("$and",
                         List.of(
                                 new Document("object", object)
@@ -31,5 +30,4 @@ public class TimelinesClient extends Client {
     public Timeline getTimeline(String objectId) {
         return new Timeline(super.findOne(new Document("object", objectId)));
     }
-
 }

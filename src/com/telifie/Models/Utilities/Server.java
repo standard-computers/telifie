@@ -43,12 +43,12 @@ public class Server {
                     Thread th = new Thread(connection);
                     th.start();
                 } catch (IOException e) {
-                    Telifie.console.out.string("Failed to accept client connection: " + e.getMessage());
+                    System.out.println("Failed to accept client connection: " + e.getMessage());
                     throw new RuntimeException(e);
                 }
             }
         } catch (KeyStoreException e) {
-            Telifie.console.out.error("Failed to ini SSL Server: " + e.getMessage());
+            System.err.println("Failed to ini SSL Server: " + e.getMessage());
             throw new RuntimeException(e);
         } catch (UnrecoverableKeyException | CertificateException | NoSuchAlgorithmException | KeyManagementException | IOException e) {
             throw new RuntimeException(e);

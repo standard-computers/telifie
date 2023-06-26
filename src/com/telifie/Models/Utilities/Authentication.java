@@ -35,13 +35,6 @@ public class Authentication {
         this(user.getId());
     }
 
-    public Authentication(String user, String token, String refreshToken) {
-        this.user = user;
-        this.token = token;
-        this.refreshToken = refreshToken;
-        //TODO Get information from authentication client (origin, expiration)
-    }
-
     public String getUser() {
         return user;
     }
@@ -54,30 +47,16 @@ public class Authentication {
         return refreshToken;
     }
 
-    public int getOrigin() {
-        return origin;
-    }
-
     public int getExpiration() {
         return expiration;
     }
 
-    public void refreshToken(){
-        //TODO Refresh token with database and AuthenticationClient
-    }
-
     public boolean hasToken(String token){
-        if(token.equals(this.token)){
-            return true;
-        }
-        return false;
+        return token.equals(this.token);
     }
 
     public boolean hasRefreshToken(String token){
-        if(token.equals(this.refreshToken)){
-            return true;
-        }
-        return false;
+        return token.equals(this.refreshToken);
     }
 
     @Override

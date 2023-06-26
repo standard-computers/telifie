@@ -20,9 +20,9 @@ public class Article {
     private ArrayList<Image> images = new ArrayList<>();
     private ArrayList<Attribute> attributes = new ArrayList<>();
     private ArrayList<Association> associations = new ArrayList<>();
-    private ArrayList<DataSet> dataSets = new ArrayList<DataSet>();
+    private ArrayList<DataSet> dataSets = new ArrayList<>();
     private Source source;
-    private int origin;
+    private final int origin;
 
     public Article(){
         this.id = UUID.randomUUID().toString();
@@ -31,7 +31,7 @@ public class Article {
 
     public Article(Document document) throws NullPointerException {
         this.id = (document.getString("id") == null ? UUID.randomUUID().toString() : document.getString("id"));
-        this.verified = (document.getBoolean("verified") == null ? false : document.getBoolean("verified"));
+        this.verified = (document.getBoolean("verified") != null && document.getBoolean("verified"));
         this.title = Telifie.tools.strings.escape(document.getString("title"));
         this.link = document.getString("link");
         this.icon = document.getString("icon");
@@ -125,10 +125,6 @@ public class Article {
         this.content = content;
     }
 
-    public void setTags(ArrayList<String> tags) {
-        this.tags = tags;
-    }
-
     public ArrayList<Image> getImages() {
         return images;
     }
@@ -192,7 +188,7 @@ public class Article {
         while (newKeys.hasNext()) {
             String key = newKeys.next();
             if(this.toJson().get(key) instanceof String){
-                if(old.toJson().has(key) && !this.toJson().getString(key.toString()).equals(old.toJson().getString(key.toString()))){ //If the value at key HAS changed
+                if(old.toJson().has(key) && !this.toJson().getString(key).equals(old.toJson().getString(key))){ //If the value at key HAS changed
                     //i.e. {"title", "old_title_value", "new_title_value"}
                     changes.add(
                             new Event(
@@ -229,7 +225,7 @@ public class Article {
         this.priority = priority;
     }
 
-    public class MarkdownEscapeUtils {
+    public static class MarkdownEscapeUtils {
         public static String escapeMarkdownForJson(String markdownText) {
             String escapedText = markdownText.replace("\\", "\\\\");
             escapedText = escapedText.replace("\"", "\\\"");
