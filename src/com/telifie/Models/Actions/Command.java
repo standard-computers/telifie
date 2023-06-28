@@ -14,6 +14,7 @@ import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -101,25 +102,27 @@ public class Command {
                     if(secSelector != null){
                         try{
                             Domain d = domains.withAltId(secSelector);
-                            if(objectSelector.equals("delete")){
-
-                                if (d.getOwner().equals(actingUser)) {
-                                    if (domains.delete(d)) {
-                                        return new Result(200, this.command, "Domain deleted");
+                            switch (objectSelector) {
+                                case "delete" -> {
+                                    if (d.getOwner().equals(actingUser)) {
+                                        if (domains.delete(d)) {
+                                            return new Result(200, this.command, "Domain deleted");
+                                        }
+                                        return new Result(505, this.command, "Failed to delete domain");
                                     }
-                                    return new Result(505, this.command, "Failed to delete domain");
+                                    return new Result(401, this.command, "This is not your domain");
                                 }
-                                return new Result(401, this.command, "This is not your domain");
-                            }else if(objectSelector.equals("id")){
-                                return new Result(this.command, "domain", d);
-                            }else if(objectSelector.equals("update")){ //Updating domain
-
-                                if(content != null){
-                                    if(domains.update(d, content)){ //TODO content check
-                                        return new Result(this.command, "domain", d);
+                                case "id" -> {
+                                    return new Result(this.command, "domain", d);
+                                }
+                                case "update" -> {
+                                    if (content != null) {
+                                        if (domains.update(d, content)) { //TODO content check
+                                            return new Result(this.command, "domain", d);
+                                        }
                                     }
+                                    return new Result(428, this.command, "JSON body expected");
                                 }
-                                return new Result(428, this.command, "JSON body expected");
                             }
                             return new Result(404, this.command, "Bad domains selector");
                         }catch (NullPointerException n){
@@ -134,24 +137,25 @@ public class Command {
 
                             ArrayList<Member> members = new ArrayList<>();
                             content.getList("users", Document.class).forEach(doc -> members.add(new Member(doc)));
-                            if(terSelector.equals("add")){
-
-                                if(domains.addUsers(d, members)){
-                                    return new Result(200, this.command, "Added " + members.size() + " user(s) to domain");
+                            switch (terSelector) {
+                                case "add" -> {
+                                    if (domains.addUsers(d, members)) {
+                                        return new Result(200, this.command, "Added " + members.size() + " user(s) to domain");
+                                    }
+                                    return new Result(505, this.command, "Failed adding " + members.size() + " user(s) to domain");
                                 }
-                                return new Result(505, this.command, "Failed adding " + members.size() + " user(s) to domain");
-                            }else if(terSelector.equals("remove")){
-
-                                if(domains.removeUsers(d, members)){
-                                    return new Result(200, this.command, "Removed " + members.size() + " user(s) from domain");
+                                case "remove" -> {
+                                    if (domains.removeUsers(d, members)) {
+                                        return new Result(200, this.command, "Removed " + members.size() + " user(s) from domain");
+                                    }
+                                    return new Result(505, this.command, "Failed removing " + members.size() + " user(s) from domain");
                                 }
-                                return new Result(505, this.command, "Failed removing " + members.size() + " user(s) from domain");
-                            }else if(terSelector.equals("update")) {
-
-                                if (domains.updateUsers(d, members)) {
-                                    return new Result(200, this.command, "Updated " + members.size() + " user(s) in domain");
+                                case "update" -> {
+                                    if (domains.updateUsers(d, members)) {
+                                        return new Result(200, this.command, "Updated " + members.size() + " user(s) in domain");
+                                    }
+                                    return new Result(505, this.command, "Failed to update user in domain");
                                 }
-                                return new Result(505, this.command, "Failed to update user in domain");
                             }
                             return new Result(428, this.command, "Bad domains users selector");
                         }
@@ -178,81 +182,82 @@ public class Command {
 
                 try {
                     Article a = articles.withId(secSelector);
-                    if(objectSelector.equals("id")){
-
-                        try {
-                            return new Result(this.command, "article", articles.withId(secSelector));
-                        }catch(NullPointerException n){
-                            return new Result(404, this.command, "Article not found");
-                        }
-                    }else if(objectSelector.equals("update")){
-
-                        if(content != null) {
-                            if (content.getString("id") == null) {
-                                content.put("id", secSelector);
+                    switch (objectSelector) {
+                        case "id" -> {
+                            try {
+                                return new Result(this.command, "article", articles.withId(secSelector));
+                            } catch (NullPointerException n) {
+                                return new Result(404, this.command, "Article not found");
                             }
-                            Article updatedArticle = new Article(content);
-                            ArrayList<Event> events = updatedArticle.compare(a);
-                            events.forEach(e -> e.setUser(config.getUser().getId()));
-                            if (articles.update(a, updatedArticle)) {
-                                TimelinesClient timelines = new TimelinesClient(config);
-                                timelines.addEvents(secSelector, events);
-                                return new Result(this.command, "events", events.toString());
-                            }
-                            return new Result(505, this.command, "Failed to update Article");
                         }
-                        return new Result(428, "No new Article JSON data provided");
-                    }else if(objectSelector.equals("delete")){
-
-                            if(articles.delete(articles.withId(secSelector))){
+                        case "update" -> {
+                            if (content != null) {
+                                if (content.getString("id") == null) {
+                                    content.put("id", secSelector);
+                                }
+                                Article updatedArticle = new Article(content);
+                                ArrayList<Event> events = updatedArticle.compare(a);
+                                events.forEach(e -> e.setUser(config.getUser().getId()));
+                                if (articles.update(a, updatedArticle)) {
+                                    TimelinesClient timelines = new TimelinesClient(config);
+                                    timelines.addEvents(secSelector, events);
+                                    return new Result(this.command, "events", events.toString());
+                                }
+                                return new Result(505, this.command, "Failed to update Article");
+                            }
+                            return new Result(428, "No new Article JSON data provided");
+                        }
+                        case "delete" -> {
+                            if (articles.delete(articles.withId(secSelector))) {
                                 return new Result(200, this.command, "");
                             }
                             return new Result(505, this.command, "Failed to delete article");
-                    }else if(objectSelector.equals("duplicate")){
-
-                        if(this.selectors.length > 3){
-                            DomainsClient domains = new DomainsClient(config);
-                            try{
-                                if(articles.duplicate(a, domains.withAltId(terSelector))){
-                                    return new Result(200, this.command, "");
+                        }
+                        case "duplicate" -> {
+                            if (this.selectors.length > 3) {
+                                DomainsClient domains = new DomainsClient(config);
+                                try {
+                                    if (articles.duplicate(a, domains.withAltId(terSelector))) {
+                                        return new Result(200, this.command, "");
+                                    }
+                                    return new Result(505, this.command, "Failed to duplicate article");
+                                } catch (NullPointerException n) {
+                                    return new Result(404, this.command, "Domain not found");
                                 }
-                                return new Result(505, this.command, "Failed to duplicate article");
-                            }catch(NullPointerException n){
-                                return new Result(404, this.command, "Domain not found");
                             }
                         }
-                    }else if(objectSelector.equals("archive")){
-
-                        if(articles.archive(a)){
-                            return new Result(200, this.command, "Article unarchived");
+                        case "archive" -> {
+                            if (articles.archive(a)) {
+                                return new Result(200, this.command, "Article unarchived");
+                            }
+                            return new Result(505, this.command, "Failed to archive article");
                         }
-                        return new Result(505, this.command, "Failed to archive article");
-                    }else if(objectSelector.equals("unarchive")){
-
-                        ArchiveClient archive = new ArchiveClient(config);
-                        if(archive.unarchive(a)){
-                            return new Result(200, this.command, "");
+                        case "unarchive" -> {
+                            ArchiveClient archive = new ArchiveClient(config);
+                            if (archive.unarchive(a)) {
+                                return new Result(200, this.command, "");
+                            }
+                            return new Result(505, this.command, "Failed to unarchive article");
                         }
-                        return new Result(505, this.command, "Failed to unarchive article");
-                    }else if(objectSelector.equals("move")){
-
-                        if(this.selectors.length > 3){
-                            DomainsClient domains = new DomainsClient(config);
-                            try{
-                                if(articles.move(a, domains.withAltId(terSelector))){
-                                    return new Result(200, this.command, "");
+                        case "move" -> {
+                            if (this.selectors.length > 3) {
+                                DomainsClient domains = new DomainsClient(config);
+                                try {
+                                    if (articles.move(a, domains.withAltId(terSelector))) {
+                                        return new Result(200, this.command, "");
+                                    }
+                                    return new Result(505, this.command, "Failed to move article");
+                                } catch (NullPointerException n) {
+                                    return new Result(404, this.command, "Domain not found");
                                 }
-                                return new Result(505, this.command, "Failed to move article");
-                            }catch(NullPointerException n){
-                                return new Result(404, this.command, "Domain not found");
                             }
                         }
-                    }else if(objectSelector.equals("verify")){
-
-                        if(articles.verify(articles.withId(secSelector))){
-                            return new Result(200, this.command, "");
+                        case "verify" -> {
+                            if (articles.verify(articles.withId(secSelector))) {
+                                return new Result(200, this.command, "");
+                            }
+                            return new Result(505, this.command, "Failed to update Article");
                         }
-                        return new Result(505, this.command, "Failed to update Article");
                     }
                     return new Result(404, this.command, "Unknown articles action");
                 }catch (NullPointerException n){
@@ -323,27 +328,28 @@ public class Command {
                 if(secSelector != null) {
                     try {
                         Collection c = collections.get(actingUser, secSelector);
-                        if(objectSelector.equals("update")){
-
-                            if(content != null){
-                                if(content.getString("name") != null && content.getString("name").equals("Pinned")){
-                                    return new Result(304, this.command, "'Pinned' is a reserved Collection name");
+                        switch (objectSelector) {
+                            case "update" -> {
+                                if (content != null) {
+                                    if (content.getString("name") != null && content.getString("name").equals("Pinned")) {
+                                        return new Result(304, this.command, "'Pinned' is a reserved Collection name");
+                                    }
+                                    if (collections.update(c, content)) {
+                                        return new Result(200, this.command, "Collection Update");
+                                    }
+                                    return new Result(505, this.command, "Failed to update Collection");
                                 }
-                                if(collections.update(c, content)){
-                                    return new Result(200, this.command, "Collection Update");
+                                return new Result(428, this.command, "Update content for Collection not provided");
+                            }
+                            case "delete" -> {
+                                if (collections.delete(c)) {
+                                    return new Result(200, this.command, "Collection '" + secSelector + "' deleted");
                                 }
-                                return new Result(505, this.command, "Failed to update Collection");
+                                return new Result(505, this.command, "Failed to delete group '" + secSelector + "'");
                             }
-                            return new Result(428, this.command, "Update content for Collection not provided");
-                        } else if(objectSelector.equals("delete")){
-
-                            if(collections.delete(c)){
-                                return new Result(200, this.command, "Collection '" + secSelector + "' deleted");
+                            case "id" -> {
+                                return new Result(this.command, "collection", c);
                             }
-                            return new Result(505, this.command, "Failed to delete group '" + secSelector + "'");
-                        } else if(objectSelector.equals("id")){
-
-                            return new Result(this.command, "collection", c);
                         }
                         return new Result(404, this.command, "Invalid collections command");
 
@@ -437,71 +443,76 @@ public class Command {
             if(content != null){
                 String mode = content.getString("mode");
                 if(mode != null){
-                    if(mode.equals("batch")){
-
-                        String uri = content.getString("uri");
-                        double priority = (content.getDouble("priority") == null ? 1.01 : content.getDouble("priority"));
-                        ArrayList<Article> extractedArticles = Parser.engines.batch(uri, priority);
-                        if(extractedArticles != null){
-                            if(content.getBoolean("insert") != null && content.getBoolean("insert")){
-                                extractedArticles.forEach(article -> articles.create(article));
+                    switch (mode) {
+                        case "batch" -> {
+                            String uri = content.getString("uri");
+                            double priority = (content.getDouble("priority") == null ? 1.01 : content.getDouble("priority"));
+                            ArrayList<Article> extractedArticles = Parser.engines.batch(uri, priority);
+                            if (extractedArticles != null) {
+                                if (content.getBoolean("insert") != null && content.getBoolean("insert")) {
+                                    extractedArticles.forEach(articles::create);
+                                }
+                                return new Result(this.command, "articles", extractedArticles);
                             }
-                            return new Result(this.command, "articles", extractedArticles);
+                            return new Result(404, this.command, "No articles from batch upload");
                         }
-                        return new Result(404, this.command, "No articles from batch upload");
-
-                    }else if(mode.equals("yelp")){
-                        String[] zips = content.getString("zips").split(",");
-                        ArrayList<Article> yelps = null;
-                        try {
-                            yelps = Parser.connectors.yelp(zips, config);
-                        } catch (UnsupportedEncodingException e) {
-                            return new Result(505, this.command, "Failed to Yelp");
+                        case "yelp" -> {
+                            String[] zips = content.getString("zips").split(",");
+                            ArrayList<Article> yelps;
+                            try {
+                                yelps = Parser.connectors.yelp(zips, config);
+                            } catch (UnsupportedEncodingException e) {
+                                return new Result(505, this.command, "Failed to Yelp");
+                            }
+                            return new Result(this.command, "articles", yelps);
                         }
-                        return new Result(this.command, "articles", yelps);
+                        case "uri" -> {
 
-                    }else if(mode.equals("uri")){
+                            String url = content.getString("uri");
+                            if (url != null && !url.equals("")) {
+                                Parser parser = new Parser();
+                                Article parsed = Parser.engines.parse(url);
+                                if (parser.getTraversable().size() > 1) {
+                                    return new Result(this.command, "articles", parser.getTraversable());
+                                }
+                                if (content.getBoolean("insert") != null && content.getBoolean("insert")) {
+                                    if (parsed != null) {
+                                        articles.create(parsed);
+                                    }
+                                }
+                                return new Result(this.command, "article", parsed);
+                            }
+                            return new Result(428, this.command, "URI is required");
+                        }
+                        case "crawl" -> {
 
-                        String url = content.getString("uri");
-                        if(url != null && !url.equals("")){
-                            Parser parser = new Parser();
-                            Article parsed = Parser.engines.parse(url);
-                            if(parser.getTraversable().size() > 1){
+                            String url = content.getString("uri");
+                            if (url != null && !url.equals("")) {
+                                Parser parser = new Parser();
+                                parser.purge();
+                                int limit = (content.getInteger("limit") == null ? Integer.MAX_VALUE : content.getInteger("limit"));
+                                Parser.engines.crawl(url, limit);
+                                if (content.getBoolean("insert") != null && content.getBoolean("insert")) {
+                                    parser.getTraversable().forEach(articles::create);
+                                }
                                 return new Result(this.command, "articles", parser.getTraversable());
                             }
-                            if(content.getBoolean("insert") != null && content.getBoolean("insert")) {
-                                articles.create(parsed);
-                            }
-                            return new Result(this.command, "article", parsed);
+                            return new Result(428, this.command, "URI is required");
                         }
-                        return new Result(428, this.command, "URI is required to parse in URI mode");
-                    }else if(mode.equals("crawl")){
-
-                        String url = content.getString("uri");
-                        if(url != null && !url.equals("")){
-                            Parser parser = new Parser();
-                            parser.purge();
-                            int limit = (content.getInteger("limit") == null ? Integer.MAX_VALUE : content.getInteger("limit"));
-                            Parser.engines.crawl(url, limit);
-                            if(content.getBoolean("insert") != null && content.getBoolean("insert")) {
-                                parser.getTraversable().forEach(article -> articles.create(article));
-                            }
-                            return new Result(this.command, "articles", parser.getTraversable());
+                        case "text" -> {
+                            String text = content.getString("text");
+                            List<Andromeda.unit> tokens = Andromeda.encoder.tokenize(text, false);
                         }
-                        return new Result(428, this.command, "URI is required to parse in URI mode");
-                    }else if(mode.equals("text")){
-                        String text = content.getString("text");
-                        List<Andromeda.unit> tokens = Andromeda.encoder.tokenize(text, false);
-                    }else if(mode.equals("edit")){
-                        ArrayList<String> ids = new ArrayList<>();
-                        System.out.println("Working lis");
-                        articles.getIds().forEach(a -> ids.add(new Article(a).getId()));
-                        return new Result(this.command, "ids", ids);
+                        case "edit" -> {
+                            ArrayList<String> ids = new ArrayList<>();
+                            articles.getIds().forEach(a -> ids.add(new Article(a).getId())); //TODO refine all this
+                            return new Result(this.command, "ids", "" + ids + "");
+                        }
                     }
                 }
-                return new Result(428, this.command, "Please select a parser mode");
+                return new Result(428, this.command, "Select parser mode");
             }
-            return new Result(428, this.command, "JSON http request body expected");
+            return new Result(428, this.command, "JSON request body expected");
         }
         /*
          * Authenticate an app for backend use to facilitate user authentication
@@ -578,18 +589,9 @@ public class Command {
                 if(timeline != null){
                     return new Result(this.command, "timeline", timeline);
                 }
-                return new Result(404, this.command, "No timeline found for " + objectSelector + "");
+                return new Result(404, this.command, "No timeline found for " + objectSelector);
             }
             return new Result(428, this.command, "Please provide object ID to get timeline");
-
-        }else if(primarySelector.equals("messaging")){
-
-            //TODO sending/receiving messages
-
-        }else if(primarySelector.equals("netstat")){
-
-            //TODO diagnostics, logging, system stats, etc.
-            return new Result(this.command, "netstat", "ok");
 
         }else if(primarySelector.equals("connectors")){
 
@@ -601,7 +603,7 @@ public class Command {
                     connector.setUser(actingUser);
                     boolean connectorUsed = connectors.exists(connector);
                     if(connector.getId().equals("com.telifie.connectors.spotify")){
-                        Spotify spotify = null;
+                        Spotify spotify;
                         try {
                             spotify = new Spotify(connector);
                             if(!connectorUsed){ //User hasn't used this connector before
@@ -629,7 +631,7 @@ public class Command {
                 if(connector != null){
                     return new Result(this.command, "connector", connector);
                 }
-                return new Result(404, this.command, "No connector found for " + objectSelector + "");
+                return new Result(404, this.command, "No connector found for " + objectSelector);
             }
             return new Result(428, this.command, "Please provide connector name to get");
         }

@@ -76,7 +76,6 @@ public class Http {
                     if (authenticationClient.isAuthenticated(auth)) {
                         String body = null;
                         if (request instanceof HttpEntityEnclosingRequest) {
-
                             HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
                             body = EntityUtils.toString(entity);
                         }
@@ -85,7 +84,7 @@ public class Http {
                         requestConfiguration.setUser(users.getUserWithId(auth.getUser())); //Set Configuration User as requesting user
                         result = processRequest(requestConfiguration, method, query, body);
                     } else {
-                        result = new Result(403, "Invalid Auth Credentials");
+                        result = new Result(403, "Invalid Credentials");
                     }
                 }
                 response.setStatusCode(result.getStatusCode());
@@ -103,7 +102,6 @@ public class Http {
                 connection.bind(socket);
                 httpService.handleRequest(connection, new BasicHttpContext());
             } catch (IOException e) {
-                System.out.println("Failed to process client request: " + e.getMessage());
                 throw new RuntimeException(e);
             } catch (HttpException e) {
                 throw new RuntimeException(e);

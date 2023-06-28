@@ -174,7 +174,6 @@ public class Parser {
                     } catch (IOException | CsvException e) {
                         e.printStackTrace();
                     }
-
                     ArrayList<Article> articles = new ArrayList<>();
                     String[] headers = lines.get(0);
                     int titleIndex = 0, descriptionIndex = 0, iconIndex = 0, linkIndex = 0, contentIndex = 0;

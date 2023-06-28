@@ -3,6 +3,7 @@ package com.telifie.Models.Utilities;
 import com.telifie.Models.Article;
 import com.telifie.Models.Articles.Attribute;
 import com.telifie.Models.Articles.Image;
+import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -55,9 +56,11 @@ public class Webpage {
             String srcset = Telifie.tools.detector.fixLink(url, image.attr("srcset"));
             if(!src.equals("") && !src.equals("null") && Telifie.tools.detector.getType(src).equals("image") && !image.attr("src").trim().toLowerCase().startsWith("data:")){
 
-                String caption = Telifie.tools.strings.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
-                Image img = new Image(src, caption, url);
-                article.addImage(img);
+                String caption = Telifie.tools.strings.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;").trim());
+                if(!caption.equals("Page semi-protected") && !caption.equals("Wikimedia Foundation") && !caption.equals("Powered by MediaWiki") && !caption.equals("Edit this at Wikidata") && !caption.equals("This is a good article. Click here for more information.")){
+                    Image img = new Image(src, caption, url);
+                    article.addImage(img);
+                }
             }else if(!srcset.equals("") && !srcset.startsWith("data:")){
 
                 String caption =  Telifie.tools.strings.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
@@ -86,21 +89,23 @@ public class Webpage {
                     article.addAttribute(attr);
                 }
             }
-            // Convert <p> elements to newlines in Markdown
             StringBuilder markdown = new StringBuilder();
-            Elements paragraphs = body.select("p, h2"); // Select both paragraphs (p) and H2 headers (h2)
+            Elements paragraphs = body.select("p, h2, h3"); // Select both paragraphs (p) and H2 headers (h2)
             for (Element element : paragraphs) {
                 if (element.tagName().equalsIgnoreCase("p")) {
-                    String text = element.text().trim();
+                    String text = StringEscapeUtils.escapeHtml4(element.text().replaceAll("\\s+", " ").trim());
                     if(!text.equals("")){
-                        markdown.append(text).append("\\n\\n");
+                        markdown.append("  \n").append(text).append("  \n");
                     }
                 } else if (element.tagName().equalsIgnoreCase("h2")) {
-                    String headerText = element.text().trim();
-                    markdown.append("### ").append(headerText).append("\\n\\n"); // Append H2 headers as ## Header Text
+                    String headerText = Telifie.tools.strings.escape(element.text().trim());
+                    markdown.append("### ").append(headerText).append("  \n");
+                } else if (element.tagName().equalsIgnoreCase("h3")) {
+                    String headerText = Telifie.tools.strings.escape(element.text().trim());
+                    markdown.append("##### ").append(headerText).append("  \n");
                 }
             }
-            String md = Telifie.tools.strings.htmlEscape(markdown.toString().replaceAll("\\s+", " ").replaceAll("\\[.*?]", "").trim());
+            String md = StringEscapeUtils.escapeJson(markdown.toString().replaceAll("\\[.*?]", "").trim());
             article.setContent(md);
         }
         return article;
