@@ -61,34 +61,11 @@ public class Search {
 
     private static ArrayList executeQuery(Configuration config, String query, Parameters params){
 
-        Andromeda.unit tokenized = Andromeda.encoder.tokenize(query, true).get(0);
-        Document gf = general(query);
         ArticlesClient articles = new ArticlesClient(config);
-        ArrayList<Article> results;
-        if(gf != null){ //When specific command is entered, use specific query
-            results = articles.search(config, params, gf);
-        }else{ //General queries, search through most parameters
-            ArrayList<Bson> filters = new ArrayList<>();
-            Bson[] titleFilters = {
-                    Filters.regex("title", pattern(Andromeda.encoder.clean(query))),
-                    Filters.regex("title", pattern(query))
-            };
-            filters.add(Filters.or(titleFilters));
-            for (String token : tokenized.tokens()) {
-                filters.add(Filters.regex("link", pattern(token)));
-            }
-            filters.add(Filters.in("tags", tokenized.tokens()));
-//            filters.add(Filters.regex("content", pattern(query)));
-            filters.add(Filters.regex("attributes.key", pattern(query)));
-            filters.add(Filters.regex("attributes.value", pattern(query)));
-
-            Document searchFilter = new Document("$or", filters);
-            results = articles.search(config, params, searchFilter);
-
-            if(results != null && results.size() > 3){ //Sort if there is more than three results
-                Collections.sort(results, new RelevanceComparator(query));
-                Collections.reverse(results);
-            }
+        ArrayList<Article> results = articles.search(config, params, filter(query));
+        if(results != null && results.size() > 3){
+            Collections.sort(results, new RelevanceComparator(query));
+            Collections.reverse(results);
         }
         return results;
     }
@@ -98,7 +75,7 @@ public class Search {
      * Returns Document used for .find in for MongoCollection
      * @return Document
      */
-    private static Document general(String query){
+    private static Document filter(String query){
 
         if(query.matches("^id\\s*:\\s*.*")){ //Return articles with id
 
@@ -164,7 +141,17 @@ public class Search {
                     new Document("attribute.value", query) //adjust, format query input
             ));
         }
-        return null;
+        Andromeda.unit tokenized = Andromeda.encoder.tokenize(query, true).get(0);
+        ArrayList<Bson> filters = new ArrayList<>();
+        Bson[] titleFilters = {
+                Filters.regex("title", pattern(Andromeda.encoder.clean(query))),
+                Filters.regex("title", pattern(query))
+        };
+        filters.add(Filters.or(titleFilters));
+        filters.add(Filters.regex("link", pattern(query)));
+        filters.add(Filters.in("tags", tokenized.tokens()));
+        filters.add(Filters.regex("attributes.value", pattern(query)));
+        return new Document("$or", filters);
     }
 
     private static Pattern wholeWord(String value){

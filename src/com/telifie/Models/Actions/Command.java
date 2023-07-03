@@ -491,10 +491,7 @@ public class Command {
                                 Parser parser = new Parser();
                                 parser.purge();
                                 int limit = (content.getInteger("limit") == null ? Integer.MAX_VALUE : content.getInteger("limit"));
-                                Parser.engines.crawl(url, limit);
-                                if (content.getBoolean("insert") != null && content.getBoolean("insert")) {
-                                    parser.getTraversable().forEach(articles::create);
-                                }
+                                Parser.engines.crawl(config, url, limit);
                                 return new Result(this.command, "articles", parser.getTraversable());
                             }
                             return new Result(428, this.command, "URI is required");

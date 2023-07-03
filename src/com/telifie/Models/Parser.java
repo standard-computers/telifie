@@ -32,6 +32,7 @@ public class Parser {
     private static final ArrayList<Article> traversable = new ArrayList<>();
     private static final ArrayList<String> parsed = new ArrayList<>();
     private static int MAX_DEPTH = 0;
+    private static ArticlesClient articles;
 
     public static class engines {
 
@@ -55,7 +56,8 @@ public class Parser {
             return null;
         }
 
-        public static Article crawl(String uri, int limit){
+        public static Article crawl(Configuration config, String uri, int limit){
+            articles = new ArticlesClient(config);
             traversable.removeAll(traversable);
             Parser.uri = uri;
             try {
@@ -73,6 +75,9 @@ public class Parser {
                     Document root = response.parse();
                     Article article = Webpage.extract(url, root);
                     Parser.traversable.add(article);
+                    if(article != null && articles.create(article)){
+                        System.out.println("Created article " + article.getTitle());
+                    }
                     ArrayList<Element> links = root.getElementsByTag("a");
                     for(Element link : links){
                         String href = Telifie.tools.detector.fixLink("https://" + new URL(url).getHost(), link.attr("href").split("\\?")[0]);
@@ -176,9 +181,9 @@ public class Parser {
                     }
                     ArrayList<Article> articles = new ArrayList<>();
                     String[] headers = lines.get(0);
-                    int titleIndex = 0, descriptionIndex = 0, iconIndex = 0, linkIndex = 0, contentIndex = 0;
+                    int titleIndex = -1, descriptionIndex = -1, iconIndex = -1, linkIndex = -1, contentIndex = -1;
                     for (int i = 0; i < headers.length; i++) {
-                        String hV = lines.get(0)[i].toLowerCase().trim();
+                        String hV = headers[i].trim().toLowerCase();
                         switch (hV) {
                             case "title" -> titleIndex = i;
                             case "description" -> descriptionIndex = i;
@@ -188,30 +193,27 @@ public class Parser {
                         }
                     }
                     String batchId = Telifie.tools.make.shortEid().toLowerCase();
-                    int total = lines.size() - 1;
-                    for (int i = 1; i < lines.size() - 1; i++) {
-                        System.out.println("Parsing article " + i + " of " + total);
+                    for (int i = 1; i < lines.size(); i++) {
                         String[] articleData = lines.get(i);
                         Article article = new Article();
                         article.setPriority(withPriority);
                         article.addAttribute(new Attribute("*batch", batchId));
-                        for (int g = 0; g < articleData.length - 1; g++) {
+                        for (int g = 0; g < articleData.length; g++) {
                             String value = articleData[g];
-                            if (g == titleIndex) {
+                            if (g == titleIndex && titleIndex > -1) {
                                 article.setTitle(value);
-                            } else if (g == descriptionIndex) {
+                            } else if (g == descriptionIndex && descriptionIndex > -1) {
                                 article.setDescription(value);
-                            } else if (g == linkIndex) {
+                            } else if (g == linkIndex && linkIndex > -1) {
                                 article.setLink(value);
-                            } else if (g == contentIndex) {
+                            } else if (g == contentIndex && contentIndex > -1) {
                                 article.setContent(value);
-                            } else if(g == iconIndex){
+                            } else if(g == iconIndex && iconIndex > -1){
                                 article.setIcon(value);
                             } else { //Not specified value
-
                                 //TODO Do special stuff with attributes
                                 if(!value.trim().equals("")){
-                                    article.addAttribute(new Attribute(headers[g], value));
+                                    article.addAttribute(new Attribute(headers[g].trim(), value));
                                 }
                             }
                         }
