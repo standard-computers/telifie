@@ -10,9 +10,9 @@ import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Parameters;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -62,7 +62,7 @@ public class Search {
     private static ArrayList executeQuery(Configuration config, String query, Parameters params){
 
         ArticlesClient articles = new ArticlesClient(config);
-        ArrayList<Article> results = articles.search(config, params, filter(query));
+        ArrayList<Article> results = articles.search(config, params, filter(query, params));
         if(results != null && results.size() > 3){
             Collections.sort(results, new RelevanceComparator(query));
             Collections.reverse(results);
@@ -75,7 +75,7 @@ public class Search {
      * Returns Document used for .find in for MongoCollection
      * @return Document
      */
-    private static Document filter(String query){
+    private static Document filter(String query, Parameters params){
 
         if(query.matches("^id\\s*:\\s*.*")){ //Return articles with id
 
@@ -87,7 +87,7 @@ public class Search {
 
             String[] spl = query.split(":");
             if(spl.length >= 2) {
-                return new Document("description", ignoreCase(spl[1].trim()));
+                return new Document("description", pattern(spl[1].trim()));
             }
         }else if(query.matches("^title\\s*:\\s*.*")){ //Search only with title
 
@@ -100,35 +100,45 @@ public class Search {
             String[] spl = query.split(":");
             if(spl.length >= 2){
                 String[] spl2 = spl[1].split("=");
-                if(spl2.length < 2){
-                    String key = spl2[0].trim();
+                String key = spl2[0].trim().toLowerCase();
+                if(spl2.length >= 2){
                     if(spl2.length >= 2){
-                        String value = spl2[1].trim();
+                        String value = spl2[1].trim().toLowerCase();
                         return new Document("$and", Arrays.asList(
-                                new Document("attributes.key", pattern(key)),
+                                new Document("attributes.key", wholeWord(key)),
                                 new Document("attributes.value", pattern(value))
                         ));
                     }
-                    return new Document("attributes.key", pattern(key));
                 }
+                return new Document("attributes.key", wholeWord(key));
             }
-        }else if(query.matches("^define\\s*.*")) { //If defining a term
-            Pattern term = wholeWord(query.replaceFirst("define", "").trim());
+        }else if(query.matches("^define\\s*.*")) {
+
+            String term = query.replaceFirst("define", "").trim();
             return new Document("$and", Arrays.asList(
                     new Document("description", "Definition"),
-                    new Document("title", term)
+                    new Document("title", pattern(term))
             ));
-        }else if(query.matches("(?i)\\bhttps?://\\S+\\b")){ //If link
+        }else if(query.matches("(?i)\\bhttps?://\\S+\\b")){
+
             return new Document("link", new Document("$in", Arrays.asList(pattern(query), pattern(query))));
         }else if(query.matches("^(\\d+)\\s+([A-Za-z\\s]+),\\s+([A-Za-z\\s]+),\\s+([A-Za-z]{2})\\s+(\\d{5})$")){
+
             return new Document("$and", Arrays.asList(
                     new Document("attribute.key", "Address"),
                     new Document("attribute.value", pattern(query))
             ));
         }else if(query.matches("^\\+\\d{1,3}\\s*\\(\\d{1,3}\\)\\s*\\d{3}-\\d{4}$")){
+
             return new Document("$and", Arrays.asList(
                     new Document("attribute.key", "Phone"),
                     new Document("attribute.value", query) //adjust, format query input
+            ));
+        }else if (query.matches("^\\w+@\\w+\\.[a-zA-Z]{2,3}$")) {
+
+            return new Document("$and", Arrays.asList(
+                    new Document("attribute.key", "Email"),
+                    new Document("attribute.value", query.toLowerCase()) //adjust, format query input
             ));
         }else if(query.matches("\\b(\\d{4}-\\d{2}-\\d{2}|\\d{2}/\\d{2}/\\d{4}|\\d{2}-[a-zA-Z]{3}-\\d{4}|[a-zA-Z]+ \\d{1,2}, \\d{4})\\b")){
             return new Document("$and", Arrays.asList(
@@ -139,6 +149,25 @@ public class Search {
                             ignoreCase("started")
                     ))),
                     new Document("attribute.value", query) //adjust, format query input
+            ));
+        }else if(query.matches("^(.+)\\s+near me$")){
+
+            String q = query.replace("near me", "").trim();
+            return new Document("$and", Arrays.asList(
+                    new Document("$or", Arrays.asList(
+                            new Document("tags", pattern(q)),
+                            new Document("description", pattern(q)),
+                            new Document("title", pattern(q))
+                    )),
+                    new Document("location", new Document("$near",
+                            new Document("$geometry", new Document("type", "Point")
+                                    .append("coordinates", Arrays.asList(
+                                            params.getLongitude(),
+                                            params.getLatitude()
+                                    ))
+                            ).append("$maxDistance", 16000)
+                    )
+                )
             ));
         }
         Andromeda.unit tokenized = Andromeda.encoder.tokenize(query, true).get(0);

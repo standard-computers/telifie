@@ -1,8 +1,16 @@
 package com.telifie;
 
+import com.mongodb.client.*;
+import com.mongodb.client.model.Updates;
+import com.mongodb.client.model.geojson.Point;
+import com.mongodb.client.model.geojson.Position;
 import com.telifie.Models.*;
 import com.telifie.Models.Utilities.*;
+import org.bson.Document;
+import org.bson.conversions.Bson;
+
 import java.io.File;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -58,6 +66,36 @@ public class Start {
                         System.err.println("Failed to start Andromeda...");
                         e.printStackTrace();
                     }
+                }
+                case "--geocode" -> {
+                    checkConfig();
+
+                    MongoClient mongoClient = MongoClients.create(config.getDomain().getUri());
+                    MongoDatabase database = mongoClient.getDatabase("telifie");
+                    MongoCollection<Document> collection = database.getCollection("articles");
+                    FindIterable<Document> doc = collection.find(new Document("$and", Arrays.asList(
+                            new Document("attributes.key", "Longitude"),
+                            new Document("attributes.key", "Latitude"),
+                            new Document("location", new Document("$exists", false))
+                    )));
+                    for(Document d : doc){
+                        if (d != null) {
+                            Article a = new Article(d);
+                            String longitude = a.getAttribute("Longitude");
+                            String latitude = a.getAttribute("Latitude");
+                            if(longitude != null && latitude != null && !longitude.equals("null") && !latitude.equals("null")){
+
+                                double longitudeValue = Double.parseDouble(longitude);
+                                double latitudeValue = Double.parseDouble(latitude);
+                                Position position = new Position(longitudeValue, latitudeValue);
+                                Point point = new Point(position);
+                                Bson update = Updates.set("location", point);
+                                collection.updateOne(new Document("id", a.getId()), update);
+                                System.out.println(a.getTitle());
+                            }
+                        }
+                    }
+                    mongoClient.close();
                 }
             }
         }

@@ -8,7 +8,7 @@ public class Parameters {
     private int pages; // How many pages of search results
     private int page; //Current page of the search results
     private String index, postalCode; //Index such as images, maps, developers, articles, etc.
-    private double latitude, longitude;
+    private double latitude = 39.103699, longitude = -84.513611;
     private boolean disableQuickResults = true;
 
     public Parameters(Document document) throws NullPointerException {
@@ -17,8 +17,8 @@ public class Parameters {
         this.page = (document.getInteger("page") == null ? 0 : document.getInteger("page"));
         this.index = (document.getString("index") == null ? "articles" : document.getString("index"));
         this.postalCode = (document.getString("postal_code") == null ? "" : document.getString("postal_code"));
-        this.latitude = (document.getDouble("latitude") == null ? 0.0 : document.getDouble("latitude"));
-        this.longitude = (document.getDouble("longitude") == null ? 0.0 : document.getDouble("longitude"));
+        this.latitude = (document.getDouble("latitude") == null ? 39.103699 : document.getDouble("latitude"));
+        this.longitude = (document.getDouble("longitude") == null ? -84.513611 : document.getDouble("longitude"));
         this.disableQuickResults = (document.getBoolean("disable_quick_results") == null ? false : document.getBoolean("disable_quick_results"));
     }
 

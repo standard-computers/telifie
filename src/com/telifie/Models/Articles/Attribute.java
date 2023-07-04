@@ -16,6 +16,10 @@ public class Attribute {
         return this.key;
     }
 
+    public String getValue() {
+        return value;
+    }
+
     @Override
     public String toString() {
         return "{\"key\" : \"" + key + "\", \"value\" : \"" + value + "\"}";

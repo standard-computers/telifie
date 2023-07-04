@@ -146,6 +146,15 @@ public class Article {
         return false;
     }
 
+    public String getAttribute(String key){
+        for(Attribute attr : this.attributes){
+            if(attr.getKey().toLowerCase().trim().equals(key.toLowerCase())){
+                return attr.getValue();
+            }
+        }
+        return null;
+    }
+
     public void addAssociation(Association ass){
         this.associations.add(ass);
     }
