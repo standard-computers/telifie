@@ -5,6 +5,11 @@ import com.telifie.Models.Clients.Client;
 import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
+import org.languagetool.JLanguageTool;
+import org.languagetool.Language;
+import org.languagetool.language.AmericanEnglish;
+import org.languagetool.rules.RuleMatch;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
@@ -55,7 +60,6 @@ public class Andromeda extends Client{
                     });
                 }
                 processedCount++;
-                System.out.println("Indexed (" + processedCount + " / " + totalCount + ")");
             }
             cursor.close();
         }catch (Exception e){
@@ -120,9 +124,28 @@ public class Andromeda extends Client{
     public static class unit {
 
         private final String[] tokens;
+        private final String text;
 
         public unit(String unit) {
+            this.text = unit;
             this.tokens = Arrays.stream(unit.split("\\s+")).filter(token -> !token.isEmpty()).toArray(String[]::new);
+        }
+
+        public static String correct(String text) {
+            Language language = new AmericanEnglish();
+            JLanguageTool langTool = new JLanguageTool(language);
+            List<RuleMatch> matches;
+            try {
+                matches = langTool.check(text);
+                for (int i = matches.size() - 1; i >= 0; i--) {
+                    RuleMatch match = matches.get(i);
+                    String replacement = match.getSuggestedReplacements().get(0);
+                    text = text.substring(0, match.getFromPos()) + replacement + text.substring(match.getToPos());
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return text;
         }
 
         public String[] tokens() {

@@ -1,18 +1,8 @@
 package com.telifie.Models;
 
 import com.telifie.Models.Utilities.*;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
 import org.bson.Document;
-import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 public class User implements Serializable {
@@ -95,49 +85,6 @@ public class User implements Serializable {
             return true;
         }
         return false;
-    }
-
-    public boolean requestAuthenticationCode(){
-        //TODO move to DB connection
-        Network get2fa = new Network();
-        List<NameValuePair> data = new ArrayList<>();
-        data.add(new BasicNameValuePair("email", this.getEmail()));
-        data.add(new BasicNameValuePair("app_id", "main.java.telifie.User.requestAuthenticationCode"));
-        data.add(new BasicNameValuePair("auth_token", "an9f7moqw8fhx387fhcwomr"));
-        get2fa.post("http://telifie.net/connect", data);
-        if(get2fa.getStatusCode() == 200){
-            return true;
-        }else{
-            return false;
-        }
-    }
-
-    public boolean verify(String attempt){
-        Network get2fa = new Network();
-        List<NameValuePair> data = new ArrayList<>();
-        data.add(new BasicNameValuePair("email", this.getEmail()));
-        data.add(new BasicNameValuePair("attempt", attempt));
-        data.add(new BasicNameValuePair("auth_token", "asdukhflaisuhdfpas9d8fy"));
-        data.add(new BasicNameValuePair("app_id", "main.java.telifie.Start.install"));
-        CloseableHttpResponse response = get2fa.post("http://telifie.net/verify", data);
-        if(get2fa.getStatusCode() == 200){
-            String jsonResponse = null;
-            try {
-                jsonResponse = EntityUtils.toString(response.getEntity());
-                Gson gson = new Gson();
-                JsonElement element = gson.fromJson(jsonResponse, JsonElement.class);
-                JsonObject jsonObject = element.getAsJsonObject();
-                this.id = jsonObject.get("id").getAsString();
-                this.name = jsonObject.get("name").getAsString();
-                this.phone = jsonObject.get("phone").getAsString();
-
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            return true;
-        }else{
-            return false;
-        }
     }
 
     @Override

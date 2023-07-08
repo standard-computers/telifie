@@ -114,18 +114,11 @@ public class Parser {
                     ArrayList<String> links = Telifie.tools.make.extractLinks(root.getElementsByTag("a"), uri);
                     if(links.size() > 0){
 
-                        Association pages = new Association("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/images/associations/pages.png", "Pages");
                         for(String link : links){
 
                             boolean isNotParsed = !isParsed(link);
                             if(isNotParsed) {
                                 Article child = website(link, depth + 1);
-                                if (child != null) { //Then should be making an association
-                                    String referenceString = child.getTitle();
-                                    Child child_association = new Child(child.getId(), child.getIcon(), referenceString, "Page");
-                                    child_association.setId(child.getId());
-                                    pages.addArticle(child_association);
-                                }
                             }else{
                                 if(Telifie.tools.strings.containsAnyOf(new String[]{"facebook", "instagram", "spotify", "linkedin", "youtube"}, link)){
 
@@ -140,9 +133,6 @@ public class Parser {
                                 }
                             } //Not link that belongs to parent
                         } //End for loop
-                        if(pages.size() >= 1){
-                            article.addAssociation(pages);
-                        }
                     } //End if links > 0
                     if(article.getLink().contains(new URL(uri).getHost())) {
                         Parser.traversable.add(article);
@@ -165,7 +155,6 @@ public class Parser {
         public static ArrayList<Article> batch(String uri, Double withPriority){
 
             if(uri.endsWith("csv")) {
-
                 try {
                     URL url = new URL(uri);
                     InputStream inputStream = url.openStream();
@@ -210,8 +199,7 @@ public class Parser {
                                 article.setContent(value);
                             } else if(g == iconIndex && iconIndex > -1){
                                 article.setIcon(value);
-                            } else { //Not specified value
-                                //TODO Do special stuff with attributes
+                            } else {
                                 if(!value.trim().equals("")){
                                     article.addAttribute(new Attribute(headers[g].trim(), value));
                                 }
@@ -223,7 +211,6 @@ public class Parser {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
             }
             return null;
         }
@@ -290,9 +277,6 @@ public class Parser {
         }
     }
 
-    /**
-     * Parser.connectors is for parsing content from connectors
-     */
     public static class connectors {
 
         public static ArrayList<Article> yelp(String[] zips, Configuration config) throws UnsupportedEncodingException {
@@ -300,7 +284,6 @@ public class Parser {
             ArrayList<Article> articles = new ArrayList<>();
             String batchId = Telifie.tools.make.shortEid();
             String API_KEY = "IyhStCFRvjRbjE51NyND1w4JyKIiZ-3r4Qf1g-DquKCgi8bNJcqK0-EjNoxCen1y0H57JJxmteYzpj8uZ78LLAlMn3Ea0S8bjioBm_5CMYK-TnHwzQ0jC0UN-0tHZHYx";
-            int total_count = 0, saved = 0;
             for(String zip : zips){
                 String url = "https://api.yelp.com/v3/businesses/search?sort_by=best_match&limit=50&location=" + URLEncoder.encode(zip, StandardCharsets.UTF_8);
                 HttpGet httpGet = new HttpGet(url);
@@ -309,10 +292,7 @@ public class Parser {
                     ObjectMapper objectMapper = new ObjectMapper();
                     JsonNode rootNode = objectMapper.readTree(httpResponse.getEntity().getContent());
                     JsonNode businessesNode = rootNode.path("businesses");
-                    int i = 0;
-                    total_count += businessesNode.size();
                     for (JsonNode businessNode : businessesNode) {
-                        i++;
                         Article article = new Article();
                         article.setPriority(0.78);
                         article.setId(Telifie.tools.make.md5(businessNode.path("id").asText()));
@@ -366,7 +346,6 @@ public class Parser {
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
-                            saved += 1;
                             articlesClient.create(article);
                             articles.add(article);
                         }
@@ -377,7 +356,6 @@ public class Parser {
                     throw new RuntimeException(e);
                 }
             }
-            Telifie.console.out.line();
             return articles;
         }
     }

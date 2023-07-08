@@ -14,11 +14,9 @@ public class Crypter {
         Key secretKey = new SecretKeySpec(key.getBytes(), "AES");
         Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
         cipher.init(Cipher.ENCRYPT_MODE, secretKey);
-
         try (FileInputStream fis = new FileInputStream(fileIn);
              FileOutputStream fos = new FileOutputStream(fileOut);
              CipherOutputStream cos = new CipherOutputStream(fos, cipher)) {
-
             byte[] block = new byte[8];
             int i;
             while ((i = fis.read(block)) != -1) {
@@ -31,11 +29,9 @@ public class Crypter {
         Key secretKey = new SecretKeySpec(key.getBytes(), "AES");
         var cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
         cipher.init(Cipher.DECRYPT_MODE, secretKey);
-
         try (FileInputStream fis = new FileInputStream(fileIn);
              CipherInputStream cis = new CipherInputStream(fis, cipher);
              FileOutputStream fos = new FileOutputStream(fileOut)) {
-
             byte[] block = new byte[8];
             int i;
             while ((i = cis.read(block)) != -1) {
@@ -43,5 +39,4 @@ public class Crypter {
             }
         }
     }
-
 }

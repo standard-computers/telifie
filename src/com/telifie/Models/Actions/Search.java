@@ -12,7 +12,6 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.text.DecimalFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -21,6 +20,27 @@ public class Search {
     public static Result execute(Configuration config, String query, Parameters params){
 
         query = URLDecoder.decode(query, StandardCharsets.UTF_8);
+
+        //Quick results
+        String generated = "";
+        if(query.matches("([^\\s]+(?:\\s+[^\\s]+)*) of ([^\\s]+(?:\\s+[^\\s]+)*)")){
+            String[] spl = query.split("of");
+            if(spl.length >= 2){
+                String info = spl[0].trim();
+                String subject = spl[1].trim();
+                ArticlesClient articles = new ArticlesClient(config);
+                ArrayList<Article> r = articles.get(new Document("title", pattern(subject)));
+                if(r.size() > 0) {
+                    Article p = r.get(0);
+                    String answer = p.getAttribute(info);
+                    if (answer != null) {
+                        generated = "The **" + info + "** of " + p.getTitle() + " is **" + answer + "**";
+                        query = subject;
+                    }
+                }
+            }
+        }
+
         ArrayList results = Search.executeQuery(config, query, params);
 
         if(params.getIndex().equals("images")) {
@@ -56,7 +76,7 @@ public class Search {
             return new Result(query, "articles", articles);
         }
         ArrayList<Article> qr = new ArrayList<>();
-        return new Result(query, qr, results);
+        return new Result(query, qr, results, generated);
     }
 
     private static ArrayList executeQuery(Configuration config, String query, Parameters params){
@@ -83,19 +103,28 @@ public class Search {
             if(spl.length >= 2) {
                 return new Document("id", spl[1].trim());
             }
-        }else if(query.matches("^description\\s*:\\s*.*")){ //Return Articles with requested description
+        }else if(query.matches("^description\\s*:\\s*.*")){
 
             String[] spl = query.split(":");
             if(spl.length >= 2) {
                 return new Document("description", pattern(spl[1].trim()));
             }
-        }else if(query.matches("^title\\s*:\\s*.*")){ //Search only with title
+        }else if(query.matches("^title\\s*:\\s*.*")){
 
             String[] spl = query.split(":");
             if(spl.length >= 2){
-                return new Document("title", pattern(query.split(":")[1].trim() ));
+                return new Document("title", pattern(spl[1].trim() ));
             }
-        }else if(query.matches("^attribute\\s*:\\s*.*")){ //Search using attributes
+        }else if(query.matches("^source\\s*:\\s*.*")){
+
+            String[] spl = query.split(":");
+            if(spl.length >= 2){
+                if(spl[1].startsWith("http")){
+                    return new Document("source.url", pattern(spl[1].trim() ));
+                }
+                return new Document("source.name", pattern(spl[1].trim() ));
+            }
+        }else if(query.matches("^attribute\\s*:\\s*.*")){
 
             String[] spl = query.split(":");
             if(spl.length >= 2){
@@ -212,7 +241,7 @@ public class Search {
             return Integer.compare(relevanceB, relevanceA);
         }
 
-        private int relevance(String title) { // Calc Levenshtein distance between title and query
+        private int relevance(String title) {
             int[][] dp = new int[title.length() + 1][query.length() + 1];
             for (int i = 0; i <= title.length(); i++) {
                 for (int j = 0; j <= query.length(); j++) {

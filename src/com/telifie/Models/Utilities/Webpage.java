@@ -48,21 +48,17 @@ public class Webpage {
             }
         }
 
-        //Parse images
         Elements images = document.getElementsByTag("img");
         for(Element image : images){
-
             String src = Telifie.tools.detector.fixLink(url, image.attr("src"));
             String srcset = Telifie.tools.detector.fixLink(url, image.attr("srcset"));
             if(!src.equals("") && !src.equals("null") && Telifie.tools.detector.getType(src).equals("image") && !image.attr("src").trim().toLowerCase().startsWith("data:")){
-
                 String caption = Telifie.tools.strings.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;").trim());
                 if(!caption.equals("Page semi-protected") && !caption.equals("Wikimedia Foundation") && !caption.equals("Powered by MediaWiki") && !caption.equals("Edit this at Wikidata") && !caption.equals("This is a good article. Click here for more information.")){
                     Image img = new Image(src, caption, url);
                     article.addImage(img);
                 }
             }else if(!srcset.equals("") && !srcset.startsWith("data:")){
-
                 String caption =  Telifie.tools.strings.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
                 Image img = new Image(src, caption, url);
                 article.addImage(img);
@@ -71,8 +67,6 @@ public class Webpage {
         article.setTitle(Telifie.tools.strings.escape(document.title()));
         article.setLink(url);
         String whole_text = document.text().replaceAll("[\n\r]", " ");
-
-
 
         if(article.getContent() == null || article.getContent().equals("")){
             Element body = document.getElementsByTag("body").get(0);
@@ -90,16 +84,13 @@ public class Webpage {
                 }
             }
             StringBuilder markdown = new StringBuilder();
-            Elements paragraphs = body.select("p, h2, h3"); // Select both paragraphs (p) and H2 headers (h2)
+            Elements paragraphs = body.select("p, h3"); // Select both paragraphs (p) and H2 headers (h2)
             for (Element element : paragraphs) {
                 if (element.tagName().equalsIgnoreCase("p")) {
                     String text = StringEscapeUtils.escapeHtml4(element.text().replaceAll("\\s+", " ").trim());
                     if(!text.equals("")){
                         markdown.append("  \n").append(text).append("  \n");
                     }
-                } else if (element.tagName().equalsIgnoreCase("h2")) {
-                    String headerText = Telifie.tools.strings.escape(element.text().trim());
-                    markdown.append("### ").append(headerText).append("  \n");
                 } else if (element.tagName().equalsIgnoreCase("h3")) {
                     String headerText = Telifie.tools.strings.escape(element.text().trim());
                     markdown.append("##### ").append(headerText).append("  \n");

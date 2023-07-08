@@ -23,7 +23,7 @@ public class Server {
 
     public Server(Configuration config){
         this.config = config;
-        KeyStore keyStore = null;
+        KeyStore keyStore;
         try {
             keyStore = KeyStore.getInstance("JKS");
             InputStream inputStream = new FileInputStream(KEYSTORE_PATH);

@@ -22,5 +22,4 @@ public class Endpoint {
                 ", \"description\" : \"" + (description != null ? description :  "") + '\"' +
                 '}';
     }
-
 }
