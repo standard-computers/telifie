@@ -409,19 +409,18 @@ public class Command {
 
                 if(content != null){
                     User newUser = new User(content.getString("email"), content.getString("name"), content.getString("phone"));
-                    if(newUser.getPermissions() == 0 && !newUser.getName().equals("") && !newUser.getEmail().equals("") && newUser.getName() != null && newUser.getEmail() != null) { //0 is permissions of new user
+                    if(newUser.getPermissions() == 0 && !newUser.getName().equals("") && !newUser.getEmail().equals("") && newUser.getName() != null && newUser.getEmail() != null) {
                         if (!users.userExistsWithEmail(newUser.getEmail())) {
                             if (users.createUser(newUser)) {
                                 return new Result(this.command, "user", newUser);
                             }
-                            return new Result(505, this.command, "Failed making user for email '" + newUser.getEmail() + "'");
+                            return new Result(505, this.command, "Failed making user");
                         }
-                        return new Result(410, this.command, "User already exists for email '" + newUser.getEmail() + "'");
+                        return new Result(410, this.command, "Email taken");
                     }
-                    return new Result(428, this.command, "Name, email, phone number, and permissions are required to create a User");
+                    return new Result(428, this.command, "Not enough info");
                 }
-                return new Result(428, this.command, "New User details expected with JSON request body.");
-
+                return new Result(428, this.command, "JSON request body expected");
             }
             Matcher matcher = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", Pattern.CASE_INSENSITIVE).matcher(objectSelector);
             if (matcher.matches()) {
@@ -448,8 +447,8 @@ public class Command {
                             double priority = (content.getDouble("priority") == null ? 1.01 : content.getDouble("priority"));
                             ArrayList<Article> extractedArticles = Parser.engines.batch(uri, priority);
                             if (extractedArticles != null) {
-                                if (content.getBoolean("insert") != null && content.getBoolean("insert")) {
-                                    extractedArticles.forEach(articles::create);
+                                if (content.getBoolean("insert") != null && content.getBoolean("insert") == true) {
+                                    articles.createMany(extractedArticles);
                                 }
                                 return new Result(this.command, "articles", extractedArticles);
                             }
@@ -533,13 +532,13 @@ public class Command {
         else if(primarySelector.equals("connect")){
 
             if(this.selectors.length >= 2){
-                UsersClient users = new UsersClient(config);
-                if(users.userExistsWithEmail(objectSelector)){
-                    User user = users.getUserWithEmail(objectSelector);
+                UsersClient u = new UsersClient(config);
+                if(u.userExistsWithEmail(objectSelector)){
+                    User user = u.getUserWithEmail(objectSelector);
                     if(user.getPermissions() == 0){
                         //TODO lock user with email
                     }else if(user.getPermissions() >= 1){
-                        if(users.sendCode(user)){
+                        if(u.sendCode(user)){
                             return new Result(200, "Authentication code sent");
                         }
                         return new Result(501, "Failed to send code");

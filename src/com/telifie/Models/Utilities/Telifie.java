@@ -1,13 +1,10 @@
 package com.telifie.Models.Utilities;
 
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import java.io.*;
 import java.math.BigInteger;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -21,6 +18,7 @@ public class Telifie {
     public static String[] stopWords = new String[]{"a", "an", "and", "are", "as", "at", "make", "be", "by", "for", "from", "has", "he", "in", "is", "it", "its", "of", "on", "that", "the", "to", "was", "were", "with", "who", "what", "when", "where", "why", "how"};
     private static final String[] ALPHAS = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"};
     private static final String[] NUMERALS = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
+    public static final String[] PROXIMITY = {"near", "nearby", "close to", "around", "within", "in the vicinity of", "within walking distance of", "adjacent to", "bordering", "neighboring", "local to", "surrounding", "not far from", "just off"};
     public static final int PRIVATE = 0, PROTECTED = 1, PUBLIC = 2;
     public static final String WINDOWS_SYSTEM_DIR = "/Program\\ Files/telifie/";
     public static final String MAC_SYSTEM_DIR = System.getProperty("user.home") + "/Library/Application Support/telifie";
@@ -163,13 +161,22 @@ public class Telifie {
                 return sb.toString().trim();
             }
 
-            public static boolean containsAnyOf(String[] things, String string){
+            public static boolean contains(String[] things, String string){
                 for (String thing: things) {
                     if(string.contains(thing)){
                         return true;
                     }
                 }
                 return false;
+            }
+
+            public static int has(String[] things, String string){
+                for(int i = 0; i < things.length; i++){
+                    if(string.contains(things[i])){
+                        return i;
+                    }
+                }
+                return -1;
             }
 
             public static String removeWords(String text, String[] wordsToRemove) {
@@ -258,7 +265,7 @@ public class Telifie {
                 ArrayList<String> links = new ArrayList<>();
                 for(Element el : elements){
                     String link = el.attr("href");
-                    if(!link.equals("/") && !link.equals("") & !link.equals(root) && !Telifie.tools.strings.containsAnyOf(new String[]{"facebook", "instagram", "spotify", "linkedin", "youtube"}, link)){
+                    if(!link.equals("/") && !link.equals("") & !link.equals(root) && !Telifie.tools.strings.contains(new String[]{"facebook", "instagram", "spotify", "linkedin", "youtube"}, link)){
                         String fixed = Telifie.tools.detector.fixLink(root, link);
                         if(Telifie.tools.detector.isValidLink(fixed, root)){
                             links.add(fixed);

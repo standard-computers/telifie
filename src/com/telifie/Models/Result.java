@@ -9,7 +9,7 @@ public class Result {
     private final String id = UUID.randomUUID().toString();
     private String query = "";
     private String object = "results";
-    private String generated;
+    private String generated = "";
     private Object results;
     private final int origin = Telifie.getEpochTime();
     private int statusCode = 200, count = 0;
@@ -52,7 +52,7 @@ public class Result {
         this.object = "articles";
         this.results = results;
         this.quickResults = quickResults;
-        this.count = results.size();
+        this.count = (results == null ? 0 : results.size());
         this.generated = generated;
     }
 
@@ -74,7 +74,7 @@ public class Result {
         return "{\"status_code\" : " + statusCode +
                 ", \"id\" : \"" + id + '\"' +
                 ", \"query\" : \"" + query + '\"' +
-                ", \"generated\" : \"" + generated + '\"' +
+                (generated.equals("") ? "" : "\"generated\" : \"" + generated + '\"') +
                 ", \"count\" : " + count +
                 ", \"origin\" : " + origin +
                 (quickResults.size() > 0 ? ", \"quick_results\" : " + quickResults : "") +

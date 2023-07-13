@@ -31,6 +31,14 @@ public class ArticlesClient extends Client {
         }
     }
 
+    public boolean createMany(ArrayList<Article> articles){
+        ArrayList<Document> documents = new ArrayList<>();
+        for(Article article : articles){
+            documents.add(Document.parse(article.toString()));
+        }
+        return super.insertMany(documents);
+    }
+
     public Article withLink(String link){
         try{
             return new Article(this.findOne(new Document("link", link)));

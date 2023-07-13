@@ -148,6 +148,22 @@ public class Andromeda extends Client{
             return text;
         }
 
+        public String[] keywords(int numKeywords) {
+
+            // Remove punctuation and convert text to lowercase
+            String wt = this.text.replaceAll("[^a-zA-Z ]", "").toLowerCase();
+            String[] words = wt.split("\\s+");
+            Map<String, Integer> wordFreq = new HashMap<>();
+            for (String word : words) {
+                wordFreq.put(word, wordFreq.getOrDefault(word, 0) + 1);
+            }
+            String[] sortedWords = wordFreq.keySet().toArray(new String[0]);
+            Arrays.sort(sortedWords, (a, b) -> wordFreq.get(b) - wordFreq.get(a));
+            int numKeywordsToExtract = Math.min(numKeywords, sortedWords.length);
+            String[] keywords = Arrays.copyOfRange(sortedWords, 0, numKeywordsToExtract);
+            return keywords;
+        }
+
         public String[] tokens() {
             return tokens;
         }

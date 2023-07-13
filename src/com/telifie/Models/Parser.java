@@ -120,7 +120,7 @@ public class Parser {
                             if(isNotParsed) {
                                 Article child = website(link, depth + 1);
                             }else{
-                                if(Telifie.tools.strings.containsAnyOf(new String[]{"facebook", "instagram", "spotify", "linkedin", "youtube"}, link)){
+                                if(Telifie.tools.strings.contains(new String[]{"facebook", "instagram", "spotify", "linkedin", "youtube"}, link)){
 
                                     String value = link;
                                     String[] parts = host.split("\\.");

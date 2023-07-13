@@ -81,6 +81,17 @@ public class Client {
         }
     }
 
+    protected boolean insertMany(ArrayList<Document> documents){
+        try(MongoClient mongoClient = MongoClients.create(this.mongoUri)){
+            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getAlt());
+            MongoCollection<Document> collection = database.getCollection(this.collection);
+            collection.insertMany(documents);
+            return true;
+        }catch(MongoException e){
+            return false;
+        }
+    }
+
     protected boolean exists(Document filter){
         Document data = this.findOne(filter);
         return data != null;

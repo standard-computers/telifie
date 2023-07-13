@@ -8,6 +8,7 @@ import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Result;
 import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Parameters;
+import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import java.net.URLDecoder;
@@ -17,8 +18,12 @@ import java.util.regex.Pattern;
 
 public class Search {
 
+    private static ArticlesClient articlesClient;
+
     public static Result execute(Configuration config, String query, Parameters params){
 
+
+        articlesClient = new ArticlesClient(config);
         query = URLDecoder.decode(query, StandardCharsets.UTF_8);
 
         //Quick results
@@ -28,8 +33,7 @@ public class Search {
             if(spl.length >= 2){
                 String info = spl[0].trim();
                 String subject = spl[1].trim();
-                ArticlesClient articles = new ArticlesClient(config);
-                ArrayList<Article> r = articles.get(new Document("title", pattern(subject)));
+                ArrayList<Article> r = articlesClient.get(new Document("title", pattern(subject)));
                 if(r.size() > 0) {
                     Article p = r.get(0);
                     String answer = p.getAttribute(info);
@@ -81,8 +85,7 @@ public class Search {
 
     private static ArrayList executeQuery(Configuration config, String query, Parameters params){
 
-        ArticlesClient articles = new ArticlesClient(config);
-        ArrayList<Article> results = articles.search(config, params, filter(query, params));
+        ArrayList<Article> results = articlesClient.search(config, params, filter(query, params));
         if(results != null && results.size() > 3){
             Collections.sort(results, new RelevanceComparator(query));
             Collections.reverse(results);
@@ -97,7 +100,7 @@ public class Search {
      */
     private static Document filter(String query, Parameters params){
 
-        if(query.matches("^id\\s*:\\s*.*")){ //Return articles with id
+        if(query.matches("^id\\s*:\\s*.*")){
 
             String[] spl = query.split(":");
             if(spl.length >= 2) {
@@ -198,6 +201,45 @@ public class Search {
                     )
                 )
             ));
+        }else if(Telifie.tools.strings.has(Telifie.PROXIMITY, query) > -1){
+            String splr = Telifie.PROXIMITY[Telifie.tools.strings.has(Telifie.PROXIMITY, query)];
+            String[] spl = query.split(splr);
+            if(spl.length >= 2){
+                String subject = spl[0].trim();
+                String place = spl[1].trim();
+                ArrayList<Article> findPlace = articlesClient.get(
+                        new Document("$and", Arrays.asList(
+                                new Document("title", pattern(place)),
+                                new Document("description", pattern("city")),
+                                new Document("location", new Document("$near",
+                                        new Document("$geometry", new Document("type", "Point")
+                                                .append("coordinates", Arrays.asList(
+                                                        params.getLongitude(),
+                                                        params.getLatitude()
+                                                ))
+                                        ).append("$maxDistance", Integer.MAX_VALUE)
+                                )
+                                )
+                        ))
+                );
+                Article pl = findPlace.get(0);
+                return new Document("$and", Arrays.asList(
+                        new Document("$or", Arrays.asList(
+                                new Document("tags", pattern(subject)),
+                                new Document("description", pattern(subject)),
+                                new Document("title", pattern(subject))
+                        )),
+                        new Document("location", new Document("$near",
+                                new Document("$geometry", new Document("type", "Point")
+                                        .append("coordinates", Arrays.asList(
+                                                Double.parseDouble(pl.getAttribute("Longitude")),
+                                                Double.parseDouble(pl.getAttribute("Latitude"))
+                                        ))
+                                ).append("$maxDistance", 16000)
+                        )
+                        )
+                ));
+            }
         }
         Andromeda.unit tokenized = Andromeda.encoder.tokenize(query, true).get(0);
         ArrayList<Bson> filters = new ArrayList<>();
@@ -208,7 +250,7 @@ public class Search {
         filters.add(Filters.or(titleFilters));
         filters.add(Filters.regex("link", pattern(query)));
         filters.add(Filters.in("tags", tokenized.tokens()));
-        filters.add(Filters.regex("attributes.value", pattern(query)));
+//        filters.add(Filters.regex("attributes.value", pattern(query)));
         return new Document("$or", filters);
     }
 
