@@ -17,9 +17,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -31,7 +29,6 @@ public class Parser {
     private static String uri, host;
     private static final ArrayList<Article> traversable = new ArrayList<>();
     private static final ArrayList<String> parsed = new ArrayList<>();
-    private static int MAX_DEPTH = 0;
     private static ArticlesClient articles;
 
     public static class engines {
@@ -45,7 +42,7 @@ public class Parser {
                 } catch (MalformedURLException e) {
                     throw new RuntimeException(e);
                 }
-                Article crawled = Parser.engines.website(uri, 0);
+                Article crawled = Parser.engines.website(uri);
                 return crawled;
             }else if(Telifie.tools.detector.isFile(uri)){
                 File file = new File(uri);
@@ -99,42 +96,33 @@ public class Parser {
             }
         }
 
-        public static Article website(String url, int depth){
-
-            if(depth > MAX_DEPTH || !url.contains(host)){
-                return null;
-            }
+        public static Article website(String url){
             parsed.add(url);
             try {
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
                 if(response.statusCode() == 200){
                     Document root = response.parse();
                     Article article = Webpage.extract(url, root);
-
                     ArrayList<String> links = Telifie.tools.make.extractLinks(root.getElementsByTag("a"), uri);
                     if(links.size() > 0){
-
                         for(String link : links){
-
-                            boolean isNotParsed = !isParsed(link);
-                            if(isNotParsed) {
-                                Article child = website(link, depth + 1);
-                            }else{
-                                if(Telifie.tools.strings.contains(new String[]{"facebook", "instagram", "spotify", "linkedin", "youtube"}, link)){
-
-                                    String value = link;
-                                    String[] parts = host.split("\\.");
-                                    String domain = parts[parts.length - 2];
-                                    String capitalizedDomain = domain.substring(0, 1).toUpperCase() + domain.substring(1);
-                                    if(Telifie.tools.detector.isUrl(value)){
-                                        value = "@" + value;
-                                    }
-                                    article.addAttribute(new Attribute(capitalizedDomain, value));
+                            if(Telifie.tools.strings.contains(new String[]{"facebook.com", "instagram.com", "spotify.com", "linkedin.com", "youtube.com", "pinterest.com", "github.com", "twitter.com", "tumblr.com", "reddit.com"}, link)){
+                                URI uri = null;
+                                try {
+                                    uri = new URI(link);
+                                    String domain = uri.getHost();
+                                    String k = (domain.split("\\.")[0].equals("www") ? domain.split("\\.")[1] : domain.split("\\.")[0]);
+                                    k = k.substring(0, 1).toUpperCase() + k.substring(1);
+                                    String[] l = link.split("\\?")[0].split("/");
+                                    String un = l[l.length - 1];
+                                    article.addAttribute(new Attribute(k, un));
+                                } catch (URISyntaxException e) {
+                                    throw new RuntimeException(e);
                                 }
-                            } //Not link that belongs to parent
-                        } //End for loop
-                    } //End if links > 0
-                    if(article.getLink().contains(new URL(uri).getHost())) {
+                            }
+                        }
+                    }
+                    if(article.getLink() == null || article.getLink().contains(new URL(uri).getHost())) {
                         Parser.traversable.add(article);
                     }
                     return article;
@@ -170,7 +158,7 @@ public class Parser {
                     }
                     ArrayList<Article> articles = new ArrayList<>();
                     String[] headers = lines.get(0);
-                    int titleIndex = -1, descriptionIndex = -1, iconIndex = -1, linkIndex = -1, contentIndex = -1;
+                    int titleIndex = -1, descriptionIndex = -1, iconIndex = -1, linkIndex = -1, contentIndex = -1, tagsIndex = -1;
                     for (int i = 0; i < headers.length; i++) {
                         String hV = headers[i].trim().toLowerCase();
                         switch (hV) {
@@ -179,6 +167,7 @@ public class Parser {
                             case "link" -> linkIndex = i;
                             case "content" -> contentIndex = i;
                             case "icon" -> iconIndex = i;
+                            case "tags" -> tagsIndex = i;
                         }
                     }
                     String batchId = Telifie.tools.make.shortEid().toLowerCase();
@@ -199,6 +188,11 @@ public class Parser {
                                 article.setContent(value);
                             } else if(g == iconIndex && iconIndex > -1){
                                 article.setIcon(value);
+                            } else if(g == tagsIndex){
+                                String[] tags = value.split(",");
+                                for(String tag : tags){
+                                    article.addTag(tag.toLowerCase().trim());
+                                }
                             } else {
                                 if(!value.trim().equals("")){
                                     article.addAttribute(new Attribute(headers[g].trim(), value));
@@ -357,6 +351,15 @@ public class Parser {
                 }
             }
             return articles;
+        }
+
+        public static ArrayList<Article> tmdb(){
+
+            String apiKey = "991191cec151e1797c192c74f06b40a7";
+            int pageNumber = 1;
+            String sortBy = "popularity.desc";
+            String url = "https://api.themoviedb.org/3/discover/movie?api_key=" + apiKey + "&page=" + pageNumber + "&sort_by=" + sortBy;
+            return null;
         }
     }
 

@@ -8,6 +8,7 @@ import com.telifie.Models.Connectors.Spotify;
 import com.telifie.Models.Utilities.*;
 import org.apache.hc.core5.http.ParseException;
 import org.bson.Document;
+import org.bson.json.JsonWriterSettings;
 import org.json.JSONException;
 import org.json.JSONObject;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
@@ -176,7 +177,6 @@ public class Command {
                 return new Result(401, this.command, "Insufficient permissions");
             }
             ArticlesClient articles = new ArticlesClient(config);
-
             if(this.selectors.length >= 3){
 
                 try {
@@ -464,15 +464,14 @@ public class Command {
                             }
                             return new Result(this.command, "articles", yelps);
                         }
-                        case "uri" -> {
+                        case "tmdb" -> {
 
+                        }
+                        case "uri" -> {
                             String url = content.getString("uri");
                             if (url != null && !url.equals("")) {
                                 Parser parser = new Parser();
                                 Article parsed = Parser.engines.parse(url);
-                                if (parser.getTraversable().size() > 1) {
-                                    return new Result(this.command, "articles", parser.getTraversable());
-                                }
                                 if (content.getBoolean("insert") != null && content.getBoolean("insert")) {
                                     if (parsed != null) {
                                         articles.create(parsed);
@@ -483,7 +482,6 @@ public class Command {
                             return new Result(428, this.command, "URI is required");
                         }
                         case "crawl" -> {
-
                             String url = content.getString("uri");
                             if (url != null && !url.equals("")) {
                                 Parser parser = new Parser();
@@ -500,7 +498,7 @@ public class Command {
                         }
                         case "edit" -> {
                             ArrayList<String> ids = new ArrayList<>();
-                            articles.getIds().forEach(a -> ids.add(new Article(a).getId())); //TODO refine all this
+                            articles.getIds().forEach(a -> ids.add(new Article(a).getId()));
                             return new Result(this.command, "ids", "" + ids + "");
                         }
                     }

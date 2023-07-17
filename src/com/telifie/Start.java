@@ -10,6 +10,7 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -60,7 +61,21 @@ public class Start {
                 case "--andromeda" -> {
                     checkConfig();
                     try {
-                        new Andromeda(config, true);
+                        Andromeda a = new Andromeda(config);
+                        Scanner in = new Scanner(System.in);
+                        System.out.println("Andromeda started.\nname:item,item,item,...");
+                        while(true){
+                            String c = in.nextLine();
+                            String[] ts = c.split(":");
+                            String name = ts[0];
+                            String[] items = ts[1].split(",");
+                            for(String item : items){
+                                if(!item.trim().equals("")){
+                                    a.add(name, item.trim().toLowerCase().replace(".",""));
+                                }
+                            }
+                            System.out.println("[DONE]");
+                        }
                     } catch (Exception e) {
                         System.err.println("Failed to start Andromeda...");
                         e.printStackTrace();
@@ -68,7 +83,6 @@ public class Start {
                 }
                 case "--geocode" -> {
                     checkConfig();
-
                     MongoClient mongoClient = MongoClients.create(config.getDomain().getUri());
                     MongoDatabase database = mongoClient.getDatabase("telifie");
                     MongoCollection<Document> collection = database.getCollection("articles");
@@ -83,7 +97,6 @@ public class Start {
                             String longitude = a.getAttribute("Longitude");
                             String latitude = a.getAttribute("Latitude");
                             if(longitude != null && latitude != null && !longitude.equals("null") && !latitude.equals("null")){
-
                                 double longitudeValue = Double.parseDouble(longitude);
                                 double latitudeValue = Double.parseDouble(latitude);
                                 Position position = new Position(longitudeValue, latitudeValue);

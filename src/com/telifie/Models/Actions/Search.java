@@ -22,12 +22,10 @@ public class Search {
 
     public static Result execute(Configuration config, String query, Parameters params){
 
-
         articlesClient = new ArticlesClient(config);
         query = URLDecoder.decode(query, StandardCharsets.UTF_8);
 
-        //Quick results
-        String generated = "";
+        String g = "";
         if(query.matches("([^\\s]+(?:\\s+[^\\s]+)*) of ([^\\s]+(?:\\s+[^\\s]+)*)")){
             String[] spl = query.split("of");
             if(spl.length >= 2){
@@ -38,7 +36,7 @@ public class Search {
                     Article p = r.get(0);
                     String answer = p.getAttribute(info);
                     if (answer != null) {
-                        generated = "The **" + info + "** of " + p.getTitle() + " is **" + answer + "**";
+                        g = "The **" + info + "** of " + p.getTitle() + " is **" + answer + "**";
                         query = subject;
                     }
                 }
@@ -80,7 +78,7 @@ public class Search {
             return new Result(query, "articles", articles);
         }
         ArrayList<Article> qr = new ArrayList<>();
-        return new Result(query, qr, results, generated);
+        return new Result(query, qr, results, g);
     }
 
     private static ArrayList executeQuery(Configuration config, String query, Parameters params){
@@ -182,7 +180,7 @@ public class Search {
                     ))),
                     new Document("attribute.value", query) //adjust, format query input
             ));
-        }else if(query.matches("^(.+)\\s+near me$")){
+        }else if(query.endsWith("near me")){
 
             String q = query.replace("near me", "").trim();
             return new Document("$and", Arrays.asList(
@@ -197,7 +195,7 @@ public class Search {
                                             params.getLongitude(),
                                             params.getLatitude()
                                     ))
-                            ).append("$maxDistance", 16000)
+                            ).append("$maxDistance", Integer.MAX_VALUE)
                     )
                 )
             ));
@@ -241,7 +239,6 @@ public class Search {
                 ));
             }
         }
-        Andromeda.unit tokenized = Andromeda.encoder.tokenize(query, true).get(0);
         ArrayList<Bson> filters = new ArrayList<>();
         Bson[] titleFilters = {
                 Filters.regex("title", pattern(Andromeda.encoder.clean(query))),
@@ -249,8 +246,7 @@ public class Search {
         };
         filters.add(Filters.or(titleFilters));
         filters.add(Filters.regex("link", pattern(query)));
-        filters.add(Filters.in("tags", tokenized.tokens()));
-//        filters.add(Filters.regex("attributes.value", pattern(query)));
+        filters.add(Filters.in("tags", pattern(query)));
         return new Document("$or", filters);
     }
 

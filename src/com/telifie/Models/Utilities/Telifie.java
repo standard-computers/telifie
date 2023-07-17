@@ -265,11 +265,9 @@ public class Telifie {
                 ArrayList<String> links = new ArrayList<>();
                 for(Element el : elements){
                     String link = el.attr("href");
-                    if(!link.equals("/") && !link.equals("") & !link.equals(root) && !Telifie.tools.strings.contains(new String[]{"facebook", "instagram", "spotify", "linkedin", "youtube"}, link)){
-                        String fixed = Telifie.tools.detector.fixLink(root, link);
-                        if(Telifie.tools.detector.isValidLink(fixed, root)){
-                            links.add(fixed);
-                        }
+                    String fixed = Telifie.tools.detector.fixLink(root, link);
+                    if(Telifie.tools.detector.isValidLink(fixed, root)){
+                        links.add(fixed);
                     }
                 }
                 return links;

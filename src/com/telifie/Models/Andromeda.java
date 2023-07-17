@@ -1,6 +1,7 @@
 package com.telifie.Models;
 
 import com.mongodb.client.*;
+import com.mongodb.client.model.UpdateOptions;
 import com.telifie.Models.Clients.Client;
 import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Telifie;
@@ -44,7 +45,6 @@ public class Andromeda extends Client{
             MongoCursor<Document> cursor = collection.find().iterator();
             int totalCount = (int) collection.countDocuments();
             int processedCount = 0;
-            vectorizer vectorizer = new vectorizer(100, 2, 0.01, 10);
             while (cursor.hasNext()) {
                 Article a = new Article(cursor.next());
                 String title = (a.getTitle() == null ? null : a.getTitle().toLowerCase());
@@ -56,7 +56,6 @@ public class Andromeda extends Client{
                 if(content != null){
                     Andromeda.encoder.tokenize(a.getContent(), true).forEach(s -> {
                         tokens.add(s);
-                        vectorizer.train(s.tokens);
                     });
                 }
                 processedCount++;
@@ -83,6 +82,8 @@ public class Andromeda extends Client{
             super.collection = "taxon";
             this.name = document.getString("name");
             this.items = document.get("items", ArrayList.class);
+            System.out.println(name);
+            System.out.println(items.toString());
         }
 
         public ArrayList<String> items(){
@@ -90,7 +91,22 @@ public class Andromeda extends Client{
         }
 
         public void add(String string){
+            for(String item : items){
+                if(item.equals(string)){
+                    System.out.println("Duplicate: " + string);
+                    return;
+                }
+            }
             items.add(string);
+            super.updateOne(
+                    new Document("name", name),
+                    new Document("$push", new Document("items", string)),
+                    new UpdateOptions().upsert(true)
+            );
+        }
+
+        public String getName() {
+            return name;
         }
 
         @Override
@@ -105,6 +121,17 @@ public class Andromeda extends Client{
         for (taxon taxon : taxon) {
             if (taxon.name.equals(name.toLowerCase().trim())) {
                 return taxon;
+            }
+        }
+        return null;
+    }
+
+    public static String classify(String word){
+        for(taxon t : taxon){
+            for(String item : t.items()){
+                if(item.equals(word)){
+                    return t.getName();
+                }
             }
         }
         return null;
@@ -149,8 +176,6 @@ public class Andromeda extends Client{
         }
 
         public String[] keywords(int numKeywords) {
-
-            // Remove punctuation and convert text to lowercase
             String wt = this.text.replaceAll("[^a-zA-Z ]", "").toLowerCase();
             String[] words = wt.split("\\s+");
             Map<String, Integer> wordFreq = new HashMap<>();
@@ -235,121 +260,5 @@ public class Andromeda extends Client{
             softmaxOutputs[i] /= sum;
         }
         return softmaxOutputs;
-    }
-
-    protected static class vectorizer {
-        private Map<String, double[]> wordVectors;
-        private Map<String, Integer> wordFreq;
-        private int vectorSize;
-        private int windowSize;
-        private double learningRate;
-        private int epochs;
-
-        public vectorizer(int vectorSize, int windowSize, double learningRate, int epochs) {
-            this.vectorSize = vectorSize;
-            this.windowSize = windowSize;
-            this.learningRate = learningRate;
-            this.epochs = epochs;
-            this.wordVectors = new HashMap<>();
-            this.wordFreq = new HashMap<>();
-        }
-
-        public void train(String[] tokens) {
-            for (String token : tokens) {
-                wordFreq.put(token, wordFreq.getOrDefault(token, 0) + 1);
-            }
-
-            int numWords = wordFreq.size();
-            int[][] coocurrenceMatrix = new int[numWords][numWords];
-
-            for (int i = 0; i < tokens.length; i++) {
-                int centerIdx = i;
-                String centerWord = tokens[centerIdx];
-
-                for (int j = Math.max(0, centerIdx - windowSize); j < Math.min(tokens.length, centerIdx + windowSize + 1); j++) {
-                    if (j == centerIdx) {
-                        continue;
-                    }
-                    String contextWord = tokens[j];
-                    coocurrenceMatrix[getIndex(centerWord)][getIndex(contextWord)]++;
-                }
-            }
-
-            initializeWordVectors(numWords);
-
-            for (int epoch = 0; epoch < epochs; epoch++) {
-                for (int i = 0; i < tokens.length; i++) {
-                    int centerIdx = i;
-                    String centerWord = tokens[centerIdx];
-
-                    for (int j = Math.max(0, centerIdx - windowSize); j < Math.min(tokens.length, centerIdx + windowSize + 1); j++) {
-                        if (j == centerIdx) {
-                            continue;
-                        }
-                        String contextWord = tokens[j];
-                        updateWordVectors(centerWord, contextWord, coocurrenceMatrix);
-                    }
-                }
-            }
-        }
-
-        private void initializeWordVectors(int numWords) {
-            for (String word : wordFreq.keySet()) {
-                double[] vector = new double[vectorSize];
-                for (int i = 0; i < vectorSize; i++) {
-                    vector[i] = Math.random();
-                }
-                wordVectors.put(word, vector);
-            }
-        }
-
-        private void updateWordVectors(String centerWord, String contextWord, int[][] coocurrenceMatrix) {
-            double[] centerVector = wordVectors.get(centerWord);
-            double[] contextVector = wordVectors.get(contextWord);
-
-            for (int i = 0; i < vectorSize; i++) {
-                double gradient = 0.0;
-                for (int j = 0; j < vectorSize; j++) {
-                    gradient += centerVector[j] * contextVector[j];
-                }
-
-                gradient -= coocurrenceMatrix[getIndex(centerWord)][getIndex(contextWord)];
-
-                for (int j = 0; j < vectorSize; j++) {
-                    centerVector[j] -= learningRate * gradient * contextVector[j];
-                    contextVector[j] -= learningRate * gradient * centerVector[j];
-                }
-            }
-        }
-
-        public double[] getWordVector(String word) {
-            return wordVectors.get(word);
-        }
-
-        private int getIndex(String word) {
-            int index = 0;
-            for (String key : wordFreq.keySet()) {
-                if (key.equals(word)) {
-                    return index;
-                }
-                index++;
-            }
-            return -1; // Word not found in the wordFreq map
-        }
-
-        public void exportWordEmbeddings(String filePath) {
-            try (FileWriter writer = new FileWriter(filePath)) {
-                for (String word : wordVectors.keySet()) {
-                    double[] vector = wordVectors.get(word);
-                    writer.write(word + " ");
-                    for (double value : vector) {
-                        writer.write(value + " ");
-                    }
-                    writer.write("\n");
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 }

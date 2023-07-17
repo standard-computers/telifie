@@ -163,6 +163,12 @@ public class Article {
         this.source = source;
     }
 
+    public void clean(){
+        this.title = this.title.trim();
+        this.description = this.description.trim();
+
+    }
+
     @Override
     public String toString() {
         return "{\"id\" : \"" + id + '\"' +

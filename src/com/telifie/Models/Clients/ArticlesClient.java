@@ -111,14 +111,29 @@ public class ArticlesClient extends Client {
         return super.exists(new Document("id", id));
     }
 
-    public String stats(){
-        //TODO
-        return "";
+    public Document stats(){
+        Document groupFields = new Document("_id", "$description");
+        groupFields.put("count", new Document("$sum", 1));
+        Document groupStage = new Document("$group", groupFields);
+        ArrayList<Document> iterable = super.aggregate(groupStage);
+        Document stats = new Document();
+        stats.append("total", super.count());
+        Document descriptions = new Document();
+        for (Document document : iterable) {
+            String description = document.getString("_id");
+            int count = document.getInteger("count");
+            if(description == null){
+                descriptions.append("Unclassified", count);
+            }else{
+                descriptions.append(description, count);
+            }
+        }
+        stats.append("descriptions", descriptions);
+        return stats;
     }
 
     public boolean archive(Article article){
         ArchiveClient archive = new ArchiveClient(config);
         return archive.archive(article);
     }
-
 }

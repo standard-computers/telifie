@@ -3,6 +3,7 @@ package com.telifie.Models.Utilities;
 import com.telifie.Models.Article;
 import com.telifie.Models.Articles.Attribute;
 import com.telifie.Models.Articles.Image;
+import com.telifie.Models.Articles.Source;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -71,8 +72,16 @@ public class Webpage {
         if(article.getContent() == null || article.getContent().equals("")){
             Element body = document.getElementsByTag("body").get(0);
             body.select("table, script, header, style, img, svg, button, label, form, input, aside, code, nav").remove();
-//          TODO Convert tables to datasets
             if(url.contains("wiki")){
+                article.setSource(
+                        new Source(
+                                "bb9ae95c2b59f2c7d8a81ded769d3bab",
+                                "https://telifie-static.nyc3.digitaloceanspaces.com/wwdb-index-storage/wikipedia.png",
+                                "Wikipedia",
+                                article.getLink()
+                        )
+                );
+                article.setLink(null);
                 article.setTitle(article.getTitle().replaceAll(" - Wikipedia", ""));
                 body.select("div.mw-jump-link, div#toc, div.navbox, table.infobox, div.vector-body-before-content, div.navigation-not-searchable, div.mw-footer-container, div.reflist, div#See_also, h2#See_also, h2#References, h2#External_links").remove();
             }else{
@@ -84,7 +93,7 @@ public class Webpage {
                 }
             }
             StringBuilder markdown = new StringBuilder();
-            Elements paragraphs = body.select("p, h3"); // Select both paragraphs (p) and H2 headers (h2)
+            Elements paragraphs = body.select("p, h3");
             for (Element element : paragraphs) {
                 if (element.tagName().equalsIgnoreCase("p")) {
                     String text = StringEscapeUtils.escapeHtml4(element.text().replaceAll("\\s+", " ").trim());
