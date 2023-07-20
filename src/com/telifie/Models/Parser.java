@@ -42,8 +42,7 @@ public class Parser {
                 } catch (MalformedURLException e) {
                     throw new RuntimeException(e);
                 }
-                Article crawled = Parser.engines.website(uri);
-                return crawled;
+                return Parser.engines.website(uri);
             }else if(Telifie.tools.detector.isFile(uri)){
                 File file = new File(uri);
                 if(file.exists()){
@@ -53,7 +52,7 @@ public class Parser {
             return null;
         }
 
-        public static Article crawl(Configuration config, String uri, int limit){
+        public static Article crawl(Configuration config, String uri, int limit, boolean allowExternalCrawl){
             articles = new ArticlesClient(config);
             traversable.removeAll(traversable);
             Parser.uri = uri;
@@ -62,30 +61,42 @@ public class Parser {
             } catch (MalformedURLException e) {
                 throw new RuntimeException(e);
             }
-            return Parser.engines.fetch(uri, limit);
+            return Parser.engines.fetch(uri, limit, allowExternalCrawl);
         }
 
-        public static Article fetch(String url, int limit){
+        protected static Article fetch(String url, int limit, boolean allowExternalCrawl){
             try {
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
                 if(response.statusCode() == 200){
                     Document root = response.parse();
                     Article article = Webpage.extract(url, root);
                     Parser.traversable.add(article);
-                    if(article != null && articles.create(article)){
+                    if(articles.existsWithSource(article.getSource().getUrl()) == false && article != null && articles.create(article)){
                         System.out.println("Created article " + article.getTitle());
                     }
                     ArrayList<Element> links = root.getElementsByTag("a");
                     for(Element link : links){
                         String href = Telifie.tools.detector.fixLink("https://" + new URL(url).getHost(), link.attr("href").split("\\?")[0]);
-                        boolean isNotParsed = !isParsed(href);
-                        if(isNotParsed && Telifie.tools.detector.isUrl(href)) {
-                            System.out.println("Fetching (" + parsed.size() + ")" + href);
-                            parsed.add(href);
-                            if(parsed.size() >= limit){
-                                return article;
+                        if(!isParsed(href)
+                                && Telifie.tools.detector.isUrl(href)
+                                && !Telifie.tools.strings.contains(new String[]{
+                                    "facebook.com", "instagram.com", "spotify.com",
+                                    "linkedin.com", "youtube.com", "pinterest.com",
+                                    "github.com", "twitter.com", "tumblr.com", "reddit.com"
+                                }, href)) {
+                            if((allowExternalCrawl && !href.contains(host)) || (!allowExternalCrawl && href.contains(host))){
+                                System.out.println("Fetching (" + parsed.size() + ")" + href);
+                                parsed.add(href);
+                                if(parsed.size() >= limit){
+                                    return article;
+                                }
+                                try {
+                                    Thread.sleep(3000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                                fetch(href, limit, allowExternalCrawl);
                             }
-                            fetch(href, limit);
                         }
                     }
                     return article;

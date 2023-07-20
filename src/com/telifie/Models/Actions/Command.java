@@ -487,7 +487,7 @@ public class Command {
                                 Parser parser = new Parser();
                                 parser.purge();
                                 int limit = (content.getInteger("limit") == null ? Integer.MAX_VALUE : content.getInteger("limit"));
-                                Parser.engines.crawl(config, url, limit);
+                                Parser.engines.crawl(config, url, limit, false);
                                 return new Result(this.command, "articles", parser.getTraversable());
                             }
                             return new Result(428, this.command, "URI is required");

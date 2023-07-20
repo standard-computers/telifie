@@ -9,6 +9,7 @@ import com.telifie.Models.Article;
 import com.telifie.Models.Utilities.Configuration;
 import org.bson.Document;
 import java.util.ArrayList;
+import java.util.TreeMap;
 
 public class ArticlesClient extends Client {
 
@@ -111,6 +112,17 @@ public class ArticlesClient extends Client {
         return super.exists(new Document("id", id));
     }
 
+    public boolean existsWithSource(String source){
+        return (super.findOne(new Document("source.url", source)) == null ? false : true);
+    }
+
+    public ArrayList<Document> withSource(String source){
+        if(source.startsWith("http")){
+            return super.find(new Document("source.url", source));
+        }
+        return super.find(new Document("source.name", source));
+    }
+
     public Document stats(){
         Document groupFields = new Document("_id", "$description");
         groupFields.put("count", new Document("$sum", 1));
@@ -118,16 +130,17 @@ public class ArticlesClient extends Client {
         ArrayList<Document> iterable = super.aggregate(groupStage);
         Document stats = new Document();
         stats.append("total", super.count());
-        Document descriptions = new Document();
+        TreeMap<String, Integer> sortedDescriptions = new TreeMap<>();
         for (Document document : iterable) {
             String description = document.getString("_id");
             int count = document.getInteger("count");
-            if(description == null){
-                descriptions.append("Unclassified", count);
-            }else{
-                descriptions.append(description, count);
+            if (description == null) {
+                description = "Unclassified";
             }
+            sortedDescriptions.put(description, sortedDescriptions.getOrDefault(description, 0) + count);
         }
+        Document descriptions = new Document();
+        sortedDescriptions.forEach((key, value) -> descriptions.append(key, value));
         stats.append("descriptions", descriptions);
         return stats;
     }

@@ -36,6 +36,10 @@ public class Source {
         this.name = name;
     }
 
+    public String getUrl() {
+        return url;
+    }
+
     @Override
     public String toString() {
         return "{\"id\" : \"" + id + '\"' +

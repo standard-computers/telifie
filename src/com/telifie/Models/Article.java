@@ -159,6 +159,10 @@ public class Article {
         this.dataSets.add(dataSet);
     }
 
+    public Source getSource() {
+        return source;
+    }
+
     public void setSource(Source source) {
         this.source = source;
     }

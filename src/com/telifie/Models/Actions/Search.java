@@ -121,7 +121,7 @@ public class Search {
             String[] spl = query.split(":");
             if(spl.length >= 2){
                 if(spl[1].startsWith("http")){
-                    return new Document("source.url", pattern(spl[1].trim() ));
+                    return new Document("source.url", spl[1].trim());
                 }
                 return new Document("source.name", pattern(spl[1].trim() ));
             }
@@ -195,7 +195,7 @@ public class Search {
                                             params.getLongitude(),
                                             params.getLatitude()
                                     ))
-                            ).append("$maxDistance", Integer.MAX_VALUE)
+                            ).append("$maxDistance", 16000)
                     )
                 )
             ));
