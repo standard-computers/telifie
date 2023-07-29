@@ -48,7 +48,7 @@ public class Spotify extends Connector {
     public void parse(Configuration config) throws IOException, ParseException, SpotifyWebApiException {
 
         Configuration personalConfiguration = new Configuration();
-        Domain pd = new Domain(config.getDomain().getUri());
+        Domain pd = new Domain();
         pd.setAlt(config.getAuthentication().getUser());
         personalConfiguration.setDomain(pd);
         ArticlesClient articles = new ArticlesClient(personalConfiguration); //Put found articles in personal domain

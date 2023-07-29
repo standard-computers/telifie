@@ -11,8 +11,6 @@ import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -23,8 +21,6 @@ public class Search {
     public static Result execute(Configuration config, String query, Parameters params){
 
         articlesClient = new ArticlesClient(config);
-        query = URLDecoder.decode(query, StandardCharsets.UTF_8);
-
         String g = "";
         if(query.matches("([^\\s]+(?:\\s+[^\\s]+)*) of ([^\\s]+(?:\\s+[^\\s]+)*)")){
             String[] spl = query.split("of");
@@ -82,7 +78,6 @@ public class Search {
     }
 
     private static ArrayList executeQuery(Configuration config, String query, Parameters params){
-
         ArrayList<Article> results = articlesClient.search(config, params, filter(query, params));
         if(results != null && results.size() > 3){
             Collections.sort(results, new RelevanceComparator(query));
@@ -246,6 +241,7 @@ public class Search {
         };
         filters.add(Filters.or(titleFilters));
         filters.add(Filters.regex("link", pattern(query)));
+        filters.add(Filters.regex("attributes.value", pattern(query)));
         filters.add(Filters.in("tags", pattern(query)));
         return new Document("$or", filters);
     }
@@ -280,20 +276,28 @@ public class Search {
         }
 
         private int relevance(String title) {
-            int[][] dp = new int[title.length() + 1][query.length() + 1];
+            int lenDiff = Math.abs(title.length() - query.length());
+            if (lenDiff > 3) {
+                return lenDiff;
+            }
+            int[] prev = new int[query.length() + 1];
+            int[] curr = new int[query.length() + 1];
             for (int i = 0; i <= title.length(); i++) {
                 for (int j = 0; j <= query.length(); j++) {
                     if (i == 0) {
-                        dp[i][j] = j;
+                        curr[j] = j;
                     } else if (j == 0) {
-                        dp[i][j] = i;
+                        curr[j] = i;
                     } else {
-                        dp[i][j] = Math.min(dp[i - 1][j - 1] + (title.charAt(i - 1) == query.charAt(j - 1) ? 0 : 1),
-                                Math.min(dp[i - 1][j], dp[i][j - 1]) + 1);
+                        curr[j] = Math.min(prev[j - 1] + (title.charAt(i - 1) == query.charAt(j - 1) ? 0 : 1),
+                                Math.min(prev[j], curr[j - 1]) + 1);
                     }
                 }
+                int[] temp = prev;
+                prev = curr;
+                curr = temp;
             }
-            return dp[title.length()][query.length()];
+            return prev[query.length()];
         }
     }
 }

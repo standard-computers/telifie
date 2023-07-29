@@ -59,8 +59,8 @@ public class DomainsClient extends Client {
 
     public boolean create(Domain domain){
         if(this.insertOne(Document.parse(domain.toString()))){
-            try(MongoClient mongoClient = MongoClients.create(super.config.getDomain().getUri())){
-                MongoDatabase database = mongoClient.getDatabase(domain.getAlt());
+            try {
+                MongoDatabase database = super.mc.getDatabase(domain.getAlt());
                 database.createCollection("articles");
             }catch(MongoException e){
                 return true;

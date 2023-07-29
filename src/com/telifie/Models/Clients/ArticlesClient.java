@@ -52,7 +52,7 @@ public class ArticlesClient extends Client {
         return this.updateOne(new Document("id", article.getId()), new Document("$set", new Document("verified", true)));
     }
 
-    public Article withId(String articleId){
+    public Article withId(String articleId) {
         return new Article(this.findOne(new Document("id", articleId)));
     }
 
@@ -66,8 +66,8 @@ public class ArticlesClient extends Client {
     }
 
     public ArrayList<Article> search(Configuration config, Parameters params, Document filter){
-        try(MongoClient mongoClient = MongoClients.create(config.getDomain().getUri())){
-            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getAlt());
+        try {
+            MongoDatabase database = super.mc.getDatabase(config.getDomain().getAlt());
             MongoCollection<Document> collection = database.getCollection("articles");
             FindIterable<Document> iterable = collection.find(filter)
                     .sort(new BasicDBObject("priority", -1))
@@ -94,7 +94,6 @@ public class ArticlesClient extends Client {
     public boolean move(Article article, Domain domain){
         this.delete(article);
         Configuration c2 = new Configuration();
-        domain.setUri(config.getDomain().getUri());
         c2.setDomain(domain);
         this.config = c2;
         return this.create(article);
@@ -102,7 +101,6 @@ public class ArticlesClient extends Client {
 
     public boolean duplicate(Article article, Domain domain){
         Configuration c2 = new Configuration();
-        domain.setUri(config.getDomain().getUri());
         c2.setDomain(domain);
         this.config = c2;
         return this.create(article);
@@ -143,6 +141,10 @@ public class ArticlesClient extends Client {
         sortedDescriptions.forEach((key, value) -> descriptions.append(key, value));
         stats.append("descriptions", descriptions);
         return stats;
+    }
+
+    public boolean imageExists(String imageUrl){
+        return exists(new Document("images.url", imageUrl));
     }
 
     public boolean archive(Article article){

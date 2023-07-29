@@ -1,5 +1,7 @@
 package com.telifie.Models.Utilities;
 
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import com.telifie.Models.Domain;
 import com.telifie.Models.User;
 import java.io.Serializable;
@@ -10,7 +12,9 @@ public class Configuration implements Serializable {
     private User user;
     private Authentication authentication = null;
     private String license = null;
-    private Domain domain;
+    private String uri;
+    private static MongoClient mongoClient;
+    protected Domain domain;
 
     public User getUser() {
         return user;
@@ -30,6 +34,19 @@ public class Configuration implements Serializable {
     
     public void setLicense(String license) {
         this.license = license;
+    }
+
+    public String getUri() {
+        return uri;
+    }
+
+    public void setUri(String uri) {
+        this.uri = uri;
+        mongoClient = MongoClients.create(uri);
+    }
+
+    public MongoClient getClient(){
+        return mongoClient;
     }
 
     public Domain getDomain() {

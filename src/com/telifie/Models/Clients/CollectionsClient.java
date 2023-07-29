@@ -23,7 +23,7 @@ public class CollectionsClient extends Client {
             }
         }
         if(collection.getDomain().equals(userId)){
-            Domain dm = new Domain(this.config.getDomain().getUri());
+            Domain dm = new Domain();
             dm.setAlt(userId);
             this.config = new Configuration();
             this.config.setDomain(dm);

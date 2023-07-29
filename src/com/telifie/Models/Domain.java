@@ -8,12 +8,11 @@ import java.util.UUID;
 
 public class Domain implements Serializable {
 
-    private String uri, id, alt = "telifie", icon, owner, name;
+    private String id, alt = "telifie", icon, owner, name;
     private int origin, permissions;
     private final ArrayList<Member> users = new ArrayList<>();
 
-    public Domain(String uri){
-        this.uri = uri;
+    public Domain() {
     }
 
     public Domain(String owner, String name, String icon, int permissions){
@@ -37,14 +36,6 @@ public class Domain implements Serializable {
         if (m != null) {
             m.forEach(d -> this.addUser(new Member(d)));
         }
-    }
-
-    public String getUri() {
-        return uri;
-    }
-
-    public void setUri(String uri){
-        this.uri = uri;
     }
 
     public String getId() {
@@ -87,7 +78,6 @@ public class Domain implements Serializable {
     @Override
     public String toString() {
         return "{" +
-                (uri == null ? "" : "\"uri\" : \"" + uri + "\", ") +
                 "\"id\" : \"" + id + '\"' +
                 ", \"alt\" : \"" + alt + '\"' +
                 ", \"icon\" : \"" + icon + '\"' +

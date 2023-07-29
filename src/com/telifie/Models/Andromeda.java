@@ -39,12 +39,10 @@ public class Andromeda extends Client{
     }
 
     private void index(){
-        try (MongoClient mongoClient = MongoClients.create(config.getDomain().getUri())) {
-            MongoDatabase database = mongoClient.getDatabase(config.getDomain().getAlt());
+        try {
+            MongoDatabase database = super.mc.getDatabase(config.getDomain().getAlt());
             MongoCollection<Document> collection = database.getCollection("articles");
             MongoCursor<Document> cursor = collection.find().iterator();
-            int totalCount = (int) collection.countDocuments();
-            int processedCount = 0;
             while (cursor.hasNext()) {
                 Article a = new Article(cursor.next());
                 String title = (a.getTitle() == null ? null : a.getTitle().toLowerCase());
@@ -58,7 +56,6 @@ public class Andromeda extends Client{
                         tokens.add(s);
                     });
                 }
-                processedCount++;
             }
             cursor.close();
         }catch (Exception e){

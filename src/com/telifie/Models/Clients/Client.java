@@ -11,13 +11,13 @@ import java.util.Arrays;
 
 public class Client {
 
-    private final String mongoUri;
+    protected static MongoClient mc;
     protected String collection;
     protected Configuration config;
 
     protected Client(Configuration config){
         this.config = config;
-        this.mongoUri = config.getDomain().getUri();
+        mc = config.getClient();
     }
 
     public Configuration getConfig() {
@@ -25,7 +25,7 @@ public class Client {
     }
 
     protected ArrayList<Document> find(Document filter){
-        try(MongoClient mc = MongoClients.create(this.mongoUri)){
+        try {
             MongoDatabase db = mc.getDatabase(config.getDomain().getAlt());
             MongoCollection<Document> c = db.getCollection(this.collection);
             FindIterable<Document> iter = c.find(filter).limit(250);
@@ -40,7 +40,7 @@ public class Client {
     }
 
     protected Document findOne(Document filter){
-        try(MongoClient mc = MongoClients.create(this.mongoUri)){
+        try {
             MongoDatabase db = mc.getDatabase(config.getDomain().getAlt());
             MongoCollection<Document> c = db.getCollection(this.collection);
             return c.find(filter).first();
@@ -50,7 +50,7 @@ public class Client {
     }
 
     protected boolean updateOne(Document filter, Document update){
-        try(MongoClient mc = MongoClients.create(this.mongoUri)){
+        try {
             MongoDatabase db = mc.getDatabase(config.getDomain().getAlt());
             MongoCollection<Document> c = db.getCollection(this.collection);
             UpdateResult result = c.updateOne(filter, update);
@@ -61,7 +61,7 @@ public class Client {
     }
 
     protected boolean updateOne(Document filter, Document update, UpdateOptions options){
-        try(MongoClient mc = MongoClients.create(this.mongoUri)){
+        try {
             MongoDatabase db = mc.getDatabase(config.getDomain().getAlt());
             MongoCollection<Document> c = db.getCollection(this.collection);
             UpdateResult result = c.updateOne(filter, update, options);
@@ -72,7 +72,7 @@ public class Client {
     }
 
     protected boolean insertOne(Document document){
-        try(MongoClient mc = MongoClients.create(this.mongoUri)){
+        try {
             MongoDatabase db = mc.getDatabase(config.getDomain().getAlt());
             MongoCollection<Document> c = db.getCollection(this.collection);
             c.insertOne(document);
@@ -83,7 +83,7 @@ public class Client {
     }
 
     protected boolean insertMany(ArrayList<Document> documents){
-        try(MongoClient mc = MongoClients.create(this.mongoUri)){
+        try {
             MongoDatabase db = mc.getDatabase(config.getDomain().getAlt());
             MongoCollection<Document> c = db.getCollection(this.collection);
             c.insertMany(documents);
@@ -94,7 +94,7 @@ public class Client {
     }
 
     protected ArrayList<Document> aggregate(Document filter){
-        try(MongoClient mc = MongoClients.create(this.mongoUri)){
+        try {
             MongoDatabase db = mc.getDatabase(config.getDomain().getAlt());
             MongoCollection<Document> c = db.getCollection(this.collection);
             AggregateIterable<Document> i = c.aggregate(Arrays.asList(filter));
@@ -109,7 +109,7 @@ public class Client {
     }
 
     protected int count(){
-        try(MongoClient mc = MongoClients.create(this.mongoUri)){
+        try {
             MongoDatabase db = mc.getDatabase(config.getDomain().getAlt());
             MongoCollection<Document> c = db.getCollection(this.collection);
             return (int) c.countDocuments();
@@ -124,7 +124,7 @@ public class Client {
     }
 
     protected boolean deleteOne(Document filter){
-        try(MongoClient mc = MongoClients.create(this.mongoUri)){
+        try {
             MongoDatabase db = mc.getDatabase(config.getDomain().getAlt());
             MongoCollection<Document> c = db.getCollection(this.collection);
             c.deleteOne(filter);

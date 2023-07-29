@@ -8,7 +8,6 @@ import com.telifie.Models.Connectors.Spotify;
 import com.telifie.Models.Utilities.*;
 import org.apache.hc.core5.http.ParseException;
 import org.bson.Document;
-import org.bson.json.JsonWriterSettings;
 import org.json.JSONException;
 import org.json.JSONObject;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
@@ -22,16 +21,11 @@ import java.util.regex.Pattern;
 public class Command {
 
     private final String command;
-    private final String targetDomain;
-    private final String primarySelector;
     private final String[] selectors;
 
     public Command(String command){
         this.command = command;
-        String[] spl = this.command.split("://");
-        this.targetDomain = spl.length <= 1 || spl[0].equals("") || spl[0].contains("/") ? "telifie" : spl[0];
-        this.selectors = this.command.replaceFirst(targetDomain + "://", "").split("(?!//)/");
-        this.primarySelector = this.get(0);
+        this.selectors = this.command.split("(?!//)/");
     }
 
     public String get(int index){
@@ -40,26 +34,29 @@ public class Command {
 
     public Result parseCommand(Configuration config, Document content){
 
+        String primarySelector = this.get(0);
         String objectSelector = (this.selectors.length > 1 ? this.get(1) : "");
         String secSelector = (this.selectors.length > 2 ? this.get(2) : null);
         String terSelector = (this.selectors.length > 3 ? this.get(3) : null);
         String actingUser = config.getAuthentication().getUser();
 
         if(primarySelector.equals("search")){
-            String query = this.command.replaceFirst("search/", "");
-            DomainsClient domains = new DomainsClient(config);
-            Domain domain;
-            if(!this.targetDomain.equals("telifie")){
-                query = this.command.replaceFirst(this.targetDomain + "://search/", "");
-                try{
-                    domain = domains.withAltId(this.targetDomain.trim());
-                }catch (NullPointerException n){
-                    domain = config.getDomain();
-                }
-                domain.setUri(config.getDomain().getUri());
-                config.setDomain(domain);
-            }
             if(content != null){
+                String query = content.getString("query").trim();
+                String targetDomain = (content == null || content.getString("domain") == null ? "telifie" : content.getString("domain"));
+                if(query.equals("")){
+                    return new Result(428, this.command, "Query expected");
+                }
+                DomainsClient domains = new DomainsClient(config);
+                Domain domain;
+                if(!targetDomain.equals("telifie")){
+                    try{
+                        domain = domains.withAltId(targetDomain);
+                        config.setDomain(domain);
+                    }catch (NullPointerException n){
+                        return new Result(410, this.command, "Failed to select domain");
+                    }
+                }
                 try {
                     Parameters params = new Parameters(content);
                     return Search.execute(config, query, params);
@@ -67,8 +64,7 @@ public class Command {
                     return new Result(428, this.command, "Invalid search parameters");
                 }
             }
-            return Search.execute(config, query, new Parameters(25, 0, "articles"));
-
+            return new Result(428, this.command, "JSON body expected");
         }else if(primarySelector.equals("domains")){
 
             if(this.selectors.length >= 2){ //telifie.com/domains/{owner|member|create|update}
@@ -171,8 +167,13 @@ public class Command {
          * Accessing Articles
          */
         else if(primarySelector.equals("articles")){
-
-            if(config.getUser().getPermissions() < 12 && !this.targetDomain.equals("telifie")){
+            String targetDomain = "telifie";
+            if(content != null){
+                if(content.getString("domain") != null){
+                    targetDomain = content.getString("domain");
+                }
+            }
+            if(config.getUser().getPermissions() < 12 && !targetDomain.equals("telifie")){
                 //TODO, share changes with data team for approval and change status on Article
                 return new Result(401, this.command, "Insufficient permissions");
             }
@@ -268,8 +269,7 @@ public class Command {
                 if(content != null){
                     DomainsClient domains = new DomainsClient(config);
                     try{
-                        Domain domain = domains.withAltId(this.targetDomain);
-                        domain.setUri(config.getDomain().getUri());
+                        Domain domain = domains.withAltId(targetDomain);
                         config.setDomain(domain);
                         try {
                             Article na = new Article(content);
@@ -465,12 +465,16 @@ public class Command {
                             return new Result(this.command, "articles", yelps);
                         }
                         case "tmdb" -> {
-
+                            new Parser(config);
+                            int page = (content.getInteger("page") == null ? 1 : content.getInteger("page"));
+                            int limit = (content.getInteger("limit") == null ? 1 : content.getInteger("limit"));
+                            ArrayList<Article> tmdb = Parser.connectors.tmdb(page, limit);
+                            return new Result(this.command, "articles", tmdb);
                         }
                         case "uri" -> {
                             String url = content.getString("uri");
                             if (url != null && !url.equals("")) {
-                                Parser parser = new Parser();
+                                new Parser(config);
                                 Article parsed = Parser.engines.parse(url);
                                 if (content.getBoolean("insert") != null && content.getBoolean("insert")) {
                                     if (parsed != null) {
@@ -484,10 +488,11 @@ public class Command {
                         case "crawl" -> {
                             String url = content.getString("uri");
                             if (url != null && !url.equals("")) {
-                                Parser parser = new Parser();
+                                Parser parser = new Parser(config);
                                 parser.purge();
                                 int limit = (content.getInteger("limit") == null ? Integer.MAX_VALUE : content.getInteger("limit"));
-                                Parser.engines.crawl(config, url, limit, false);
+                                boolean allowExternalCrawl = (content.getBoolean("allow_external") == null ? false : content.getBoolean("allow_external"));
+                                Parser.engines.crawl(config, url, limit, allowExternalCrawl);
                                 return new Result(this.command, "articles", parser.getTraversable());
                             }
                             return new Result(428, this.command, "URI is required");

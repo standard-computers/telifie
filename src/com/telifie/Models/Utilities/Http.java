@@ -29,7 +29,6 @@ public class Http {
     private Configuration config;
 
     public Http (Configuration config) {
-
         this.config = config;
         try {
             serverSocket = new ServerSocket(80);
@@ -43,6 +42,7 @@ public class Http {
             throw new RuntimeException(e);
         }
     }
+
     private Result processRequest(Configuration configuration, String method, String request, String requestBody){
         if(method.equals("POST")){
             try {
@@ -55,6 +55,7 @@ public class Http {
         }
         return new Result(404, request, "Invalid method");
     }
+
     private class Connection implements Runnable {
 
         @Override
@@ -71,6 +72,7 @@ public class Http {
                     result.setResult("result", "No Authentication credentials provided");
                 } else {
                     Configuration requestConfiguration = new Configuration();
+                    requestConfiguration.setUri(config.getUri());
                     requestConfiguration.setDomain(config.getDomain());
                     AuthenticationClient authenticationClient = new AuthenticationClient(requestConfiguration);
                     if (authenticationClient.isAuthenticated(auth)) {

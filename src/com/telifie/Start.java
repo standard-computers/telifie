@@ -83,7 +83,7 @@ public class Start {
                 }
                 case "--geocode" -> {
                     checkConfig();
-                    MongoClient mongoClient = MongoClients.create(config.getDomain().getUri());
+                    MongoClient mongoClient = MongoClients.create(config.getUri());
                     MongoDatabase database = mongoClient.getDatabase("telifie");
                     MongoCollection<Document> collection = database.getCollection("articles");
                     FindIterable<Document> doc = collection.find(new Document("$and", Arrays.asList(
@@ -132,7 +132,8 @@ public class Start {
         System.out.println("\nLet's connect to a MongoDB first.");
         Telifie.console.out.line();
         String mongo_uri = Telifie.console.in.string("MongoDB URI -> ");
-        Domain domain = new Domain(mongo_uri);
+        configuration.setUri(mongo_uri);
+        Domain domain = new Domain();
         domain.setName("telifie");
         String email = Telifie.console.in.string("Email -> ");
         configuration.setUser(new User(email));
