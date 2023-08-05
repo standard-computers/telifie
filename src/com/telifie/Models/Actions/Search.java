@@ -39,7 +39,7 @@ public class Search {
             }
         }
 
-        ArrayList results = Search.executeQuery(config, query, params);
+        ArrayList results = Search.executeQuery(query, params);
 
         if(params.getIndex().equals("images")) {
             ArrayList<Image> images = new ArrayList();
@@ -77,8 +77,8 @@ public class Search {
         return new Result(query, qr, results, g);
     }
 
-    private static ArrayList executeQuery(Configuration config, String query, Parameters params){
-        ArrayList<Article> results = articlesClient.search(config, params, filter(query, params));
+    private static ArrayList executeQuery(String query, Parameters params){
+        ArrayList<Article> results = articlesClient.search(params, filter(query, params));
         if(results != null && results.size() > 3){
             Collections.sort(results, new RelevanceComparator(query));
             Collections.reverse(results);

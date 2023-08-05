@@ -43,15 +43,14 @@ public class Command {
         if(primarySelector.equals("search")){
             if(content != null){
                 String query = content.getString("query").trim();
-                String targetDomain = (content == null || content.getString("domain") == null ? "telifie" : content.getString("domain"));
+                String targetDomain = (content.getString("domain") == null ? "telifie" : content.getString("domain"));
                 if(query.equals("")){
                     return new Result(428, this.command, "Query expected");
                 }
-                DomainsClient domains = new DomainsClient(config);
-                Domain domain;
                 if(!targetDomain.equals("telifie")){
                     try{
-                        domain = domains.withAltId(targetDomain);
+                        DomainsClient domains = new DomainsClient(config);
+                        Domain domain = domains.withAltId(targetDomain);
                         config.setDomain(domain);
                     }catch (NullPointerException n){
                         return new Result(410, this.command, "Failed to select domain");
@@ -501,11 +500,13 @@ public class Command {
                             String text = content.getString("text");
                             List<Andromeda.unit> tokens = Andromeda.encoder.tokenize(text, false);
                         }
-                        case "edit" -> {
+                        case "audit" -> {
+                            String q = (content.getString("q") == null ? "" : content.getString("q"));
                             ArrayList<String> ids = new ArrayList<>();
-                            articles.getIds().forEach(a -> ids.add(new Article(a).getId()));
+                            articles.getIds(q).forEach(a -> ids.add(new Article(a).getId()));
                             return new Result(this.command, "ids", "" + ids + "");
                         }
+                        case "recursive" -> Parser.engines.recursive(config);
                     }
                 }
                 return new Result(428, this.command, "Select parser mode");
@@ -533,48 +534,54 @@ public class Command {
          * Connect: Creating or logging in user
          */
         else if(primarySelector.equals("connect")){
-
-            if(this.selectors.length >= 2){
+            if(content != null){
+                String email = content.getString("email");
                 UsersClient u = new UsersClient(config);
-                if(u.userExistsWithEmail(objectSelector)){
-                    User user = u.getUserWithEmail(objectSelector);
+                if(u.userExistsWithEmail(email)){
+                    User user = u.getUserWithEmail(email);
                     if(user.getPermissions() == 0){
-                        //TODO lock user with email
+                        if(u.emailCode(user)){
+                            return new Result(200, "Code Sent");
+                        }
+                        return new Result(501, "Failed to email code");
                     }else if(user.getPermissions() >= 1){
-                        if(u.sendCode(user)){
-                            return new Result(200, "Authentication code sent");
+                        if(u.textCode(user)){
+                            return new Result(200, "Code Sent");
                         }
                         return new Result(501, "Failed to send code");
                     }
                 }
                 return new Result(404, "Account not found");
             }
-            return new Result(428, "Need more params");
+            return new Result(428, "JSON request body expected");
         }
         /*
          * Verify: Unlocking account using one-time 2fa token
          */
         else if(primarySelector.startsWith("verify")){
-
-            if(this.selectors.length >= 3){
-                String code = Telifie.tools.make.md5(secSelector);
+            if(content != null){
+                String email = content.getString("email");
+                String code = Telifie.tools.make.md5(content.getString("code"));
                 UsersClient users = new UsersClient(config);
-                User user = users.getUserWithEmail(objectSelector);
-                if(user.hasToken(code)){
-                    if(user.getPermissions() == 0 || user.getPermissions() == 1){
-                        users.upgradePermissions(user);
-                        user.setPermissions(user.getPermissions() + 1);
+                if(users.userExistsWithEmail(email)){
+                    User user = users.getUserWithEmail(email);
+                    if(user.hasToken(code)){
+                        if(user.getPermissions() == 0 || user.getPermissions() == 1){
+                            users.upgradePermissions(user);
+                            user.setPermissions(user.getPermissions() + 1);
+                        }
+                        Authentication auth = new Authentication(user);
+                        AuthenticationClient auths = new AuthenticationClient(config);
+                        auths.authenticate(auth);
+                        JSONObject json = new JSONObject(user.toString());
+                        json.put("authentication", auth.toJson());
+                        return new Result(this.command, "user", json);
                     }
-                    Authentication auth = new Authentication(user);
-                    AuthenticationClient auths = new AuthenticationClient(config);
-                    auths.authenticate(auth);
-                    JSONObject json = new JSONObject(user.toString());
-                    json.put("authentication", auth.toJson());
-                    return new Result(this.command, "user", json);
+                    return new Result(403, "Invalid Code");
                 }
-                return new Result(403, "Invalid verification code provided");
+                return new Result(404, "User not found");
             }
-            return new Result(404, this.command, "Invalid command received");
+            return new Result(404, this.command, "JSON request body expected");
         }
         /*
          * Timelines: Accessing the timelines (history) of objects

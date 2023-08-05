@@ -26,7 +26,7 @@ public class Client {
 
     protected ArrayList<Document> find(Document filter){
         try {
-            MongoDatabase db = mc.getDatabase(config.getDomain().getAlt());
+            MongoDatabase db = mc.getDatabase("telifie");
             MongoCollection<Document> c = db.getCollection(this.collection);
             FindIterable<Document> iter = c.find(filter).limit(250);
             ArrayList<Document> documents = new ArrayList<>();
@@ -41,7 +41,7 @@ public class Client {
 
     protected Document findOne(Document filter){
         try {
-            MongoDatabase db = mc.getDatabase(config.getDomain().getAlt());
+            MongoDatabase db = mc.getDatabase("telifie");
             MongoCollection<Document> c = db.getCollection(this.collection);
             return c.find(filter).first();
         }catch(MongoException e){
@@ -51,7 +51,7 @@ public class Client {
 
     protected boolean updateOne(Document filter, Document update){
         try {
-            MongoDatabase db = mc.getDatabase(config.getDomain().getAlt());
+            MongoDatabase db = mc.getDatabase("telifie");
             MongoCollection<Document> c = db.getCollection(this.collection);
             UpdateResult result = c.updateOne(filter, update);
             return result.getModifiedCount() > 0;
@@ -62,7 +62,7 @@ public class Client {
 
     protected boolean updateOne(Document filter, Document update, UpdateOptions options){
         try {
-            MongoDatabase db = mc.getDatabase(config.getDomain().getAlt());
+            MongoDatabase db = mc.getDatabase("telifie");
             MongoCollection<Document> c = db.getCollection(this.collection);
             UpdateResult result = c.updateOne(filter, update, options);
             return result.getModifiedCount() > 0;
@@ -73,7 +73,7 @@ public class Client {
 
     protected boolean insertOne(Document document){
         try {
-            MongoDatabase db = mc.getDatabase(config.getDomain().getAlt());
+            MongoDatabase db = mc.getDatabase("telifie");
             MongoCollection<Document> c = db.getCollection(this.collection);
             c.insertOne(document);
             return true;
@@ -84,7 +84,7 @@ public class Client {
 
     protected boolean insertMany(ArrayList<Document> documents){
         try {
-            MongoDatabase db = mc.getDatabase(config.getDomain().getAlt());
+            MongoDatabase db = mc.getDatabase("telifie");
             MongoCollection<Document> c = db.getCollection(this.collection);
             c.insertMany(documents);
             return true;
@@ -95,7 +95,7 @@ public class Client {
 
     protected ArrayList<Document> aggregate(Document filter){
         try {
-            MongoDatabase db = mc.getDatabase(config.getDomain().getAlt());
+            MongoDatabase db = mc.getDatabase("telifie");
             MongoCollection<Document> c = db.getCollection(this.collection);
             AggregateIterable<Document> i = c.aggregate(Arrays.asList(filter));
             ArrayList<Document> documents = new ArrayList<>();
@@ -110,7 +110,7 @@ public class Client {
 
     protected int count(){
         try {
-            MongoDatabase db = mc.getDatabase(config.getDomain().getAlt());
+            MongoDatabase db = mc.getDatabase("telifie");
             MongoCollection<Document> c = db.getCollection(this.collection);
             return (int) c.countDocuments();
         }catch(MongoException e){
@@ -125,7 +125,7 @@ public class Client {
 
     protected boolean deleteOne(Document filter){
         try {
-            MongoDatabase db = mc.getDatabase(config.getDomain().getAlt());
+            MongoDatabase db = mc.getDatabase("telifie");
             MongoCollection<Document> c = db.getCollection(this.collection);
             c.deleteOne(filter);
             return true;

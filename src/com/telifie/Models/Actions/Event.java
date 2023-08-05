@@ -10,7 +10,7 @@ public class Event {
     private final String content;
 
     public enum Type {
-        UPDATE, POST, GET, PUT, SEARCH, MESSAGE, EMAIL, TEXT, FLAG, DELETE
+        UPDATE, POST, GET, PUT, SEARCH, MESSAGE, EMAIL, TEXT, FLAG, DELETE, CRAWL
     }
 
     public Event(Type type, int origin, String user, String content) {
@@ -20,11 +20,26 @@ public class Event {
         this.content = content;
     }
 
+    public Event(Type type, String user, String content) {
+        this.type = type;
+        this.origin = (int) (System.currentTimeMillis() / 1000);
+        this.user = user;
+        this.content = content;
+    }
+
     public Event(Document document){
         this.type = Type.valueOf(document.getString("type"));
         this.origin = document.getInteger("origin");
         this.user = document.getString("user");
         this.content = document.getString("content");
+    }
+
+    public Type getType() {
+        return type;
+    }
+
+    public int getOrigin() {
+        return origin;
     }
 
     public String getUser() {

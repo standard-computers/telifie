@@ -8,8 +8,8 @@ public class Attribute {
     private final String value;
 
     public Attribute(String key, String value) {
-        this.key = Telifie.tools.strings.escape(key);
-        this.value = Telifie.tools.strings.escape(value);
+        this.key = Telifie.tools.strings.escape(key.trim());
+        this.value = Telifie.tools.strings.escape(value.trim());
     }
 
     public String getKey() {

@@ -3,22 +3,17 @@ package com.telifie.Models.Connectors;
 import com.sendgrid.Method;
 import com.sendgrid.Request;
 import com.sendgrid.Response;
-import com.sendgrid.SendGrid;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
-import com.telifie.Models.Connector;
+
 import java.io.IOException;
 
-public class SGrid {
+public class SendGrid {
 
-    private final SendGrid sg;
+    private static final com.sendgrid.SendGrid sg = new com.sendgrid.SendGrid("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");;
 
-    public SGrid(Connector connector){
-        sg = new SendGrid(connector.getSecret());
-    }
-
-    public boolean sendAuthenticationCode(String email, String string){
+    public static boolean sendCode(String email, String string){
         Request req = new Request();
         Email from = new Email("no-reply@telifie.com");
         String subject = "Verify your email";

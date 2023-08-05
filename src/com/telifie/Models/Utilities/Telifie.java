@@ -238,7 +238,6 @@ public class Telifie {
                         NUMERALS[(int) random(0, 9)] +
                         NUMERALS[(int) random(0, 9)] +
                         NUMERALS[(int) random(0, 9)] +
-                        NUMERALS[(int) random(0, 9)] +
                         NUMERALS[(int) random(0, 9)];
             }
 

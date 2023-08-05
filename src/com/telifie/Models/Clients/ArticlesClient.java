@@ -9,13 +9,18 @@ import com.telifie.Models.Article;
 import com.telifie.Models.Utilities.Configuration;
 import org.bson.Document;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.TreeMap;
 
 public class ArticlesClient extends Client {
 
     public ArticlesClient(Configuration config){
         super(config);
-        super.collection = "articles";
+        if(!config.getDomain().getAlt().equals("telifie") || config.getDomain() == null){
+            super.collection = "domain-articles";
+        }else{
+            super.collection = "articles";
+        }
     }
 
     public boolean update(Article article, Article newArticle){
@@ -30,6 +35,17 @@ public class ArticlesClient extends Client {
         }else{
             return false;
         }
+    }
+
+    public ArrayList<Article> linked(){
+        return this.get(
+            new Document("$or",
+                Arrays.asList(
+                        new Document("source.url", new Document("$exists", true)),
+                        new Document("link", new Document("$exists", true))
+                )
+            )
+        );
     }
 
     public boolean createMany(ArrayList<Article> articles){
@@ -65,10 +81,10 @@ public class ArticlesClient extends Client {
         return articles;
     }
 
-    public ArrayList<Article> search(Configuration config, Parameters params, Document filter){
+    public ArrayList<Article> search(Parameters params, Document filter){
         try {
-            MongoDatabase database = super.mc.getDatabase(config.getDomain().getAlt());
-            MongoCollection<Document> collection = database.getCollection("articles");
+            MongoDatabase database = super.mc.getDatabase("telifie");
+            MongoCollection<Document> collection = database.getCollection(super.collection);
             FindIterable<Document> iterable = collection.find(filter)
                     .sort(new BasicDBObject("priority", -1))
                     .skip(params.getSkip())
@@ -87,7 +103,7 @@ public class ArticlesClient extends Client {
         return super.deleteOne(new Document("id", article.getId()));
     }
 
-    public ArrayList<Document> getIds(){
+    public ArrayList<Document> getIds(String q){
         return super.find(new Document("verified", false));
     }
 
@@ -121,21 +137,26 @@ public class ArticlesClient extends Client {
         return super.find(new Document("source.name", source));
     }
 
-    public Document stats(){
+    public Document stats() {
         Document groupFields = new Document("_id", "$description");
         groupFields.put("count", new Document("$sum", 1));
         Document groupStage = new Document("$group", groupFields);
         ArrayList<Document> iterable = super.aggregate(groupStage);
         Document stats = new Document();
-        stats.append("total", super.count());
-        TreeMap<String, Integer> sortedDescriptions = new TreeMap<>();
+        int total = super.count();
+        stats.append("total", total);
+        TreeMap<String, Document> sortedDescriptions = new TreeMap<>();
         for (Document document : iterable) {
             String description = document.getString("_id");
             int count = document.getInteger("count");
             if (description == null) {
                 description = "Unclassified";
             }
-            sortedDescriptions.put(description, sortedDescriptions.getOrDefault(description, 0) + count);
+            double percent = (double) count / total * 100; // Calculate the percentage
+            Document descriptionStats = new Document();
+            descriptionStats.append("count", count);
+            descriptionStats.append("percent", percent);
+            sortedDescriptions.put(description, descriptionStats);
         }
         Document descriptions = new Document();
         sortedDescriptions.forEach((key, value) -> descriptions.append(key, value));

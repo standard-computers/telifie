@@ -1,6 +1,7 @@
 package com.telifie.Models.Clients;
 
-import com.telifie.Models.Connectors.TwilioSMS;
+import com.telifie.Models.Connectors.SendGrid;
+import com.telifie.Models.Connectors.Twilio;
 import com.telifie.Models.User;
 import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Telifie;
@@ -30,10 +31,15 @@ public class UsersClient extends Client {
         return this.updateOne(new Document("email", user.getEmail()), new Document("$set", new Document("token", Telifie.tools.make.md5(code))));
     }
 
-    public boolean sendCode(User user){
+    public boolean emailCode(User user){
         String code = Telifie.tools.make.simpleCode();
-        TwilioSMS messenger = new TwilioSMS();
-        messenger.send(user.getPhone(), "+12243476722", "Welcome back! Your login code is " + code);
+        SendGrid.sendCode(user.getEmail(), code);
+        return this.lock(user, code);
+    }
+
+    public boolean textCode(User user){
+        String code = Telifie.tools.make.simpleCode();
+        Twilio.send(user.getPhone(), "+12243476722", "Hello \uD83D\uDC4B It's Telifie! Your login code is " + code);
         return this.lock(user, code);
     }
 

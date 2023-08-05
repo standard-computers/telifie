@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
+import com.telifie.Models.Actions.Event;
 import com.telifie.Models.Articles.*;
 import com.telifie.Models.Clients.ArticlesClient;
+import com.telifie.Models.Clients.TimelinesClient;
 import com.telifie.Models.Utilities.*;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.http.client.ClientProtocolException;
@@ -66,6 +68,26 @@ public class Parser {
             return null;
         }
 
+        public static void recursive(Configuration config){
+            articles = new ArticlesClient(config);
+            TimelinesClient timelines = new TimelinesClient(config);
+            ArrayList<Article> as = articles.linked();
+            for(Article a : as){
+                if(!parsed.contains(a.getLink())){
+                    int lastCrawl = timelines.lastEvent(a.getId(), Event.Type.CRAWL);
+                    if(lastCrawl > 604800 || lastCrawl == -1){ //7 days
+                        timelines.addEvent(a.getId(), new Event(
+                                Event.Type.CRAWL,
+                                "com.telifie.web-app@parser",
+                                "Crawled")
+                        );
+                        parsed.add(a.getLink());
+                        Parser.engines.crawl(config, a.getLink(), Integer.MAX_VALUE, false);
+                    }
+                }
+            }
+        }
+
         public static Article crawl(Configuration config, String uri, int limit, boolean allowExternalCrawl){
             traversable.removeAll(traversable);
             Parser.uri = uri;
@@ -79,6 +101,13 @@ public class Parser {
 
         protected static Article fetch(String url, int limit, boolean allowExternalCrawl){
             try {
+                URL urlObj = new URL(url);
+                String host = urlObj.getProtocol() + "://" + urlObj.getHost();
+                RobotPermission robotPermission = new RobotPermission(host);
+                if(!robotPermission.isAllowed(urlObj.getPath())){
+                    System.out.println("Disallowed by robots.txt: " + url);
+                    return null;
+                }
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
                 if(response.statusCode() == 200){
                     Document root = response.parse();
@@ -89,18 +118,18 @@ public class Parser {
                         created = articles.create(article);
                         System.out.println("With source -> Created article " + article.getTitle());
                     }else if(article != null && article.getSource() == null && (created = articles.create(article))){
-                        System.out.println("With source -> Created article " + article.getTitle());
+                        System.out.println("With link -> Created article " + article.getTitle());
                     }
                     ArrayList<Element> links = root.getElementsByTag("a");
                     for(Element link : links){
-                        String href = Telifie.tools.detector.fixLink("https://" + new URL(url).getHost(), link.attr("href").split("\\?")[0]);
-                        if(created && !isParsed(href)
+                        String href = Telifie.tools.detector.fixLink(host, link.attr("href").split("\\?")[0]);
+                        if(!isParsed(href)
                                 && Telifie.tools.detector.isUrl(href)
                                 && !Telifie.tools.strings.contains(new String[]{
-                                    "facebook.com", "instagram.com", "spotify.com",
-                                    "linkedin.com", "youtube.com", "pinterest.com",
-                                    "github.com", "twitter.com", "tumblr.com", "reddit.com"
-                                }, href)) {
+                                "facebook.com", "instagram.com", "spotify.com",
+                                "linkedin.com", "youtube.com", "pinterest.com",
+                                "twitter.com", "tumblr.com", "reddit.com"}, href)
+                        ) {
                             if((allowExternalCrawl && !href.contains(host)) || (!allowExternalCrawl && href.contains(host))){
                                 System.out.println("Fetching (" + parsed.size() + ")" + href);
                                 parsed.add(href);
@@ -108,11 +137,12 @@ public class Parser {
                                     return article;
                                 }
                                 try {
+                                    System.out.println("awaiting");
                                     Thread.sleep(3000);
+                                    fetch(href, limit, allowExternalCrawl);
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
-                                fetch(href, limit, allowExternalCrawl);
                             }
                         }
                     }
@@ -388,9 +418,11 @@ public class Parser {
             while(pageNumber < (page + limit)){
                 try {
                     String batchId = Telifie.tools.make.shortEid();
-                    String url = "https://api.themoviedb.org/3/discover/movie?api_key=" + apiKey + "&page=" + pageNumber;
+                    String url = "https://api.themoviedb.org/3/discover/movie?api_key=" + apiKey + "&sort_by=popularity.asc&page=" + pageNumber;
                     URL obj = new URL(url);
                     HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+                    System.out.println(con.getResponseCode());
+                    System.out.println(con.getResponseMessage());
                     BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
                     String inputLine;
                     StringBuffer response = new StringBuffer();
@@ -517,7 +549,7 @@ public class Parser {
                     }
                     pageNumber++;
                     System.out.println("Onto page " + pageNumber);
-                    Thread.sleep(10000);
+                    Thread.sleep(8000);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -556,7 +588,7 @@ public class Parser {
             Elements metaTags = document.getElementsByTag("meta");
             for (Element tag : metaTags){
                 String mtn = tag.attr("name");
-                String mtc = tag.attr("content");
+                String mtc = Telifie.tools.strings.htmlEscape(tag.attr("content"));
                 switch (mtn) {
                     case "description" -> {
                         if (!tag.attr("content").trim().equals("")) {
@@ -600,7 +632,7 @@ public class Parser {
                     article.addImage(img);
                 }
             }
-            article.setTitle(Telifie.tools.strings.escape(document.title()));
+            article.setTitle(Telifie.tools.strings.htmlEscape(document.title()));
             article.setLink(url);
             String whole_text = document.text().replaceAll("[\n\r]", " ");
             if(article.getContent() == null || article.getContent().equals("")){
@@ -643,6 +675,35 @@ public class Parser {
                 article.setContent(md);
             }
             return article;
+        }
+    }
+
+    public static class RobotPermission {
+        private final List<String> disallowed = new ArrayList<>();
+        public RobotPermission(String host) {
+            try {
+                URL url = new URL(host + "/robots.txt");
+                try (Scanner scanner = new Scanner(url.openStream())) {
+                    boolean isUserAgent = false;
+                    while (scanner.hasNextLine()) {
+                        String line = scanner.nextLine().trim();
+                        if (line.toLowerCase().startsWith("user-agent")) {
+                            isUserAgent = line.substring(11).trim().equals("*") || line.substring(11).trim().equals("telifie/1.0");
+                        } else if (isUserAgent) {
+                            if (line.toLowerCase().startsWith("disallow")) {
+                                disallowed.add(line.substring(9).trim());
+                            } else if (line.toLowerCase().startsWith("user-agent")) {
+                                break;
+                            }
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        public boolean isAllowed(String path) {
+            return disallowed.stream().noneMatch(path::startsWith);
         }
     }
 

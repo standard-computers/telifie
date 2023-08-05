@@ -1,9 +1,5 @@
 package com.telifie.Models.Clients;
 
-import com.mongodb.MongoException;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoDatabase;
 import com.telifie.Models.Domain;
 import com.telifie.Models.Member;
 import com.telifie.Models.Utilities.Configuration;
@@ -58,16 +54,7 @@ public class DomainsClient extends Client {
     }
 
     public boolean create(Domain domain){
-        if(this.insertOne(Document.parse(domain.toString()))){
-            try {
-                MongoDatabase database = super.mc.getDatabase(domain.getAlt());
-                database.createCollection("articles");
-            }catch(MongoException e){
-                return true;
-            }
-            return true;
-        }
-        return false;
+        return this.insertOne(Document.parse(domain.toString()));
     }
 
     public boolean addUsers(Domain domain, ArrayList<Member> members){
