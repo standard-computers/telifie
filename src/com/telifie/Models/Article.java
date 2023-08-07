@@ -130,7 +130,18 @@ public class Article {
     }
 
     public void addAttribute(Attribute attr){
-        this.attributes.add(attr);
+        if (!attributeExists(attr)) {
+            this.attributes.add(attr);
+        }
+    }
+
+    private boolean attributeExists(Attribute attr) {
+        for (Attribute existingAttr : this.attributes) {
+            if (existingAttr.getKey().equals(attr.getKey()) && existingAttr.getValue().equals(attr.getValue())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean hasAttribute(String key){

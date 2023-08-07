@@ -75,6 +75,27 @@ public class Domain implements Serializable {
         this.users.add(member);
     }
 
+    public boolean hasPermission(User user){
+        if(this.owner.equals(user.getId())){
+            return true;
+        }
+        return false;
+    }
+
+    public int getPermissions(User user){
+        if(this.owner.equals(user.getId())){
+            return 0; //Is owner
+        }else{
+            for(Member u : users){
+                if(u.getEmail().equals(user.getEmail())){
+                    int up = u.getPermissions();
+                    return (up < 1 || up > 2 ? 1 : u.getPermissions());
+                }
+            }
+        }
+        return -1;
+    }
+
     @Override
     public String toString() {
         return "{" +

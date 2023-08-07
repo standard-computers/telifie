@@ -68,11 +68,12 @@ public class Parser {
             return null;
         }
 
-        public static void recursive(Configuration config){
+        public static void recursive(Configuration config, int start){
             articles = new ArticlesClient(config);
             TimelinesClient timelines = new TimelinesClient(config);
             ArrayList<Article> as = articles.linked();
-            for(Article a : as){
+            List<Article> as2 = as.subList(start, as.size());
+            for(Article a : as2){
                 if(!parsed.contains(a.getLink())){
                     int lastCrawl = timelines.lastEvent(a.getId(), Event.Type.CRAWL);
                     if(lastCrawl > 604800 || lastCrawl == -1){ //7 days
@@ -419,6 +420,152 @@ public class Parser {
                 try {
                     String batchId = Telifie.tools.make.shortEid();
                     String url = "https://api.themoviedb.org/3/discover/movie?api_key=" + apiKey + "&sort_by=popularity.asc&page=" + pageNumber;
+                    URL obj = new URL(url);
+                    HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+                    System.out.println(con.getResponseCode());
+                    System.out.println(con.getResponseMessage());
+                    BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                    String inputLine;
+                    StringBuffer response = new StringBuffer();
+                    while ((inputLine = in.readLine()) != null) {
+                        response.append(inputLine);
+                    }
+                    in.close();
+                    JSONObject myresponse = new JSONObject(response.toString());
+                    JSONArray moviesArray = myresponse.getJSONArray("results");
+                    for (int i = 0; i < moviesArray.length(); i++) {
+                        Article article = new Article();
+                        JSONObject movie = moviesArray.getJSONObject(i);
+                        String movie_title = Telifie.tools.strings.htmlEscape(movie.getString("title"));
+                        String movie_id = String.valueOf(movie.getInt("id"));
+                        article.setId(Telifie.tools.make.md5(movie_id));
+                        article.addAttribute(new Attribute("*batch", batchId));
+                        article.setPriority(0.56);
+                        article.setTitle(movie_title);
+                        article.setDescription("Movie");
+                        article.setContent(Telifie.tools.strings.htmlEscape(movie.getString("overview")));
+                        if(!movie.isNull("poster_path")){
+                            article.setIcon("https://image.tmdb.org/t/p/original" + movie.getString("poster_path"));
+                            article.addImage(
+                                    new Image(
+                                            "https://image.tmdb.org/t/p/original" + movie.getString("poster_path"),
+                                            movie_title + " Poster",
+                                            "https://www.themoviedb.org/movie/" + movie_id));
+                        }
+                        if(!movie.isNull("backdrop_path")){
+                            article.addImage(
+                                    new Image(
+                                            "https://image.tmdb.org/t/p/original" + movie.getString("backdrop_path"),
+                                            movie_title + " Backdrop",
+                                            "https://www.themoviedb.org/movie/" + movie_id));
+                        }
+                        if(!movie.isNull("release_date") && !movie.getString("release_date").equals("")){
+                            article.addAttribute(new Attribute("Released", convertDateFormat(movie.getString("release_date")))); //TODO format release date
+                        }
+                        article.setSource(new Source(
+                                "1adc674b-12ce-4428-8874-4a4445c13617",
+                                "https://telifie-static.nyc3.digitaloceanspaces.com/mirror/uploads/articles/icons/37430239-78ae-4bf7-8245-8d8969f99011_apple-touch-icon-57ed4b3b0450fd5e9a0c20f34e814b82adaa1085c79bdde2f00ca8787b63d2c4.png",
+                                "The Movie Database",
+                                "https://www.themoviedb.org/movie/" + movie_id
+                        ));
+                        String url2 = "https://api.themoviedb.org/3/movie/" + movie_id + "?api_key=" + apiKey;
+                        URL obj2 = new URL(url2);
+                        System.out.println(article);
+                        if(!articles.exists(article.getId())){
+                            try{
+                                HttpURLConnection con2 = (HttpURLConnection) obj2.openConnection();
+                                BufferedReader in2 = new BufferedReader(new InputStreamReader(con2.getInputStream()));
+                                String inputLine2;
+                                StringBuffer response2 = new StringBuffer();
+                                while ((inputLine2 = in2.readLine()) != null) {
+                                    response2.append(inputLine2);
+                                }
+                                in2.close();
+                                JSONObject myresponse2 = new JSONObject(response2.toString());
+                                article.setLink(myresponse2.getString("homepage"));
+                                try {
+                                    int rev = myresponse2.getInt("revenue");
+                                    int bud = myresponse2.getInt("budget");
+                                    int runtime = myresponse2.getInt("runtime");
+                                    NumberFormat formatter = NumberFormat.getInstance();
+                                    String fRevenue = formatter.format(rev);
+                                    String fBudget = formatter.format(bud);
+
+                                    if(rev > 0){
+                                        article.addAttribute(new Attribute("Revenue", "$" + fRevenue));
+                                    }
+                                    if(bud > 0){
+                                        article.addAttribute(new Attribute("Budget", "$" + fBudget));
+                                    }
+                                    if(runtime > 0){
+                                        article.addAttribute(new Attribute("Runtime", simplifyRuntime(runtime)));
+                                    }
+
+                                    try {
+                                        String url3 = "https://api.themoviedb.org/3/movie/" + movie_id + "/credits?api_key=" + apiKey;
+                                        URL obj3 = new URL(url3);
+                                        HttpURLConnection con3 = (HttpURLConnection) obj3.openConnection();
+                                        BufferedReader in3 = new BufferedReader(new InputStreamReader(con3.getInputStream()));
+                                        String inputLine3;
+                                        StringBuffer response3 = new StringBuffer();
+                                        while ((inputLine3 = in3.readLine()) != null) {
+                                            response3.append(inputLine3);
+                                        }
+                                        in3.close();
+                                        JSONObject myresponse3 = new JSONObject(response3.toString());
+                                        JSONArray cast = myresponse3.getJSONArray("cast");
+                                        Association ass = new Association("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/images/associations/cast.png", "Cast");
+                                        for(int d = 0; d < cast.length(); d++){
+                                            JSONObject c = cast.getJSONObject(d);
+                                            String position = "Casting", profile = "https://telifie-static.nyc3.cdn.digitaloceanspaces.com/images/casting.png", job = c.getString("known_for_department");
+                                            if(!c.isNull("profile_path")){
+                                                profile = "https://image.tmdb.org/t/p/original" + c.getString("profile_path");
+                                            }
+                                            if(!c.isNull("job")){
+                                                job = c.getString("job");
+                                            }
+                                            if(!c.isNull("character")){
+                                                position = Telifie.tools.strings.htmlEscape(c.getString("character"));
+                                            }else if(!c.isNull("department")) {
+                                                position = c.getString("department");
+                                            }
+                                            String name = Telifie.tools.strings.htmlEscape(c.getString("name"));
+                                            ass.addArticle(new Child(profile, name, position));
+                                        }
+                                        article.addAssociation(ass);
+                                    } catch (Exception e) {
+                                        System.out.println("Could not parse credits");
+                                    }
+                                } catch (JSONException e) {
+                                    System.out.println("Could not parse number from JSON");
+                                }
+                            }catch(FileNotFoundException e){
+                                System.out.println("\n\nNo Detail query");
+                            }
+                            articles.create(article);
+                        }else{
+                            System.out.println("Exists");
+                        }
+                        movies.add(article);
+                    }
+                    pageNumber++;
+                    System.out.println("Onto page " + pageNumber);
+                    Thread.sleep(8000);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            return movies;
+        }
+
+        public static ArrayList<Article> tmdbShows(int page, int limit){
+            ArrayList<Article> movies = new ArrayList<>();
+            String apiKey = "991191cec151e1797c192c74f06b40a7";
+            int pageNumber = page;
+            while(pageNumber < (page + limit)){
+                try {
+                    String batchId = Telifie.tools.make.shortEid();
+                    String url = "https://api.themoviedb.org/3/discover/movie?api_key=" + apiKey + "&page=" + pageNumber;
                     URL obj = new URL(url);
                     HttpURLConnection con = (HttpURLConnection) obj.openConnection();
                     System.out.println(con.getResponseCode());

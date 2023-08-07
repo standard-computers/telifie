@@ -44,7 +44,7 @@ public class Command {
             if(content != null){
                 String query = content.getString("query").trim();
                 String targetDomain = (content.getString("domain") == null ? "telifie" : content.getString("domain"));
-                if(query.equals("")){
+                if(query.isEmpty()){
                     return new Result(428, this.command, "Query expected");
                 }
                 if(!targetDomain.equals("telifie")){
@@ -108,7 +108,21 @@ public class Command {
                                     return new Result(401, this.command, "This is not your domain");
                                 }
                                 case "id" -> {
-                                    return new Result(this.command, "domain", d);
+                                    if(d.hasPermission(config.getUser())){
+                                        return new Result(this.command, "domain", d);
+                                    }
+                                    return new Result(403, "No permission");
+                                }
+                                case "check" -> {
+                                    int p = d.getPermissions(config.getUser());
+                                    if(p == 0){
+                                        return new Result(200, "Owner");
+                                    }else if(p == 1){
+                                        return new Result(206, "Viewer");
+                                    }else if(p == 2){
+                                        return new Result(207, "Editor");
+                                    }
+                                    return new Result(403, "No permission");
                                 }
                                 case "update" -> {
                                     if (content != null) {
@@ -408,7 +422,7 @@ public class Command {
 
                 if(content != null){
                     User newUser = new User(content.getString("email"), content.getString("name"), content.getString("phone"));
-                    if(newUser.getPermissions() == 0 && !newUser.getName().equals("") && !newUser.getEmail().equals("") && newUser.getName() != null && newUser.getEmail() != null) {
+                    if(newUser.getPermissions() == 0 && !newUser.getName().isEmpty() && !newUser.getEmail().isEmpty() && newUser.getName() != null && newUser.getEmail() != null) {
                         if (!users.userExistsWithEmail(newUser.getEmail())) {
                             if (users.createUser(newUser)) {
                                 return new Result(this.command, "user", newUser);
@@ -472,7 +486,7 @@ public class Command {
                         }
                         case "uri" -> {
                             String url = content.getString("uri");
-                            if (url != null && !url.equals("")) {
+                            if (url != null && !url.isEmpty()) {
                                 new Parser(config);
                                 Article parsed = Parser.engines.parse(url);
                                 if (content.getBoolean("insert") != null && content.getBoolean("insert")) {
@@ -486,7 +500,7 @@ public class Command {
                         }
                         case "crawl" -> {
                             String url = content.getString("uri");
-                            if (url != null && !url.equals("")) {
+                            if (url != null && !url.isEmpty()) {
                                 Parser parser = new Parser(config);
                                 parser.purge();
                                 int limit = (content.getInteger("limit") == null ? Integer.MAX_VALUE : content.getInteger("limit"));
@@ -506,7 +520,10 @@ public class Command {
                             articles.getIds(q).forEach(a -> ids.add(new Article(a).getId()));
                             return new Result(this.command, "ids", "" + ids + "");
                         }
-                        case "recursive" -> Parser.engines.recursive(config);
+                        case "recursive" -> {
+                            int start = (content.getInteger("start") == null ? 0 : content.getInteger("start"));
+                            Parser.engines.recursive(config, start);
+                        }
                     }
                 }
                 return new Result(428, this.command, "Select parser mode");

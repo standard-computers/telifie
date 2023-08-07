@@ -14,6 +14,14 @@ public class Member {
         this.permissions = (doc.getInteger("permissions") == null ? 0 : doc.getInteger("permissions"));
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public int getPermissions() {
+        return permissions;
+    }
+
     @Override
     public String toString(){
         return "{" +
