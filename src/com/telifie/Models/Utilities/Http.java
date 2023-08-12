@@ -64,7 +64,7 @@ public class Http {
                 String method = request.getRequestLine().getMethod();
                 String query = request.getRequestLine().getUri().substring(1);
                 String authString = (request.getFirstHeader("Authorization") == null ? "" : request.getFirstHeader("Authorization").getValue());
-                Authentication auth = (authString.equals("") ? null : new Authentication(authString.split(" ")[1].split("\\.")));
+                Authentication auth = (authString.isEmpty() ? null : new Authentication(authString.split(" ")[1].split("\\.")));
                 Result result = new Result(200, query, "\"okay\"");
 
                 if (auth == null) {
@@ -82,8 +82,8 @@ public class Http {
                             body = EntityUtils.toString(entity);
                         }
                         requestConfiguration.setAuthentication(auth);
-                        UsersClient users = new UsersClient(requestConfiguration); //Ini UsersClient to find requesting user
-                        requestConfiguration.setUser(users.getUserWithId(auth.getUser())); //Set Configuration User as requesting user
+                        UsersClient users = new UsersClient(requestConfiguration);
+                        requestConfiguration.setUser(users.getUserWithId(auth.getUser()));
                         result = processRequest(requestConfiguration, method, query, body);
                     } else {
                         result = new Result(403, "Invalid Credentials");
@@ -103,9 +103,7 @@ public class Http {
                 DefaultBHttpServerConnection connection = new DefaultBHttpServerConnection(8 * 1024);
                 connection.bind(socket);
                 httpService.handleRequest(connection, new BasicHttpContext());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            } catch (HttpException e) {
+            } catch (IOException | HttpException e) {
                 throw new RuntimeException(e);
             }
         }

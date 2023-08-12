@@ -28,7 +28,7 @@ public class Search {
                 String info = spl[0].trim();
                 String subject = spl[1].trim();
                 ArrayList<Article> r = articlesClient.get(new Document("title", pattern(subject)));
-                if(r.size() > 0) {
+                if(!r.isEmpty()) {
                     Article p = r.get(0);
                     String answer = p.getAttribute(info);
                     if (answer != null) {
@@ -41,37 +41,41 @@ public class Search {
 
         ArrayList results = Search.executeQuery(query, params);
 
-        if(params.getIndex().equals("images")) {
-            ArrayList<Image> images = new ArrayList();
-            for(Object result : results){
-                Article article = (Article) result;
-                ArrayList<Image> articleImages = article.getImages();
-                if(articleImages != null && articleImages.size() > 0){
-                    for(Image image : articleImages){
-                        image.setId(article.getId());
-                        images.add(image);
+        switch (params.getIndex()) {
+            case "images" -> {
+                ArrayList<Image> images = new ArrayList<>();
+                for (Object result : results) {
+                    Article article = (Article) result;
+                    ArrayList<Image> articleImages = article.getImages();
+                    if (articleImages != null && !articleImages.isEmpty()) {
+                        for (Image image : articleImages) {
+                            image.setId(article.getId());
+                            images.add(image);
+                        }
                     }
                 }
+                return new Result(query, "images", images);
             }
-            return new Result(query, "images", images);
-        }else if(params.getIndex().equals("locations")){
-            ArrayList<Article> articles = new ArrayList();
-            for(Object result : results){
-                Article article = (Article) result;
-                if(article.hasAttribute("latitude") && article.hasAttribute("longitude")){
-                    articles.add(article);
+            case "locations" -> {
+                ArrayList<Article> articles = new ArrayList<>();
+                for (Object result : results) {
+                    Article article = (Article) result;
+                    if (article.hasAttribute("latitude") && article.hasAttribute("longitude")) {
+                        articles.add(article);
+                    }
                 }
+                return new Result(query, "articles", articles);
             }
-            return new Result(query, "articles", articles);
-        }else if(params.getIndex().equals("shopping")){
-            ArrayList<Article> articles = new ArrayList();
-            for(Object result : results){
-                Article article = (Article) result;
-                if(article.hasAttribute("cost") || article.hasAttribute("price") || article.hasAttribute("value")){
-                    articles.add(article);
+            case "shopping" -> {
+                ArrayList<Article> articles = new ArrayList<>();
+                for (Object result : results) {
+                    Article article = (Article) result;
+                    if (article.hasAttribute("cost") || article.hasAttribute("price") || article.hasAttribute("value")) {
+                        articles.add(article);
+                    }
                 }
+                return new Result(query, "articles", articles);
             }
-            return new Result(query, "articles", articles);
         }
         ArrayList<Article> qr = new ArrayList<>();
         return new Result(query, qr, results, g);
@@ -79,18 +83,13 @@ public class Search {
 
     private static ArrayList executeQuery(String query, Parameters params){
         ArrayList<Article> results = articlesClient.search(params, filter(query, params));
-        if(results != null && results.size() > 3){
+        if(results != null && results.size() > 3 && !query.contains(":")){
             Collections.sort(results, new RelevanceComparator(query));
             Collections.reverse(results);
         }
         return results;
     }
 
-    /**
-     * Generates MongoDB query filter based on query string.
-     * Returns Document used for .find in for MongoCollection
-     * @return Document
-     */
     private static Document filter(String query, Parameters params){
 
         if(query.matches("^id\\s*:\\s*.*")){
@@ -259,6 +258,71 @@ public class Search {
         String regex = "\\b" + Pattern.quote(value) + "\\b";
         return Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
     }
+
+    private static class CosmoScore implements Comparator<Article> {
+
+        private final String query;
+        private final String[] words;
+
+        public CosmoScore(String query){
+            this.query = query;
+            this.words = Andromeda.encoder.nova(Andromeda.encoder.clean(query));
+            System.out.println(Andromeda.encoder.clean(query));
+            System.out.println(words);
+        }
+
+        @Override
+        public int compare(Article a, Article b) {
+            int relevanceA = relevance(a.getTitle());
+            int relevanceB = relevance(b.getTitle());
+            return Integer.compare(relevanceB, relevanceA);
+        }
+
+        private int relevance(String title) {
+            int lenDiff = Math.abs(title.length() - query.length());
+            if (lenDiff < 1) {
+                return Integer.MAX_VALUE;
+            }
+            int wordMatchScore = countMatches(title, words);
+            int levDist = lenDiff > 3 ? lenDiff : levenshteinDistance(title, query);
+            return ((levDist * 100) * (wordMatchScore * 20)) * ((1/lenDiff)*100);
+        }
+
+        private int levenshteinDistance(String title, String query) {
+            int[] prev = new int[query.length() + 1];
+            int[] curr = new int[query.length() + 1];
+            for (int i = 0; i <= title.length(); i++) {
+                for (int j = 0; j <= query.length(); j++) {
+                    if (i == 0) {
+                        curr[j] = j;
+                    } else if (j == 0) {
+                        curr[j] = i;
+                    } else {
+                        curr[j] = Math.min(prev[j - 1] + (title.charAt(i - 1) == query.charAt(j - 1) ? 0 : 1),
+                                Math.min(prev[j], curr[j - 1]) + 1);
+                    }
+                }
+                int[] temp = prev;
+                prev = curr;
+                curr = temp;
+            }
+            return prev[query.length()];
+        }
+
+        private int countMatches(String title, String[] words) {
+            int matches = 0;
+            String[] titleWords = title.split("\\s+");
+            for(String word : words) {
+                for(String titleWord : titleWords) {
+                    if(titleWord.equalsIgnoreCase(word)) {
+                        matches++;
+                    }
+                }
+            }
+            return matches;
+        }
+    }
+
 
     private static class RelevanceComparator implements Comparator<Article> {
 

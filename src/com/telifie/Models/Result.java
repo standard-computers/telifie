@@ -76,10 +76,10 @@ public class Result {
         return "{\"status_code\" : " + statusCode +
                 ", \"id\" : \"" + id + '\"' +
                 ", \"query\" : \"" + query + '\"' +
-                (generated.equals("") ? "" : ", \"generated\" : \"" + generated + '\"') +
+                (generated.isEmpty() ? "" : ", \"generated\" : \"" + generated + '\"') +
                 ", \"count\" : " + count +
                 ", \"origin\" : " + origin +
-                (quickResults.size() > 0 ? ", \"quick_results\" : " + quickResults : "") +
+                (!quickResults.isEmpty() ? ", \"quick_results\" : " + quickResults : "") +
                 ", \"" + object + "\" : " + (results instanceof String ? "\"" + results + "\"" : (results instanceof Document ? ((Document) results).toJson() : results.toString())) +
                 "}";
     }

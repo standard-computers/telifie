@@ -11,7 +11,6 @@ import org.languagetool.Language;
 import org.languagetool.language.AmericanEnglish;
 import org.languagetool.rules.RuleMatch;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -237,6 +236,10 @@ public class Andromeda extends Client{
             cleanedText = Telifie.tools.strings.removeWords(cleanedText, Telifie.stopWords);
             cleanedText = cleanedText.replaceAll("[^a-zA-Z0-9 ]", "");
             return cleanedText;
+        }
+
+        public static String[] nova(String text){
+            return text.split("\\s+");
         }
 
     }

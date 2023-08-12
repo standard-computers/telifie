@@ -4,12 +4,14 @@ import org.bson.Document;
 
 public class Parameters {
 
-    private int resultsPerPage;
-    private int pages; // How many pages of search results
-    private int page; //Current page of the search results
-    private String index, postalCode; //Index such as images, maps, developers, articles, etc.
-    private double latitude = 39.103699, longitude = -84.513611;
-    private boolean disableQuickResults = true;
+    private final int resultsPerPage;
+    private final int pages; // How many pages of search results
+    private final int page; //Current page of the search results
+    private final String index;
+    private final String postalCode; //Index such as images, maps, developers, articles, etc.
+    private final double latitude;
+    private final double longitude;
+    private final boolean disableQuickResults;
 
     public Parameters(Document document) throws NullPointerException {
         this.resultsPerPage = (document.getInteger("results_per_page") == null ? 100 : document.getInteger("results_per_page"));
@@ -19,13 +21,7 @@ public class Parameters {
         this.postalCode = (document.getString("postal_code") == null ? "" : document.getString("postal_code"));
         this.latitude = (document.getDouble("latitude") == null ? 39.103699 : document.getDouble("latitude"));
         this.longitude = (document.getDouble("longitude") == null ? -84.513611 : document.getDouble("longitude"));
-        this.disableQuickResults = (document.getBoolean("disable_quick_results") == null ? false : document.getBoolean("disable_quick_results"));
-    }
-
-    public Parameters(int resultsPerPage, int page, String index) {
-        this.resultsPerPage = resultsPerPage;
-        this.page = page;
-        this.index = index;
+        this.disableQuickResults = (document.getBoolean("disable_quick_results") != null && document.getBoolean("disable_quick_results"));
     }
 
     public int getResultsPerPage() {
@@ -50,10 +46,6 @@ public class Parameters {
 
     public double getLongitude() {
         return longitude;
-    }
-
-    public boolean isDisableQuickResults() {
-        return disableQuickResults;
     }
 
     @Override

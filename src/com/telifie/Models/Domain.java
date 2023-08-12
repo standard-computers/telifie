@@ -50,10 +50,6 @@ public class Domain implements Serializable {
         return alt;
     }
 
-    public void setAlt(String alt) {
-        this.alt = alt;
-    }
-
     public String getOwner() {
         return owner;
     }
@@ -76,15 +72,13 @@ public class Domain implements Serializable {
     }
 
     public boolean hasPermission(User user){
-        if(this.owner.equals(user.getId())){
-            return true;
-        }
-        return false;
+        //TODO Change using code from getPermissions
+        return this.owner.equals(user.getId());
     }
 
     public int getPermissions(User user){
         if(this.owner.equals(user.getId())){
-            return 0; //Is owner
+            return 0;
         }else{
             for(Member u : users){
                 if(u.getEmail().equals(user.getEmail())){

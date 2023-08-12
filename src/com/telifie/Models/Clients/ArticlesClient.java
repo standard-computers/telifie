@@ -16,7 +16,7 @@ public class ArticlesClient extends Client {
 
     public ArticlesClient(Configuration config){
         super(config);
-        if(!config.getDomain().getAlt().equals("telifie") || config.getDomain() == null){
+        if(config.getDomain().getId() != null && !config.getDomain().getId().equals("telifie")){
             super.collection = "domain-articles";
         }else{
             super.collection = "articles";

@@ -74,17 +74,16 @@ public class Parser {
             ArrayList<Article> as = articles.linked();
             List<Article> as2 = as.subList(start, as.size());
             for(Article a : as2){
-                if(!parsed.contains(a.getLink())){
-                    int lastCrawl = timelines.lastEvent(a.getId(), Event.Type.CRAWL);
-                    if(lastCrawl > 604800 || lastCrawl == -1){ //7 days
-                        timelines.addEvent(a.getId(), new Event(
-                                Event.Type.CRAWL,
-                                "com.telifie.web-app@parser",
-                                "Crawled")
-                        );
-                        parsed.add(a.getLink());
-                        Parser.engines.crawl(config, a.getLink(), Integer.MAX_VALUE, false);
-                    }
+                parsed.removeAll(parsed);
+                int lastCrawl = timelines.lastEvent(a.getId(), Event.Type.CRAWL);
+                if(lastCrawl > 604800 || lastCrawl == -1){ //7 days
+                    timelines.addEvent(a.getId(), new Event(
+                            Event.Type.CRAWL,
+                            "com.telifie.web-app@parser",
+                            "Crawled")
+                    );
+                    parsed.add(a.getLink());
+                    Parser.engines.crawl(config, a.getLink(), Integer.MAX_VALUE, false);
                 }
             }
         }

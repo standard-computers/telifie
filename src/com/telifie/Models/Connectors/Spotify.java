@@ -49,14 +49,14 @@ public class Spotify extends Connector {
 
         Configuration personalConfiguration = new Configuration();
         Domain pd = new Domain();
-        pd.setAlt(config.getAuthentication().getUser());
+        pd.setId(config.getAuthentication().getUser());
         personalConfiguration.setDomain(pd);
         ArticlesClient articles = new ArticlesClient(personalConfiguration); //Put found articles in personal domain
         CollectionsClient collections = new CollectionsClient(config); //Put generated collections in personal domain
         Source primarySource = new Source(
                 "com.telifie.connectors.spotify",
                 "https://telifie-static.nyc3.cdn.digitaloceanspaces.com/images/connectors/spotify.png",
-                "Connector: Spotify",
+                "Connector / Spotify",
                 "https://telifie.com/documentation/connectors/spotify"
         );
 

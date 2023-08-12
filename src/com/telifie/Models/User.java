@@ -27,9 +27,9 @@ public class User implements Serializable {
     /**
      * Constructor for creating user.
      * Other data is autofill such as origin, permissions, and customerId
-     * @param email
-     * @param name
-     * @param phone
+     * @param email User's email
+     * @param name User's name
+     * @param phone User's phone that receives texts
      */
     public User(String email, String name, String phone) {
         this.id = UUID.randomUUID().toString();
@@ -81,10 +81,7 @@ public class User implements Serializable {
     }
 
     public boolean hasToken(String attempt){
-        if(attempt.equals(this.token)){
-            return true;
-        }
-        return false;
+        return attempt.equals(this.token);
     }
 
     @Override
@@ -95,7 +92,7 @@ public class User implements Serializable {
                 ", \"name\" : \"" + name + '\"' +
                 ", \"photo\" : \"" + photo + '\"' +
                 ", \"phone\" : \"" + phone + '\"' +
-                (this.customerId == null || this.customerId.equals("") ? "" : ", \"phone\" : \"" + phone + '\"') +
+                (this.customerId == null || this.customerId.isEmpty() ? "" : ", \"phone\" : \"" + phone + '\"') +
                 ", \"origin\" : " + origin +
                 ", \"permissions\" : " + permissions +
                 ", \"theme\" : " + theme +

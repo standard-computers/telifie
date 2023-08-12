@@ -71,9 +71,9 @@ public class DomainsClient extends Client {
         members.forEach(member -> super.updateOne(new Document("id", domain.getId()), new Document("$set", new Document("users", Document.parse(member.toString())))));
         return true;
     }
-
-    public Domain withAltId(String altId){
-        return new Domain(super.findOne(new Document("alt", altId)));
+    
+    public Domain withId(String id){
+        return new Domain(super.findOne(new Document("id", id)));
     }
 
     public boolean update(Domain domain, Document updates){
