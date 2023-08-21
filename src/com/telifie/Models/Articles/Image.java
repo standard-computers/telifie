@@ -1,6 +1,8 @@
 package com.telifie.Models.Articles;
 
 import org.bson.Document;
+import org.json.JSONObject;
+
 import java.util.UUID;
 
 public class Image {
@@ -26,12 +28,12 @@ public class Image {
 
     @Override
     public String toString() {
-        return "{" +
-                (id == null || id.equals("null") ? "" : "\"id\" : \"" + id + "\",") +
-                (url == null || url.equals("null") ? "" : "\"url\" : \"" + url + "\",") +
-                (caption == null || caption.equals("null") ? "" : "\"caption\" : \"" + caption + "\",") +
-                (source == null || source.equals("null") ? "" : "\"source\" : \"" + source + '\"') +
-                '}';
+        JSONObject jsonObj = new JSONObject();
+        if (id != null && !id.isEmpty()) jsonObj.put("id", id);
+        if (url != null && !url.isEmpty()) jsonObj.put("url", url);
+        if (caption != null && !caption.isEmpty()) jsonObj.put("caption", caption);
+        if (source != null && !source.isEmpty()) jsonObj.put("source", source);
+        return jsonObj.toString();
     }
 
     public void setId(String id) {

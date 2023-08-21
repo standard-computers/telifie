@@ -14,7 +14,7 @@ public class Parameters {
     private final boolean disableQuickResults;
 
     public Parameters(Document document) throws NullPointerException {
-        this.resultsPerPage = (document.getInteger("results_per_page") == null ? 100 : document.getInteger("results_per_page"));
+        this.resultsPerPage = (document.getInteger("results_per_page") == null ? 50 : document.getInteger("results_per_page"));
         this.pages = (document.getInteger("pages") == null ? 1 : document.getInteger("pages"));
         this.page = (document.getInteger("page") == null ? 0 : document.getInteger("page"));
         this.index = (document.getString("index") == null ? "articles" : document.getString("index"));

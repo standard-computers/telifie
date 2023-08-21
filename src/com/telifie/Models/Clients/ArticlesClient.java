@@ -28,6 +28,9 @@ public class ArticlesClient extends Client {
     }
 
     public boolean create(Article article){
+        if(article.getOwner() == null || article.getOwner().equals("")){
+            article.setOwner(this.config.getAuthentication().getUser());
+        }
         if(article.getLink() == null || article.getLink().equals("")){
             return super.insertOne(Document.parse(article.toString()));
         }else if(this.withLink(article.getLink()) == null){

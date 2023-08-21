@@ -304,7 +304,7 @@ public class Telifie {
                 String lowercaseUri = uri.toLowerCase();
                 if (lowercaseUri.startsWith("https://") || lowercaseUri.startsWith("http://") || lowercaseUri.startsWith("www")) {
                     for (String extension : imageExtensions) {
-                        if (lowercaseUri.endsWith(extension)) {
+                        if (lowercaseUri.endsWith(extension) || lowercaseUri.contains("#")) {
                             return false;
                         }
                     }

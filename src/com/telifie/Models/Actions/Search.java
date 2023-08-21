@@ -21,26 +21,7 @@ public class Search {
     public static Result execute(Configuration config, String query, Parameters params){
 
         articlesClient = new ArticlesClient(config);
-        String g = "";
-        if(query.matches("([^\\s]+(?:\\s+[^\\s]+)*) of ([^\\s]+(?:\\s+[^\\s]+)*)")){
-            String[] spl = query.split("of");
-            if(spl.length >= 2){
-                String info = spl[0].trim();
-                String subject = spl[1].trim();
-                ArrayList<Article> r = articlesClient.get(new Document("title", pattern(subject)));
-                if(!r.isEmpty()) {
-                    Article p = r.get(0);
-                    String answer = p.getAttribute(info);
-                    if (answer != null) {
-                        g = "The **" + info + "** of " + p.getTitle() + " is **" + answer + "**";
-                        query = subject;
-                    }
-                }
-            }
-        }
-
-        ArrayList results = Search.executeQuery(query, params);
-
+        ArrayList results = Search.executeQuery(config, query, params);
         switch (params.getIndex()) {
             case "images" -> {
                 ArrayList<Image> images = new ArrayList<>();
@@ -78,14 +59,31 @@ public class Search {
             }
         }
         ArrayList<Article> qr = new ArrayList<>();
-        return new Result(query, qr, results, g);
+        return new Result(query, qr, results);
     }
 
-    private static ArrayList executeQuery(String query, Parameters params){
-        ArrayList<Article> results = articlesClient.search(params, filter(query, params));
-        if(results != null && results.size() > 3 && !query.contains(":")){
-            Collections.sort(results, new RelevanceComparator(query));
-            Collections.reverse(results);
+    private static ArrayList executeQuery(Configuration config, String query, Parameters params){
+
+        Document filter = filter(query, params);
+        if(config.getDomain().getId() != null && !config.getDomain().getId().equals("telifie")){
+            ArrayList<Document> conditions = new ArrayList<>();
+            String domainId = config.getDomain().getId();
+            conditions.add(new Document("domain", domainId));
+            Document queryFilter = filter(query, params);
+            conditions.add(queryFilter);
+            filter = new Document("$and", conditions);
+        }
+
+        ArrayList<Article> results = articlesClient.search(params, filter);
+        if(results != null && !query.contains(":")){
+            if(Telifie.tools.strings.has(Telifie.PROXIMITY, query) > -1 || query.endsWith("near me")) {
+                Collections.sort(results, new DistanceSorter(params.getLatitude(), params.getLongitude()));
+            }else if(query.split(" ").length > 2 && !query.contains(",")){
+                Collections.sort(results, new CosmoScore(query));
+            }else{
+                Collections.sort(results, new RelevanceComparator(query));
+                Collections.reverse(results);
+            }
         }
         return results;
     }
@@ -233,15 +231,26 @@ public class Search {
                 ));
             }
         }
+        String cleanedQuery = Andromeda.encoder.clean(query);
+        String[] exploded = Andromeda.encoder.nova(cleanedQuery);
         ArrayList<Bson> filters = new ArrayList<>();
-        Bson[] titleFilters = {
-                Filters.regex("title", pattern(Andromeda.encoder.clean(query))),
-                Filters.regex("title", pattern(query))
-        };
-        filters.add(Filters.or(titleFilters));
+        List<Bson> titleWordFilters = new ArrayList<>();
+        for (String word : exploded) {
+            titleWordFilters.add(Filters.regex("title", ignoreCase(word)));
+        }
+        if (!titleWordFilters.isEmpty()) {
+            filters.add(Filters.or(titleWordFilters));
+        }
         filters.add(Filters.regex("link", pattern(query)));
         filters.add(Filters.regex("attributes.value", pattern(query)));
-        filters.add(Filters.in("tags", pattern(query)));
+        filters.add(Filters.in("tags", ignoreCase(query)));
+//        List<Bson> contentFilters = new ArrayList<>();
+//        for (String word : exploded) {
+//            contentFilters.add(Filters.regex("content", pattern(word)));
+//        }
+//        if (!contentFilters.isEmpty()) {
+//            filters.add(Filters.or(contentFilters));
+//        }
         return new Document("$or", filters);
     }
 
@@ -268,50 +277,26 @@ public class Search {
             this.query = query;
             this.words = Andromeda.encoder.nova(Andromeda.encoder.clean(query));
             System.out.println(Andromeda.encoder.clean(query));
-            System.out.println(words);
+            System.out.println(Arrays.toString(words));
         }
 
         @Override
         public int compare(Article a, Article b) {
-            int relevanceA = relevance(a.getTitle());
-            int relevanceB = relevance(b.getTitle());
-            return Integer.compare(relevanceB, relevanceA);
+            double relevanceA = relevance(a);
+            double relevanceB = relevance(b);
+            return Double.compare(relevanceB, relevanceA);
         }
 
-        private int relevance(String title) {
-            int lenDiff = Math.abs(title.length() - query.length());
-            if (lenDiff < 1) {
-                return Integer.MAX_VALUE;
-            }
-            int wordMatchScore = countMatches(title, words);
-            int levDist = lenDiff > 3 ? lenDiff : levenshteinDistance(title, query);
-            return ((levDist * 100) * (wordMatchScore * 20)) * ((1/lenDiff)*100);
+        private double relevance(Article a) {
+            int titleGrade = countMatches(a.getTitle(), words) * 3;
+            int linkGrade = countMatches((a.getLink() == null ? "" : a.getLink()), words) * 2;
+            double grade = (titleGrade + linkGrade) * a.getPriority();
+            return grade;
         }
 
-        private int levenshteinDistance(String title, String query) {
-            int[] prev = new int[query.length() + 1];
-            int[] curr = new int[query.length() + 1];
-            for (int i = 0; i <= title.length(); i++) {
-                for (int j = 0; j <= query.length(); j++) {
-                    if (i == 0) {
-                        curr[j] = j;
-                    } else if (j == 0) {
-                        curr[j] = i;
-                    } else {
-                        curr[j] = Math.min(prev[j - 1] + (title.charAt(i - 1) == query.charAt(j - 1) ? 0 : 1),
-                                Math.min(prev[j], curr[j - 1]) + 1);
-                    }
-                }
-                int[] temp = prev;
-                prev = curr;
-                curr = temp;
-            }
-            return prev[query.length()];
-        }
-
-        private int countMatches(String title, String[] words) {
+        private int countMatches(String text, String[] words) {
             int matches = 0;
-            String[] titleWords = title.split("\\s+");
+            String[] titleWords = text.split("\\s+");
             for(String word : words) {
                 for(String titleWord : titleWords) {
                     if(titleWord.equalsIgnoreCase(word)) {
@@ -322,6 +307,7 @@ public class Search {
             return matches;
         }
     }
+
 
 
     private static class RelevanceComparator implements Comparator<Article> {
@@ -362,6 +348,34 @@ public class Search {
                 curr = temp;
             }
             return prev[query.length()];
+        }
+    }
+
+    private static class DistanceSorter implements Comparator<Article> {
+
+        private final double latitude, longitude;
+
+        public DistanceSorter(double latitude, double longitude) {
+            this.latitude = latitude;
+            this.longitude = longitude;
+        }
+
+        @Override
+        public int compare(Article a, Article b) {
+            double relevanceA = distance(Double.parseDouble(a.getAttribute("Latitude")), Double.parseDouble(a.getAttribute("Longitude")));
+            double relevanceB = distance(Double.parseDouble(b.getAttribute("Latitude")), Double.parseDouble(b.getAttribute("Longitude")));
+            return Double.compare(relevanceB, relevanceA);
+        }
+
+        private double distance(double latitude, double longitude) {
+            final int R = 6371; // Radius of the earth in km
+            double latDistance = Math.toRadians(latitude - this.latitude);
+            double lonDistance = Math.toRadians(longitude - this.longitude);
+            double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                    + Math.cos(Math.toRadians(this.latitude)) * Math.cos(Math.toRadians(this.longitude))
+                    * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+            double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c; // returns distance in kilometers
         }
     }
 }

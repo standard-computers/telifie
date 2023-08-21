@@ -76,19 +76,19 @@ public class Parser {
             for(Article a : as2){
                 parsed.removeAll(parsed);
                 int lastCrawl = timelines.lastEvent(a.getId(), Event.Type.CRAWL);
-                if(lastCrawl > 604800 || lastCrawl == -1){ //7 days
+                if(lastCrawl > 2592000 || lastCrawl == -1){ //7 days
                     timelines.addEvent(a.getId(), new Event(
                             Event.Type.CRAWL,
                             "com.telifie.web-app@parser",
                             "Crawled")
                     );
                     parsed.add(a.getLink());
-                    Parser.engines.crawl(config, a.getLink(), Integer.MAX_VALUE, false);
+                    Parser.engines.crawl(a.getLink(), Integer.MAX_VALUE, false);
                 }
             }
         }
 
-        public static Article crawl(Configuration config, String uri, int limit, boolean allowExternalCrawl){
+        public static Article crawl(String uri, int limit, boolean allowExternalCrawl){
             traversable.removeAll(traversable);
             Parser.uri = uri;
             try {
@@ -172,8 +172,10 @@ public class Parser {
                                     String k = (domain.split("\\.")[0].equals("www") ? domain.split("\\.")[1] : domain.split("\\.")[0]);
                                     k = k.substring(0, 1).toUpperCase() + k.substring(1);
                                     String[] l = link.split("\\?")[0].split("/");
-                                    String un = l[l.length - 1];
-                                    article.addAttribute(new Attribute(k, un));
+                                    String un = l[l.length - 1].trim();
+                                    if(!un.equals("watch")){
+                                        article.addAttribute(new Attribute(k, un));
+                                    }
                                 } catch (URISyntaxException e) {
                                     throw new RuntimeException(e);
                                 }
@@ -411,6 +413,10 @@ public class Parser {
             return articles;
         }
 
+        public static ArrayList<Article> spotify(){
+            return null;
+        }
+
         public static ArrayList<Article> tmdb(int page, int limit){
             ArrayList<Article> movies = new ArrayList<>();
             String apiKey = "991191cec151e1797c192c74f06b40a7";
@@ -418,7 +424,7 @@ public class Parser {
             while(pageNumber < (page + limit)){
                 try {
                     String batchId = Telifie.tools.make.shortEid();
-                    String url = "https://api.themoviedb.org/3/discover/movie?api_key=" + apiKey + "&sort_by=popularity.asc&page=" + pageNumber;
+                    String url = "https://api.themoviedb.org/3/discover/movie?api_key=" + apiKey + "&page=" + pageNumber;
                     URL obj = new URL(url);
                     HttpURLConnection con = (HttpURLConnection) obj.openConnection();
                     System.out.println(con.getResponseCode());
@@ -731,6 +737,7 @@ public class Parser {
     public class webpage {
         public static Article extract(String url, Document document){
             Article article = new Article();
+            article.setDescription("Webpage");
             Elements metaTags = document.getElementsByTag("meta");
             for (Element tag : metaTags){
                 String mtn = tag.attr("name");

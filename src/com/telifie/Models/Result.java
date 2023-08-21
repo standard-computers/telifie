@@ -9,7 +9,7 @@ import java.util.UUID;
 public class Result {
 
     private final String id = UUID.randomUUID().toString();
-    private String query = "";
+    private String query = "", source = "";
     private String object = "results";
     private String generated = "";
     private Object results;
@@ -76,6 +76,7 @@ public class Result {
         return "{\"status_code\" : " + statusCode +
                 ", \"id\" : \"" + id + '\"' +
                 ", \"query\" : \"" + query + '\"' +
+                (source.isEmpty() ? "" : ", \"source\" : \"" + source + '\"') +
                 (generated.isEmpty() ? "" : ", \"generated\" : \"" + generated + '\"') +
                 ", \"count\" : " + count +
                 ", \"origin\" : " + origin +

@@ -344,10 +344,13 @@ public class Command {
                                     if (content.getString("name") != null && content.getString("name").equals("Pinned")) {
                                         return new Result(304, this.command, "'Pinned' is a reserved Collection name");
                                     }
-                                    if (collections.update(c, content)) {
-                                        return new Result(200, this.command, "Collection Update");
+                                    if(c.getUser().equals(config.getUser().getId())){
+                                        if (collections.update(c, content)) {
+                                            return new Result(200, this.command, "Collection Update");
+                                        }
+                                        return new Result(505, this.command, "Failed to update Collection");
                                     }
-                                    return new Result(505, this.command, "Failed to update Collection");
+                                    return new Result(428, this.command, "Not your collection");
                                 }
                                 return new Result(428, this.command, "Update content for Collection not provided");
                             }
@@ -358,7 +361,10 @@ public class Command {
                                 return new Result(505, this.command, "Failed to delete group '" + secSelector + "'");
                             }
                             case "id" -> {
-                                return new Result(this.command, "collection", c);
+                                if(c.getUser().equals(config.getUser().getId())) {
+                                    return new Result(this.command, "collection", c);
+                                }
+                                return new Result(428, this.command, "Not your collection");
                             }
                         }
                         return new Result(404, this.command, "Invalid collections command");
@@ -496,7 +502,7 @@ public class Command {
                                 parser.purge();
                                 int limit = (content.getInteger("limit") == null ? Integer.MAX_VALUE : content.getInteger("limit"));
                                 boolean allowExternalCrawl = (content.getBoolean("allow_external") != null && content.getBoolean("allow_external"));
-                                Parser.engines.crawl(config, url, limit, allowExternalCrawl);
+                                Parser.engines.crawl(url, limit, allowExternalCrawl);
                                 return new Result(this.command, "articles", parser.getTraversable());
                             }
                             return new Result(428, this.command, "URI is required");

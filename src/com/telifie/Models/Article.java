@@ -4,6 +4,7 @@ import com.telifie.Models.Actions.Event;
 import com.telifie.Models.Articles.*;
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -12,7 +13,7 @@ import java.util.stream.Collectors;
 
 public class Article {
 
-    private String id, title, link, icon, description;
+    private String owner, domain, id, title, link, icon, description;
     private double priority = 1.01;
     private boolean verified = false;
     private String content;
@@ -30,6 +31,8 @@ public class Article {
     }
 
     public Article(Document document) throws NullPointerException {
+        this.owner = (document.getString("owner") == null ? null : document.getString("owner"));
+        this.domain = (document.getString("domain") == null ? null : document.getString("domain"));
         this.id = (document.getString("id") == null ? UUID.randomUUID().toString() : document.getString("id"));
         this.verified = (document.getBoolean("verified") != null && document.getBoolean("verified"));
         this.title = Telifie.tools.strings.escape(document.getString("title"));
@@ -77,6 +80,22 @@ public class Article {
         }
     }
 
+    public String getOwner() {
+        return owner;
+    }
+
+    public void setOwner(String owner) {
+        this.owner = owner;
+    }
+
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
+
+    public String getDomain() {
+        return domain;
+    }
+
     public String getId() {
         return id;
     }
@@ -111,6 +130,10 @@ public class Article {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public double getPriority() {
+        return priority;
     }
 
     public String getContent() {
@@ -187,6 +210,8 @@ public class Article {
     @Override
     public String toString() {
         return "{\"id\" : \"" + id + '\"' +
+                (owner == null ? "" : ", \"owner\" : \"" + owner + "\"") +
+                (domain == null ? "" : ", \"domain\" : \"" + domain + "\"") +
                 ", \"verified\" : " + verified +
                 ", \"title\" : \"" + title + '\"' +
                 (link == null ? "" : ", \"link\" : \"" + link + '\"') +

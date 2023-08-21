@@ -17,11 +17,6 @@ public class CollectionsClient extends Client {
 
     public Collection get(String userId, String id){
         Collection collection = new Collection(this.findOne(new Document("id", id)));
-        if(collection.getPermissions() == 0){
-            if(!collection.getUser().equals(userId)){
-                return null;
-            }
-        }
         if(collection.getDomain().equals(userId)){
             Domain dm = new Domain();
             dm.setId(userId);
