@@ -4,7 +4,6 @@ import com.telifie.Models.Actions.Event;
 import com.telifie.Models.Articles.*;
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -142,6 +141,10 @@ public class Article {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public ArrayList<String> getTags() {
+        return tags;
     }
 
     public ArrayList<Image> getImages() {

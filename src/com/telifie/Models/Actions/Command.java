@@ -41,7 +41,7 @@ public class Command {
 
         if(primarySelector.equals("search")){
             if(content != null){
-                String query = content.getString("query").trim();
+                String query = content.getString("query");
                 String targetDomain = (content.getString("domain") == null ? "telifie" : content.getString("domain"));
                 if(query.isEmpty()){
                     return new Result(428, this.command, "Query expected");
@@ -52,12 +52,12 @@ public class Command {
                         Domain domain = domains.withId(targetDomain);
                         config.setDomain(domain);
                     }catch (NullPointerException n){
-                        return new Result(410, this.command, "Failed to select domain");
+                        return new Result(410, this.command, "Domain Failed");
                     }
                 }
                 try {
                     Parameters params = new Parameters(content);
-                    return Search.execute(config, query, params);
+                    return new Search().execute(config, query, params);
                 }catch(NullPointerException n){
                     return new Result(428, this.command, "Invalid search parameters");
                 }
@@ -509,7 +509,6 @@ public class Command {
                         }
                         case "text" -> {
                             String text = content.getString("text");
-                            //List<Andromeda.unit> tokens =
                             Andromeda.encoder.tokenize(text, false);
                         }
                         case "audit" -> {
@@ -538,7 +537,7 @@ public class Command {
                 AuthenticationClient authentications = new AuthenticationClient(config);
                 if(authentications.authenticate(auth)){
                     System.out.println("App authenticated with ID: " + secSelector);
-                    Telifie.console.out.message(auth.toJson().toString(4));
+                    Console.out.message(auth.toJson().toString(4));
                     return new Result(this.command, "authentication", auth.toJson());
                 }
                 return new Result(505, "Failed creating app authentication");

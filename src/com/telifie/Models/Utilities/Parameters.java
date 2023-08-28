@@ -9,8 +9,8 @@ public class Parameters {
     private final int page; //Current page of the search results
     private final String index;
     private final String postalCode; //Index such as images, maps, developers, articles, etc.
-    private final double latitude;
-    private final double longitude;
+    private double latitude;
+    private double longitude;
     private final boolean disableQuickResults;
 
     public Parameters(Document document) throws NullPointerException {
@@ -44,8 +44,16 @@ public class Parameters {
         return latitude;
     }
 
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
     public double getLongitude() {
         return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
     }
 
     @Override

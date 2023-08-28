@@ -35,6 +35,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Parser {
 
@@ -116,9 +117,9 @@ public class Parser {
                     boolean created = true;
                     if(article.getSource() != null && !articles.existsWithSource(article.getSource().getUrl())){
                         created = articles.create(article);
-                        System.out.println("With source -> Created article " + article.getTitle());
+                        System.out.println("Created with source -> Created article " + article.getTitle());
                     }else if(article != null && article.getSource() == null && (created = articles.create(article))){
-                        System.out.println("With link -> Created article " + article.getTitle());
+                        System.out.println("Created with link -> Created article " + article.getTitle());
                     }
                     ArrayList<Element> links = root.getElementsByTag("a");
                     for(Element link : links){
@@ -137,7 +138,6 @@ public class Parser {
                                     return article;
                                 }
                                 try {
-                                    System.out.println("awaiting");
                                     Thread.sleep(3000);
                                     fetch(href, limit, allowExternalCrawl);
                                 } catch (InterruptedException e) {
@@ -414,6 +414,7 @@ public class Parser {
         }
 
         public static ArrayList<Article> spotify(){
+
             return null;
         }
 
@@ -570,7 +571,7 @@ public class Parser {
             while(pageNumber < (page + limit)){
                 try {
                     String batchId = Telifie.tools.make.shortEid();
-                    String url = "https://api.themoviedb.org/3/discover/movie?api_key=" + apiKey + "&page=" + pageNumber;
+                    String url = "https://api.themoviedb.org/3/discover/tv?api_key=" + apiKey + "&page=" + pageNumber;
                     URL obj = new URL(url);
                     HttpURLConnection con = (HttpURLConnection) obj.openConnection();
                     System.out.println(con.getResponseCode());
@@ -586,42 +587,35 @@ public class Parser {
                     JSONArray moviesArray = myresponse.getJSONArray("results");
                     for (int i = 0; i < moviesArray.length(); i++) {
                         Article article = new Article();
-                        JSONObject movie = moviesArray.getJSONObject(i);
-                        String movie_title = Telifie.tools.strings.htmlEscape(movie.getString("title"));
-                        String movie_id = String.valueOf(movie.getInt("id"));
-                        article.setId(Telifie.tools.make.md5(movie_id));
+                        JSONObject show = moviesArray.getJSONObject(i);
+                        String showTitle = Telifie.tools.strings.htmlEscape(show.getString("title"));
+                        String showId = String.valueOf(show.getInt("id"));
+                        article.setId(Telifie.tools.make.md5(showId));
                         article.addAttribute(new Attribute("*batch", batchId));
-                        article.setPriority(0.56);
-                        article.setTitle(movie_title);
-                        article.setDescription("Movie");
-                        article.setContent(Telifie.tools.strings.htmlEscape(movie.getString("overview")));
-                        if(!movie.isNull("poster_path")){
-                            article.setIcon("https://image.tmdb.org/t/p/original" + movie.getString("poster_path"));
+                        article.setPriority(0.54);
+                        article.setTitle(showTitle);
+                        article.setDescription("TV Show");
+                        article.setContent(Telifie.tools.strings.htmlEscape(show.getString("overview")));
+                        if(!show.isNull("backdrop_path")){
                             article.addImage(
                                     new Image(
-                                            "https://image.tmdb.org/t/p/original" + movie.getString("poster_path"),
-                                            movie_title + " Poster",
-                                            "https://www.themoviedb.org/movie/" + movie_id));
+                                            "https://image.tmdb.org/t/p/original" + show.getString("backdrop_path"),
+                                            showTitle + " Backdrop",
+                                            "https://www.themoviedb.org/tv/" + showId));
                         }
-                        if(!movie.isNull("backdrop_path")){
-                            article.addImage(
-                                    new Image(
-                                            "https://image.tmdb.org/t/p/original" + movie.getString("backdrop_path"),
-                                            movie_title + " Backdrop",
-                                            "https://www.themoviedb.org/movie/" + movie_id));
-                        }
-                        if(!movie.isNull("release_date") && !movie.getString("release_date").equals("")){
-                            article.addAttribute(new Attribute("Released", convertDateFormat(movie.getString("release_date")))); //TODO format release date
+                        if(!show.isNull("first_air_date") && !show.getString("first_air_date").equals("")){
+                            article.addAttribute(new Attribute("First Aired", convertDateFormat(show.getString("first_air_date"))));
                         }
                         article.setSource(new Source(
                                 "1adc674b-12ce-4428-8874-4a4445c13617",
                                 "https://telifie-static.nyc3.digitaloceanspaces.com/mirror/uploads/articles/icons/37430239-78ae-4bf7-8245-8d8969f99011_apple-touch-icon-57ed4b3b0450fd5e9a0c20f34e814b82adaa1085c79bdde2f00ca8787b63d2c4.png",
                                 "The Movie Database",
-                                "https://www.themoviedb.org/movie/" + movie_id
+                                "https://www.themoviedb.org/tv/" + showId
                         ));
-                        String url2 = "https://api.themoviedb.org/3/movie/" + movie_id + "?api_key=" + apiKey;
+                        String url2 = "https://api.themoviedb.org/3/tv/" + showId + "?api_key=" + apiKey;
                         URL obj2 = new URL(url2);
-                        System.out.println(article);
+
+                        //Check if show exists, get details if not
                         if(!articles.exists(article.getId())){
                             try{
                                 HttpURLConnection con2 = (HttpURLConnection) obj2.openConnection();
@@ -635,25 +629,10 @@ public class Parser {
                                 JSONObject myresponse2 = new JSONObject(response2.toString());
                                 article.setLink(myresponse2.getString("homepage"));
                                 try {
-                                    int rev = myresponse2.getInt("revenue");
-                                    int bud = myresponse2.getInt("budget");
-                                    int runtime = myresponse2.getInt("runtime");
-                                    NumberFormat formatter = NumberFormat.getInstance();
-                                    String fRevenue = formatter.format(rev);
-                                    String fBudget = formatter.format(bud);
 
-                                    if(rev > 0){
-                                        article.addAttribute(new Attribute("Revenue", "$" + fRevenue));
-                                    }
-                                    if(bud > 0){
-                                        article.addAttribute(new Attribute("Budget", "$" + fBudget));
-                                    }
-                                    if(runtime > 0){
-                                        article.addAttribute(new Attribute("Runtime", simplifyRuntime(runtime)));
-                                    }
-
+                                    //TODO
                                     try {
-                                        String url3 = "https://api.themoviedb.org/3/movie/" + movie_id + "/credits?api_key=" + apiKey;
+                                        String url3 = "https://api.themoviedb.org/3/movie/" + showId + "/credits?api_key=" + apiKey;
                                         URL obj3 = new URL(url3);
                                         HttpURLConnection con3 = (HttpURLConnection) obj3.openConnection();
                                         BufferedReader in3 = new BufferedReader(new InputStreamReader(con3.getInputStream()));
@@ -731,7 +710,6 @@ public class Parser {
                 return hours + (hours > 1 ? " Hours " : " Hour ") + remainingMinutes + " Minutes";
             }
         }
-
     }
 
     public class webpage {
@@ -788,6 +766,13 @@ public class Parser {
             article.setTitle(Telifie.tools.strings.htmlEscape(document.title()));
             article.setLink(url);
             String whole_text = document.text().replaceAll("[\n\r]", " ");
+            Pattern pattern = Pattern.compile("\\$\\d+(\\.\\d{2})?");
+            Matcher matcher = pattern.matcher(whole_text);
+            if (matcher.find()) {
+                String priceValue = matcher.group();
+                System.out.println("Extracted price: " + priceValue);
+                article.addAttribute(new Attribute("Price", priceValue));
+            }
             if(article.getContent() == null || article.getContent().equals("")){
                 Element body = document.getElementsByTag("body").get(0);
                 body.select("table, script, header, style, img, svg, button, label, form, input, aside, code, nav").remove();

@@ -11,8 +11,6 @@ import org.bson.conversions.Bson;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class Start {
 
@@ -22,8 +20,7 @@ public class Start {
 
     public static void main(String[] args){
 
-        Telifie.console.out.telifie();
-        Logger.getLogger("org.mongodb.driver").setLevel(Level.SEVERE);
+        Console.out.welcome();
         if (args.length > 0) {
             String mode = args[0].trim().toLowerCase();
             switch (mode) {
@@ -32,7 +29,7 @@ public class Start {
                 case "--purge" -> {
                     checkConfig();
                     System.out.println("<!----------- Purge Mode -----------!>\n");
-                    if (Telifie.console.in.string("Confirm purge and fresh install (y/n) -> ").equals("y")) {
+                    if (Console.in.string("Confirm purge, fresh install (y/n) -> ").equals("y")) {
                         configFile.delete();
                         System.out.println("telifie.configuration deleted");
                         install();
@@ -81,35 +78,10 @@ public class Start {
                         e.printStackTrace();
                     }
                 }
-                case "--geocode" -> {
-                    checkConfig();
-                    MongoClient mongoClient = MongoClients.create(config.getUri());
-                    MongoDatabase database = mongoClient.getDatabase("telifie");
-                    MongoCollection<Document> collection = database.getCollection("articles");
-                    FindIterable<Document> doc = collection.find(new Document("$and", Arrays.asList(
-                            new Document("attributes.key", "Longitude"),
-                            new Document("attributes.key", "Latitude"),
-                            new Document("location", new Document("$exists", false))
-                    )));
-                    for(Document d : doc){
-                        if (d != null) {
-                            Article a = new Article(d);
-                            String longitude = a.getAttribute("Longitude");
-                            String latitude = a.getAttribute("Latitude");
-                            if(longitude != null && latitude != null && !longitude.equals("null") && !latitude.equals("null")){
-                                double longitudeValue = Double.parseDouble(longitude);
-                                double latitudeValue = Double.parseDouble(latitude);
-                                Position position = new Position(longitudeValue, latitudeValue);
-                                Point point = new Point(position);
-                                Bson update = Updates.set("location", point);
-                                collection.updateOne(new Document("id", a.getId()), update);
-                                System.out.println(a.getTitle());
-                            }
-                        }
-                    }
-                    mongoClient.close();
-                }
             }
+        }else{
+            checkConfig();
+            new Console.line(config);
         }
     }
 
@@ -117,7 +89,7 @@ public class Start {
         File working_dir = new File(wrkDir);
         if(configFile.exists()){
             System.err.println("telifie.configuration file already set");
-            System.err.println("Run with --purge or run normally...");
+            System.err.println("Run with --purge or run normally");
             System.exit(-1);
         }else if(!working_dir.exists()){
             boolean made_dir = working_dir.mkdirs();
@@ -127,20 +99,19 @@ public class Start {
                 System.err.println("Failed to create working directory: " + working_dir);
             }
         }
-
         Configuration configuration = new Configuration();
         System.out.println("\nLet's connect to a MongoDB first.");
-        Telifie.console.out.line();
-        String mongo_uri = Telifie.console.in.string("MongoDB URI -> ");
+        Console.out.line();
+        String mongo_uri = Console.in.string("MongoDB URI -> ");
         configuration.setUri(mongo_uri);
         Domain domain = new Domain();
         domain.setName("telifie");
-        String email = Telifie.console.in.string("Email -> ");
+        String email = Console.in.string("Email -> ");
         configuration.setUser(new User(email));
         configuration.setDomain(domain); //Add domain to configuration file
-        configuration.setLicense(Telifie.console.in.string("Paste License -> ")); //Add license to configuration file. Must copy and paste.
+        configuration.setLicense(Console.in.string("Paste License -> ")); //Add license to configuration file. Must copy and paste.
         if(configuration.save(wrkDir)){
-            Telifie.console.out.line();
+            Console.out.line();
             System.out.println("Configuration saved!\nRun Telifie with no arguments to start the console.");
             System.exit(0);
         }else{
@@ -152,10 +123,10 @@ public class Start {
     private static void checkConfig(){
         if(configFile.exists()){
             System.out.println("Configuration file found :)");
-            Telifie.console.out.line();
-            config = (com.telifie.Models.Utilities.Configuration) Telifie.console.in.serialized(wrkDir + "/telifie.configuration");
+            Console.out.line();
+            config = (com.telifie.Models.Utilities.Configuration) Console.in.serialized(wrkDir + "/telifie.configuration");
         }else{
-            Telifie.console.out.message("No config file found. Use option '--install'");
+            Console.out.message("No config file found. Use option '--install'");
             install();
         }
     }

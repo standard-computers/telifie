@@ -5,6 +5,7 @@ import com.mongodb.client.MongoClients;
 import com.telifie.Models.Domain;
 import com.telifie.Models.User;
 import java.io.Serializable;
+import java.util.ArrayList;
 
 public class Configuration implements Serializable {
 
@@ -12,7 +13,8 @@ public class Configuration implements Serializable {
     private User user;
     private Authentication authentication = null;
     private String license = null;
-    private String uri;
+    private String uri, mgusername, mgpassword;
+    private ArrayList<String> ipList = new ArrayList<>();
     private static MongoClient mongoClient;
     protected Domain domain;
 

@@ -1,5 +1,6 @@
 package com.telifie.Models;
 
+import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 
@@ -10,6 +11,7 @@ public class Result {
 
     private final String id = UUID.randomUUID().toString();
     private String query = "", source = "";
+    private Parameters params;
     private String object = "results";
     private String generated = "";
     private Object results;
@@ -19,6 +21,14 @@ public class Result {
 
     public Result(String query, String object, ArrayList results) {
         this.query = query;
+        this.object = object;
+        this.results = results;
+        this.count = results.size();
+    }
+
+    public Result(String query, Parameters params, String object, ArrayList results) {
+        this.query = query;
+        this.params = params;
         this.object = object;
         this.results = results;
         this.count = results.size();
@@ -41,21 +51,12 @@ public class Result {
         this.results = results;
     }
 
-    public Result(String query, ArrayList<Article> quickResults, ArrayList<Article> results) {
+    public Result(String query, Parameters params, ArrayList<Article> quickResults, ArrayList<Article> results) {
         this.query = query;
         this.object = "articles";
         this.results = results;
         this.quickResults = quickResults;
         this.count = results.size();
-    }
-
-    public Result(String query, ArrayList<Article> quickResults, ArrayList<Article> results, String generated) {
-        this.query = query;
-        this.object = "articles";
-        this.results = results;
-        this.quickResults = quickResults;
-        this.count = (results == null ? 0 : results.size());
-        this.generated = generated;
     }
 
     public int getStatusCode() {
@@ -76,6 +77,7 @@ public class Result {
         return "{\"status_code\" : " + statusCode +
                 ", \"id\" : \"" + id + '\"' +
                 ", \"query\" : \"" + query + '\"' +
+                (params == null ? "" : ", \"params\" : " + params) +
                 (source.isEmpty() ? "" : ", \"source\" : \"" + source + '\"') +
                 (generated.isEmpty() ? "" : ", \"generated\" : \"" + generated + '\"') +
                 ", \"count\" : " + count +

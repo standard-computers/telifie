@@ -17,11 +17,13 @@ import java.util.regex.Pattern;
 public class Search {
 
     private static ArticlesClient articlesClient;
+    private Parameters params;
 
-    public static Result execute(Configuration config, String query, Parameters params){
-
+    public Result execute(Configuration config, String query, Parameters params){
+        query = query.toLowerCase().trim();
+        this.params = params;
         articlesClient = new ArticlesClient(config);
-        ArrayList results = Search.executeQuery(config, query, params);
+        ArrayList results = executeQuery(config, query);
         switch (params.getIndex()) {
             case "images" -> {
                 ArrayList<Image> images = new ArrayList<>();
@@ -35,7 +37,7 @@ public class Search {
                         }
                     }
                 }
-                return new Result(query, "images", images);
+                return new Result(query, params, "images", images);
             }
             case "locations" -> {
                 ArrayList<Article> articles = new ArrayList<>();
@@ -45,7 +47,7 @@ public class Search {
                         articles.add(article);
                     }
                 }
-                return new Result(query, "articles", articles);
+                return new Result(query, params, "articles", articles);
             }
             case "shopping" -> {
                 ArrayList<Article> articles = new ArrayList<>();
@@ -55,31 +57,30 @@ public class Search {
                         articles.add(article);
                     }
                 }
-                return new Result(query, "articles", articles);
+                return new Result(query, params,"articles", articles);
             }
         }
         ArrayList<Article> qr = new ArrayList<>();
-        return new Result(query, qr, results);
+        return new Result(query, params, qr, results);
     }
 
-    private static ArrayList executeQuery(Configuration config, String query, Parameters params){
+    private ArrayList executeQuery(Configuration config, String query){
 
-        Document filter = filter(query, params);
+        Document filter = filter(query);
         if(config.getDomain().getId() != null && !config.getDomain().getId().equals("telifie")){
             ArrayList<Document> conditions = new ArrayList<>();
             String domainId = config.getDomain().getId();
             conditions.add(new Document("domain", domainId));
-            Document queryFilter = filter(query, params);
+            Document queryFilter = filter(query);
             conditions.add(queryFilter);
             filter = new Document("$and", conditions);
         }
-
         ArrayList<Article> results = articlesClient.search(params, filter);
         if(results != null && !query.contains(":")){
             if(Telifie.tools.strings.has(Telifie.PROXIMITY, query) > -1 || query.endsWith("near me")) {
                 Collections.sort(results, new DistanceSorter(params.getLatitude(), params.getLongitude()));
             }else if(query.split(" ").length > 2 && !query.contains(",")){
-                Collections.sort(results, new CosmoScore(query));
+                Collections.sort(results, new CosmoScore(Andromeda.encoder.clean(query)));
             }else{
                 Collections.sort(results, new RelevanceComparator(query));
                 Collections.reverse(results);
@@ -88,7 +89,7 @@ public class Search {
         return results;
     }
 
-    private static Document filter(String query, Parameters params){
+    private Document filter(String query){
 
         if(query.matches("^id\\s*:\\s*.*")){
 
@@ -100,13 +101,19 @@ public class Search {
 
             String[] spl = query.split(":");
             if(spl.length >= 2) {
-                return new Document("description", pattern(spl[1].trim()));
+                return new Document("description", Pattern.compile("\\b" + Pattern.quote(spl[1].trim()) + "\\b", Pattern.CASE_INSENSITIVE));
             }
         }else if(query.matches("^title\\s*:\\s*.*")){
 
             String[] spl = query.split(":");
             if(spl.length >= 2){
                 return new Document("title", pattern(spl[1].trim() ));
+            }
+        }else if(query.matches("^link\\s*:\\s*.*")){
+
+            String[] spl = query.split(":");
+            if(spl.length >= 2){
+                return new Document("link", pattern(spl[1].trim() ));
             }
         }else if(query.matches("^source\\s*:\\s*.*")){
 
@@ -128,7 +135,7 @@ public class Search {
                         String value = spl2[1].trim().toLowerCase();
                         return new Document("$and", Arrays.asList(
                                 new Document("attributes.key", wholeWord(key)),
-                                new Document("attributes.value", pattern(value))
+                                new Document("attributes.value", wholeWord(value))
                         ));
                     }
                 }
@@ -213,6 +220,8 @@ public class Search {
                         ))
                 );
                 Article pl = findPlace.get(0);
+                params.setLatitude( Double.parseDouble(pl.getAttribute("Longitude")));
+                params.setLongitude(Double.parseDouble(pl.getAttribute("Latitude")));
                 return new Document("$and", Arrays.asList(
                         new Document("$or", Arrays.asList(
                                 new Document("tags", pattern(subject)),
@@ -235,6 +244,7 @@ public class Search {
         String[] exploded = Andromeda.encoder.nova(cleanedQuery);
         ArrayList<Bson> filters = new ArrayList<>();
         List<Bson> titleWordFilters = new ArrayList<>();
+        titleWordFilters.add(Filters.regex("title", ignoreCase(query)));
         for (String word : exploded) {
             titleWordFilters.add(Filters.regex("title", ignoreCase(word)));
         }
@@ -242,15 +252,7 @@ public class Search {
             filters.add(Filters.or(titleWordFilters));
         }
         filters.add(Filters.regex("link", pattern(query)));
-        filters.add(Filters.regex("attributes.value", pattern(query)));
         filters.add(Filters.in("tags", ignoreCase(query)));
-//        List<Bson> contentFilters = new ArrayList<>();
-//        for (String word : exploded) {
-//            contentFilters.add(Filters.regex("content", pattern(word)));
-//        }
-//        if (!contentFilters.isEmpty()) {
-//            filters.add(Filters.or(contentFilters));
-//        }
         return new Document("$or", filters);
     }
 
@@ -259,13 +261,11 @@ public class Search {
     }
 
     private static Pattern pattern(String value){
-        String regex = "\\b" + Pattern.quote(value) + "\\w*\\b";
-        return Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+        return Pattern.compile("\\b" + Pattern.quote(value) + "\\w*\\b", Pattern.CASE_INSENSITIVE);
     }
 
-    private static Pattern ignoreCase(String value) {
-        String regex = "\\b" + Pattern.quote(value) + "\\b";
-        return Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+    private static Pattern ignoreCase(String value) { //Doesn't allow extra stuff at end
+        return Pattern.compile("\\b" + Pattern.quote(value) + "\\b", Pattern.CASE_INSENSITIVE);
     }
 
     private static class CosmoScore implements Comparator<Article> {
@@ -276,8 +276,6 @@ public class Search {
         public CosmoScore(String query){
             this.query = query;
             this.words = Andromeda.encoder.nova(Andromeda.encoder.clean(query));
-            System.out.println(Andromeda.encoder.clean(query));
-            System.out.println(Arrays.toString(words));
         }
 
         @Override
@@ -288,27 +286,30 @@ public class Search {
         }
 
         private double relevance(Article a) {
-            int titleGrade = countMatches(a.getTitle(), words) * 3;
-            int linkGrade = countMatches((a.getLink() == null ? "" : a.getLink()), words) * 2;
-            double grade = (titleGrade + linkGrade) * a.getPriority();
-            return grade;
+            if(a.getTitle().trim().toLowerCase().equals(query)){
+                return Integer.MAX_VALUE;
+            }
+            int titleGrade = (countMatches(a.getTitle(), words) / words.length) * 4;
+            int linkGrade = (countMatches((a.getLink() == null ? "" : a.getLink()), words) / words.length) * 2;
+            int tagsGrade = 0;
+            if(a.getTags() != null && !a.getTags().isEmpty()){
+                for(String tag : a.getTags()){
+                    tagsGrade += countMatches(tag, words);
+                }
+            }
+            return ((titleGrade + linkGrade) + ((tagsGrade / words.length) * 0.25)) * a.getPriority();
         }
 
         private int countMatches(String text, String[] words) {
             int matches = 0;
-            String[] titleWords = text.split("\\s+");
             for(String word : words) {
-                for(String titleWord : titleWords) {
-                    if(titleWord.equalsIgnoreCase(word)) {
-                        matches++;
-                    }
+                if(text.contains(word)) {
+                    matches++;
                 }
             }
             return matches;
         }
     }
-
-
 
     private static class RelevanceComparator implements Comparator<Article> {
 
@@ -371,11 +372,9 @@ public class Search {
             final int R = 6371; // Radius of the earth in km
             double latDistance = Math.toRadians(latitude - this.latitude);
             double lonDistance = Math.toRadians(longitude - this.longitude);
-            double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-                    + Math.cos(Math.toRadians(this.latitude)) * Math.cos(Math.toRadians(this.longitude))
-                    * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+            double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2) + Math.cos(Math.toRadians(this.latitude)) * Math.cos(Math.toRadians(this.longitude)) * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
             double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c; // returns distance in kilometers
+            return R * c;
         }
     }
 }

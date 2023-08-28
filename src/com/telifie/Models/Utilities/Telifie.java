@@ -1,6 +1,13 @@
 package com.telifie.Models.Utilities;
 
+import com.mongodb.client.*;
+import com.mongodb.client.model.Updates;
+import com.mongodb.client.model.geojson.Point;
+import com.mongodb.client.model.geojson.Position;
+import com.telifie.Models.Article;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import java.io.*;
@@ -9,7 +16,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -66,10 +72,6 @@ public class Telifie {
             return (files.file = new File(name));
         }
 
-        public static boolean write(String content){
-            return false;
-        }
-
         public static void serialized(String name, Serializable object){
             try {
                 ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(name));
@@ -82,65 +84,35 @@ public class Telifie {
         }
     }
 
-    public static class console {
+    public static class tools {
 
-        public static class out {
-
-            public static void line(){
-                System.out.println("--------------------------------------------------------------");
-            }
-
-            public static void message(String message){
-                line();
-                System.out.println("\n" + message + "\n");
-                line();
-            }
-
-            public static void telifie() {
-                System.out.println("\n");
-                System.out.println("||===========================================================||");
-                System.out.println("||                                                           ||");
-                System.out.println("||  ,--------. ,------. ,--.    ,--. ,------. ,--. ,------.  ||");
-                System.out.println("||  '--.  .--' |  .---' |  |    |  | |  .---' |  | |  .---'  ||");
-                System.out.println("||     |  |    |  `--,  |  |    |  | |  `--,  |  | |  `--,   ||");
-                System.out.println("||     |  |    |  `---. |  '--. |  | |  |`    |  | |  `---.  ||");
-                System.out.println("||     `--'    `------' `-----' `--' `--'     `--' `------'  ||");
-                System.out.println("||                                                           ||");
-                System.out.println("||===========================================================||\n");
-                String operatingSystem = System.getProperty("os.name");
-                System.out.println("Operating System : " + operatingSystem);
-                System.out.println("System Architecture : " + System.getProperty("os.arch"));
-                Telifie.console.out.line();
-            }
-        }
-
-        public static class in {
-
-            public static String string(){
-                Scanner in = new Scanner(System.in);
-                return in.nextLine();
-            }
-
-            public static String string(String prompt){
-                System.out.print(prompt);
-                Scanner in = new Scanner(System.in);
-                return in.nextLine();
-            }
-
-            public static Object serialized(String dir){
-                try {
-                    ObjectInputStream in = new ObjectInputStream(new FileInputStream(dir));
-                    return in.readObject();
-                } catch (IOException e) {
-                    return null;
-                } catch (ClassNotFoundException e) {
-                    return null;
+        public static void geocode(Configuration config){
+            MongoClient mongoClient = MongoClients.create(config.getUri());
+            MongoDatabase database = mongoClient.getDatabase("telifie");
+            MongoCollection<Document> collection = database.getCollection("articles");
+            FindIterable<Document> doc = collection.find(new Document("$and", Arrays.asList(
+                    new Document("attributes.key", "Longitude"),
+                    new Document("attributes.key", "Latitude"),
+                    new Document("location", new Document("$exists", false))
+            )));
+            for(Document d : doc){
+                if (d != null) {
+                    Article a = new Article(d);
+                    String longitude = a.getAttribute("Longitude");
+                    String latitude = a.getAttribute("Latitude");
+                    if(longitude != null && latitude != null && !longitude.equals("null") && !latitude.equals("null")){
+                        double longitudeValue = Double.parseDouble(longitude);
+                        double latitudeValue = Double.parseDouble(latitude);
+                        Position position = new Position(longitudeValue, latitudeValue);
+                        Point point = new Point(position);
+                        Bson update = Updates.set("location", point);
+                        collection.updateOne(new Document("id", a.getId()), update);
+                        System.out.println(a.getTitle());
+                    }
                 }
             }
+            mongoClient.close();
         }
-    }
-
-    public static class tools {
 
         public static class strings {
 
@@ -333,23 +305,6 @@ public class Telifie {
                 }else{
                     return "Unknown";
                 }
-            }
-
-            public static String fileToString(String filePath) {
-                File file = new File(filePath);
-                if(!file.exists()){
-                    return "";
-                }
-                StringBuilder sb = new StringBuilder();
-                try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        sb.append(line).append("\n");
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                return sb.toString();
             }
 
             public static boolean isValidLink(String link, String uri) {
