@@ -217,14 +217,13 @@ public class Command {
                                     content.put("id", secSelector);
                                 }
                                 Article ua = new Article(content);
-                                ArrayList<Event> events = ua.compare(a);
-                                events.forEach(e -> e.setUser(config.getUser().getId()));
+//                                ArrayList<Event> events = ua.compare(a);
+//                                events.forEach(e -> e.setUser(config.getUser().getId()));
                                 if (articles.update(a, ua)) {
-                                    TimelinesClient timelines = new TimelinesClient(config);
-                                    timelines.addEvents(secSelector, events);
-                                    return new Result(this.command, "events", events.toString());
+//                                    TimelinesClient timelines = new TimelinesClient(config);
+//                                    timelines.addEvents(secSelector, events);
+                                    return new Result(200, this.command, ua.toString());
                                 }
-                                return new Result(505, this.command, "Failed to update Article");
                             }
                             return new Result(428, "No new Article JSON data provided");
                         }
@@ -526,23 +525,6 @@ public class Command {
                 return new Result(428, this.command, "Select parser mode");
             }
             return new Result(428, this.command, "JSON request body expected");
-        }
-        /*
-         * Authenticate an app for backend use to facilitate user authentication
-         */
-        else if(primarySelector.equals("authenticate")){
-
-            if(this.selectors.length >= 3 && objectSelector.equals("app")){
-                Authentication auth = new Authentication(secSelector);
-                AuthenticationClient authentications = new AuthenticationClient(config);
-                if(authentications.authenticate(auth)){
-                    System.out.println("App authenticated with ID: " + secSelector);
-                    Console.out.message(auth.toJson().toString(4));
-                    return new Result(this.command, "authentication", auth.toJson());
-                }
-                return new Result(505, "Failed creating app authentication");
-            }
-            return new Result(428, "Need more params");
         }
         /*
          * Connect: Creating or logging in user

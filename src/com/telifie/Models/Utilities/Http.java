@@ -24,14 +24,13 @@ import java.net.Socket;
 
 public class Http {
 
-    private ServerSocket serverSocket;
     private Socket socket;
     private Configuration config;
 
     public Http (Configuration config) {
         this.config = config;
         try {
-            serverSocket = new ServerSocket(80);
+            ServerSocket serverSocket = new ServerSocket(80);
             while (true) {
                 socket = serverSocket.accept();
                 Connection connection = new Connection();
@@ -61,10 +60,8 @@ public class Http {
         @Override
         public void run(){
             HttpRequestHandler requestHandler = (request, response, context) -> {
-                String method = request.getRequestLine().getMethod();
                 String query = request.getRequestLine().getUri().substring(1);
-                String authString = (request.getFirstHeader("Authorization") == null ? "" : request.getFirstHeader("Authorization").getValue());
-                Authentication auth = (authString.isEmpty() ? null : new Authentication(authString.split(" ")[1].split("\\.")));
+                Authentication auth = (request.getFirstHeader("Authorization") == null ? null : new Authentication(request.getFirstHeader("Authorization").getValue()));
                 Result result = new Result(200, query, "\"okay\"");
 
                 if (auth == null) {
@@ -84,7 +81,7 @@ public class Http {
                         requestConfiguration.setAuthentication(auth);
                         UsersClient users = new UsersClient(requestConfiguration);
                         requestConfiguration.setUser(users.getUserWithId(auth.getUser()));
-                        result = processRequest(requestConfiguration, method, query, body);
+                        result = processRequest(requestConfiguration, request.getRequestLine().getMethod(), query, body);
                     } else {
                         result = new Result(403, "Invalid Credentials");
                     }

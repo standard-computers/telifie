@@ -8,13 +8,10 @@ import com.telifie.Models.Article;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import java.io.*;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,21 +26,6 @@ public class Telifie {
     public static final String WINDOWS_SYSTEM_DIR = "/Program\\ Files/telifie/";
     public static final String MAC_SYSTEM_DIR = System.getProperty("user.home") + "/Library/Application Support/telifie";
     public static final String UNIX_SYSTEM_DIR = "/usr/bin/telifie/";
-
-    public enum Languages {
-
-        ENGLISH("ENGLISH");
-
-        private String disp = "ENGLISH";
-        Languages(String displayName){
-            this.disp = displayName;
-        }
-
-        @Override
-        public String toString() {
-            return this.disp;
-        }
-    }
 
     public static String getConfigDirectory(){
         String operatingSystem = System.getProperty("os.name");
@@ -61,16 +43,6 @@ public class Telifie {
     }
 
     public static class files {
-
-        private static File file;
-
-        public static File file(String directory, String name, String content){
-            File dir = new File(directory);
-            if(!dir.exists()){
-                dir.mkdirs();
-            }
-            return (files.file = new File(name));
-        }
 
         public static void serialized(String name, Serializable object){
             try {
@@ -114,7 +86,19 @@ public class Telifie {
             mongoClient.close();
         }
 
+
         public static class strings {
+
+            public static String escapeMarkdownForJson(String markdownText) {
+                String escapedText = markdownText.replace("\\", "\\\\");
+                escapedText = escapedText.replace("\"", "\\\"");
+                escapedText = escapedText.replace("\n", "\\n");
+                escapedText = escapedText.replace("\r", "\\r");
+                escapedText = escapedText.replace("\t", "\\t");
+                escapedText = escapedText.replace("\b", "\\b");
+                escapedText = escapedText.replace("\f", "\\f");
+                return escapedText;
+            }
 
             public static String sentenceCase(String str) {
                 if (str == null || str.isEmpty()) {
@@ -231,18 +215,6 @@ public class Telifie {
                     throw new RuntimeException(e);
                 }
             }
-
-            public static ArrayList<String> extractLinks(Elements elements, String root){
-                ArrayList<String> links = new ArrayList<>();
-                for(Element el : elements){
-                    String link = el.attr("href");
-                    String fixed = Telifie.tools.detector.fixLink(root, link);
-                    if(Telifie.tools.detector.isValidLink(fixed, root)){
-                        links.add(fixed);
-                    }
-                }
-                return links;
-            }
         }
 
         public static class detector {
@@ -276,7 +248,7 @@ public class Telifie {
                 String lowercaseUri = uri.toLowerCase();
                 if (lowercaseUri.startsWith("https://") || lowercaseUri.startsWith("http://") || lowercaseUri.startsWith("www")) {
                     for (String extension : imageExtensions) {
-                        if (lowercaseUri.endsWith(extension) || lowercaseUri.contains("#")) {
+                        if (lowercaseUri.endsWith(extension)) {
                             return false;
                         }
                     }
@@ -307,18 +279,15 @@ public class Telifie {
                 }
             }
 
-            public static boolean isValidLink(String link, String uri) {
-                if(link.contains("cart") || link.contains("search") || link.contains("account")){ //Audit out pages
+            public static boolean isValidLink(String link) {
+                if(link.contains("cart") || link.contains("search") || link.contains("account") || link.contains("#")){ //Audit out pages
                     return false;
                 }
-                if (link.startsWith("tel:")
-                        && link.startsWith("mailto:")
-                        && link.startsWith("sms:")
-                        && link.startsWith("skype:")
-                        && link.startsWith("#")) {
-                    return false;
-                }
-                return true;
+                return !link.startsWith("tel:")
+                        || !link.startsWith("mailto:")
+                        || !link.startsWith("sms:")
+                        || !link.startsWith("skype:")
+                        || !link.startsWith("#");
             }
         }
     }

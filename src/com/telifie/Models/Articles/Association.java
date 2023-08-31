@@ -47,8 +47,12 @@ public class Association {
 
     @Override
     public String toString() {
-        return "{\"icon\" : \"" + icon + '\"' +
-                ", \"name\" : \"" + name + '\"' +
-                ", \"articles\" : " + articles + '}';
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"icon\" : \"").append(icon).append('\"')
+                .append(", \"name\" : \"").append(name).append('\"')
+                .append(", \"articles\" : ").append(articles)
+                .append('}');
+
+        return sb.toString();
     }
 }

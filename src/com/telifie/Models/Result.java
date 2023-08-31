@@ -74,16 +74,35 @@ public class Result {
 
     @Override
     public String toString() {
-        return "{\"status_code\" : " + statusCode +
-                ", \"id\" : \"" + id + '\"' +
-                ", \"query\" : \"" + query + '\"' +
-                (params == null ? "" : ", \"params\" : " + params) +
-                (source.isEmpty() ? "" : ", \"source\" : \"" + source + '\"') +
-                (generated.isEmpty() ? "" : ", \"generated\" : \"" + generated + '\"') +
-                ", \"count\" : " + count +
-                ", \"origin\" : " + origin +
-                (!quickResults.isEmpty() ? ", \"quick_results\" : " + quickResults : "") +
-                ", \"" + object + "\" : " + (results instanceof String ? "\"" + results + "\"" : (results instanceof Document ? ((Document) results).toJson() : results.toString())) +
-                "}";
+        StringBuilder sb = new StringBuilder();
+        sb.append("{")
+                .append("\"status_code\" : ").append(statusCode)
+                .append(", \"id\" : \"").append(id).append('\"')
+                .append(", \"query\" : \"").append(query).append('\"');
+        if (params != null) {
+            sb.append(", \"params\" : ").append(params);
+        }
+        if (!source.isEmpty()) {
+            sb.append(", \"source\" : \"").append(source).append('\"');
+        }
+        if (!generated.isEmpty()) {
+            sb.append(", \"generated\" : \"").append(generated).append('\"');
+        }
+        sb.append(", \"count\" : ").append(count)
+                .append(", \"origin\" : ").append(origin);
+        if (!quickResults.isEmpty()) {
+            sb.append(", \"quick_results\" : ").append(quickResults);
+        }
+        sb.append(", \"").append(object).append("\" : ");
+        if (results instanceof String) {
+            sb.append("\"").append(results).append("\"");
+        } else if (results instanceof Document) {
+            sb.append(((Document) results).toJson());
+        } else {
+            sb.append(results);
+        }
+        sb.append("}");
+        return sb.toString();
     }
+
 }

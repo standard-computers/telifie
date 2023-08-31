@@ -87,7 +87,7 @@ public class Server {
                         authString = headerLine.substring("Authorization:".length()).trim();
                     }
                 }
-                Authentication auth = (authString.equals("") ? null : new Authentication(authString.split(" ")[1].split("\\.")));
+                Authentication auth = (authString.equals("") ? null : new Authentication(authString));
                 String method = requestLine.split(" ")[0];
                 String query = URLDecoder.decode(requestLine.split(" ")[1].substring(1), StandardCharsets.UTF_8);
                 Result result = new Result(200, query, "\"okay\"");

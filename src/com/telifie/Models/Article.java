@@ -1,12 +1,9 @@
 package com.telifie.Models;
 
-import com.telifie.Models.Actions.Event;
 import com.telifie.Models.Articles.*;
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
-import org.json.JSONObject;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -39,43 +36,29 @@ public class Article {
         this.icon = document.getString("icon");
         this.description = document.getString("description");
         this.priority = (document.getDouble("priority") == null ? 1.01 : document.getDouble("priority"));
-        this.content = (document.getString("content") != null ?  MarkdownEscapeUtils.escapeMarkdownForJson(document.getString("content")) : "");
+        this.content = (document.getString("content") != null ?  Telifie.tools.strings.escapeMarkdownForJson(document.getString("content")) : "");
         this.origin = (document.getInteger("origin") == null ? 0 : document.getInteger("origin"));
         this.tags = document.get("tags", ArrayList.class);
 
         ArrayList<Document> iterable = (ArrayList<Document>) document.getList("images", Document.class);
-        if (iterable != null && iterable.size() >= 1) {
-            for (Document doc : iterable) {
-                Image ni = new Image(doc);
-                ni.setId(this.getId());
-                this.addImage(new Image(doc));
-            }
-        }else{
-            this.images = new ArrayList<>();
+        if (iterable != null) {
+            iterable.forEach(doc -> this.addImage(new Image(doc)));
         }
         ArrayList<Document> it2 = (ArrayList<Document>) document.getList("attributes", Document.class);
         if (it2 != null) {
             it2.forEach(doc -> this.addAttribute(new Attribute(doc.getString("key"), doc.getString("value"))));
-        }else{
-            this.attributes = new ArrayList<>();
         }
         ArrayList<Document> it3 = (ArrayList<Document>) document.getList("associations", Document.class);
         if (it3 != null) {
             it3.forEach(doc -> this.addAssociation(new Association(doc)));
-        }else{
-            this.associations = new ArrayList<>();
         }
         ArrayList<Document> it4 = (ArrayList<Document>) document.getList("data_sets", Document.class);
         if(it4 != null){
             it4.forEach(doc -> this.addDataSet(new DataSet(doc)));
-        }else{
-            this.dataSets = new ArrayList<>();
         }
         Document sourceDocument = document.get("source", Document.class);
         if (sourceDocument != null) {
             this.source = new Source(sourceDocument);
-        }else{
-            this.source = null;
         }
     }
 
@@ -135,6 +118,14 @@ public class Article {
         return priority;
     }
 
+    public void setPriority(Double priority) {
+        this.priority = priority;
+    }
+
+    public void addTag(String tag) {
+        this.tags.add(tag.toLowerCase().trim());
+    }
+
     public String getContent() {
         return content;
     }
@@ -163,7 +154,7 @@ public class Article {
 
     private boolean attributeExists(Attribute attr) {
         for (Attribute existingAttr : this.attributes) {
-            if (existingAttr.getKey().equals(attr.getKey()) && existingAttr.getValue().equals(attr.getValue())) {
+            if (existingAttr.key().equals(attr.key()) && existingAttr.value().equals(attr.value())) {
                 return true;
             }
         }
@@ -172,7 +163,7 @@ public class Article {
 
     public boolean hasAttribute(String key){
         for(Attribute attr : this.attributes){
-            if(attr.getKey().toLowerCase().trim().equals(key)){
+            if(attr.key().toLowerCase().trim().equals(key)){
                 return true;
             }
         }
@@ -181,8 +172,8 @@ public class Article {
 
     public String getAttribute(String key){
         for(Attribute attr : this.attributes){
-            if(attr.getKey().toLowerCase().trim().equals(key.toLowerCase())){
-                return attr.getValue();
+            if(attr.key().toLowerCase().trim().equals(key.toLowerCase())){
+                return attr.value();
             }
         }
         return null;
@@ -202,12 +193,6 @@ public class Article {
 
     public void setSource(Source source) {
         this.source = source;
-    }
-
-    public void clean(){
-        this.title = this.title.trim();
-        this.description = this.description.trim();
-
     }
 
     @Override
@@ -230,65 +215,5 @@ public class Article {
                 (source == null ? ", \"source\" : null" : ", \"source\" : " + source) +
                 ", \"origin\" : " + origin +
                 '}';
-    }
-
-    public JSONObject toJson(){
-        return new JSONObject(this.toString());
-    }
-
-    public ArrayList<Event> compare(Article old){
-        ArrayList<Event> changes = new ArrayList<>();
-        Iterator<String> newKeys = this.toJson().keys();
-        while (newKeys.hasNext()) {
-            String key = newKeys.next();
-            if(this.toJson().get(key) instanceof String){
-                if(old.toJson().has(key) && !this.toJson().getString(key).equals(old.toJson().getString(key))){ //If the value at key HAS changed
-                    //i.e. {"title", "old_title_value", "new_title_value"}
-                    changes.add(
-                            new Event(
-                                    Event.Type.UPDATE,
-                                    Telifie.getEpochTime(),
-                                    "GUEST",
-                                    key + " : " + old.toJson().getString(key) + " => " + key + " : " + this.toJson().getString(key)
-                            )
-                    );
-                }else if(!old.toJson().has(key)){
-                    changes.add(
-                            new Event(
-                                    Event.Type.PUT,
-                                    Telifie.getEpochTime(),
-                                    "GUEST",
-                                    key + " : " + this.toJson().getString(key)
-                            )
-                    );
-                }
-            }else if(this.toJson().get(key) instanceof ArrayList<?>){
-                if(!this.toJson().get(key).toString().equals(old.toJson().get(key).toString())){
-
-                }
-            }
-        }
-        return changes;
-    }
-
-    public void addTag(String tag) {
-        this.tags.add(tag.toLowerCase().trim());
-    }
-
-    public void setPriority(Double priority) {
-        this.priority = priority;
-    }
-
-    public static class MarkdownEscapeUtils {
-        public static String escapeMarkdownForJson(String markdownText) {
-            String escapedText = markdownText.replace("\\", "\\\\");
-            escapedText = escapedText.replace("\"", "\\\"");
-            escapedText = escapedText.replace("\n", "\\n");
-            escapedText = escapedText.replace("\r", "\\r");
-            escapedText = escapedText.replace("\t", "\\t");
-            escapedText = escapedText.replace("\b", "\\b");
-            escapedText = escapedText.replace("\f", "\\f");
-            return escapedText;
-        }
     }
 }

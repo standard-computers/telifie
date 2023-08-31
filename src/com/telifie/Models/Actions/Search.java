@@ -32,7 +32,6 @@ public class Search {
                     ArrayList<Image> articleImages = article.getImages();
                     if (articleImages != null && !articleImages.isEmpty()) {
                         for (Image image : articleImages) {
-                            image.setId(article.getId());
                             images.add(image);
                         }
                     }
@@ -196,7 +195,7 @@ public class Search {
                                     ))
                             ).append("$maxDistance", 16000)
                     )
-                )
+                    )
             ));
         }else if(Telifie.tools.strings.has(Telifie.PROXIMITY, query) > -1){
             String splr = Telifie.PROXIMITY[Telifie.tools.strings.has(Telifie.PROXIMITY, query)];

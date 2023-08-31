@@ -84,6 +84,8 @@ public class Console {
                     }
                 }else if(cmd.equals("clean")){
 
+                }else if(cmd.equals("sepimg")){
+
                 }
             }
         }

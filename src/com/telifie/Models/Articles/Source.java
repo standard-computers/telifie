@@ -42,9 +42,10 @@ public class Source {
 
     @Override
     public String toString() {
-        return "{\"id\" : \"" + id + '\"' +
-                ", \"icon\" : \"" + icon + '\"' +
-                ", \"name\" : \"" + name + '\"' +
-                ", \"url\" : \"" + url + "\"}";
+        return new StringBuilder()
+            .append("{\"id\" : \"").append(id).append('\"')
+            .append(", \"icon\" : \"").append(icon).append('\"')
+            .append(", \"name\" : \"").append(name).append('\"')
+            .append(", \"url\" : \"").append(url).append("\"}").toString();
     }
 }

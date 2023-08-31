@@ -9,7 +9,6 @@ import java.util.ArrayList;
 
 public class Configuration implements Serializable {
 
-    public final String VERSION = "1.0.0";
     private User user;
     private Authentication authentication = null;
     private String license = null;

@@ -9,7 +9,6 @@ public class Connector {
 
     private String id, name, clientId, accessToken, secret, refreshToken, redirectUri;
     private String user, userId; //User ID of the user in the connector, not Telifie's User ID
-    private ArrayList<Endpoint> endpoints = new ArrayList<>();
     private int origin;
 
     public Connector(Document document) {
@@ -24,13 +23,6 @@ public class Connector {
             this.clientId = (document.getString("client_id") != null ? document.getString("client_id") : null);
             this.redirectUri = (document.getString("redirect_uri") != null ? document.getString("redirect_uri") : "");
             this.origin = (document.getInteger("origin") != null ? document.getInteger("origin") : Telifie.getEpochTime());
-            ArrayList<Document> eps = (ArrayList<Document>) document.getList("endpoints", Document.class);
-            if (eps != null) {
-                endpoints = new ArrayList<>();
-                for (Document d : eps) {
-                    endpoints.add(new Endpoint(d));
-                }
-            }
         }
     }
 
@@ -56,10 +48,6 @@ public class Connector {
 
     public void setUserId(String userId) {
         this.userId = userId;
-    }
-
-    public ArrayList<Endpoint> getEndpoints() {
-        return endpoints;
     }
 
     public String getId() {
@@ -97,7 +85,6 @@ public class Connector {
                 ", \"redirect_uri\" : \"" + redirectUri + '\"' +
                 ", \"user\" : \"" + user + '\"' +
                 ", \"user_id\" : \"" + userId + '\"' +
-                ", \"endpoints\" : " + endpoints +
                 ", \"origin\" : " + origin +
                 '}';
     }

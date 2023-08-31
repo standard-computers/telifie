@@ -1,15 +1,8 @@
 package com.telifie;
 
-import com.mongodb.client.*;
-import com.mongodb.client.model.Updates;
-import com.mongodb.client.model.geojson.Point;
-import com.mongodb.client.model.geojson.Position;
 import com.telifie.Models.*;
 import com.telifie.Models.Utilities.*;
-import org.bson.Document;
-import org.bson.conversions.Bson;
 import java.io.File;
-import java.util.Arrays;
 import java.util.Scanner;
 
 public class Start {

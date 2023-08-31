@@ -1,4 +1,4 @@
-package com.telifie.Models.Actions;
+package com.telifie.Models.Utilities;
 
 import org.bson.Document;
 
@@ -50,16 +50,14 @@ public class Event {
         this.user = user;
     }
 
-    public String getContent() {
-        return content;
-    }
-
     @Override
     public String toString() {
-        return "{\"type\" : \"" + type + '\"' +
-                ", \"user\" : \"" + user + '\"' +
-                ", \"origin\" : " + origin +
-                ", \"content\" : \"" + content + '\"' +
-                '}';
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"type\" : \"").append(type).append('\"')
+                .append(", \"user\" : \"").append(user).append('\"')
+                .append(", \"origin\" : ").append(origin)
+                .append(", \"content\" : \"").append(content).append('\"')
+                .append('}');
+        return sb.toString();
     }
 }

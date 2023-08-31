@@ -1,7 +1,7 @@
 package com.telifie.Models.Clients;
 
 import com.mongodb.client.model.UpdateOptions;
-import com.telifie.Models.Actions.Event;
+import com.telifie.Models.Utilities.Event;
 import com.telifie.Models.Actions.Timeline;
 import com.telifie.Models.Utilities.Configuration;
 import org.bson.Document;
@@ -47,7 +47,6 @@ public class TimelinesClient extends Client {
         Timeline timeline = new Timeline(document);
         int time = (int) (System.currentTimeMillis() / 1000);
         for(int i = timeline.getEvents().size() - 1; i > 0; i--){
-            System.out.println(timeline.getEvents().get(i).getType());
             if(timeline.getEvents().get(i).getType() == type){
                 return time - timeline.getEvents().get(i).getOrigin();
             }

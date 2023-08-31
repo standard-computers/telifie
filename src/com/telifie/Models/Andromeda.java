@@ -10,7 +10,6 @@ import org.languagetool.JLanguageTool;
 import org.languagetool.Language;
 import org.languagetool.language.AmericanEnglish;
 import org.languagetool.rules.RuleMatch;
-
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -89,7 +88,6 @@ public class Andromeda extends Client{
         public void add(String string){
             for(String item : items){
                 if(item.equals(string)){
-                    System.out.println("Duplicate: " + string);
                     return;
                 }
             }

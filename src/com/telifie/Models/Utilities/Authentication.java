@@ -9,18 +9,11 @@ public class Authentication {
     private final String user, token, refreshToken;
     private int origin, expiration;
 
-    public Authentication(String user) {
-        this.user = user;
-        this.token = Telifie.tools.make.md5(Telifie.tools.make.randomReferenceCode());
-        this.refreshToken = Telifie.tools.make.md5(Telifie.tools.make.randomReferenceCode());
-        this.origin = (int) (System.currentTimeMillis() / 1000);
-        this.expiration = this.origin + 2419000; //28 Days until expiration
-    }
-
-    public Authentication(String[] bearer){
-        this.user = bearer[0];
-        this.token = bearer[1];
-        this.refreshToken = bearer[2];
+    public Authentication(String bearer){
+        String[] b = bearer.split(" ")[1].split("\\.");
+        this.user = b[0];
+        this.token = b[1];
+        this.refreshToken = b[2];
     }
 
     public Authentication(Document document) throws NullPointerException {
@@ -32,7 +25,11 @@ public class Authentication {
     }
 
     public Authentication(User user){
-        this(user.getId());
+        this.user = user.getId();
+        this.token = Telifie.tools.make.md5(Telifie.tools.make.randomReferenceCode());
+        this.refreshToken = Telifie.tools.make.md5(Telifie.tools.make.randomReferenceCode());
+        this.origin = (int) (System.currentTimeMillis() / 1000);
+        this.expiration = this.origin + 2419000; //28 Days until expiration
     }
 
     public String getUser() {
@@ -61,13 +58,13 @@ public class Authentication {
 
     @Override
     public String toString() {
-        return "{" +
-                "\"user\" : \"" + user + '\"' +
-                ", \"token\" : \"" + token + '\"' +
-                ", \"refresh_token\" : \"" + refreshToken + '\"' +
-                ", \"origin\" : " + origin +
-                ", \"expiration\" : " + expiration +
-                '}';
+        return new StringBuilder().append("{")
+                .append("\"user\" : \"").append(user).append('\"')
+                .append(", \"token\" : \"").append(token).append('\"')
+                .append(", \"refresh_token\" : \"").append(refreshToken).append('\"')
+                .append(", \"origin\" : ").append(origin)
+                .append(", \"expiration\" : ").append(expiration)
+                .append("}").toString();
     }
 
     public JSONObject toJson(){

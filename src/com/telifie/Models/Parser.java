@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
-import com.telifie.Models.Actions.Event;
+import com.telifie.Models.Utilities.Event;
 import com.telifie.Models.Articles.*;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Clients.TimelinesClient;
@@ -161,7 +161,7 @@ public class Parser {
                 if(response.statusCode() == 200){
                     Document root = response.parse();
                     Article article = webpage.extract(url, root);
-                    ArrayList<String> links = Telifie.tools.make.extractLinks(root.getElementsByTag("a"), uri);
+                    ArrayList<String> links = Parser.extractLinks(root.getElementsByTag("a"), uri);
                     if(links.size() > 0){
                         for(String link : links){
                             if(Telifie.tools.strings.contains(new String[]{"facebook.com", "instagram.com", "spotify.com", "linkedin.com", "youtube.com", "pinterest.com", "github.com", "twitter.com", "tumblr.com", "reddit.com"}, link)){
@@ -864,5 +864,17 @@ public class Parser {
             }
         }
         return false;
+    }
+
+    public static ArrayList<String> extractLinks(Elements elements, String root){
+        ArrayList<String> links = new ArrayList<>();
+        for(Element el : elements){
+            String link = el.attr("href");
+            String fixed = Telifie.tools.detector.fixLink(root, link);
+            if(Telifie.tools.detector.isValidLink(fixed)){
+                links.add(fixed);
+            }
+        }
+        return links;
     }
 }
