@@ -21,7 +21,7 @@ public class Domain implements Serializable {
         this.alt = Telifie.tools.make.randomReferenceCode();
         this.name = name;
         this.icon = icon;
-        this.origin = Telifie.getEpochTime();
+        this.origin = Telifie.epochTime();
         this.permissions = (permissions <= 2 && permissions >= 0 ? permissions : 0); //Private is default mode if none
     }
 

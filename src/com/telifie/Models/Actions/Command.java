@@ -485,12 +485,13 @@ public class Command {
                             if (url != null && !url.isEmpty()) {
                                 new Parser(config, session);
                                 Article parsed = Parser.engines.parse(url);
-                                if (content.getBoolean("insert") != null && content.getBoolean("insert")) {
-                                    if (parsed != null) {
+                                if(parsed != null){
+                                    if (content.getBoolean("insert") != null && content.getBoolean("insert")) {
                                         articles.create(parsed);
                                     }
+                                    return new Result(this.command, "article", parsed);
                                 }
-                                return new Result(this.command, "article", parsed);
+                                return new Result(this.command, "parser", "Failed to parse URI");
                             }
                             return new Result(428, this.command, "URI is required");
                         }

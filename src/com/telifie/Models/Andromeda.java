@@ -52,9 +52,7 @@ public class Andromeda extends Client{
                     add(description, title);
                 }
                 if(content != null){
-                    Andromeda.encoder.tokenize(a.getContent(), true).forEach(s -> {
-                        tokens.add(s);
-                    });
+                    Andromeda.encoder.tokenize(a.getContent(), true).forEach(s -> tokens.add(s));
                 }
             }
             cursor.close();
@@ -172,7 +170,7 @@ public class Andromeda extends Client{
         }
 
         public String[] keywords(int numKeywords) {
-            String wt = this.text.replaceAll("[^a-zA-Z ]", "").toLowerCase();
+            String wt = Andromeda.encoder.clean(this.text.replaceAll("[^a-zA-Z ]", "").toLowerCase());
             String[] words = wt.split("\\s+");
             Map<String, Integer> wordFreq = new HashMap<>();
             for (String word : words) {

@@ -14,7 +14,7 @@ public class Result {
     private String object = "results";
     private String generated = "";
     private Object results;
-    private final int origin = Telifie.getEpochTime();
+    private final int origin = Telifie.epochTime();
     private int statusCode = 200, count = 0;
     private ArrayList<Article> quickResults = new ArrayList<>();
 

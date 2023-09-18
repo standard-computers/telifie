@@ -54,17 +54,25 @@ public class Parser {
         public static Article parse(String uri){
             traversable.removeAll(traversable);
             Parser.uri = uri;
-            if(Telifie.tools.detector.isUrl(uri)){
+            if(Telifie.tools.detector.isWebpage(uri)){
                 try {
                     host = new URL(uri).getHost();
                 } catch (MalformedURLException e) {
                     throw new RuntimeException(e);
                 }
                 return Parser.engines.website(uri);
-            }else if(Telifie.tools.detector.isFile(uri)){
+            }else if(Telifie.tools.detector.isFile(uri)){ //File URI provided
                 File file = new File(uri);
                 if(file.exists()){
 
+                }
+            }else{
+                Asset asset = new Asset(uri);
+                asset.download();
+                if(asset.getExt().equals("md")){
+                    return Parser.engines.markdown(asset);
+                }else if(asset.getExt().equals("txt")){
+                    return Parser.engines.text(asset);
                 }
             }
             return null;
@@ -130,7 +138,7 @@ public class Parser {
                     for(Element link : links){
                         String href = Telifie.tools.detector.fixLink(host, link.attr("href").split("\\?")[0]);
                         if(!isParsed(href)
-                                && Telifie.tools.detector.isUrl(href)
+                                && Telifie.tools.detector.isWebpage(href)
                                 && !Telifie.tools.strings.contains(new String[]{
                                 "facebook.com", "instagram.com", "spotify.com",
                                 "linkedin.com", "youtube.com", "pinterest.com",
@@ -213,9 +221,9 @@ public class Parser {
                 try {
                     URL url = new URL(uri);
                     InputStream inputStream = url.openStream();
-                    Files.copy(inputStream, Paths.get(Telifie.getConfigDirectory() + "temp/" + url.getPath().split("/")[url.getPath().split("/").length - 1]), StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(inputStream, Paths.get(Telifie.configDirectory() + "temp/" + url.getPath().split("/")[url.getPath().split("/").length - 1]), StandardCopyOption.REPLACE_EXISTING);
                     ArrayList<String[]> lines = new ArrayList<>();
-                    try (CSVReader reader = new CSVReader(new FileReader(Telifie.getConfigDirectory() + "temp/" + url.getPath().split("/")[url.getPath().split("/").length - 1]))) {
+                    try (CSVReader reader = new CSVReader(new FileReader(Telifie.configDirectory() + "temp/" + url.getPath().split("/")[url.getPath().split("/").length - 1]))) {
                         String[] fields;
                         while ((fields = reader.readNext()) != null) {
                             lines.add(fields);
@@ -308,8 +316,7 @@ public class Parser {
         }
 
         /**
-         * Parsing textual files into articles
-         * For example, docx, txt, rtf
+         * Parsing docx like files into articles
          * @param uri Location of asset on disk
          * @return Article representation of asset
          */
@@ -327,18 +334,34 @@ public class Parser {
             return null;
         }
 
-        public static Article markdown(String content){
-            return null;
+        public static Article markdown(Asset asset){
+            Article a = new Article();
+            Andromeda.unit u = new Andromeda.unit(asset.getContents());
+            String[] keywords = u.keywords(6);
+            a.setTitle(uri.split("/")[uri.split("/").length - 1].split("\\.")[0]);
+            a.setDescription("Markdown File");
+            a.addTags(keywords);
+            a.setContent(Telifie.tools.strings.escapeMarkdownForJson(Telifie.tools.strings.htmlEscape(asset.getContents())));
+            a.addAttribute(new Attribute("File Type", "Markdown"));
+            a.addAttribute(new Attribute("Size", asset.fileSize()));
+            a.addAttribute(new Attribute("Lines", asset.lineCount()));
+            a.addAttribute(new Attribute("Words", asset.wordCount()));
+            return a;
         }
 
-        /**
-         * Parse plain text into an article
-         * @param text Plain text as string to parse
-         * @return Article representing text
-         */
-        public static Article text(String text){
-
-            return null;
+        public static Article text(Asset asset){
+            Article a = new Article();
+            Andromeda.unit u = new Andromeda.unit(asset.getContents());
+            String[] keywords = u.keywords(6);
+            a.setTitle(uri.split("/")[uri.split("/").length - 1].split("\\.")[0]);
+            a.setDescription("Text File");
+            a.addTags(keywords);
+            a.setContent(Telifie.tools.strings.escapeMarkdownForJson(Telifie.tools.strings.htmlEscape(asset.getContents())));
+            a.addAttribute(new Attribute("File Type", "Plain Text"));
+            a.addAttribute(new Attribute("Size", asset.fileSize()));
+            a.addAttribute(new Attribute("Lines", asset.lineCount()));
+            a.addAttribute(new Attribute("Words", asset.wordCount()));
+            return a;
         }
     }
 

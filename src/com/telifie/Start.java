@@ -6,7 +6,7 @@ import java.io.File;
 
 public class Start {
 
-    private static final String wrkDir = Telifie.getConfigDirectory();
+    private static final String wrkDir = Telifie.configDirectory();
     private static Configuration config;
     private static final File configFile = new File(wrkDir + "/telifie.configuration");
 

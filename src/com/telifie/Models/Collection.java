@@ -21,7 +21,7 @@ public class Collection {
     public Collection(String name){
         this.id = UUID.randomUUID().toString();
         this.name = name;
-        this.origin = Telifie.getEpochTime();
+        this.origin = Telifie.epochTime();
     }
 
     public Collection(Document document) throws NullPointerException {
@@ -32,7 +32,7 @@ public class Collection {
         this.name = document.getString("name");
         this.connector = document.getString("connector");
         this.articles = document.get("articles", ArrayList.class);
-        this.origin = Telifie.getEpochTime();
+        this.origin = Telifie.epochTime();
         this.permissions = document.getInteger("permissions");
     }
 

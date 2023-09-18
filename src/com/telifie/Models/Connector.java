@@ -2,7 +2,7 @@ package com.telifie.Models;
 
 import com.telifie.Models.Utilities.*;
 import org.bson.Document;
-import java.util.ArrayList;
+
 import java.util.UUID;
 
 public class Connector {
@@ -22,7 +22,7 @@ public class Connector {
             this.userId = (document.getString("user_id") != null ? document.getString("user_id") : null);
             this.clientId = (document.getString("client_id") != null ? document.getString("client_id") : null);
             this.redirectUri = (document.getString("redirect_uri") != null ? document.getString("redirect_uri") : "");
-            this.origin = (document.getInteger("origin") != null ? document.getInteger("origin") : Telifie.getEpochTime());
+            this.origin = (document.getInteger("origin") != null ? document.getInteger("origin") : Telifie.epochTime());
         }
     }
 

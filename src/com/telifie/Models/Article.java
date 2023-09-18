@@ -122,8 +122,18 @@ public class Article {
         this.priority = priority;
     }
 
+    public void setTags(ArrayList<String> tags) {
+        this.tags = tags;
+    }
+
     public void addTag(String tag) {
         this.tags.add(tag.toLowerCase().trim());
+    }
+
+    public void addTags(String[] tags){
+        for(String tag : tags){
+            this.tags.add(tag.toLowerCase().trim());
+        }
     }
 
     public String getContent() {
