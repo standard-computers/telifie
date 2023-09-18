@@ -3,14 +3,15 @@ package com.telifie.Models.Clients;
 import com.telifie.Models.Domain;
 import com.telifie.Models.Member;
 import com.telifie.Models.Utilities.Configuration;
+import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class DomainsClient extends Client {
 
-    public DomainsClient(Configuration config){
-        super(config);
+    public DomainsClient(Configuration config, Session session){
+        super(config, session);
         this.collection = "domains";
     }
 
@@ -19,7 +20,7 @@ public class DomainsClient extends Client {
      * @return ArrayList<Domain>
      */
     public ArrayList<Domain> mine(){
-        ArrayList<Document> found = super.find(new Document("owner", config.getAuthentication().getUser()));
+        ArrayList<Document> found = super.find(new Document("owner", session.getUser()));
         ArrayList<Domain> domains = new ArrayList<>();
         for(Document doc : found){
             domains.add(new Domain(doc));
@@ -29,7 +30,7 @@ public class DomainsClient extends Client {
 
     public boolean delete(Domain domain){
         return super.deleteOne(new Document("$and", Arrays.asList(
-                new Document("owner", config.getAuthentication().getUser()),
+                new Document("owner", session.getUser()),
                 new Document("id", domain.getId())
             )
         ));

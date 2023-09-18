@@ -3,7 +3,6 @@ package com.telifie;
 import com.telifie.Models.*;
 import com.telifie.Models.Utilities.*;
 import java.io.File;
-import java.util.Scanner;
 
 public class Start {
 
@@ -20,7 +19,6 @@ public class Start {
                 case "--install" ->
                         install();
                 case "--purge" -> {
-                    checkConfig();
                     System.out.println("<!----------- Purge Mode -----------!>\n");
                     if (Console.in.string("Confirm purge, fresh install (y/n) -> ").equals("y")) {
                         configFile.delete();
@@ -29,15 +27,6 @@ public class Start {
                     }
                     System.exit(1);
                 }
-                case "--server" -> {
-                    checkConfig();
-                    try {
-                        new Server(config);
-                    } catch (Exception e) {
-                        System.err.println("Failed to start HTTPS server...");
-                        e.printStackTrace();
-                    }
-                }
                 case "--http" -> {
                     checkConfig();
                     try {
@@ -45,29 +34,6 @@ public class Start {
                         new Http(config);
                     } catch (Exception e) {
                         System.err.println("Failed to start HTTP server...");
-                        e.printStackTrace();
-                    }
-                }
-                case "--andromeda" -> {
-                    checkConfig();
-                    try {
-                        Andromeda a = new Andromeda(config);
-                        Scanner in = new Scanner(System.in);
-                        System.out.println("Andromeda started.\nname:item,item,item,...");
-                        while(true){
-                            String c = in.nextLine();
-                            String[] ts = c.split(":");
-                            String name = ts[0];
-                            String[] items = ts[1].split(",");
-                            for(String item : items){
-                                if(!item.trim().equals("")){
-                                    a.add(name, item.trim().toLowerCase().replace(".",""));
-                                }
-                            }
-                            System.out.println("[DONE]");
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Failed to start Andromeda...");
                         e.printStackTrace();
                     }
                 }
@@ -93,15 +59,15 @@ public class Start {
             }
         }
         Configuration configuration = new Configuration();
-        System.out.println("\nLet's connect to a MongoDB first.");
+        System.out.println("\nLet's connect to a MongoDB.");
         Console.out.line();
-        String mongo_uri = Console.in.string("MongoDB URI -> ");
-        configuration.setUri(mongo_uri);
-        Domain domain = new Domain();
-        domain.setName("telifie");
+        Console.out.string("Remote or local installation?");
+        int choice = Console.in.integer("(1: LOCAL / 2: REMOTE) -> ");
+        configuration.setInstallation(choice == 1 ? "LOCAL" : "REMOTE");
+        String mongoUri = Console.in.string("Mongo URI -> ");
+        configuration.setMongoURI(mongoUri);
         String email = Console.in.string("Email -> ");
         configuration.setUser(new User(email));
-        configuration.setDomain(domain); //Add domain to configuration file
         configuration.setLicense(Console.in.string("Paste License -> ")); //Add license to configuration file. Must copy and paste.
         if(configuration.save(wrkDir)){
             Console.out.line();
@@ -118,9 +84,10 @@ public class Start {
             System.out.println("Configuration file found :)");
             Console.out.line();
             config = (com.telifie.Models.Utilities.Configuration) Console.in.serialized(wrkDir + "/telifie.configuration");
+            config.startMongo();
         }else{
             Console.out.message("No config file found. Use option '--install'");
-            install();
+            System.exit(-1);
         }
     }
 }

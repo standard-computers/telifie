@@ -42,15 +42,15 @@ public class Http {
         }
     }
 
-    private Result processRequest(Configuration configuration, String method, String request, String requestBody){
+    private Result processRequest(Session session, String method, String request, String requestBody){
         if(method.equals("POST")){
             try {
-                return new Command(request).parseCommand(configuration, Document.parse(requestBody));
+                return new Command(request).parseCommand(config, session, Document.parse(requestBody));
             }catch(BsonInvalidOperationException e){
                 return new Result(505, "Malformed JSON data provided");
             }
         }else if(method.equals("GET")){
-            return new Command(request).parseCommand(configuration, null);
+            return new Command(request).parseCommand(config, session, null);
         }
         return new Result(404, request, "Invalid method");
     }
@@ -63,25 +63,21 @@ public class Http {
                 String query = request.getRequestLine().getUri().substring(1);
                 Authentication auth = (request.getFirstHeader("Authorization") == null ? null : new Authentication(request.getFirstHeader("Authorization").getValue()));
                 Result result = new Result(200, query, "\"okay\"");
-
+                Session session;
                 if (auth == null) {
                     result.setStatusCode(406);
                     result.setResult("result", "No Authentication credentials provided");
                 } else {
-                    Configuration requestConfiguration = new Configuration();
-                    requestConfiguration.setUri(config.getUri());
-                    requestConfiguration.setDomain(config.getDomain());
-                    AuthenticationClient authenticationClient = new AuthenticationClient(requestConfiguration);
+                    AuthenticationClient authenticationClient = new AuthenticationClient(config);
                     if (authenticationClient.isAuthenticated(auth)) {
                         String body = null;
                         if (request instanceof HttpEntityEnclosingRequest) {
                             HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
                             body = EntityUtils.toString(entity);
                         }
-                        requestConfiguration.setAuthentication(auth);
-                        UsersClient users = new UsersClient(requestConfiguration);
-                        requestConfiguration.setUser(users.getUserWithId(auth.getUser()));
-                        result = processRequest(requestConfiguration, request.getRequestLine().getMethod(), query, body);
+                        UsersClient users = new UsersClient(config);
+                        session = new Session(users.getUserWithId(auth.getUser()).getId(), "telifie");
+                        result = processRequest(session, request.getRequestLine().getMethod(), query, body);
                     } else {
                         result = new Result(403, "Invalid Credentials");
                     }

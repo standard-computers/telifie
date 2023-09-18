@@ -9,13 +9,40 @@ import java.util.ArrayList;
 
 public class Configuration implements Serializable {
 
+    private String installation; //REMOTE, LOCAL
+    private ArrayList<String> ipList; //List of IP to externally connect
+    private ArrayList<String> ipAccess; //List of IP to allowed to access server
+    private String mongoURI; //JSON of database configuration
+
+
     private User user;
-    private Authentication authentication = null;
     private String license = null;
-    private String uri, mgusername, mgpassword;
-    private ArrayList<String> ipList = new ArrayList<>();
     private static MongoClient mongoClient;
     protected Domain domain;
+
+    public String getInstallation() {
+        return installation;
+    }
+
+    public void setInstallation(String installation) {
+        this.installation = installation;
+    }
+
+    public String getURI() {
+        return mongoURI;
+    }
+
+    public void setMongoURI(String mongoURI) {
+        this.mongoURI = mongoURI;
+    }
+
+    public String getMongoURI() {
+        return mongoURI;
+    }
+
+    public void startMongo(){
+        mongoClient = MongoClients.create(getMongoURI());
+    }
 
     public User getUser() {
         return user;
@@ -25,25 +52,8 @@ public class Configuration implements Serializable {
         this.user = user;
     }
 
-    public Authentication getAuthentication() {
-        return authentication;
-    }
-
-    public void setAuthentication(Authentication authentication) {
-        this.authentication = authentication;
-    }
-    
     public void setLicense(String license) {
         this.license = license;
-    }
-
-    public String getUri() {
-        return uri;
-    }
-
-    public void setUri(String uri) {
-        this.uri = uri;
-        mongoClient = MongoClients.create(uri);
     }
 
     public MongoClient getClient(){
@@ -62,13 +72,5 @@ public class Configuration implements Serializable {
         String dir = systemDir + "/telifie.configuration";
         Telifie.files.serialized(dir, this);
         return true;
-    }
-
-    @Override
-    public String toString() {
-        return "{\"user\" : \"" + user + "\"" +
-                ", \"authentication\" : \"" + authentication + "\"" +
-                ", \"license\" : \"" + license + "\"" +
-                ", \"domain\" : \"" + domain + "\"}";
     }
 }

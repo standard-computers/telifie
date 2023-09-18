@@ -2,6 +2,7 @@ package com.telifie.Models.Clients;
 
 import com.telifie.Models.Connector;
 import com.telifie.Models.Utilities.Configuration;
+import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,8 +16,8 @@ import java.util.Arrays;
  */
 public class ConnectorsClient extends Client{
 
-    public ConnectorsClient(Configuration config){
-        super(config);
+    public ConnectorsClient(Configuration config, Session session){
+        super(config, session);
         super.collection = "connectors";
     }
 
@@ -35,7 +36,7 @@ public class ConnectorsClient extends Client{
     public Connector getConnector(String id){
         return new Connector(
                 super.findOne(new Document("$and", Arrays.asList(
-                        new Document("user", config.getAuthentication().getUser()),
+                        new Document("user", session.getUser()),
                         new Document("id", id)
                 ))
             )
@@ -44,7 +45,7 @@ public class ConnectorsClient extends Client{
 
     public ArrayList<Connector> mine(){
         ArrayList<Connector> connectors = new ArrayList<>();
-        ArrayList<Document> docs = super.find(new Document("user", config.getAuthentication().getUser()));
+        ArrayList<Document> docs = super.find(new Document("user", session.getUser()));
         docs.forEach(c -> connectors.add(new Connector(c)));
         return connectors;
     }

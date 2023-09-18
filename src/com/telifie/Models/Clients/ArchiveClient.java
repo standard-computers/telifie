@@ -2,24 +2,25 @@ package com.telifie.Models.Clients;
 
 import com.telifie.Models.Article;
 import com.telifie.Models.Utilities.Configuration;
+import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
 import java.util.ArrayList;
 
 public class ArchiveClient extends Client {
 
-    public ArchiveClient(Configuration config){
-        super(config);
+    public ArchiveClient(Configuration config, Session session){
+        super(config, session);
         super.collection = "archive";
     }
 
     public boolean archive(Article article){
-        ArticlesClient articles = new ArticlesClient(config);
+        ArticlesClient articles = new ArticlesClient(config, session);
         articles.delete(article);
         return super.insertOne(Document.parse(article.toString()));
     }
 
     public boolean unarchive(Article article){
-        ArticlesClient articles = new ArticlesClient(config);
+        ArticlesClient articles = new ArticlesClient(config, session);
         articles.create(article);
         return super.deleteOne(new Document("id", article.getId()));
     }

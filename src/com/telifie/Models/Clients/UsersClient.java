@@ -11,7 +11,7 @@ import org.bson.Document;
 public class UsersClient extends Client {
 
     public UsersClient(Configuration config) {
-        super(config);
+        super(config, null);
         super.collection = "users";
     }
 

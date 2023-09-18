@@ -59,7 +59,7 @@ public class Telifie {
     public static class tools {
 
         public static void geocode(Configuration config){
-            MongoClient mongoClient = MongoClients.create(config.getUri());
+            MongoClient mongoClient = MongoClients.create(config.getURI());
             MongoDatabase database = mongoClient.getDatabase("telifie");
             MongoCollection<Document> collection = database.getCollection("articles");
             FindIterable<Document> doc = collection.find(new Document("$and", Arrays.asList(

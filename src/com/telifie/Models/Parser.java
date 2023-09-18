@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
+import com.telifie.Models.Utilities.Console;
 import com.telifie.Models.Utilities.Event;
 import com.telifie.Models.Articles.*;
 import com.telifie.Models.Clients.ArticlesClient;
@@ -44,8 +45,8 @@ public class Parser {
     private static final ArrayList<String> parsed = new ArrayList<>();
     private static ArticlesClient articles;
 
-    public Parser(Configuration config){
-        articles = new ArticlesClient(config);
+    public Parser(Configuration config, Session session){
+        articles = new ArticlesClient(config, session);
     }
 
     public static class engines {
@@ -69,15 +70,18 @@ public class Parser {
             return null;
         }
 
-        public static void recursive(Configuration config, int start){
-            articles = new ArticlesClient(config);
-            TimelinesClient timelines = new TimelinesClient(config);
+        public static void recursive(Configuration config, Session session, int start){
+            articles = new ArticlesClient(config, session);
+            TimelinesClient timelines = new TimelinesClient(config, session);
             ArrayList<Article> as = articles.linked();
             List<Article> as2 = as.subList(start, as.size());
+            int i = 0;
             for(Article a : as2){
+                i++;
                 parsed.removeAll(parsed);
                 int lastCrawl = timelines.lastEvent(a.getId(), Event.Type.CRAWL);
-                if(lastCrawl > 2592000 || lastCrawl == -1){ //7 days
+                System.out.println(i);
+                if(lastCrawl > 3602000 || lastCrawl == -1){ //7 days
                     timelines.addEvent(a.getId(), new Event(
                             Event.Type.CRAWL,
                             "com.telifie.web-app@parser",
@@ -87,6 +91,7 @@ public class Parser {
                     Parser.engines.crawl(a.getLink(), Integer.MAX_VALUE, false);
                 }
             }
+            recursive(config, session, start);
         }
 
         public static Article crawl(String uri, int limit, boolean allowExternalCrawl){
@@ -158,6 +163,7 @@ public class Parser {
             parsed.add(url);
             try {
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
+                Console.out.message("Server Response:" + response.statusCode());
                 if(response.statusCode() == 200){
                     Document root = response.parse();
                     Article article = webpage.extract(url, root);
@@ -189,6 +195,7 @@ public class Parser {
                 }
                 return null;
             } catch (IOException e) {
+                System.out.println(e);
                 return null;
             }
         }
@@ -320,6 +327,10 @@ public class Parser {
             return null;
         }
 
+        public static Article markdown(String content){
+            return null;
+        }
+
         /**
          * Parse plain text into an article
          * @param text Plain text as string to parse
@@ -333,8 +344,8 @@ public class Parser {
 
     public static class connectors {
 
-        public static ArrayList<Article> yelp(String[] zips, Configuration config) throws UnsupportedEncodingException {
-            ArticlesClient articlesClient = new ArticlesClient(config);
+        public static ArrayList<Article> yelp(String[] zips, Configuration config, Session session) throws UnsupportedEncodingException {
+            ArticlesClient articlesClient = new ArticlesClient(config, session);
             ArrayList<Article> articles = new ArrayList<>();
             String batchId = Telifie.tools.make.shortEid();
             String API_KEY = "IyhStCFRvjRbjE51NyND1w4JyKIiZ-3r4Qf1g-DquKCgi8bNJcqK0-EjNoxCen1y0H57JJxmteYzpj8uZ78LLAlMn3Ea0S8bjioBm_5CMYK-TnHwzQ0jC0UN-0tHZHYx";

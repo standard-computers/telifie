@@ -7,6 +7,7 @@ import com.telifie.Models.Domain;
 import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Article;
 import com.telifie.Models.Utilities.Configuration;
+import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,9 +15,9 @@ import java.util.TreeMap;
 
 public class ArticlesClient extends Client {
 
-    public ArticlesClient(Configuration config){
-        super(config);
-        if(config.getDomain().getId() != null && !config.getDomain().getId().equals("telifie")){
+    public ArticlesClient(Configuration config, Session session){
+        super(config, session);
+        if(!session.getDomain().equals("telifie")){
             super.collection = "domain-articles";
         }else{
             super.collection = "articles";
@@ -29,7 +30,7 @@ public class ArticlesClient extends Client {
 
     public boolean create(Article article){
         if(article.getOwner() == null || article.getOwner().equals("")){
-            article.setOwner(this.config.getAuthentication().getUser());
+            article.setOwner(session.getUser());
         }
         if(article.getLink() == null || article.getLink().equals("")){
             return super.insertOne(Document.parse(article.toString()));
@@ -67,8 +68,8 @@ public class ArticlesClient extends Client {
         }
     }
 
-    public boolean verify(Article article){
-        return this.updateOne(new Document("id", article.getId()), new Document("$set", new Document("verified", true)));
+    public boolean verify(String articleId){
+        return this.updateOne(new Document("id", articleId), new Document("$set", new Document("verified", true)));
     }
 
     public Article withId(String articleId) {
@@ -167,12 +168,8 @@ public class ArticlesClient extends Client {
         return stats;
     }
 
-    public boolean imageExists(String imageUrl){
-        return exists(new Document("images.url", imageUrl));
-    }
-
     public boolean archive(Article article){
-        ArchiveClient archive = new ArchiveClient(config);
+        ArchiveClient archive = new ArchiveClient(config, session);
         return archive.archive(article);
     }
 }

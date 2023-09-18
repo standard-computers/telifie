@@ -5,6 +5,7 @@ import com.mongodb.client.*;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.UpdateResult;
 import com.telifie.Models.Utilities.Configuration;
+import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,9 +15,11 @@ public class Client {
     protected static MongoClient mc;
     protected String collection;
     protected Configuration config;
+    protected Session session;
 
-    protected Client(Configuration config){
+    protected Client(Configuration config, Session session){
         this.config = config;
+        this.session = session;
         mc = config.getClient();
     }
 

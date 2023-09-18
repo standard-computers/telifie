@@ -34,6 +34,10 @@ public class Console {
             System.out.println("\n" + message + "\n");
             line();
         }
+
+        public static void string(String message){
+            System.out.println(message);
+        }
     }
 
     public static class in {
@@ -58,6 +62,12 @@ public class Console {
             } catch (ClassNotFoundException e) {
                 return null;
             }
+        }
+
+        public static int integer(String prompt){
+            System.out.print(prompt);
+            Scanner in = new Scanner(System.in);
+            return in.nextInt();
         }
     }
 

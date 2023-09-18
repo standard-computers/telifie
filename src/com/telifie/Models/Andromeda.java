@@ -4,6 +4,7 @@ import com.mongodb.client.*;
 import com.mongodb.client.model.UpdateOptions;
 import com.telifie.Models.Clients.Client;
 import com.telifie.Models.Utilities.Configuration;
+import com.telifie.Models.Utilities.Session;
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import org.languagetool.JLanguageTool;
@@ -20,9 +21,10 @@ public class Andromeda extends Client{
     private static List<String> sentences;
     private static List<unit> tokens = new ArrayList<>();
     protected static Configuration config;
+    protected static Session session;
 
-    public Andromeda(Configuration config, boolean index){
-        super(config);
+    public Andromeda(Configuration config, Session session, boolean index){
+        super(config, session);
         this.config = config;
         super.collection = "taxon";
         ArrayList<Document> documents = super.find(new Document());
@@ -32,8 +34,8 @@ public class Andromeda extends Client{
         }
     }
 
-    public Andromeda(Configuration config){
-        this(config, false);
+    public Andromeda(Configuration config, Session session){
+        this(config, session, false);
     }
 
     private void index(){
@@ -67,13 +69,13 @@ public class Andromeda extends Client{
         private ArrayList<String> items = new ArrayList<>();
 
         public taxon(String name) {
-            super(Andromeda.config);
+            super(Andromeda.config, Andromeda.session);
             super.collection = "taxon";
             this.name = name.toLowerCase().trim();
         }
 
         public taxon(Document document){
-            super(Andromeda.config);
+            super(Andromeda.config, Andromeda.session);
             super.collection = "taxon";
             this.name = document.getString("name");
             this.items = document.get("items", ArrayList.class);

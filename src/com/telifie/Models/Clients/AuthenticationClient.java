@@ -8,7 +8,7 @@ import java.util.Arrays;
 public class AuthenticationClient extends Client {
 
     public AuthenticationClient(Configuration config) {
-        super(config);
+        super(config, null);
         super.collection = "authentications";
     }
 

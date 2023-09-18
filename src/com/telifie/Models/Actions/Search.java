@@ -8,6 +8,7 @@ import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Result;
 import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Parameters;
+import com.telifie.Models.Utilities.Session;
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -19,11 +20,11 @@ public class Search {
     private static ArticlesClient articlesClient;
     private Parameters params;
 
-    public Result execute(Configuration config, String query, Parameters params){
+    public Result execute(Configuration config, Session session, String query, Parameters params){
         query = query.toLowerCase().trim();
         this.params = params;
-        articlesClient = new ArticlesClient(config);
-        ArrayList results = executeQuery(config, query);
+        articlesClient = new ArticlesClient(config, session);
+        ArrayList results = executeQuery(config, session, query);
         switch (params.getIndex()) {
             case "images" -> {
                 ArrayList<Image> images = new ArrayList<>();
@@ -63,10 +64,10 @@ public class Search {
         return new Result(query, params, qr, results);
     }
 
-    private ArrayList executeQuery(Configuration config, String query){
+    private ArrayList executeQuery(Configuration config, Session session, String query){
 
         Document filter = filter(query);
-        if(config.getDomain().getId() != null && !config.getDomain().getId().equals("telifie")){
+        if(!session.getDomain().equals("telifie")){
             ArrayList<Document> conditions = new ArrayList<>();
             String domainId = config.getDomain().getId();
             conditions.add(new Document("domain", domainId));
@@ -288,9 +289,9 @@ public class Search {
             if(a.getTitle().trim().toLowerCase().equals(query)){
                 return Integer.MAX_VALUE;
             }
-            int titleGrade = (countMatches(a.getTitle(), words) / words.length) * 4;
-            int linkGrade = (countMatches((a.getLink() == null ? "" : a.getLink()), words) / words.length) * 2;
-            int tagsGrade = 0;
+            double titleGrade = (countMatches(a.getTitle(), words) / words.length) * 4;
+            double linkGrade = (countMatches((a.getLink() == null ? "" : a.getLink()), words) / words.length) * 2;
+            double tagsGrade = 0;
             if(a.getTags() != null && !a.getTags().isEmpty()){
                 for(String tag : a.getTags()){
                     tagsGrade += countMatches(tag, words);
@@ -299,14 +300,14 @@ public class Search {
             return ((titleGrade + linkGrade) + ((tagsGrade / words.length) * 0.25)) * a.getPriority();
         }
 
-        private int countMatches(String text, String[] words) {
+        private double countMatches(String text, String[] words) {
             int matches = 0;
             for(String word : words) {
                 if(text.contains(word)) {
                     matches++;
                 }
             }
-            return matches;
+            return matches / words.length;
         }
     }
 

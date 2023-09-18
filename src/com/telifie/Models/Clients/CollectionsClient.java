@@ -2,29 +2,24 @@ package com.telifie.Models.Clients;
 
 import com.telifie.Models.Article;
 import com.telifie.Models.Collection;
-import com.telifie.Models.Domain;
 import com.telifie.Models.Utilities.Configuration;
+import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class CollectionsClient extends Client {
 
-    public CollectionsClient(Configuration config){
-        super(config);
+    public CollectionsClient(Configuration config, Session session){
+        super(config, session);
         super.collection = "collections";
     }
 
     public Collection get(String userId, String id){
         Collection collection = new Collection(this.findOne(new Document("id", id)));
-        if(collection.getDomain().equals(userId)){
-            Domain dm = new Domain();
-            dm.setId(userId);
-            this.config = new Configuration();
-            this.config.setDomain(dm);
-        }
+        //TODO may have to reconfigure for multiple domains
         ArrayList<Article> articles = new ArrayList<>();
-        ArticlesClient articlesClient = new ArticlesClient(this.getConfig());
+        ArticlesClient articlesClient = new ArticlesClient(config, session);
         if(collection.getArticles() != null || collection.getArticles().size() > 0){
             for (String articleId : collection.getArticles()) {
                 articles.add(articlesClient.withId(articleId));
@@ -42,7 +37,7 @@ public class CollectionsClient extends Client {
     }
 
     public Collection create(Collection collection){
-        collection.setUser(config.getAuthentication().getUser());
+        collection.setUser(session.getUser());
         if(super.insertOne( Document.parse(collection.toString()) )){
             return collection;
         }
@@ -52,7 +47,7 @@ public class CollectionsClient extends Client {
     public Collection create(String name){
         if(this.exists(
                 new Document("$and", Arrays.asList(
-                        new Document("user", config.getAuthentication().getUser()),
+                        new Document("user", session.getUser()),
                         new Document("name", name)
                 )
             )
@@ -70,7 +65,7 @@ public class CollectionsClient extends Client {
         return this.updateOne(
             new Document("$and",
                 Arrays.asList(
-                    new Document("user", config.getAuthentication().getUser()),
+                    new Document("user", session.getUser()),
                     new Document("id", collection.getId())
                 )
             ),
@@ -82,7 +77,7 @@ public class CollectionsClient extends Client {
         return this.updateOne(
             new Document("$and",
                 Arrays.asList(
-                    new Document("user", config.getAuthentication().getUser()),
+                    new Document("user", session.getUser()),
                     new Document("id", collection.getId())
                 )
             ),
@@ -94,7 +89,7 @@ public class CollectionsClient extends Client {
         return this.deleteOne(
             new Document("$and",
                 Arrays.asList(
-                    new Document("user", config.getAuthentication().getUser()),
+                    new Document("user", session.getUser()),
                     new Document("id", collection.getId())
                 )
             )

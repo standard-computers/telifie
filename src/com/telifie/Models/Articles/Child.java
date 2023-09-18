@@ -5,20 +5,17 @@ import java.util.UUID;
 
 public class Child {
 
-    private final String id;
     private final String image;
     private final String title;
     private final String reference;
 
     public Child(String image, String title, String reference) {
-        this.id = UUID.randomUUID().toString();
         this.image = image;
         this.title = title;
         this.reference = reference;
     }
 
     public Child(Document document){
-        this.id = document.getString("id");
         this.image = document.getString("image");
         this.title = document.getString("title");
         this.reference = document.getString("reference");
@@ -27,8 +24,7 @@ public class Child {
     @Override
     public String toString() {
         return new StringBuilder().append("{")
-            .append("\"id\" : \"").append(id).append('\"')
-            .append(", \"image\" : \"").append(image).append('\"')
+            .append("\"image\" : \"").append(image).append('\"')
             .append(", \"title\" : \"").append(title).append('\"')
             .append(", \"reference\" : \"").append(reference).append('\"')
             .append('}').toString();
