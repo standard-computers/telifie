@@ -31,12 +31,12 @@ public class Article {
         this.domain = (document.getString("domain") == null ? null : document.getString("domain"));
         this.id = (document.getString("id") == null ? UUID.randomUUID().toString() : document.getString("id"));
         this.verified = (document.getBoolean("verified") != null && document.getBoolean("verified"));
-        this.title = Telifie.tools.strings.escape(document.getString("title"));
+        this.title = Telifie.tools.escape(document.getString("title"));
         this.link = document.getString("link");
         this.icon = document.getString("icon");
         this.description = document.getString("description");
         this.priority = (document.getDouble("priority") == null ? 1.01 : document.getDouble("priority"));
-        this.content = (document.getString("content") != null ?  Telifie.tools.strings.escapeMarkdownForJson(document.getString("content")) : "");
+        this.content = (document.getString("content") != null ?  Telifie.tools.escapeMarkdownForJson(document.getString("content")) : "");
         this.origin = (document.getInteger("origin") == null ? 0 : document.getInteger("origin"));
         this.tags = document.get("tags", ArrayList.class);
 

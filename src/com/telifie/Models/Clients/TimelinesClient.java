@@ -6,7 +6,6 @@ import com.telifie.Models.Actions.Timeline;
 import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
-import java.util.ArrayList;
 import java.util.List;
 
 public class TimelinesClient extends Client {
@@ -14,18 +13,6 @@ public class TimelinesClient extends Client {
     public TimelinesClient(Configuration config, Session session){
         super(config, session);
         super.collection = "timelines";
-    }
-
-    public void addEvents(String object, ArrayList<Event> events){
-        this.updateOne(
-                new Document("$and",
-                        List.of(
-                                new Document("object", object)
-                        )
-                ),
-                new Document("$push", new Document("events", Document.parse("{ $each: " + events + "}"))),
-                new UpdateOptions().upsert(true)
-        );
     }
 
     public void addEvent(String object, Event event){

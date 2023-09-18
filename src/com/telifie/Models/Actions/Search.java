@@ -77,7 +77,7 @@ public class Search {
         }
         ArrayList<Article> results = articlesClient.search(params, filter);
         if(results != null && !query.contains(":")){
-            if(Telifie.tools.strings.has(Telifie.PROXIMITY, query) > -1 || query.endsWith("near me")) {
+            if(Telifie.tools.has(Telifie.PROXIMITY, query) > -1 || query.endsWith("near me")) {
                 Collections.sort(results, new DistanceSorter(params.getLatitude(), params.getLongitude()));
             }else if(query.split(" ").length > 2 && !query.contains(",")){
                 Collections.sort(results, new CosmoScore(Andromeda.encoder.clean(query)));
@@ -198,8 +198,8 @@ public class Search {
                     )
                     )
             ));
-        }else if(Telifie.tools.strings.has(Telifie.PROXIMITY, query) > -1){
-            String splr = Telifie.PROXIMITY[Telifie.tools.strings.has(Telifie.PROXIMITY, query)];
+        }else if(Telifie.tools.has(Telifie.PROXIMITY, query) > -1){
+            String splr = Telifie.PROXIMITY[Telifie.tools.has(Telifie.PROXIMITY, query)];
             String[] spl = query.split(splr);
             if(spl.length >= 2){
                 String subject = spl[0].trim();

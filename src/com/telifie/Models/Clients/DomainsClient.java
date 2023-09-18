@@ -29,11 +29,7 @@ public class DomainsClient extends Client {
     }
 
     public boolean delete(Domain domain){
-        return super.deleteOne(new Document("$and", Arrays.asList(
-                new Document("owner", session.getUser()),
-                new Document("id", domain.getId())
-            )
-        ));
+        return super.deleteOne(new Document("$and", Arrays.asList(new Document("owner", session.getUser()), new Document("id", domain.getId()))));
     }
 
     /**

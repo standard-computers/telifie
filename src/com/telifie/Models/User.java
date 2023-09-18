@@ -20,7 +20,7 @@ public class User implements Serializable {
 
     public User(String email) {
         this.email = email;
-        this.origin = (int) (System.currentTimeMillis() / 1000);
+        this.origin = Telifie.epochTime();
         this.permissions = 0;
     }
 

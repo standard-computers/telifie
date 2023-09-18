@@ -8,16 +8,9 @@ import com.telifie.Models.Article;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import java.io.*;
 import java.math.BigInteger;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -46,20 +39,6 @@ public class Telifie {
 
     public static int epochTime(){
         return (int) (System.currentTimeMillis() / 1000);
-    }
-
-    public static class files {
-
-        public static void serialized(String name, Serializable object){
-            try {
-                ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(name));
-                out.writeObject(object);
-                out.flush();
-                out.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 
     public static class tools {
@@ -92,81 +71,61 @@ public class Telifie {
             mongoClient.close();
         }
 
-        public static class strings {
+        public static String escapeMarkdownForJson(String markdownText) {
+            String escapedText = markdownText.replace("\\", "\\\\");
+            escapedText = escapedText.replace("\"", "\\\"");
+            escapedText = escapedText.replace("\n", "\\n");
+            escapedText = escapedText.replace("\r", "\\r");
+            escapedText = escapedText.replace("\t", "\\t");
+            escapedText = escapedText.replace("\b", "\\b");
+            escapedText = escapedText.replace("\f", "\\f");
+            return escapedText;
+        }
 
-            public static String escapeMarkdownForJson(String markdownText) {
-                String escapedText = markdownText.replace("\\", "\\\\");
-                escapedText = escapedText.replace("\"", "\\\"");
-                escapedText = escapedText.replace("\n", "\\n");
-                escapedText = escapedText.replace("\r", "\\r");
-                escapedText = escapedText.replace("\t", "\\t");
-                escapedText = escapedText.replace("\b", "\\b");
-                escapedText = escapedText.replace("\f", "\\f");
-                return escapedText;
-            }
-
-            public static String sentenceCase(String str) {
-                if (str == null || str.isEmpty()) {
-                    return str;
+        public static boolean contains(String[] things, String string){
+            for (String thing: things) {
+                if(string.contains(thing)){
+                    return true;
                 }
-                String[] words = str.trim().split("\\s+");
-                StringBuilder sb = new StringBuilder();
-                for (String word : words) {
-                    if (word.isEmpty()) {
-                        continue;
-                    }
-                    sb.append(Character.toUpperCase(word.charAt(0)))
-                            .append(word.substring(1).toLowerCase())
-                            .append(" ");
+            }
+            return false;
+        }
+
+        public static int has(String[] things, String string){
+            for(int i = 0; i < things.length; i++){
+                if(string.contains(things[i])){
+                    return i;
                 }
-                return sb.toString().trim();
             }
+            return -1;
+        }
 
-            public static boolean contains(String[] things, String string){
-                for (String thing: things) {
-                    if(string.contains(thing)){
-                        return true;
-                    }
+        public static String removeWords(String text, String[] wordsToRemove) {
+            StringBuilder sb = new StringBuilder();
+            String[] words = text.split("\\s+");
+            for (String word : words) {
+                if (!Arrays.asList(wordsToRemove).contains(word.toLowerCase())) {
+                    sb.append(word).append(" ");
                 }
-                return false;
             }
+            return sb.toString().trim();
+        }
 
-            public static int has(String[] things, String string){
-                for(int i = 0; i < things.length; i++){
-                    if(string.contains(things[i])){
-                        return i;
-                    }
+        public static boolean equals(char sample, char[] chars){
+            for(char ch : chars){
+                if(sample == ch){
+                    return true;
                 }
-                return -1;
             }
+            return false;
+        }
 
-            public static String removeWords(String text, String[] wordsToRemove) {
-                StringBuilder sb = new StringBuilder();
-                String[] words = text.split("\\s+");
-                for (String word : words) {
-                    if (!Arrays.asList(wordsToRemove).contains(word.toLowerCase())) {
-                        sb.append(word).append(" ");
-                    }
-                }
-                return sb.toString().trim();
-            }
+        public static String escape(String string){
+            return  StringEscapeUtils.escapeJson(string);
+        }
 
-            public static boolean equals(char sample, char[] chars){
-                for(char ch : chars){
-                    if(sample == ch){
-                        return true;
-                    }
-                }
-                return false;
-            }
-
-            public static String escape(String string){
-                return  StringEscapeUtils.escapeJson(string);
-            }
-
-            public static String htmlEscape(String string){
-                return  StringEscapeUtils.escapeHtml4(string);
-            }
+        public static String htmlEscape(String string){
+            return  StringEscapeUtils.escapeHtml4(string);
         }
 
         public static class make {
@@ -288,11 +247,7 @@ public class Telifie {
                 if(link.contains("cart") || link.contains("search") || link.contains("account") || link.contains("#")){ //Audit out pages
                     return false;
                 }
-                return !link.startsWith("tel:")
-                        || !link.startsWith("mailto:")
-                        || !link.startsWith("sms:")
-                        || !link.startsWith("skype:")
-                        || !link.startsWith("#");
+                return !link.startsWith("tel:") || !link.startsWith("mailto:") || !link.startsWith("sms:") || !link.startsWith("skype:") || !link.startsWith("#");
             }
         }
     }

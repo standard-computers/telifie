@@ -65,14 +65,11 @@ public class Spotify extends Connector {
         Collection playlistsCollection = new Collection("Spotify Playlists").setDomain(session.getUser());
         playlistsCollection.setIcon("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/images/connectors/spotify.png");
         collections.create(playlistsCollection);
-
         GetListOfUsersPlaylistsRequest getListOfUsersPlaylistsRequest = spotifyApi.getListOfUsersPlaylists(super.getUserId()).build();
         Paging<PlaylistSimplified> plsts = getListOfUsersPlaylistsRequest.execute();
 
         for (int i = 0; i < plsts.getItems().length; i++) {
             String playlist = plsts.getItems()[i].getId();
-
-            //Make article for playlist
             Article playlistArticle = new Article();
             playlistArticle.setTitle(plsts.getItems()[i].getName());
             playlistArticle.setLink(plsts.getItems()[i].getExternalUrls().get("spotify"));
@@ -81,32 +78,25 @@ public class Spotify extends Connector {
             DataSet tracks = new DataSet("Tracks");
             tracks.add(new String[]{"Cover", "Track Name", "Artists", "Album", "Duration"});
             playlistArticle.setSource(primarySource);
-
-            //Create playlist collection
             Collection playlistCollection = new Collection(plsts.getItems()[i].getName());
             playlistCollection.setIcon(plsts.getItems()[i].getImages()[0].getUrl());
 
             Paging<PlaylistTrack> playlistTracks = spotifyApi.getPlaylistsItems(playlist).build().execute();
             for (PlaylistTrack playlistTrack : playlistTracks.getItems()) {
                 Track track = (Track) playlistTrack.getTrack();
-
-                //Prepare playlist tracks as data set and add to playlist article
-                String trackName = Telifie.tools.strings.htmlEscape(track.getName());
+                String trackName = Telifie.tools.htmlEscape(track.getName());
                 String trackLink = track.getExternalUrls().get("spotify");
-                String trackIcon = Telifie.tools.strings.htmlEscape(track.getAlbum().getImages()[0].getUrl());
+                String trackIcon = Telifie.tools.htmlEscape(track.getAlbum().getImages()[0].getUrl());
                 String trackAlbumName = track.getAlbum().getName();
                 String trackDuration = formatDuration(track.getDurationMs());
                 Date addedAt = playlistTrack.getAddedAt();
                 String formattedAddedAt = new SimpleDateFormat("MMM d, yyyy h:mm a").format(addedAt);
-
                 List<String> artistNames = new ArrayList<>();
                 for (ArtistSimplified artist : track.getArtists()) {
                     artistNames.add(artist.getName());
                 }
                 String artists = String.join(", ", artistNames);
                 tracks.add(new String[]{"@" + trackIcon, trackName, artists, trackAlbumName, trackDuration});
-
-                //No create an article for each track
                 Article trackArticle = new Article();
                 trackArticle.setTitle(trackName);
                 trackArticle.setLink(trackLink);

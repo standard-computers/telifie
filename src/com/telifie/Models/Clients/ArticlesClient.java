@@ -29,10 +29,10 @@ public class ArticlesClient extends Client {
     }
 
     public boolean create(Article article){
-        if(article.getOwner() == null || article.getOwner().equals("")){
+        if(article.getOwner() == null || article.getOwner().isEmpty()){
             article.setOwner(session.getUser());
         }
-        if(article.getLink() == null || article.getLink().equals("")){
+        if(article.getLink() == null || article.getLink().isEmpty()){
             return super.insertOne(Document.parse(article.toString()));
         }else if(this.withLink(article.getLink()) == null){
             return super.insertOne(Document.parse(article.toString()));

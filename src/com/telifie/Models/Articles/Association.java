@@ -9,11 +9,6 @@ public class Association {
     private String name;
     private ArrayList<Child> articles = new ArrayList<>();
 
-    public Association(String icon, String name) {
-        this.icon = icon;
-        this.name = name;
-    }
-
     public Association(Document document){
         this.icon = document.getString("icon");
         this.name = document.getString("name");

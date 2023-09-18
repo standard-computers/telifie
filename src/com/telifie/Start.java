@@ -11,7 +11,6 @@ public class Start {
     private static final File configFile = new File(wrkDir + "/telifie.configuration");
 
     public static void main(String[] args){
-
         Console.out.welcome();
         if (args.length > 0) {
             String mode = args[0].trim().toLowerCase();
@@ -62,13 +61,10 @@ public class Start {
         System.out.println("\nLet's connect to a MongoDB.");
         Console.out.line();
         Console.out.string("Remote or local installation?");
-        int choice = Console.in.integer("(1: LOCAL / 2: REMOTE) -> ");
-        configuration.setInstallation(choice == 1 ? "LOCAL" : "REMOTE");
         String mongoUri = Console.in.string("Mongo URI -> ");
         configuration.setMongoURI(mongoUri);
         String email = Console.in.string("Email -> ");
         configuration.setUser(new User(email));
-        configuration.setLicense(Console.in.string("Paste License -> ")); //Add license to configuration file. Must copy and paste.
         if(configuration.save(wrkDir)){
             Console.out.line();
             System.out.println("Configuration saved!\nRun Telifie with no arguments to start the console.");

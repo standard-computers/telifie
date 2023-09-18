@@ -69,10 +69,6 @@ public class Collection {
         this.name = name;
     }
 
-    public int getPermissions() {
-        return permissions;
-    }
-
     public ArrayList<String> getArticles() {
         return articles;
     }

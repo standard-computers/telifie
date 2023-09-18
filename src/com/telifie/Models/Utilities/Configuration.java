@@ -4,29 +4,22 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.telifie.Models.Domain;
 import com.telifie.Models.User;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 
 public class Configuration implements Serializable {
 
-    private String installation; //REMOTE, LOCAL
     private ArrayList<String> ipList; //List of IP to externally connect
     private ArrayList<String> ipAccess; //List of IP to allowed to access server
     private String mongoURI; //JSON of database configuration
 
-
     private User user;
-    private String license = null;
     private static MongoClient mongoClient;
     protected Domain domain;
-
-    public String getInstallation() {
-        return installation;
-    }
-
-    public void setInstallation(String installation) {
-        this.installation = installation;
-    }
 
     public String getURI() {
         return mongoURI;
@@ -52,10 +45,6 @@ public class Configuration implements Serializable {
         this.user = user;
     }
 
-    public void setLicense(String license) {
-        this.license = license;
-    }
-
     public MongoClient getClient(){
         return mongoClient;
     }
@@ -70,7 +59,18 @@ public class Configuration implements Serializable {
 
     public boolean save(String systemDir){
         String dir = systemDir + "/telifie.configuration";
-        Telifie.files.serialized(dir, this);
+        serialized(dir, this);
         return true;
+    }
+
+    public static void serialized(String name, Serializable object){
+        try {
+            ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(name));
+            out.writeObject(object);
+            out.flush();
+            out.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -210,7 +210,7 @@ public class Andromeda extends Client{
             for (int i = 0; i < text.length(); i++) {
                 char c = text.charAt(i);
                 currentSentence.append(c);
-                if (Telifie.tools.strings.equals(c, new char[] {'.', '!', '?'})) {
+                if (Telifie.tools.equals(c, new char[] {'.', '!', '?'})) {
                     sentences.add(currentSentence.toString().trim());
                     currentSentence = new StringBuilder();
                 }
@@ -231,7 +231,7 @@ public class Andromeda extends Client{
         public static String clean(String text){
             String cleanedText = text.toLowerCase().trim();
             cleanedText = cleanedText.replaceAll("[\\d+]", "");
-            cleanedText = Telifie.tools.strings.removeWords(cleanedText, Telifie.stopWords);
+            cleanedText = Telifie.tools.removeWords(cleanedText, Telifie.stopWords);
             cleanedText = cleanedText.replaceAll("[^a-zA-Z0-9 ]", "");
             return cleanedText;
         }

@@ -13,13 +13,6 @@ public class Event {
         UPDATE, POST, GET, PUT, SEARCH, MESSAGE, EMAIL, TEXT, FLAG, DELETE, CRAWL
     }
 
-    public Event(Type type, int origin, String user, String content) {
-        this.type = type;
-        this.origin = origin;
-        this.user = user;
-        this.content = content;
-    }
-
     public Event(Type type, String user, String content) {
         this.type = type;
         this.origin = (int) (System.currentTimeMillis() / 1000);

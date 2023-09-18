@@ -9,12 +9,6 @@ public class Child {
     private final String title;
     private final String reference;
 
-    public Child(String image, String title, String reference) {
-        this.image = image;
-        this.title = title;
-        this.reference = reference;
-    }
-
     public Child(Document document){
         this.image = document.getString("image");
         this.title = document.getString("title");

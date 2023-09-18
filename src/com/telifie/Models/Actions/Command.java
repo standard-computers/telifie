@@ -12,7 +12,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -309,7 +308,7 @@ public class Command {
             CollectionsClient collections = new CollectionsClient(config, session);
             if(this.selectors.length >= 4){
                 try{
-                    Collection c = collections.get(actingUser, secSelector);
+                    Collection c = collections.get(secSelector);
                     try{
                         ArticlesClient articles = new ArticlesClient(config, session);
                         Article a = articles.withId(terSelector);
@@ -336,7 +335,7 @@ public class Command {
             }else if(this.selectors.length >= 2){
                 if(secSelector != null) {
                     try {
-                        Collection c = collections.get(actingUser, secSelector);
+                        Collection c = collections.get(secSelector);
                         switch (objectSelector) {
                             case "update" -> {
                                 if (content != null) {
@@ -462,23 +461,6 @@ public class Command {
                                 return new Result(this.command, "articles", extractedArticles);
                             }
                             return new Result(404, this.command, "No articles from batch upload");
-                        }
-                        case "yelp" -> {
-                            String[] zips = content.getString("zips").split(",");
-                            ArrayList<Article> yelps;
-                            try {
-                                yelps = Parser.connectors.yelp(zips, config, session);
-                            } catch (UnsupportedEncodingException e) {
-                                return new Result(505, this.command, "Failed to Yelp");
-                            }
-                            return new Result(this.command, "articles", yelps);
-                        }
-                        case "tmdb" -> {
-                            new Parser(config, session);
-                            int page = (content.getInteger("page") == null ? 1 : content.getInteger("page"));
-                            int limit = (content.getInteger("limit") == null ? 1 : content.getInteger("limit"));
-                            ArrayList<Article> tmdb = Parser.connectors.tmdb(page, limit);
-                            return new Result(this.command, "articles", tmdb);
                         }
                         case "uri" -> {
                             String url = content.getString("uri");

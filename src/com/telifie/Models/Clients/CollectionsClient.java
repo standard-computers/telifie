@@ -15,12 +15,12 @@ public class CollectionsClient extends Client {
         super.collection = "collections";
     }
 
-    public Collection get(String userId, String id){
+    public Collection get(String id){
         Collection collection = new Collection(this.findOne(new Document("id", id)));
         //TODO may have to reconfigure for multiple domains
         ArrayList<Article> articles = new ArrayList<>();
         ArticlesClient articlesClient = new ArticlesClient(config, session);
-        if(collection.getArticles() != null || collection.getArticles().size() > 0){
+        if(collection.getArticles() != null || !collection.getArticles().isEmpty()){
             for (String articleId : collection.getArticles()) {
                 articles.add(articlesClient.withId(articleId));
             }
