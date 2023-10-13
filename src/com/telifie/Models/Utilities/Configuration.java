@@ -4,7 +4,6 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.telifie.Models.Domain;
 import com.telifie.Models.User;
-
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -18,7 +17,7 @@ public class Configuration implements Serializable {
     private String mongoURI; //JSON of database configuration
 
     private User user;
-    private static MongoClient mongoClient;
+    public static MongoClient mongoClient;
     protected Domain domain;
 
     public String getURI() {

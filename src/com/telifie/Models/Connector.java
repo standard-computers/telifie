@@ -2,7 +2,6 @@ package com.telifie.Models;
 
 import com.telifie.Models.Utilities.*;
 import org.bson.Document;
-
 import java.util.UUID;
 
 public class Connector {

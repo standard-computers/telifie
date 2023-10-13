@@ -14,17 +14,11 @@ public class Client {
 
     protected static MongoClient mc;
     protected String collection;
-    protected Configuration config;
     protected Session session;
 
-    protected Client(Configuration config, Session session){
-        this.config = config;
+    protected Client(Session session){
         this.session = session;
-        mc = config.getClient();
-    }
-
-    public Configuration getConfig() {
-        return config;
+        mc = Configuration.mongoClient;
     }
 
     protected ArrayList<Document> find(Document filter){
@@ -49,6 +43,16 @@ public class Client {
             return c.find(filter).first();
         }catch(MongoException e){
             return null;
+        }
+    }
+
+    protected int count(Document filter){
+        try {
+            MongoDatabase db = mc.getDatabase("telifie");
+            MongoCollection<Document> c = db.getCollection(this.collection);
+            return (int) c.countDocuments(filter);
+        }catch(MongoException e){
+            return -1;
         }
     }
 

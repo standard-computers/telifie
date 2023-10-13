@@ -3,15 +3,14 @@ package com.telifie.Models.Clients;
 import com.mongodb.client.model.UpdateOptions;
 import com.telifie.Models.Utilities.Event;
 import com.telifie.Models.Actions.Timeline;
-import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
 import java.util.List;
 
 public class TimelinesClient extends Client {
 
-    public TimelinesClient(Configuration config, Session session){
-        super(config, session);
+    public TimelinesClient(Session session){
+        super(session);
         super.collection = "timelines";
     }
 

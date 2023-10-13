@@ -24,7 +24,7 @@ public class Andromeda extends Client{
     protected static Session session;
 
     public Andromeda(Configuration config, Session session, boolean index){
-        super(config, session);
+        super(session);
         this.config = config;
         super.collection = "taxon";
         ArrayList<Document> documents = super.find(new Document());
@@ -40,7 +40,7 @@ public class Andromeda extends Client{
 
     private void index(){
         try {
-            MongoDatabase database = super.mc.getDatabase(config.getDomain().getAlt());
+            MongoDatabase database = super.mc.getDatabase(session.getDomain());
             MongoCollection<Document> collection = database.getCollection("articles");
             MongoCursor<Document> cursor = collection.find().iterator();
             while (cursor.hasNext()) {
@@ -67,13 +67,13 @@ public class Andromeda extends Client{
         private ArrayList<String> items = new ArrayList<>();
 
         public taxon(String name) {
-            super(Andromeda.config, Andromeda.session);
+            super(Andromeda.session);
             super.collection = "taxon";
             this.name = name.toLowerCase().trim();
         }
 
         public taxon(Document document){
-            super(Andromeda.config, Andromeda.session);
+            super(Andromeda.session);
             super.collection = "taxon";
             this.name = document.getString("name");
             this.items = document.get("items", ArrayList.class);

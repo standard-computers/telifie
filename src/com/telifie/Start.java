@@ -12,6 +12,7 @@ public class Start {
 
     public static void main(String[] args){
         Console.out.welcome();
+        Log.out(Event.Type.MESSAGE, "Telifie started");
         if (args.length > 0) {
             String mode = args[0].trim().toLowerCase();
             switch (mode) {
@@ -22,7 +23,6 @@ public class Start {
                     if (Console.in.string("Confirm purge, fresh install (y/n) -> ").equals("y")) {
                         configFile.delete();
                         System.out.println("telifie.configuration deleted");
-                        install();
                     }
                     System.exit(1);
                 }
@@ -32,14 +32,14 @@ public class Start {
                         System.out.println("Starting HTTP server [CONSIDER HTTPS FOR SECURITY]...");
                         new Http(config);
                     } catch (Exception e) {
-                        System.err.println("Failed to start HTTP server...");
+                        Log.error("Failed to start HTTP server");
                         e.printStackTrace();
                     }
                 }
             }
         }else{
             checkConfig();
-            new Console.line(config);
+            new Console.command(config);
         }
     }
 
@@ -52,15 +52,13 @@ public class Start {
         }else if(!working_dir.exists()){
             boolean made_dir = working_dir.mkdirs();
             if(made_dir){
-                System.out.println("Created working directory: " + working_dir);
+                Log.out(Event.Type.PUT, "Created working directory: " + working_dir);
             }else{
-                System.err.println("Failed to create working directory: " + working_dir);
+                Log.error("Failed to create working directory: " + working_dir);
             }
         }
         Configuration configuration = new Configuration();
-        System.out.println("\nLet's connect to a MongoDB.");
-        Console.out.line();
-        Console.out.string("Remote or local installation?");
+        Console.out.message("\nLet's connect to a MongoDB.");
         String mongoUri = Console.in.string("Mongo URI -> ");
         configuration.setMongoURI(mongoUri);
         String email = Console.in.string("Email -> ");
@@ -70,17 +68,20 @@ public class Start {
             System.out.println("Configuration saved!\nRun Telifie with no arguments to start the console.");
             System.exit(0);
         }else{
-            System.err.println("Failed to save configuration file. You may have to try again :(");
+            Log.error("Failed to save configuration file.");
             System.exit(-2);
         }
     }
 
     private static void checkConfig(){
         if(configFile.exists()){
-            System.out.println("Configuration file found :)");
-            Console.out.line();
+            Console.out.message("Configuration file found :)");
             config = (com.telifie.Models.Utilities.Configuration) Console.in.serialized(wrkDir + "/telifie.configuration");
-            config.startMongo();
+            if (config != null) {
+                config.startMongo();
+            }else{
+                Log.error("Failed to load configuration file.");
+            }
         }else{
             Console.out.message("No config file found. Use option '--install'");
             System.exit(-1);

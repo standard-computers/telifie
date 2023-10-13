@@ -16,7 +16,7 @@ public class Parameters {
     public Parameters(Document document) throws NullPointerException {
         this.resultsPerPage = (document.getInteger("results_per_page") == null ? 50 : document.getInteger("results_per_page"));
         this.pages = (document.getInteger("pages") == null ? 1 : document.getInteger("pages"));
-        this.page = (document.getInteger("page") == null ? 0 : document.getInteger("page"));
+        this.page = (document.getInteger("page") == null ? 1 : document.getInteger("page"));
         this.index = (document.getString("index") == null ? "articles" : document.getString("index"));
         this.postalCode = (document.getString("postal_code") == null ? "" : document.getString("postal_code"));
         this.latitude = (document.getDouble("latitude") == null ? 39.103699 : document.getDouble("latitude"));
@@ -28,12 +28,12 @@ public class Parameters {
         return resultsPerPage;
     }
 
-    public String getIndex() {
-        return index;
+    public int getPage() {
+        return page;
     }
 
-    public int getSkip(){
-        return (this.page * this.resultsPerPage);
+    public String getIndex() {
+        return index;
     }
 
     public String getPostalCode() {

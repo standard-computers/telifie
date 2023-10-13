@@ -1,14 +1,13 @@
 package com.telifie.Models.Clients;
 
 import com.telifie.Models.Utilities.Authentication;
-import com.telifie.Models.Utilities.Configuration;
 import org.bson.Document;
 import java.util.Arrays;
 
 public class AuthenticationClient extends Client {
 
-    public AuthenticationClient(Configuration config) {
-        super(config, null);
+    public AuthenticationClient() {
+        super(null);
         super.collection = "authentications";
     }
 

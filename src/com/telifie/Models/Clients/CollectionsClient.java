@@ -10,16 +10,18 @@ import java.util.Arrays;
 
 public class CollectionsClient extends Client {
 
-    public CollectionsClient(Configuration config, Session session){
-        super(config, session);
+    public CollectionsClient(Session session){
+        super(session);
         super.collection = "collections";
     }
 
-    public Collection get(String id){
+    public Collection withArticles(String id){
         Collection collection = new Collection(this.findOne(new Document("id", id)));
-        //TODO may have to reconfigure for multiple domains
         ArrayList<Article> articles = new ArrayList<>();
-        ArticlesClient articlesClient = new ArticlesClient(config, session);
+        if(!collection.getDomain().equals("telifie")){
+            session.setDomain(collection.getDomain());
+        }
+        ArticlesClient articlesClient = new ArticlesClient(session);
         if(collection.getArticles() != null || !collection.getArticles().isEmpty()){
             for (String articleId : collection.getArticles()) {
                 articles.add(articlesClient.withId(articleId));
@@ -27,6 +29,10 @@ public class CollectionsClient extends Client {
             collection.setDetailedList(articles);
         }
         return collection;
+    }
+
+    public Collection get(String id){
+        return new Collection(this.findOne(new Document("id", id)));
     }
 
     public ArrayList<Collection> forUser(String userId){

@@ -13,7 +13,6 @@ public class User implements Serializable {
     private String photo = "";
     private String phone;
     private String token;
-    private String customerId;
     private final int origin;
     private int permissions;
     private Theme theme;
@@ -92,7 +91,6 @@ public class User implements Serializable {
                 ", \"name\" : \"" + name + '\"' +
                 ", \"photo\" : \"" + photo + '\"' +
                 ", \"phone\" : \"" + phone + '\"' +
-                (this.customerId == null || this.customerId.isEmpty() ? "" : ", \"phone\" : \"" + phone + '\"') +
                 ", \"origin\" : " + origin +
                 ", \"permissions\" : " + permissions +
                 ", \"theme\" : " + theme +

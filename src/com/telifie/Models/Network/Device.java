@@ -1,10 +1,11 @@
-package com.telifie.Models.Utilities;
+package com.telifie.Models.Network;
 
 import com.telifie.Models.User;
 
 public class Device {
 
     private String address, id, name, type;
+    private int socket;
     private User user;
 
     public Device(String address, String id, String name, String type, User user){

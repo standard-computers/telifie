@@ -3,6 +3,8 @@ package com.telifie.Models;
 import com.telifie.Models.Articles.*;
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
+import org.bson.types.ObjectId;
+
 import java.util.ArrayList;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -78,6 +80,10 @@ public class Article {
         return domain;
     }
 
+    public boolean isVerified() {
+        return this.verified;
+    }
+
     public String getId() {
         return id;
     }
@@ -120,10 +126,6 @@ public class Article {
 
     public void setPriority(Double priority) {
         this.priority = priority;
-    }
-
-    public void setTags(ArrayList<String> tags) {
-        this.tags = tags;
     }
 
     public void addTag(String tag) {

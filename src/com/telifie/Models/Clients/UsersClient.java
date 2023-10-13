@@ -3,15 +3,14 @@ package com.telifie.Models.Clients;
 import com.telifie.Models.Connectors.SendGrid;
 import com.telifie.Models.Connectors.Twilio;
 import com.telifie.Models.User;
-import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Telifie;
 import com.telifie.Models.Utilities.Theme;
 import org.bson.Document;
 
 public class UsersClient extends Client {
 
-    public UsersClient(Configuration config) {
-        super(config, null);
+    public UsersClient() {
+        super(null);
         super.collection = "users";
     }
 

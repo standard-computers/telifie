@@ -10,7 +10,7 @@ public class Event {
     private final String content;
 
     public enum Type {
-        UPDATE, POST, GET, PUT, SEARCH, MESSAGE, EMAIL, TEXT, FLAG, DELETE, CRAWL
+        UPDATE, POST, GET, PUT, SEARCH, MESSAGE, EMAIL, TEXT, FLAG, DELETE, CRAWL, ERROR
     }
 
     public Event(Type type, String user, String content) {

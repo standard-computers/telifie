@@ -25,13 +25,14 @@ import java.util.regex.Pattern;
 
 public class Parser {
 
-    private static String uri, host;
+    private static String uri, host, defaultDescription = "Webpage";
+    private static int setDepth = 1;
     private static final ArrayList<Article> traversable = new ArrayList<>();
     private static final ArrayList<String> parsed = new ArrayList<>();
     private static ArticlesClient articles;
 
-    public Parser(Configuration config, Session session){
-        articles = new ArticlesClient(config, session);
+    public Parser(Session session){
+        articles = new ArticlesClient(session);
     }
 
     public static class engines {
@@ -63,9 +64,9 @@ public class Parser {
             return null;
         }
 
-        public static void recursive(Configuration config, Session session, int start){
-            articles = new ArticlesClient(config, session);
-            TimelinesClient timelines = new TimelinesClient(config, session);
+        public static void recursive(Session session, int start){
+            articles = new ArticlesClient(session);
+            TimelinesClient timelines = new TimelinesClient(session);
             ArrayList<Article> as = articles.linked();
             List<Article> as2 = as.subList(start, as.size());
             int i = 0;
@@ -81,13 +82,15 @@ public class Parser {
                             "Crawled")
                     );
                     parsed.add(a.getLink());
-                    Parser.engines.crawl(a.getLink(), Integer.MAX_VALUE, false);
+                    Parser.engines.crawl(a.getLink(), Integer.MAX_VALUE, 0, "Webpage", false);
                 }
             }
-            recursive(config, session, start);
+            recursive(session, start);
         }
 
-        public static Article crawl(String uri, int limit, boolean allowExternalCrawl){
+        public static Article crawl(String uri, int limit, int depth, String desc, boolean allowExternalCrawl){
+            setDepth = depth;
+            defaultDescription = desc;
             traversable.removeAll(traversable);
             Parser.uri = uri;
             try {
@@ -95,22 +98,24 @@ public class Parser {
             } catch (MalformedURLException e) {
                 throw new RuntimeException(e);
             }
-            return Parser.engines.fetch(uri, limit, allowExternalCrawl);
+            return Parser.engines.fetch(uri, limit, 0, allowExternalCrawl);
         }
 
-        protected static Article fetch(String url, int limit, boolean allowExternalCrawl){
+        protected static Article fetch(String url, int limit, int depth, boolean allowExternalCrawl){
+            depth++;
             try {
                 URL urlObj = new URL(url);
                 String host = urlObj.getProtocol() + "://" + urlObj.getHost();
                 RobotPermission robotPermission = new RobotPermission(host);
                 if(!robotPermission.isAllowed(urlObj.getPath())){
-                    Console.out.message("Disallowed by robots.txt: " + url);
+                    Log.error("Robots Disallow: " + url);
                     return null;
                 }
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
                 if(response.statusCode() == 200){
                     Document root = response.parse();
                     Article article = webpage.extract(url, root);
+                    article.setDescription(defaultDescription);
                     Parser.traversable.add(article);
                     boolean created = true;
                     if(article.getSource() != null && !articles.existsWithSource(article.getSource().getUrl())){
@@ -130,14 +135,16 @@ public class Parser {
                                 "twitter.com", "tumblr.com", "reddit.com"}, href)
                         ) {
                             if((allowExternalCrawl && !href.contains(host)) || (!allowExternalCrawl && href.contains(host))){
-                                System.out.println("Fetching (" + parsed.size() + ")" + href);
                                 parsed.add(href);
                                 if(parsed.size() >= limit){
                                     return article;
                                 }
                                 try {
                                     Thread.sleep(3000);
-                                    fetch(href, limit, allowExternalCrawl);
+                                    if(depth <= setDepth){
+                                        System.out.println("Fetching (" + parsed.size() + ")" + href);
+                                        fetch(href, limit, depth, allowExternalCrawl);
+                                    }
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
@@ -156,7 +163,7 @@ public class Parser {
             parsed.add(url);
             try {
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
-                Console.out.message("Server Response:" + response.statusCode());
+                Log.out(Event.Type.MESSAGE, "HTTP / " + response.statusCode() + ":" + url);
                 if(response.statusCode() == 200){
                     Document root = response.parse();
                     Article article = webpage.extract(url, root);

@@ -8,17 +8,13 @@ import java.util.UUID;
 
 public class Domain implements Serializable {
 
-    private String id, alt = "telifie", icon, owner, name;
-    private int origin, permissions;
+    private String id, icon, owner, name;
+    private int count, origin, permissions;
     private final ArrayList<Member> users = new ArrayList<>();
-
-    public Domain() {
-    }
 
     public Domain(String owner, String name, String icon, int permissions){
         this.owner = owner;
         this.id = UUID.randomUUID().toString();
-        this.alt = Telifie.tools.make.randomReferenceCode();
         this.name = name;
         this.icon = icon;
         this.origin = Telifie.epochTime();
@@ -27,7 +23,6 @@ public class Domain implements Serializable {
 
     public Domain(Document document) throws NullPointerException {
         this.id = (document.getString("id") == null ? UUID.randomUUID().toString() : document.getString("id"));
-        this.alt = document.getString("alt");
         this.icon = document.getString("icon");
         this.owner = document.getString("owner");
         this.name = document.getString("name");
@@ -44,10 +39,6 @@ public class Domain implements Serializable {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getAlt() {
-        return alt;
     }
 
     public String getOwner() {
@@ -71,17 +62,22 @@ public class Domain implements Serializable {
         this.users.add(member);
     }
 
-    public boolean hasPermission(User user){
-        //TODO Change using code from getPermissions
-        return this.owner.equals(user.getId());
+    public void setCount(int count){
+        this.count = count;
     }
 
-    public int getPermissions(User user){
-        if(this.owner.equals(user.getId())){
+    public boolean hasPermission(String userId){
+        //TODO Change using code from getPermissions
+        return this.owner.equals(userId);
+    }
+
+    public int getPermissions(String userId){
+        if(this.owner.equals(userId)){
             return 0;
         }else{
             for(Member u : users){
-                if(u.getEmail().equals(user.getEmail())){
+                //TODO expects email, userId given
+                if(u.getEmail().equals(userId)){
                     int up = u.getPermissions();
                     return (up < 1 || up > 2 ? 1 : u.getPermissions());
                 }
@@ -94,7 +90,7 @@ public class Domain implements Serializable {
     public String toString() {
         return "{" +
                 "\"id\" : \"" + id + '\"' +
-                ", \"alt\" : \"" + alt + '\"' +
+                ", \"count\" : " + count +
                 ", \"icon\" : \"" + icon + '\"' +
                 ", \"owner\" : \"" + owner + '\"' +
                 ", \"name\" : \"" + name + '\"' +

@@ -45,12 +45,12 @@ public class Http {
     private Result processRequest(Session session, String method, String request, String requestBody){
         if(method.equals("POST")){
             try {
-                return new Command(request).parseCommand(config, session, Document.parse(requestBody));
+                return new Command(request).parseCommand(session, Document.parse(requestBody));
             }catch(BsonInvalidOperationException e){
                 return new Result(505, "Malformed JSON data provided");
             }
         }else if(method.equals("GET")){
-            return new Command(request).parseCommand(config, session, null);
+            return new Command(request).parseCommand(session, null);
         }
         return new Result(404, request, "Invalid method");
     }
@@ -68,14 +68,14 @@ public class Http {
                     result.setStatusCode(406);
                     result.setResult("result", "No Authentication credentials provided");
                 } else {
-                    AuthenticationClient authenticationClient = new AuthenticationClient(config);
+                    AuthenticationClient authenticationClient = new AuthenticationClient();
                     if (authenticationClient.isAuthenticated(auth)) {
                         String body = null;
                         if (request instanceof HttpEntityEnclosingRequest) {
                             HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
                             body = EntityUtils.toString(entity);
                         }
-                        UsersClient users = new UsersClient(config);
+                        UsersClient users = new UsersClient();
                         session = new Session(users.getUserWithId(auth.getUser()).getId(), "telifie");
                         result = processRequest(session, request.getRequestLine().getMethod(), query, body);
                     } else {

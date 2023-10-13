@@ -16,8 +16,8 @@ import java.util.Arrays;
  */
 public class ConnectorsClient extends Client{
 
-    public ConnectorsClient(Configuration config, Session session){
-        super(config, session);
+    public ConnectorsClient(Session session){
+        super(session);
         super.collection = "connectors";
     }
 

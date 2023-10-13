@@ -1,8 +1,23 @@
 package com.telifie.Models.Utilities;
 
+import com.mongodb.client.*;
+import com.mongodb.client.model.Filters;
+import com.telifie.Models.Article;
+import com.telifie.Models.Articles.Attribute;
+import com.telifie.Models.Articles.Image;
+import com.telifie.Models.Clients.ArticlesClient;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClients;
+import org.bson.Document;
+import org.bson.types.ObjectId;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class Console {
@@ -71,9 +86,9 @@ public class Console {
         }
     }
 
-    public static class line {
+    public static class command {
 
-        public line(Configuration config){
+        public command(Configuration config){
             while(true){
                 String cmd = Console.in.string("telifie > ");
                 if(cmd.equals("exit")){
@@ -82,20 +97,55 @@ public class Console {
                     try {
                         new Http(config);
                     } catch (Exception e) {
-                        System.err.println("Failed to start HTTP server...");
+                        Log.error("Failed to start HTTP server");
                         e.printStackTrace();
                     }
                 }else if(cmd.equals("geocode")){
                     try {
                         Telifie.tools.geocode(config);
                     } catch (Exception e) {
-                        System.err.println("Failed to start Geocode server...");
+                        Log.error("Failed to start Geocode server");
                         e.printStackTrace();
                     }
                 }else if(cmd.equals("clean")){
 
-                }else if(cmd.equals("sepimg")){
-
+                }else if(cmd.equals("spimgs")){
+                    MongoClient mongoClient = MongoClients.create(config.getURI());
+                    MongoDatabase database = mongoClient.getDatabase("telifie");
+                    MongoCollection<Document> collection = database.getCollection("articles");
+                    FindIterable<Document> result = collection.find(Filters.exists("images", true));
+                    ArticlesClient articles = new ArticlesClient(new Session("", "telifie"));
+                    for (Document document : result) {
+                        Article a = new Article(document);
+                        System.out.println("Working -> " + a.getTitle() + " : " + a.getId());
+                        ArrayList<ObjectId> imageIds = new ArrayList<>();
+                        for(Image i : a.getImages()){
+                            System.out.println("Image working -> "  + i.getUrl());
+                            if(!i.getUrl().trim().startsWith("data:image/jpeg;base64") && !i.getUrl().trim().startsWith("data:image/png;base64")){
+                                Article ia = new Article();
+                                ia.setDescription("Image");
+                                ia.setPriority(0.162);
+                                ia.setTitle(a.getTitle());
+                                ia.setLink(i.getUrl());
+                                ia.addAttribute(new Attribute("Article", a.getId()));
+                                if(a.getTags() != null){
+                                    for(String s : a.getTags()){
+                                        ia.addTag(s);
+                                    }
+                                }
+                                Document in = Document.parse(ia.toString());
+                                if(articles.withLink(ia.getLink()) == null){
+                                    collection.insertOne(in);
+                                    imageIds.add(in.getObjectId("_id"));
+                                }
+                                //Set images in 'Article a' to imageIds
+                            }
+                            Document updateDoc = new Document("$set", new Document("imageref", imageIds));
+                            Document removeImages = new Document("$unset", new Document("images", ""));
+                            collection.updateOne(Filters.eq("id", a.getId()), updateDoc);
+                            collection.updateOne(Filters.eq("id", a.getId()), removeImages);
+                        }
+                    }
                 }
             }
         }

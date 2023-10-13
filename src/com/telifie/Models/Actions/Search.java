@@ -3,10 +3,8 @@ package com.telifie.Models.Actions;
 import com.mongodb.client.model.Filters;
 import com.telifie.Models.Andromeda;
 import com.telifie.Models.Article;
-import com.telifie.Models.Articles.Image;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Result;
-import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Utilities.Session;
 import com.telifie.Models.Utilities.Telifie;
@@ -17,76 +15,22 @@ import java.util.regex.Pattern;
 
 public class Search {
 
-    private static ArticlesClient articlesClient;
+    private ArticlesClient articlesClient;
     private Parameters params;
 
-    public Result execute(Configuration config, Session session, String query, Parameters params){
+    public Result execute(Session session, String query, Parameters params){
         query = query.toLowerCase().trim();
         this.params = params;
-        articlesClient = new ArticlesClient(config, session);
-        ArrayList results = executeQuery(config, session, query);
-        switch (params.getIndex()) {
-            case "images" -> {
-                ArrayList<Image> images = new ArrayList<>();
-                for (Object result : results) {
-                    Article article = (Article) result;
-                    ArrayList<Image> articleImages = article.getImages();
-                    if (articleImages != null && !articleImages.isEmpty()) {
-                        for (Image image : articleImages) {
-                            images.add(image);
-                        }
-                    }
-                }
-                return new Result(query, params, "images", images);
-            }
-            case "locations" -> {
-                ArrayList<Article> articles = new ArrayList<>();
-                for (Object result : results) {
-                    Article article = (Article) result;
-                    if (article.hasAttribute("latitude") && article.hasAttribute("longitude")) {
-                        articles.add(article);
-                    }
-                }
-                return new Result(query, params, "articles", articles);
-            }
-            case "shopping" -> {
-                ArrayList<Article> articles = new ArrayList<>();
-                for (Object result : results) {
-                    Article article = (Article) result;
-                    if (article.hasAttribute("cost") || article.hasAttribute("price") || article.hasAttribute("value")) {
-                        articles.add(article);
-                    }
-                }
-                return new Result(query, params,"articles", articles);
-            }
-        }
-        ArrayList<Article> qr = new ArrayList<>();
-        return new Result(query, params, qr, results);
+        articlesClient = new ArticlesClient(session);
+        return executeQuery(query);
     }
 
-    private ArrayList executeQuery(Configuration config, Session session, String query){
-
-        Document filter = filter(query);
-        if(!session.getDomain().equals("telifie")){
-            ArrayList<Document> conditions = new ArrayList<>();
-            String domainId = config.getDomain().getId();
-            conditions.add(new Document("domain", domainId));
-            Document queryFilter = filter(query);
-            conditions.add(queryFilter);
-            filter = new Document("$and", conditions);
-        }
-        ArrayList<Article> results = articlesClient.search(params, filter);
-        if(results != null && !query.contains(":")){
-            if(Telifie.tools.has(Telifie.PROXIMITY, query) > -1 || query.endsWith("near me")) {
-                Collections.sort(results, new DistanceSorter(params.getLatitude(), params.getLongitude()));
-            }else if(query.split(" ").length > 2 && !query.contains(",")){
-                Collections.sort(results, new CosmoScore(Andromeda.encoder.clean(query)));
-            }else{
-                Collections.sort(results, new RelevanceComparator(query));
-                Collections.reverse(results);
-            }
-        }
-        return results;
+    private Result executeQuery(String query){
+        ArrayList<Article> results = articlesClient.search(query, params, filter(query));
+        ArrayList<Article> paged = paginateArticles(results, params.getPage(), params.getResultsPerPage());
+        Result r = new Result(query, params, "articles", paged);
+        r.setTotal(results.size());
+        return r;
     }
 
     private Document filter(String query){
@@ -240,20 +184,33 @@ public class Search {
                 ));
             }
         }
-        String cleanedQuery = Andromeda.encoder.clean(query);
-        String[] exploded = Andromeda.encoder.nova(cleanedQuery);
-        ArrayList<Bson> filters = new ArrayList<>();
-        List<Bson> titleWordFilters = new ArrayList<>();
-        titleWordFilters.add(Filters.regex("title", ignoreCase(query)));
+        String[] exploded = Andromeda.encoder.nova(Andromeda.encoder.clean(query));
+        ArrayList<Bson> andFilters = new ArrayList<>();
+//        andFilters.add(Filters.regex("title", pattern(query)));
         for (String word : exploded) {
-            titleWordFilters.add(Filters.regex("title", ignoreCase(word)));
+            andFilters.add(Filters.regex("title", pattern(word)));
         }
-        if (!titleWordFilters.isEmpty()) {
-            filters.add(Filters.or(titleWordFilters));
+        if (query.contains("/") || query.contains(".")) {
+            andFilters.add(Filters.regex("link", pattern(query)));
         }
-        filters.add(Filters.regex("link", pattern(query)));
-        filters.add(Filters.in("tags", ignoreCase(query)));
-        return new Document("$or", filters);
+        andFilters.add(Filters.in("tags", ignoreCase(query)));
+        return new Document("$and", Arrays.asList(
+                Filters.ne("description", "Image"),
+                Filters.or(andFilters)
+        ));
+    }
+
+    public static ArrayList<Article> paginateArticles(ArrayList<Article> results, int page, int pageSize) {
+        if(results.size() < pageSize){
+            return results;
+        }
+        ArrayList<Article> paginatedResults = new ArrayList<>();
+        int startIndex = (page - 1) * pageSize;
+        int endIndex = Math.min(startIndex + pageSize, results.size());
+        if (startIndex < results.size()) {
+            paginatedResults.addAll(results.subList(startIndex, endIndex));
+        }
+        return paginatedResults;
     }
 
     private static Pattern wholeWord(String value){
@@ -266,115 +223,5 @@ public class Search {
 
     private static Pattern ignoreCase(String value) { //Doesn't allow extra stuff at end
         return Pattern.compile("\\b" + Pattern.quote(value) + "\\b", Pattern.CASE_INSENSITIVE);
-    }
-
-    private static class CosmoScore implements Comparator<Article> {
-
-        private final String query;
-        private final String[] words;
-
-        public CosmoScore(String query){
-            this.query = query;
-            this.words = Andromeda.encoder.nova(Andromeda.encoder.clean(query));
-        }
-
-        @Override
-        public int compare(Article a, Article b) {
-            double relevanceA = relevance(a);
-            double relevanceB = relevance(b);
-            return Double.compare(relevanceB, relevanceA);
-        }
-
-        private double relevance(Article a) {
-            if(a.getTitle().trim().toLowerCase().equals(query)){
-                return Integer.MAX_VALUE;
-            }
-            double titleGrade = (countMatches(a.getTitle(), words) / words.length) * 4;
-            double linkGrade = (countMatches((a.getLink() == null ? "" : a.getLink()), words) / words.length) * 2;
-            double tagsGrade = 0;
-            if(a.getTags() != null && !a.getTags().isEmpty()){
-                for(String tag : a.getTags()){
-                    tagsGrade += countMatches(tag, words);
-                }
-            }
-            return ((titleGrade + linkGrade) + ((tagsGrade / words.length) * 0.25)) * a.getPriority();
-        }
-
-        private double countMatches(String text, String[] words) {
-            int matches = 0;
-            for(String word : words) {
-                if(text.contains(word)) {
-                    matches++;
-                }
-            }
-            return matches / words.length;
-        }
-    }
-
-    private static class RelevanceComparator implements Comparator<Article> {
-
-        private String query;
-
-        public RelevanceComparator(String query) {
-            this.query = query;
-        }
-
-        @Override
-        public int compare(Article a, Article b) {
-            int relevanceA = relevance(a.getTitle());
-            int relevanceB = relevance(b.getTitle());
-            return Integer.compare(relevanceB, relevanceA);
-        }
-
-        private int relevance(String title) {
-            int lenDiff = Math.abs(title.length() - query.length());
-            if (lenDiff > 3) {
-                return lenDiff;
-            }
-            int[] prev = new int[query.length() + 1];
-            int[] curr = new int[query.length() + 1];
-            for (int i = 0; i <= title.length(); i++) {
-                for (int j = 0; j <= query.length(); j++) {
-                    if (i == 0) {
-                        curr[j] = j;
-                    } else if (j == 0) {
-                        curr[j] = i;
-                    } else {
-                        curr[j] = Math.min(prev[j - 1] + (title.charAt(i - 1) == query.charAt(j - 1) ? 0 : 1),
-                                Math.min(prev[j], curr[j - 1]) + 1);
-                    }
-                }
-                int[] temp = prev;
-                prev = curr;
-                curr = temp;
-            }
-            return prev[query.length()];
-        }
-    }
-
-    private static class DistanceSorter implements Comparator<Article> {
-
-        private final double latitude, longitude;
-
-        public DistanceSorter(double latitude, double longitude) {
-            this.latitude = latitude;
-            this.longitude = longitude;
-        }
-
-        @Override
-        public int compare(Article a, Article b) {
-            double relevanceA = distance(Double.parseDouble(a.getAttribute("Latitude")), Double.parseDouble(a.getAttribute("Longitude")));
-            double relevanceB = distance(Double.parseDouble(b.getAttribute("Latitude")), Double.parseDouble(b.getAttribute("Longitude")));
-            return Double.compare(relevanceB, relevanceA);
-        }
-
-        private double distance(double latitude, double longitude) {
-            final int R = 6371; // Radius of the earth in km
-            double latDistance = Math.toRadians(latitude - this.latitude);
-            double lonDistance = Math.toRadians(longitude - this.longitude);
-            double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2) + Math.cos(Math.toRadians(this.latitude)) * Math.cos(Math.toRadians(this.longitude)) * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
-            double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c;
-        }
     }
 }

@@ -15,7 +15,7 @@ public class Result {
     private String generated = "";
     private Object results;
     private final int origin = Telifie.epochTime();
-    private int statusCode = 200, count = 0;
+    private int statusCode = 200, count = 0, total;
     private ArrayList<Article> quickResults = new ArrayList<>();
 
     public Result(String query, String object, ArrayList results) {
@@ -66,6 +66,10 @@ public class Result {
         this.statusCode = statusCode;
     }
 
+    public void setTotal(int total) {
+        this.total = total;
+    }
+
     public void setResult(String object, Object results){
         this.object = object;
         this.results = results;
@@ -88,6 +92,7 @@ public class Result {
             sb.append(", \"generated\" : \"").append(generated).append('\"');
         }
         sb.append(", \"count\" : ").append(count)
+                .append(", \"total\" : ").append(total)
                 .append(", \"origin\" : ").append(origin);
         if (!quickResults.isEmpty()) {
             sb.append(", \"quick_results\" : ").append(quickResults);

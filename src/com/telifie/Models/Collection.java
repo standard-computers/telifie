@@ -86,7 +86,6 @@ public class Collection {
 
         String articles = "[]";
         if(this.articles != null){
-
             StringBuilder sb = new StringBuilder();
             sb.append("[");
             for (int i = 0; i < this.articles.size(); i++) {
@@ -99,7 +98,6 @@ public class Collection {
             }
             sb.append("]");
             articles = sb.toString();
-
         }
 
         return "{" +

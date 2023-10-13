@@ -8,8 +8,6 @@ import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Clients.CollectionsClient;
 import com.telifie.Models.Collection;
 import com.telifie.Models.Connector;
-import com.telifie.Models.Domain;
-import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Session;
 import com.telifie.Models.Utilities.Telifie;
 import org.apache.hc.core5.http.ParseException;
@@ -46,22 +44,16 @@ public class Spotify extends Connector {
         this(Document.parse(con.toString()));
     }
 
-    public void parse(Configuration config, Session session) throws IOException, ParseException, SpotifyWebApiException {
-
-        Configuration personalConfiguration = new Configuration();
-        Domain pd = new Domain();
-        pd.setId(session.getUser());
-        personalConfiguration.setDomain(pd);
-        ArticlesClient articles = new ArticlesClient(config, session); //Put found articles in personal domain
-        CollectionsClient collections = new CollectionsClient(config, session); //Put generated collections in personal domain
+    public void parse(Session session) throws IOException, ParseException, SpotifyWebApiException {
+        session.setDomain(session.getUser());
+        ArticlesClient articles = new ArticlesClient(session); //Put found articles in personal domain
+        CollectionsClient collections = new CollectionsClient(session); //Put generated collections in personal domain
         Source primarySource = new Source(
                 "com.telifie.connectors.spotify",
                 "https://telifie-static.nyc3.cdn.digitaloceanspaces.com/images/connectors/spotify.png",
                 "Connector / Spotify",
                 "https://telifie.com/documentation/connectors/spotify"
         );
-
-        //Prepare collections for organizing Spotify content
         Collection playlistsCollection = new Collection("Spotify Playlists").setDomain(session.getUser());
         playlistsCollection.setIcon("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/images/connectors/spotify.png");
         collections.create(playlistsCollection);

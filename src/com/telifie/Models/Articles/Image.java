@@ -20,6 +20,18 @@ public class Image {
         this.source = document.getString("source");
     }
 
+    public String getUrl() {
+        return url;
+    }
+
+    public String getCaption() {
+        return caption;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
     @Override
     public String toString() {
         return new StringBuilder().append("{")

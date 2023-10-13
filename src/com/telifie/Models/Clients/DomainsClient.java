@@ -2,7 +2,6 @@ package com.telifie.Models.Clients;
 
 import com.telifie.Models.Domain;
 import com.telifie.Models.Member;
-import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
 import java.util.ArrayList;
@@ -10,8 +9,8 @@ import java.util.Arrays;
 
 public class DomainsClient extends Client {
 
-    public DomainsClient(Configuration config, Session session){
-        super(config, session);
+    public DomainsClient(Session session){
+        super(session);
         this.collection = "domains";
     }
 
@@ -23,7 +22,11 @@ public class DomainsClient extends Client {
         ArrayList<Document> found = super.find(new Document("owner", session.getUser()));
         ArrayList<Domain> domains = new ArrayList<>();
         for(Document doc : found){
-            domains.add(new Domain(doc));
+            session.setDomain(doc.getString("id"));
+            ArticlesClient articles = new ArticlesClient(session);
+            Domain d = new Domain(doc);
+            d.setCount(articles.count(new Document("domain", d.getId())));
+            domains.add(d);
         }
         return domains;
     }
