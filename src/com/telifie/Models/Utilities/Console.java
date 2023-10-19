@@ -6,18 +6,10 @@ import com.telifie.Models.Article;
 import com.telifie.Models.Articles.Attribute;
 import com.telifie.Models.Articles.Image;
 import com.telifie.Models.Clients.ArticlesClient;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.HttpClients;
 import org.bson.Document;
 import org.bson.types.ObjectId;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Console {
@@ -46,7 +38,7 @@ public class Console {
 
         public static void message(String message){
             line();
-            System.out.println("\n" + message + "\n");
+            System.out.println(message);
             line();
         }
 
@@ -67,31 +59,14 @@ public class Console {
             Scanner in = new Scanner(System.in);
             return in.nextLine();
         }
-
-        public static Object serialized(String dir){
-            try {
-                ObjectInputStream in = new ObjectInputStream(new FileInputStream(dir));
-                return in.readObject();
-            } catch (IOException e) {
-                return null;
-            } catch (ClassNotFoundException e) {
-                return null;
-            }
-        }
-
-        public static int integer(String prompt){
-            System.out.print(prompt);
-            Scanner in = new Scanner(System.in);
-            return in.nextInt();
-        }
     }
 
     public static class command {
 
         public command(Configuration config){
             while(true){
-                String cmd = Console.in.string("telifie > ");
-                if(cmd.equals("exit")){
+                String cmd = Console.in.string("telifie -> ");
+                if(cmd.equals("exit") || cmd.equals("logout") || cmd.equals("close")){
                     System.exit(1);
                 }else if(cmd.equals("http")){
                     try {
@@ -138,13 +113,35 @@ public class Console {
                                     collection.insertOne(in);
                                     imageIds.add(in.getObjectId("_id"));
                                 }
-                                //Set images in 'Article a' to imageIds
                             }
                             Document updateDoc = new Document("$set", new Document("imageref", imageIds));
                             Document removeImages = new Document("$unset", new Document("images", ""));
                             collection.updateOne(Filters.eq("id", a.getId()), updateDoc);
                             collection.updateOne(Filters.eq("id", a.getId()), removeImages);
                         }
+                    }
+                }else if(cmd.equals("d")){
+                    MongoClient mongoClient = MongoClients.create(config.getURI());
+                    MongoDatabase database = mongoClient.getDatabase("telifie");
+                    MongoCollection<Document> collection = database.getCollection("articles");
+                    FindIterable<Document> definitions = collection.find(new Document("$and", Arrays.asList(
+                                new Document("description","Definition"),
+                                new Document("verified", false)
+                        ))
+                    );
+                    ArticlesClient articles = new ArticlesClient(new Session("", "telifie"));
+                    for(Document d : definitions){
+                        Article a = new Article(d);
+                        Console.out.message("ID -> " + a.getId());
+                        String c = a.getContent();
+                        Console.out.message("Original Content -> " + c);
+                        if(!c.contains("_")){
+                            String md = c.replace("<em>","_").replace("</em>","_  \n").replace("<p>","").replace("</p>","").replace("</br>","");
+                            a.setContent(md);
+                            Console.out.message(md);
+                            articles.update(a, a);
+                        }
+                        articles.verify(a.getId());
                     }
                 }
             }

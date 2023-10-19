@@ -15,21 +15,20 @@ import java.util.regex.Pattern;
 
 public class Search {
 
-    private ArticlesClient articlesClient;
-    private Parameters params;
+    private ArticlesClient articles;
 
     public Result execute(Session session, String query, Parameters params){
         query = query.toLowerCase().trim();
-        this.params = params;
-        articlesClient = new ArticlesClient(session);
-        ArrayList<Article> results = articlesClient.search(query, params, filter(query));
+        articles = new ArticlesClient(session);
+        ArrayList<Article> results = articles.search(query, params, filter(query, params));
         ArrayList<Article> paged = paginateArticles(results, params.getPage(), params.getResultsPerPage());
         Result r = new Result(query, params, "articles", paged);
         r.setTotal(results.size());
+        r.setGenerated(this.generated(query));
         return r;
     }
 
-    private Document filter(String query){
+    private Document filter(String query, Parameters params){
 
         if(query.matches("^id\\s*:\\s*.*")){
 
@@ -41,7 +40,7 @@ public class Search {
 
             String[] spl = query.split(":");
             if(spl.length >= 2) {
-                return new Document("description", Pattern.compile("\\b" + Pattern.quote(spl[1].trim()) + "\\b", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CHARACTER_CLASS));
+                return new Document("description", Pattern.compile("\\b" + Pattern.quote(spl[1].trim()) + "\\b", Pattern.CASE_INSENSITIVE));
             }
         }else if(query.matches("^title\\s*:\\s*.*")){
 
@@ -72,9 +71,10 @@ public class Search {
                 String key = spl2[0].trim().toLowerCase();
                 if(spl2.length >= 2){
                     String value = spl2[1].trim().toLowerCase();
-                    return new Document("attributes", new Document("$elemMatch", new Document("key", wholeWord(key)).append("value", wholeWord(value))));
+                    return new Document("attributes", new Document("$elemMatch", new Document("key", Pattern.compile(Pattern.quote(key), Pattern.CASE_INSENSITIVE))
+                            .append("value", Pattern.compile(Pattern.quote(value), Pattern.CASE_INSENSITIVE))));
                 }
-                return new Document("attributes.key", wholeWord(key));
+                return new Document("attributes.key", Pattern.compile(Pattern.quote(key), Pattern.CASE_INSENSITIVE));
             }
         }else if(query.matches("^define\\s*.*")) {
 
@@ -99,7 +99,7 @@ public class Search {
                             ignoreCase("established"),
                             ignoreCase("started")
                     ))),
-                    new Document("attribute.value", query) //adjust, format query input
+                    new Document("attribute.value", query)
             ));
         }else if(query.endsWith("near me")){
 
@@ -112,21 +112,18 @@ public class Search {
                     )),
                     new Document("location", new Document("$near",
                             new Document("$geometry", new Document("type", "Point")
-                                    .append("coordinates", Arrays.asList(
-                                            params.getLongitude(),
-                                            params.getLatitude()
-                                    ))
+                                .append("coordinates", Arrays.asList( params.getLongitude(), params.getLatitude() ))
                             ).append("$maxDistance", 16000)
                     )
-                    )
+                )
             ));
-        }else if(Telifie.tools.has(Telifie.PROXIMITY, query) > -1){
-            String splr = Telifie.PROXIMITY[Telifie.tools.has(Telifie.PROXIMITY, query)];
+        }else if(Telifie.tools.has(Andromeda.PROXIMITY, query) > -1){
+            String splr = Andromeda.PROXIMITY[Telifie.tools.has(Andromeda.PROXIMITY, query)];
             String[] spl = query.split(splr);
             if(spl.length >= 2){
                 String subject = spl[0].trim();
                 String place = spl[1].trim();
-                ArrayList<Article> findPlace = articlesClient.get(
+                ArrayList<Article> findPlace = articles.get(
                         new Document("$and", Arrays.asList(
                                 new Document("title", pattern(place)),
                                 new Document("description", pattern("city")),
@@ -163,18 +160,31 @@ public class Search {
             }
         }
         String[] exploded = Andromeda.encoder.nova(Andromeda.encoder.clean(query));
-        ArrayList<Bson> andFilters = new ArrayList<>();
+        ArrayList<Bson> or = new ArrayList<>();
         for (String word : exploded) {
-            andFilters.add(Filters.regex("title", pattern(word)));
+            or.add(Filters.regex("title", pattern(word)));
         }
         if (query.contains("/") || query.contains(".")) {
-            andFilters.add(Filters.regex("link", pattern(query)));
+            or.add(Filters.regex("link", pattern(query)));
         }
-        andFilters.add(Filters.in("tags", ignoreCase(query)));
-        return new Document("$and", Arrays.asList( Filters.ne("description", "Image"), Filters.or(andFilters) ));
+        or.add(Filters.in("tags", ignoreCase(query)));
+        Bson sf = Filters.ne("description", "Image");
+        if(params.getIndex().equals("images")){
+            sf = Filters.eq("description", "Image");
+        }else if(params.getIndex().equals("locations")){
+            sf = Filters.exists("location");
+        }
+        return new Document("$and", Arrays.asList( sf, Filters.or(or) ));
     }
 
-    private static ArrayList<Article> paginateArticles(ArrayList<Article> results, int page, int pageSize) {
+    private String generated(String q){
+        if((q.contains("*") || q.contains("/") || q.contains("+") || q.contains("-")) && Telifie.tools.contains(Andromeda.NUMERALS, q)){
+
+        }
+        return null;
+    }
+
+    private ArrayList<Article> paginateArticles(ArrayList<Article> results, int page, int pageSize) {
         if(results.size() < pageSize){
             return results;
         }
@@ -185,10 +195,6 @@ public class Search {
             paginatedResults.addAll(results.subList(startIndex, endIndex));
         }
         return paginatedResults;
-    }
-
-    private static Pattern wholeWord(String value){
-        return Pattern.compile(Pattern.quote(value), Pattern.CASE_INSENSITIVE);
     }
 
     private static Pattern pattern(String value){

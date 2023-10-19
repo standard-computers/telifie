@@ -38,7 +38,7 @@ public class UsersClient extends Client {
 
     public boolean textCode(User user){
         String code = Telifie.tools.make.simpleCode();
-        Twilio.send(user.getPhone(), "+15138029566s", "Hello \uD83D\uDC4B It's Telifie! Your login code is " + code);
+        Twilio.send(user.getPhone(), "+15138029566", "Hello \uD83D\uDC4B It's Telifie! Your login code is " + code);
         return this.lock(user, code);
     }
 

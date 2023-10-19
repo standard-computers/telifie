@@ -148,21 +148,21 @@ public class Command {
                             switch (terSelector) {
                                 case "add" -> {
                                     if (domains.addUsers(d, members)) {
-                                        return new Result(200, this.command, "Added " + members.size() + " user(s) to domain");
+                                        return new Result(200, this.command, "ADDED USERS TO DOMAIN");
                                     }
-                                    return new Result(505, this.command, "Failed adding " + members.size() + " user(s) to domain");
+                                    return new Result(505, this.command, "FAILED ADDING USERS TO DOMAIN");
                                 }
                                 case "remove" -> {
                                     if (domains.removeUsers(d, members)) {
-                                        return new Result(200, this.command, "Removed " + members.size() + " user(s) from domain");
+                                        return new Result(200, this.command, "REMOVED USERS FROM DOMAIN");
                                     }
-                                    return new Result(505, this.command, "Failed removing " + members.size() + " user(s) from domain");
+                                    return new Result(505, this.command, "FAILED REMOVING USERS FROM DOMAIN");
                                 }
                                 case "update" -> {
                                     if (domains.updateUsers(d, members)) {
-                                        return new Result(200, this.command, "Updated " + members.size() + " user(s) in domain");
+                                        return new Result(200, this.command, "DOMAIN USERS UPDATED");
                                     }
-                                    return new Result(505, this.command, "DOMAIN USER UPDATED FAILED");
+                                    return new Result(505, this.command, "FAILED DOMAIN USERS UPDATE");
                                 }
                             }
                             return new Result(428, this.command, "BAD DOMAIN USER SELECTOR");
@@ -461,7 +461,7 @@ public class Command {
                         case "uri" -> {
                             String uri = content.getString("uri");
                             if (uri != null && !uri.isEmpty()) {
-                                if(articles.withLink(uri) != null){
+                                if(articles.withLink(uri) == null){
                                     new Parser(session);
                                     Article parsed = Parser.engines.parse(uri);
                                     if(parsed != null){
@@ -619,6 +619,14 @@ public class Command {
                 return new Result(404, this.command, "CONNECTOR NOT FOUND");
             }
             return new Result(428, this.command, "CONNECTOR NAME REQUIRED");
+        }
+        /**
+         * For receiving messages through Twilio
+         */
+        else if(primarySelector.equals("messaging")){
+            String from  = content.getString("From");
+            String message = content.getString("Body");
+
         }
         return new Result(200, this.command, "NO COMMAND RECEIVED");
     }

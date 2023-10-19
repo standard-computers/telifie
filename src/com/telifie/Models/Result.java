@@ -75,6 +75,10 @@ public class Result {
         this.results = results;
     }
 
+    public void setGenerated(String generated) {
+        this.generated = generated;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

@@ -14,13 +14,11 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import static com.telifie.Models.Andromeda.ALPHAS;
+import static com.telifie.Models.Andromeda.NUMERALS;
 
 public class Telifie {
 
-    public static String[] stopWords = new String[]{"a", "an", "and", "are", "as", "at", "or", "make", "be", "by", "for", "from", "has", "he", "in", "is", "it", "its", "of", "on", "that", "the", "to", "was", "were", "with", "who", "what", "when", "where", "why", "how", "you"};
-    private static final String[] ALPHAS = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"};
-    private static final String[] NUMERALS = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
-    public static final String[] PROXIMITY = {"near", "nearby", "close to", "around", "within", "in the vicinity of", "within walking distance of", "adjacent to", "bordering", "neighboring", "local to", "surrounding", "not far from", "just off"};
     public static final int PRIVATE = 0, PROTECTED = 1, PUBLIC = 2;
     public static final String WINDOWS_SYSTEM_DIR = "/Program\\ Files/telifie/";
     public static final String MAC_SYSTEM_DIR = System.getProperty("user.home") + "/Library/Application Support/telifie";
@@ -131,34 +129,15 @@ public class Telifie {
         public static class make {
 
             public static String randomReferenceCode(){
-                return ALPHAS[(int) random(0, 25)] +
-                        ALPHAS[(int) random(0, 25)] +
-                        ALPHAS[(int) random(0, 25)] +
-                        ALPHAS[(int) random(0, 25)] +
-                        ALPHAS[(int) random(0, 25)] +
-                        NUMERALS[(int) random(0, 9)] +
-                        NUMERALS[(int) random(0, 9)] +
-                        NUMERALS[(int) random(0, 9)] +
-                        NUMERALS[(int) random(0, 9)] +
-                        NUMERALS[(int) random(0, 9)];
+                return ALPHAS[(int) random(0, 25)] + ALPHAS[(int) random(0, 25)] + ALPHAS[(int) random(0, 25)] + ALPHAS[(int) random(0, 25)] + ALPHAS[(int) random(0, 25)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)];
             }
 
             public static String shortEid(){
-                return ALPHAS[(int) random(0, 25)] +
-                        NUMERALS[(int) random(0, 9)] +
-                        ALPHAS[(int) random(0, 25)] +
-                        NUMERALS[(int) random(0, 9)] +
-                        ALPHAS[(int) random(0, 25)] +
-                        NUMERALS[(int) random(0, 9)];
+                return ALPHAS[(int) random(0, 25)] + NUMERALS[(int) random(0, 9)] + ALPHAS[(int) random(0, 25)] + NUMERALS[(int) random(0, 9)] + ALPHAS[(int) random(0, 25)] + NUMERALS[(int) random(0, 9)];
             }
 
             public static String simpleCode(){
-                return NUMERALS[(int) random(0, 9)] +
-                        NUMERALS[(int) random(0, 9)] +
-                        NUMERALS[(int) random(0, 9)] +
-                        NUMERALS[(int) random(0, 9)] +
-                        NUMERALS[(int) random(0, 9)] +
-                        NUMERALS[(int) random(0, 9)];
+                return NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)];
             }
 
             public static double random(double low, double high){
@@ -207,48 +186,6 @@ public class Telifie {
                 return src;
             }
 
-            public static boolean isWebpage(String uri){
-                String[] fileExts = { ".jpg", ".jpeg", ".png", ".gif", ".md", ".txt" };
-                String lowercaseUri = uri.toLowerCase();
-                if (lowercaseUri.startsWith("https://") || lowercaseUri.startsWith("http://") || lowercaseUri.startsWith("www")) {
-                    for (String extension : fileExts) {
-                        if (lowercaseUri.endsWith(extension)) {
-                            return false;
-                        }
-                    }
-                    return true;
-                }
-                return false;
-            }
-
-            public static boolean isFile(String uri){
-                return uri.startsWith("file://") || uri.startsWith("c:/") || uri.startsWith("\\");
-            }
-
-            public static String getType(String uri){
-                if(isWebpage(uri) || uri.endsWith("html")){
-                    return "webpage";
-                }else if(uri.endsWith("png") || uri.endsWith("gif") || uri.endsWith("jpeg") || uri.endsWith("jpg") || uri.endsWith("psd")){
-                    return "image";
-                }else if(uri.endsWith("mp4") || uri.endsWith("wmv") || uri.endsWith("mov") || uri.endsWith("avi") || uri.endsWith("flv") || uri.endsWith("mkv")){
-                    return "video";
-                }else if(uri.endsWith("wav") || uri.endsWith("mp3")){
-                    return "audio";
-                }else if(uri.endsWith("pdf") || uri.endsWith("docx") || uri.endsWith("txt") || uri.endsWith("rtf")){
-                    return "document";
-                }else if(uri.endsWith("php") || uri.endsWith("css")){
-                    return "code";
-                }else{
-                    return "Unknown";
-                }
-            }
-
-            public static boolean isValidLink(String link) {
-                if(link.contains("cart") || link.contains("search") || link.contains("account") || link.contains("#")){ //Audit out pages
-                    return false;
-                }
-                return !link.startsWith("tel:") || !link.startsWith("mailto:") || !link.startsWith("sms:") || !link.startsWith("skype:") || !link.startsWith("#");
-            }
         }
     }
 }

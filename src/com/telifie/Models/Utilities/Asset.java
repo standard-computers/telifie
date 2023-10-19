@@ -81,6 +81,10 @@ public class Asset {
         return uri.startsWith("file://") || uri.startsWith("c:/") || uri.startsWith("\\");
     }
 
+    public static boolean isFile(String uri){
+        return uri.startsWith("file://") || uri.startsWith("c:/") || uri.startsWith("\\");
+    }
+
     public boolean isURL(){
         return uri.startsWith("https://") || uri.startsWith("http://") || uri.startsWith("www");
     }
@@ -97,5 +101,44 @@ public class Asset {
             return true;
         }
         return false;
+    }
+
+    public static String getType(String uri){
+        if(isWebpage(uri) || uri.endsWith("html")){
+            return "webpage";
+        }else if(uri.endsWith("png") || uri.endsWith("gif") || uri.endsWith("jpeg") || uri.endsWith("jpg") || uri.endsWith("psd")){
+            return "image";
+        }else if(uri.endsWith("mp4") || uri.endsWith("wmv") || uri.endsWith("mov") || uri.endsWith("avi") || uri.endsWith("flv") || uri.endsWith("mkv")){
+            return "video";
+        }else if(uri.endsWith("wav") || uri.endsWith("mp3")){
+            return "audio";
+        }else if(uri.endsWith("pdf") || uri.endsWith("docx") || uri.endsWith("txt") || uri.endsWith("rtf")){
+            return "document";
+        }else if(uri.endsWith("php") || uri.endsWith("css")){
+            return "code";
+        }else{
+            return "Unknown";
+        }
+    }
+
+    public static boolean isWebpage(String uri){
+        String[] fileExts = { ".jpg", ".jpeg", ".png", ".gif", ".md", ".txt" };
+        String lowercaseUri = uri.toLowerCase();
+        if (lowercaseUri.startsWith("https://") || lowercaseUri.startsWith("http://") || lowercaseUri.startsWith("www")) {
+            for (String extension : fileExts) {
+                if (lowercaseUri.endsWith(extension)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isValidLink(String link) {
+        if(link.contains("cart") || link.contains("search") || link.contains("account") || link.contains("#")){ //Audit out pages
+            return false;
+        }
+        return !link.startsWith("tel:") || !link.startsWith("mailto:") || !link.startsWith("sms:") || !link.startsWith("skype:") || !link.startsWith("#");
     }
 }

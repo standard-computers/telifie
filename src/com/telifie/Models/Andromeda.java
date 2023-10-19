@@ -23,6 +23,11 @@ public class Andromeda extends Client{
     protected static Configuration config;
     protected static Session session;
 
+    public static String[] STOPWORDS = new String[]{"a", "an", "and", "are", "as", "at", "or", "make", "be", "by", "for", "from", "has", "he", "in", "is", "it", "its", "of", "on", "that", "the", "to", "was", "were", "with", "who", "what", "when", "where", "why", "how", "you"};
+    public static final String[] ALPHAS = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"};
+    public static final String[] NUMERALS = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
+    public static final String[] PROXIMITY = {"near", "nearby", "close to", "around", "within", "in the vicinity of", "within walking distance of", "adjacent to", "bordering", "neighboring", "local to", "surrounding", "not far from", "just off"};
+
     public Andromeda(Configuration config, Session session, boolean index){
         super(session);
         this.config = config;
@@ -34,10 +39,9 @@ public class Andromeda extends Client{
         }
     }
 
-    public Andromeda(Configuration config, Session session){
-        this(config, session, false);
-    }
-
+    /**
+     * This method goes through the Articles DB and reiterates the models.
+     */
     private void index(){
         try {
             MongoDatabase database = super.mc.getDatabase(session.getDomain());
@@ -231,7 +235,7 @@ public class Andromeda extends Client{
         public static String clean(String text){
             String cleanedText = text.toLowerCase().trim();
             cleanedText = cleanedText.replaceAll("[\\d+]", "");
-            cleanedText = Telifie.tools.removeWords(cleanedText, Telifie.stopWords);
+            cleanedText = Telifie.tools.removeWords(cleanedText, STOPWORDS);
             cleanedText = cleanedText.replaceAll("[^a-zA-Z0-9 ]", "");
             return cleanedText;
         }

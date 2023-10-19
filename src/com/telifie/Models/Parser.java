@@ -2,7 +2,6 @@ package com.telifie.Models;
 
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
-import com.telifie.Models.Utilities.Console;
 import com.telifie.Models.Utilities.Event;
 import com.telifie.Models.Articles.*;
 import com.telifie.Models.Clients.ArticlesClient;
@@ -40,14 +39,14 @@ public class Parser {
         public static Article parse(String uri){
             traversable.removeAll(traversable);
             Parser.uri = uri;
-            if(Telifie.tools.detector.isWebpage(uri)){
+            if(Asset.isWebpage(uri)){
                 try {
                     host = new URL(uri).getHost();
                 } catch (MalformedURLException e) {
                     throw new RuntimeException(e);
                 }
                 return Parser.engines.website(uri);
-            }else if(Telifie.tools.detector.isFile(uri)){ //File URI provided
+            }else if(Asset.isFile(uri)){ //File URI provided
                 File file = new File(uri);
                 if(file.exists()){
 
@@ -128,7 +127,7 @@ public class Parser {
                     for(Element link : links){
                         String href = Telifie.tools.detector.fixLink(host, link.attr("href").split("\\?")[0]);
                         if(!isParsed(href)
-                                && Telifie.tools.detector.isWebpage(href)
+                                && Asset.isWebpage(href)
                                 && !Telifie.tools.contains(new String[]{
                                 "facebook.com", "instagram.com", "spotify.com",
                                 "linkedin.com", "youtube.com", "pinterest.com",
@@ -395,7 +394,7 @@ public class Parser {
             for(Element image : images){
                 String src = Telifie.tools.detector.fixLink(url, image.attr("src"));
                 String srcset = Telifie.tools.detector.fixLink(url, image.attr("srcset"));
-                if(!src.isEmpty() && !src.equals("null") && Telifie.tools.detector.getType(src).equals("image") && !image.attr("src").trim().toLowerCase().startsWith("data:")){
+                if(!src.isEmpty() && !src.equals("null") && Asset.getType(src).equals("image") && !image.attr("src").trim().toLowerCase().startsWith("data:")){
                     String caption = Telifie.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;").trim());
                     if(!caption.equals("Page semi-protected") && !caption.equals("Wikimedia Foundation") && !caption.equals("Powered by MediaWiki") && !caption.equals("Edit this at Wikidata") && !caption.equals("This is a good article. Click here for more information.")){
                         Image img = new Image(src, caption, url);
@@ -514,7 +513,7 @@ public class Parser {
         for(Element el : elements){
             String link = el.attr("href");
             String fixed = Telifie.tools.detector.fixLink(root, link);
-            if(Telifie.tools.detector.isValidLink(fixed)){
+            if(Asset.isValidLink(fixed)){
                 links.add(fixed);
             }
         }

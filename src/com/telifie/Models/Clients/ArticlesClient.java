@@ -95,7 +95,7 @@ public class ArticlesClient extends Client {
                 results.add(new Article(document));
             }
             if(results != null && !query.contains(":")){
-                if(Telifie.tools.has(Telifie.PROXIMITY, query) > -1) {
+                if(Telifie.tools.has(Andromeda.PROXIMITY, query) > -1) {
                     Collections.sort(results, new ArticlesClient.DistanceSorter(params.getLatitude(), params.getLongitude()));
                 }else{
                     Collections.sort(results, new ArticlesClient.CosmoScore(Andromeda.encoder.clean(query)));
