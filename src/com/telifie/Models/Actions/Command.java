@@ -6,6 +6,7 @@ import com.telifie.Models.Parser;
 import com.telifie.Models.Clients.*;
 import com.telifie.Models.Connectors.Spotify;
 import com.telifie.Models.Utilities.*;
+import com.telifie.Models.Utilities.Package;
 import org.apache.hc.core5.http.ParseException;
 import org.bson.Document;
 import org.json.JSONException;
@@ -54,12 +55,12 @@ public class Command {
                         return new Result(410, this.command, "NOT FOUND");
                     }
                 }
+                try {
                     Parameters params = new Parameters(content);
                     return new Search().execute(session, query, params);
-//                try {
-//                }catch(NullPointerException n){
-//                    return new Result(505, this.command, "SEARCH ERROR");
-//                }
+                }catch(NullPointerException n){
+                    return new Result(505, this.command, "SEARCH ERROR");
+                }
             }
             return new Result(428, this.command, "JSON BODY EXPECTED");
         }
@@ -620,7 +621,7 @@ public class Command {
             }
             return new Result(428, this.command, "CONNECTOR NAME REQUIRED");
         }
-        /**
+        /*
          * For receiving messages through Twilio
          */
         else if(primarySelector.equals("messaging")){
@@ -628,12 +629,48 @@ public class Command {
             String message = content.getString("Body");
 
         }
-        /**
+        /*
          * For mySQL services
          * View tracking and messages
          */
         else if(primarySelector.equals("ping")){
+            if(content != null){
 
+            }
+            return new Result(428, this.command, "JSON BODY EXPECTED");
+        }
+        /*
+         * Managing packages in the system.
+         * Primarily for connectors and APIs
+         */
+        else if(primarySelector.equals("packages")){
+
+            PackagesClient packages = new PackagesClient(session);
+            if(objectSelector.equals("create")){
+
+                if(content != null){
+                    Package p = new Package(content);
+                    if(packages.create(p)){
+                        return new Result(200, this.command, "PACKAGED CREATED");
+                    }
+                    return new Result(505, this.command, "FAILED PACKAGE CREATION");
+                }
+                return new Result(428, this.command, "JSON BODY EXPECTED");
+
+            }else if(objectSelector.equals("delete")){
+                try{
+                    Package p = packages.get(secSelector);
+                    packages.delete(p.getName(), p.getVersion());
+                    return new Result(200, this.command, "PACKAGE DELETED");
+                }catch (NullPointerException e){
+                    return new Result(404, this.command, "PACKAGE NOT FOUND");
+                }
+            }
+            try{
+                return new Result(this.command, "package", packages.get(objectSelector));
+            }catch (NullPointerException e){
+                return new Result(404, this.command, "PACKAGE NOT FOUND");
+            }
         }
         return new Result(200, this.command, "NO COMMAND RECEIVED");
     }

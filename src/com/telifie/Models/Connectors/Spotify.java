@@ -49,12 +49,7 @@ public class Spotify extends Connector {
         session.setDomain(session.getUser());
         ArticlesClient articles = new ArticlesClient(session); //Put found articles in personal domain
         CollectionsClient collections = new CollectionsClient(session); //Put generated collections in personal domain
-        Source primarySource = new Source(
-                "com.telifie.connectors.spotify",
-                "https://telifie-static.nyc3.cdn.digitaloceanspaces.com/images/connectors/spotify.png",
-                "Connector / Spotify",
-                "https://telifie.com/documentation/connectors/spotify"
-        );
+        Source primarySource = new Source("com.telifie.connectors.spotify", "https://telifie-static.nyc3.cdn.digitaloceanspaces.com/images/connectors/spotify.png", "Connector / Spotify", "https://telifie.com/documentation/connectors/spotify");
         Collection playlistsCollection = new Collection("Spotify Playlists").setDomain(session.getUser());
         playlistsCollection.setIcon("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/images/connectors/spotify.png");
         collections.create(playlistsCollection);

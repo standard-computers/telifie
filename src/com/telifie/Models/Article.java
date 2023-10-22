@@ -3,8 +3,6 @@ package com.telifie.Models;
 import com.telifie.Models.Articles.*;
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
-import org.bson.types.ObjectId;
-
 import java.util.ArrayList;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -25,7 +23,7 @@ public class Article {
 
     public Article(){
         this.id = UUID.randomUUID().toString();
-        this.origin = (int) (System.currentTimeMillis() / 1000);
+        this.origin = Telifie.epochTime();
     }
 
     public Article(Document document) throws NullPointerException {
@@ -216,14 +214,14 @@ public class Article {
                 ", \"title\" : \"" + title + '\"' +
                 (link == null ? "" : ", \"link\" : \"" + link + '\"') +
                 (icon == null ? "" : ", \"icon\" : \"" + icon + '\"') +
-                (description == null || description.equals("") ? "" : ", \"description\" : \"" + description + '\"') +
+                (description == null || description.isEmpty() ? "" : ", \"description\" : \"" + description + '\"') +
                 (priority == 0 ? "" : ", \"priority\" : " + priority) +
                 (content == null ? "" : ", \"content\" : \"" + content + "\"") +
                 (tags == null ? "" : ", \"tags\" : " + tags.stream().map(tag -> "\"" + tag + "\"").collect(Collectors.joining(", ", "[", "]"))) +
                 (images == null ? "" : ", \"images\" : " + images) +
                 (attributes == null ? "" : ", \"attributes\" : " + attributes) +
-                (associations.size() == 0 ? "" : ", \"associations\" : " + associations) +
-                (dataSets.size() == 0 ? "" : ", \"data_sets\" : " + dataSets) +
+                (associations.isEmpty() ? "" : ", \"associations\" : " + associations) +
+                (dataSets.isEmpty() ? "" : ", \"data_sets\" : " + dataSets) +
                 (source == null ? ", \"source\" : null" : ", \"source\" : " + source) +
                 ", \"origin\" : " + origin +
                 '}';

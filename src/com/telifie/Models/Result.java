@@ -82,19 +82,14 @@ public class Result {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("{")
-                .append("\"status_code\" : ").append(statusCode)
-                .append(", \"id\" : \"").append(id).append('\"')
-                .append(", \"query\" : \"").append(query).append('\"');
+        sb.append("{").append("\"status_code\" : ").append(statusCode).append(", \"id\" : \"").append(id).append('\"').append(", \"query\" : \"").append(query).append('\"');
         if (!source.isEmpty()) {
             sb.append(", \"source\" : \"").append(source).append('\"');
         }
         if (!generated.isEmpty()) {
             sb.append(", \"generated\" : \"").append(generated).append('\"');
         }
-        sb.append(", \"count\" : ").append(count)
-                .append(", \"total\" : ").append(total)
-                .append(", \"origin\" : ").append(origin);
+        sb.append(", \"count\" : ").append(count).append(", \"total\" : ").append(total).append(", \"origin\" : ").append(origin);
         if (!quickResults.isEmpty()) {
             sb.append(", \"quick_results\" : ").append(quickResults);
         }

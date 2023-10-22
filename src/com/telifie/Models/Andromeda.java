@@ -5,7 +5,6 @@ import com.mongodb.client.model.UpdateOptions;
 import com.telifie.Models.Clients.Client;
 import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Session;
-import com.telifie.Models.Utilities.Telifie;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.bson.Document;
 import java.util.*;

@@ -28,7 +28,7 @@ public class Authentication {
         this.user = user.getId();
         this.token = Telifie.md5(Telifie.randomReferenceCode());
         this.refreshToken = Telifie.md5(Telifie.randomReferenceCode());
-        this.origin = (int) (System.currentTimeMillis() / 1000);
+        this.origin = Telifie.epochTime();
         this.expiration = this.origin + 2419000; //28 Days until expiration
     }
 
@@ -58,13 +58,7 @@ public class Authentication {
 
     @Override
     public String toString() {
-        return new StringBuilder().append("{")
-                .append("\"user\" : \"").append(user).append('\"')
-                .append(", \"token\" : \"").append(token).append('\"')
-                .append(", \"refresh_token\" : \"").append(refreshToken).append('\"')
-                .append(", \"origin\" : ").append(origin)
-                .append(", \"expiration\" : ").append(expiration)
-                .append("}").toString();
+        return new StringBuilder().append("{").append("\"user\" : \"").append(user).append('\"').append(", \"token\" : \"").append(token).append('\"').append(", \"refresh_token\" : \"").append(refreshToken).append('\"').append(", \"origin\" : ").append(origin).append(", \"expiration\" : ").append(expiration).append("}").toString();
     }
 
     public JSONObject toJson(){
@@ -74,5 +68,4 @@ public class Authentication {
     public Document document(){
         return Document.parse(this.toString());
     }
-
 }
