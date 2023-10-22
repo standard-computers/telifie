@@ -43,12 +43,7 @@ public class DomainsClient extends Client {
      */
     public ArrayList<Domain> forMember(String userId){
         ArrayList<Domain> domains = new ArrayList<>();
-        ArrayList<Document> fnd = super.find(new Document("$or", Arrays.asList(
-                    new Document("owner", userId),
-                    new Document("users.email", userId)
-                )
-            )
-        );
+        ArrayList<Document> fnd = super.find(new Document("$or", Arrays.asList(new Document("owner", userId), new Document("users.email", userId))));
         fnd.forEach(doc -> domains.add(new Domain(doc)));
         return domains;
     }

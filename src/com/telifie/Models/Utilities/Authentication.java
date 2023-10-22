@@ -26,8 +26,8 @@ public class Authentication {
 
     public Authentication(User user){
         this.user = user.getId();
-        this.token = Telifie.tools.make.md5(Telifie.tools.make.randomReferenceCode());
-        this.refreshToken = Telifie.tools.make.md5(Telifie.tools.make.randomReferenceCode());
+        this.token = Telifie.md5(Telifie.randomReferenceCode());
+        this.refreshToken = Telifie.md5(Telifie.randomReferenceCode());
         this.origin = (int) (System.currentTimeMillis() / 1000);
         this.expiration = this.origin + 2419000; //28 Days until expiration
     }

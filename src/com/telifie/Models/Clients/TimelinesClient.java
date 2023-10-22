@@ -15,15 +15,7 @@ public class TimelinesClient extends Client {
     }
 
     public void addEvent(String object, Event event){
-        this.updateOne(
-                new Document("$and",
-                        List.of(
-                                new Document("object", object)
-                        )
-                ),
-                new Document("$push", new Document("events", Document.parse(event.toString()))),
-                new UpdateOptions().upsert(true)
-        );
+        this.updateOne(new Document("$and", List.of(new Document("object", object))), new Document("$push", new Document("events", Document.parse(event.toString()))), new UpdateOptions().upsert(true));
     }
 
     public int lastEvent(String object, Event.Type type){

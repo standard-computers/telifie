@@ -1,5 +1,6 @@
 package com.telifie.Models.Connectors;
 
+import com.telifie.Models.Andromeda;
 import com.telifie.Models.Article;
 import com.telifie.Models.Articles.Attribute;
 import com.telifie.Models.Articles.DataSet;
@@ -76,9 +77,9 @@ public class Spotify extends Connector {
             Paging<PlaylistTrack> playlistTracks = spotifyApi.getPlaylistsItems(playlist).build().execute();
             for (PlaylistTrack playlistTrack : playlistTracks.getItems()) {
                 Track track = (Track) playlistTrack.getTrack();
-                String trackName = Telifie.tools.htmlEscape(track.getName());
+                String trackName = Andromeda.tools.htmlEscape(track.getName());
                 String trackLink = track.getExternalUrls().get("spotify");
-                String trackIcon = Telifie.tools.htmlEscape(track.getAlbum().getImages()[0].getUrl());
+                String trackIcon = Andromeda.tools.htmlEscape(track.getAlbum().getImages()[0].getUrl());
                 String trackAlbumName = track.getAlbum().getName();
                 String trackDuration = formatDuration(track.getDurationMs());
                 Date addedAt = playlistTrack.getAddedAt();

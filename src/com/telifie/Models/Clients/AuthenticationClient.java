@@ -16,12 +16,7 @@ public class AuthenticationClient extends Client {
     }
 
     public boolean isAuthenticated(Authentication authentication){
-        Document findAuthentication = this.findOne(
-                new Document("$and", Arrays.asList(
-                        new Document("user", authentication.getUser()),
-                        new Document("token", authentication.getToken())
-                    )
-                ));
+        Document findAuthentication = this.findOne(new Document("$and", Arrays.asList(new Document("user", authentication.getUser()), new Document("token", authentication.getToken()))));
         if(findAuthentication == null){
             return false;
         }
@@ -30,7 +25,6 @@ public class AuthenticationClient extends Client {
         if(epoch > found.getExpiration()){
             return false;
         }
-        return found.hasToken(authentication.getToken())
-                && found.hasRefreshToken(authentication.getRefreshToken());
+        return found.hasToken(authentication.getToken()) && found.hasRefreshToken(authentication.getRefreshToken());
     }
 }

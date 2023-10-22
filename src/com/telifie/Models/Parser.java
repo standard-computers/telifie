@@ -75,11 +75,7 @@ public class Parser {
                 int lastCrawl = timelines.lastEvent(a.getId(), Event.Type.CRAWL);
                 System.out.println(i);
                 if(lastCrawl > 3602000 || lastCrawl == -1){ //7 days
-                    timelines.addEvent(a.getId(), new Event(
-                            Event.Type.CRAWL,
-                            "com.telifie.web-app@parser",
-                            "Crawled")
-                    );
+                    timelines.addEvent(a.getId(), new Event(Event.Type.CRAWL, "com.telifie.web-app@parser", "Crawled"));
                     parsed.add(a.getLink());
                     Parser.engines.crawl(a.getLink(), Integer.MAX_VALUE, 0, "Webpage", false);
                 }
@@ -125,10 +121,10 @@ public class Parser {
                     }
                     ArrayList<Element> links = root.getElementsByTag("a");
                     for(Element link : links){
-                        String href = Telifie.tools.detector.fixLink(host, link.attr("href").split("\\?")[0]);
+                        String href = fixLink(host, link.attr("href").split("\\?")[0]);
                         if(!isParsed(href)
                                 && Asset.isWebpage(href)
-                                && !Telifie.tools.contains(new String[]{
+                                && !Andromeda.tools.contains(new String[]{
                                 "facebook.com", "instagram.com", "spotify.com",
                                 "linkedin.com", "youtube.com", "pinterest.com",
                                 "twitter.com", "tumblr.com", "reddit.com"}, href)
@@ -169,7 +165,7 @@ public class Parser {
                     ArrayList<String> links = Parser.extractLinks(root.getElementsByTag("a"), uri);
                     if(!links.isEmpty()){
                         for(String link : links){
-                            if(Telifie.tools.contains(new String[]{"facebook.com", "instagram.com", "spotify.com", "linkedin.com", "youtube.com", "pinterest.com", "github.com", "twitter.com", "tumblr.com", "reddit.com"}, link)){
+                            if(Andromeda.tools.contains(new String[]{"facebook.com", "instagram.com", "spotify.com", "linkedin.com", "youtube.com", "pinterest.com", "github.com", "twitter.com", "tumblr.com", "reddit.com"}, link)){
                                 URI uri;
                                 try {
                                     uri = new URI(link);
@@ -235,7 +231,7 @@ public class Parser {
                             case "tags" -> tagsIndex = i;
                         }
                     }
-                    String batchId = Telifie.tools.make.shortEid().toLowerCase();
+                    String batchId = Telifie.shortEid().toLowerCase();
                     for (int i = 1; i < lines.size(); i++) {
                         String[] articleData = lines.get(i);
                         Article article = new Article();
@@ -331,7 +327,7 @@ public class Parser {
             a.setTitle(uri.split("/")[uri.split("/").length - 1].split("\\.")[0]);
             a.setDescription("Markdown File");
             a.addTags(keywords);
-            a.setContent(Telifie.tools.escapeMarkdownForJson(Telifie.tools.htmlEscape(asset.getContents())));
+            a.setContent(Andromeda.tools.escapeMarkdownForJson(Andromeda.tools.htmlEscape(asset.getContents())));
             a.addAttribute(new Attribute("File Type", "Markdown"));
             a.addAttribute(new Attribute("Size", asset.fileSize()));
             a.addAttribute(new Attribute("Lines", asset.lineCount()));
@@ -346,7 +342,7 @@ public class Parser {
             a.setTitle(uri.split("/")[uri.split("/").length - 1].split("\\.")[0]);
             a.setDescription("Text File");
             a.addTags(keywords);
-            a.setContent(Telifie.tools.escapeMarkdownForJson(Telifie.tools.htmlEscape(asset.getContents())));
+            a.setContent(Andromeda.tools.escapeMarkdownForJson(Andromeda.tools.htmlEscape(asset.getContents())));
             a.addAttribute(new Attribute("File Type", "Plain Text"));
             a.addAttribute(new Attribute("Size", asset.fileSize()));
             a.addAttribute(new Attribute("Lines", asset.lineCount()));
@@ -362,7 +358,7 @@ public class Parser {
             Elements metaTags = document.getElementsByTag("meta");
             for (Element tag : metaTags){
                 String mtn = tag.attr("name");
-                String mtc = Telifie.tools.htmlEscape(tag.attr("content"));
+                String mtc = Andromeda.tools.htmlEscape(tag.attr("content"));
                 switch (mtn) {
                     case "description" -> {
                         if (!tag.attr("content").trim().isEmpty()) {
@@ -384,7 +380,7 @@ public class Parser {
                 String href = linkTag.attr("href");
                 if(rel.contains("icon")){
                     try {
-                        article.setIcon(Telifie.tools.detector.fixLink("https://" + new URL(url).getHost(), href));
+                        article.setIcon(fixLink("https://" + new URL(url).getHost(), href));
                     } catch (MalformedURLException e) {
                         throw new RuntimeException(e);
                     }
@@ -392,21 +388,21 @@ public class Parser {
             }
             Elements images = document.getElementsByTag("img");
             for(Element image : images){
-                String src = Telifie.tools.detector.fixLink(url, image.attr("src"));
-                String srcset = Telifie.tools.detector.fixLink(url, image.attr("srcset"));
+                String src = fixLink(url, image.attr("src"));
+                String srcset = fixLink(url, image.attr("srcset"));
                 if(!src.isEmpty() && !src.equals("null") && Asset.getType(src).equals("image") && !image.attr("src").trim().toLowerCase().startsWith("data:")){
-                    String caption = Telifie.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;").trim());
+                    String caption = Andromeda.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;").trim());
                     if(!caption.equals("Page semi-protected") && !caption.equals("Wikimedia Foundation") && !caption.equals("Powered by MediaWiki") && !caption.equals("Edit this at Wikidata") && !caption.equals("This is a good article. Click here for more information.")){
                         Image img = new Image(src, caption, url);
                         article.addImage(img);
                     }
                 }else if(!srcset.isEmpty() && !srcset.startsWith("data:")){
-                    String caption =  Telifie.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
+                    String caption =  Andromeda.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
                     Image img = new Image(src, caption, url);
                     article.addImage(img);
                 }
             }
-            article.setTitle(Telifie.tools.htmlEscape(document.title()));
+            article.setTitle(Andromeda.tools.htmlEscape(document.title()));
             article.setLink(url);
             String whole_text = document.text().replaceAll("[\n\r]", " ");
             Pattern pattern = Pattern.compile("\\$\\d+(\\.\\d{2})?");
@@ -431,7 +427,7 @@ public class Parser {
                     article.setTitle(article.getTitle().replaceAll(" - Wikipedia", ""));
                     body.select("div.mw-jump-link, div#toc, div.navbox, table.infobox, div.vector-body-before-content, div.navigation-not-searchable, div.mw-footer-container, div.reflist, div#See_also, h2#See_also, h2#References, h2#External_links").remove();
                 }else{
-                    Matcher phone_numbers = Telifie.tools.detector.findPhoneNumbers(whole_text);
+                    Matcher phone_numbers = findPhoneNumbers(whole_text);
                     while(phone_numbers.find()){
                         String phone_number = phone_numbers.group().trim().replaceAll("[^0-9]", "").replaceFirst("(\\d{3})(\\d{3})(\\d+)", "($1) $2 – $3");
                         Attribute attr = new Attribute("Phone", phone_number);
@@ -447,7 +443,7 @@ public class Parser {
                             markdown.append("  \n").append(text).append("  \n");
                         }
                     } else if (element.tagName().equalsIgnoreCase("h3")) {
-                        String headerText = Telifie.tools.escape(element.text().trim());
+                        String headerText = Andromeda.tools.escape(element.text().trim());
                         markdown.append("##### ").append(headerText).append("  \n");
                     }
                 }
@@ -512,11 +508,35 @@ public class Parser {
         ArrayList<String> links = new ArrayList<>();
         for(Element el : elements){
             String link = el.attr("href");
-            String fixed = Telifie.tools.detector.fixLink(root, link);
+            String fixed = fixLink(root, link);
             if(Asset.isValidLink(fixed)){
                 links.add(fixed);
             }
         }
         return links;
+    }
+
+    public static Matcher findPhoneNumbers(String text){
+        String regex = "\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b";
+        Pattern pattern = Pattern.compile(regex);
+        return pattern.matcher(text);
+    }
+
+    public static String fixLink(String url, String src){
+        if(src.startsWith("//")){
+            src = "https:" + src.trim();
+        }else if(src.startsWith("/")){
+            if(url.endsWith("/")){
+                src = url.substring(0, url.length() - 1) + src;
+            }else{
+                src = url + src;
+            }
+        }else if(src.startsWith("www")){
+            src = "https://" + src;
+        }else if(src.startsWith("./")){
+            src = url + "/" + src;
+            return src.replaceFirst("\\./", "");
+        }
+        return src;
     }
 }

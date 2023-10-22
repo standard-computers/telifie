@@ -1,19 +1,8 @@
 package com.telifie.Models.Utilities;
 
-import com.mongodb.client.*;
-import com.mongodb.client.model.Updates;
-import com.mongodb.client.model.geojson.Point;
-import com.mongodb.client.model.geojson.Position;
-import com.telifie.Models.Article;
-import org.apache.commons.lang3.StringEscapeUtils;
-import org.bson.Document;
-import org.bson.conversions.Bson;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import static com.telifie.Models.Andromeda.ALPHAS;
 import static com.telifie.Models.Andromeda.NUMERALS;
 
@@ -39,153 +28,34 @@ public class Telifie {
         return (int) (System.currentTimeMillis() / 1000);
     }
 
-    public static class tools {
+    public static String randomReferenceCode(){
+        return ALPHAS[(int) random(0, 25)] + ALPHAS[(int) random(0, 25)] + ALPHAS[(int) random(0, 25)] + ALPHAS[(int) random(0, 25)] + ALPHAS[(int) random(0, 25)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)];
+    }
 
-        public static void geocode(Configuration config){
-            MongoClient mongoClient = MongoClients.create(config.getURI());
-            MongoDatabase database = mongoClient.getDatabase("telifie");
-            MongoCollection<Document> collection = database.getCollection("articles");
-            FindIterable<Document> doc = collection.find(new Document("$and", Arrays.asList(
-                    new Document("attributes.key", "Longitude"),
-                    new Document("attributes.key", "Latitude"),
-                    new Document("location", new Document("$exists", false))
-            )));
-            for(Document d : doc){
-                if (d != null) {
-                    Article a = new Article(d);
-                    String longitude = a.getAttribute("Longitude");
-                    String latitude = a.getAttribute("Latitude");
-                    if(longitude != null && latitude != null && !longitude.equals("null") && !latitude.equals("null")){
-                        double longitudeValue = Double.parseDouble(longitude);
-                        double latitudeValue = Double.parseDouble(latitude);
-                        Position position = new Position(longitudeValue, latitudeValue);
-                        Point point = new Point(position);
-                        Bson update = Updates.set("location", point);
-                        collection.updateOne(new Document("id", a.getId()), update);
-                        System.out.println(a.getTitle());
-                    }
-                }
+    public static String shortEid(){
+        return ALPHAS[(int) random(0, 25)] + NUMERALS[(int) random(0, 9)] + ALPHAS[(int) random(0, 25)] + NUMERALS[(int) random(0, 9)] + ALPHAS[(int) random(0, 25)] + NUMERALS[(int) random(0, 9)];
+    }
+
+    public static String simpleCode(){
+        return NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)];
+    }
+
+    public static double random(double low, double high){
+        return ((Math.random() * high) - low);
+    }
+
+    public static String md5(String input){
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] messageDigest = md.digest(input.getBytes());
+            BigInteger no = new BigInteger(1, messageDigest);
+            String hashtext = no.toString(16);
+            while (hashtext.length() < 32) {
+                hashtext = "0" + hashtext;
             }
-            mongoClient.close();
-        }
-
-        public static String escapeMarkdownForJson(String markdownText) {
-            String escapedText = markdownText.replace("\\", "\\\\");
-            escapedText = escapedText.replace("\"", "\\\"");
-            escapedText = escapedText.replace("\n", "\\n");
-            escapedText = escapedText.replace("\r", "\\r");
-            escapedText = escapedText.replace("\t", "\\t");
-            escapedText = escapedText.replace("\b", "\\b");
-            escapedText = escapedText.replace("\f", "\\f");
-            return escapedText;
-        }
-
-        public static boolean contains(String[] things, String string){
-            for (String thing: things) {
-                if(string.contains(thing)){
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public static int has(String[] things, String string){
-            for(int i = 0; i < things.length; i++){
-                if(string.contains(things[i])){
-                    return i;
-                }
-            }
-            return -1;
-        }
-
-        public static String removeWords(String text, String[] wordsToRemove) {
-            StringBuilder sb = new StringBuilder();
-            String[] words = text.split("\\s+");
-            for (String word : words) {
-                if (!Arrays.asList(wordsToRemove).contains(word.toLowerCase())) {
-                    sb.append(word).append(" ");
-                }
-            }
-            return sb.toString().trim();
-        }
-
-        public static boolean equals(char sample, char[] chars){
-            for(char ch : chars){
-                if(sample == ch){
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public static String escape(String string){
-            return  StringEscapeUtils.escapeJson(string);
-        }
-
-        public static String htmlEscape(String string){
-            return  StringEscapeUtils.escapeHtml4(string);
-        }
-
-        public static class make {
-
-            public static String randomReferenceCode(){
-                return ALPHAS[(int) random(0, 25)] + ALPHAS[(int) random(0, 25)] + ALPHAS[(int) random(0, 25)] + ALPHAS[(int) random(0, 25)] + ALPHAS[(int) random(0, 25)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)];
-            }
-
-            public static String shortEid(){
-                return ALPHAS[(int) random(0, 25)] + NUMERALS[(int) random(0, 9)] + ALPHAS[(int) random(0, 25)] + NUMERALS[(int) random(0, 9)] + ALPHAS[(int) random(0, 25)] + NUMERALS[(int) random(0, 9)];
-            }
-
-            public static String simpleCode(){
-                return NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)];
-            }
-
-            public static double random(double low, double high){
-                return ((Math.random() * high) - low);
-            }
-
-            public static String md5(String input){
-                try {
-                    MessageDigest md = MessageDigest.getInstance("MD5");
-                    byte[] messageDigest = md.digest(input.getBytes());
-                    BigInteger no = new BigInteger(1, messageDigest);
-                    String hashtext = no.toString(16);
-                    while (hashtext.length() < 32) {
-                        hashtext = "0" + hashtext;
-                    }
-                    return hashtext;
-                } catch (NoSuchAlgorithmException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-
-        public static class detector {
-
-            public static Matcher findPhoneNumbers(String text){
-                String regex = "\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b";
-                Pattern pattern = Pattern.compile(regex);
-                return pattern.matcher(text);
-            }
-
-            public static String fixLink(String url, String src){
-                if(src.startsWith("//")){
-                    src = "https:" + src.trim();
-                }else if(src.startsWith("/")){
-                    if(url.endsWith("/")){
-                        src = url.substring(0, url.length() - 1) + src;
-                    }else{
-                        src = url + src;
-                    }
-                }else if(src.startsWith("www")){
-                    src = "https://" + src;
-                }else if(src.startsWith("./")){
-                    src = url + "/" + src;
-                    return src.replaceFirst("\\./", "");
-                }
-                return src;
-            }
-
+            return hashtext;
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
         }
     }
 }

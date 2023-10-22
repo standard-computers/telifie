@@ -37,7 +37,7 @@ public class Log {
         }
     }
 
-    public static String readableTimeDate(){
+    private static String readableTimeDate(){
         long epochTimestamp = Telifie.epochTime();
         Instant instant = Instant.ofEpochSecond(epochTimestamp);
         ZoneId zoneId = ZoneId.of("UTC");

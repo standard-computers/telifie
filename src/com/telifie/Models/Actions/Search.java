@@ -10,6 +10,9 @@ import com.telifie.Models.Utilities.Session;
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.mariuszgromada.math.mxparser.Expression;
+import org.mariuszgromada.math.mxparser.License;
+import java.awt.*;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -117,28 +120,13 @@ public class Search {
                     )
                 )
             ));
-        }else if(Telifie.tools.has(Andromeda.PROXIMITY, query) > -1){
-            String splr = Andromeda.PROXIMITY[Telifie.tools.has(Andromeda.PROXIMITY, query)];
+        }else if(Andromeda.tools.has(Andromeda.PROXIMITY, query) > -1){
+            String splr = Andromeda.PROXIMITY[Andromeda.tools.has(Andromeda.PROXIMITY, query)];
             String[] spl = query.split(splr);
             if(spl.length >= 2){
                 String subject = spl[0].trim();
                 String place = spl[1].trim();
-                ArrayList<Article> findPlace = articles.get(
-                        new Document("$and", Arrays.asList(
-                                new Document("title", pattern(place)),
-                                new Document("description", pattern("city")),
-                                new Document("location", new Document("$near",
-                                        new Document("$geometry", new Document("type", "Point")
-                                                .append("coordinates", Arrays.asList(
-                                                        params.getLongitude(),
-                                                        params.getLatitude()
-                                                ))
-                                        ).append("$maxDistance", Integer.MAX_VALUE)
-                                )
-                                )
-                        ))
-                );
-                Article pl = findPlace.get(0);
+                Article pl = articles.findPlace(place, params);
                 params.setLatitude( Double.parseDouble(pl.getAttribute("Longitude")));
                 params.setLongitude(Double.parseDouble(pl.getAttribute("Latitude")));
                 return new Document("$and", Arrays.asList(
@@ -178,10 +166,30 @@ public class Search {
     }
 
     private String generated(String q){
-        if((q.contains("*") || q.contains("/") || q.contains("+") || q.contains("-")) && Telifie.tools.contains(Andromeda.NUMERALS, q)){
+        if((q.contains("*") || q.contains("/") || q.contains("+") || q.contains("-")) && Andromeda.tools.contains(Andromeda.NUMERALS, q)){
+            License.iConfirmNonCommercialUse("Telifie LLC");
+            Expression expression = new Expression(q);
+            if (expression.checkSyntax()) {
+                double result = expression.calculate();
+                return "#####Result \\n" + result;
+            }
+        }else if(q.contains("uuid")){
+            return "#####Here's a UUID  \\n" + UUID.randomUUID();
+        }else if(q.contains("weather")){
 
+        }else if(q.contains("flip a coin")){
+            int random = new Random().nextInt(2);
+            return "#####Coin Flip  \\n" + ((random == 0) ? "Heads" : "Tails");
+        }else if(q.contains("roll") && q.contains("dice")){
+            int random = new Random().nextInt(6) + 1;
+            return "Your dice roll is " + random;
+        }else if(q.contains("random") && q.contains("color")){
+            Color c = new Color((int) (Math.random() * 256), (int) (Math.random() * 256), (int) (Math.random() * 256));
+            String rgb = String.format("#%02X%02X%02X", c.getRed(), c.getGreen(), c.getBlue());
+            String hex = String.format("RGB(%d, %d, %d)", c.getRed(), c.getGreen(), c.getBlue());
+            return "#####Random Color  \\n**Hex** " + hex + "  \\n**RGB** " + rgb;
         }
-        return null;
+        return "";
     }
 
     private ArrayList<Article> paginateArticles(ArrayList<Article> results, int page, int pageSize) {

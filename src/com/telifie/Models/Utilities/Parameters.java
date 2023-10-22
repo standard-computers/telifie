@@ -58,15 +58,13 @@ public class Parameters {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{ \"results_per_page\" : ").append(resultsPerPage)
+        return new StringBuilder().append("{ \"results_per_page\" : ").append(resultsPerPage)
                 .append(", \"pages\" : ").append(pages)
                 .append(", \"page\" : ").append(page)
                 .append(", \"postal_code\" : \"").append(postalCode).append("\"")
                 .append(", \"latitude\" : ").append(latitude)
                 .append(", \"longitude\" : ").append(longitude)
                 .append(", \"disable_quick_results\" : ").append(disableQuickResults)
-                .append(", \"index\" : \"").append(index).append("\"}");
-        return sb.toString();
+                .append(", \"index\" : \"").append(index).append("\"}").toString();
     }
 }

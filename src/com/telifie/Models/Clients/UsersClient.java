@@ -27,37 +27,27 @@ public class UsersClient extends Client {
     }
 
     public boolean lock(User user, String code){
-        return this.updateOne(new Document("email", user.getEmail()), new Document("$set", new Document("token", Telifie.tools.make.md5(code))));
+        return this.updateOne(new Document("email", user.getEmail()), new Document("$set", new Document("token", Telifie.md5(code))));
     }
 
     public boolean emailCode(User user){
-        String code = Telifie.tools.make.simpleCode();
+        String code = Telifie.simpleCode();
         SendGrid.sendCode(user.getEmail(), code);
         return this.lock(user, code);
     }
 
     public boolean textCode(User user){
-        String code = Telifie.tools.make.simpleCode();
+        String code = Telifie.simpleCode();
         Twilio.send(user.getPhone(), "+15138029566", "Hello \uD83D\uDC4B It's Telifie! Your login code is " + code);
         return this.lock(user, code);
     }
 
     public boolean updateUserTheme(User user, Theme theme){
-        return super.updateOne(
-            new Document("id", user.getId()),
-            new Document("$set",
-                    new Document("theme", Document.parse(theme.toString()))
-            )
-        );
+        return super.updateOne(new Document("id", user.getId()), new Document("$set", new Document("theme", Document.parse(theme.toString()))));
     }
 
     public boolean updateUserPhoto(User user, String photoUri){
-        return super.updateOne(
-                new Document("id", user.getId()),
-                new Document("$set",
-                        new Document("photo", photoUri)
-                )
-        );
+        return super.updateOne(new Document("id", user.getId()), new Document("$set", new Document("photo", photoUri)));
     }
 
     public boolean createUser(User user){
@@ -65,11 +55,6 @@ public class UsersClient extends Client {
     }
 
     public void upgradePermissions(User user){
-        super.updateOne(
-                new Document("email", user.getEmail()),
-                new Document("$set",
-                        new Document("permissions", user.getPermissions() + 1)
-                )
-        );
+        super.updateOne(new Document("email", user.getEmail()), new Document("$set", new Document("permissions", user.getPermissions() + 1)));
     }
 }

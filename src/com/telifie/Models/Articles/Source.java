@@ -42,10 +42,6 @@ public class Source {
 
     @Override
     public String toString() {
-        return new StringBuilder()
-            .append("{\"id\" : \"").append(id).append('\"')
-            .append(", \"icon\" : \"").append(icon).append('\"')
-            .append(", \"name\" : \"").append(name).append('\"')
-            .append(", \"url\" : \"").append(url).append("\"}").toString();
+        return new StringBuilder().append("{\"id\" : \"").append(id).append('\"').append(", \"icon\" : \"").append(icon).append('\"').append(", \"name\" : \"").append(name).append('\"').append(", \"url\" : \"").append(url).append("\"}").toString();
     }
 }

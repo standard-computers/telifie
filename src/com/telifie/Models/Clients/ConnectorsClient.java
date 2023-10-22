@@ -1,7 +1,6 @@
 package com.telifie.Models.Clients;
 
 import com.telifie.Models.Connector;
-import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
 import java.util.ArrayList;
@@ -34,13 +33,7 @@ public class ConnectorsClient extends Client{
     }
 
     public Connector getConnector(String id){
-        return new Connector(
-                super.findOne(new Document("$and", Arrays.asList(
-                        new Document("user", session.getUser()),
-                        new Document("id", id)
-                ))
-            )
-        );
+        return new Connector(super.findOne(new Document("$and", Arrays.asList(new Document("user", session.getUser()), new Document("id", id)))));
     }
 
     public ArrayList<Connector> mine(){

@@ -17,12 +17,6 @@ public class User implements Serializable {
     private int permissions;
     private Theme theme;
 
-    public User(String email) {
-        this.email = email;
-        this.origin = Telifie.epochTime();
-        this.permissions = 0;
-    }
-
     /**
      * Constructor for creating user.
      * Other data is autofill such as origin, permissions, and customerId

@@ -6,12 +6,8 @@ import com.telifie.Models.Clients.Client;
 import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Session;
 import com.telifie.Models.Utilities.Telifie;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.bson.Document;
-import org.languagetool.JLanguageTool;
-import org.languagetool.Language;
-import org.languagetool.language.AmericanEnglish;
-import org.languagetool.rules.RuleMatch;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -23,7 +19,7 @@ public class Andromeda extends Client{
     protected static Configuration config;
     protected static Session session;
 
-    public static String[] STOPWORDS = new String[]{"a", "an", "and", "are", "as", "at", "or", "make", "be", "by", "for", "from", "has", "he", "in", "is", "it", "its", "of", "on", "that", "the", "to", "was", "were", "with", "who", "what", "when", "where", "why", "how", "you"};
+    public static String[] STOP_WORDS = new String[]{"a", "an", "and", "are", "as", "at", "or", "make", "be", "by", "for", "from", "has", "he", "in", "is", "it", "its", "of", "on", "that", "the", "to", "was", "were", "with", "who", "what", "when", "where", "why", "how", "you"};
     public static final String[] ALPHAS = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"};
     public static final String[] NUMERALS = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
     public static final String[] PROXIMITY = {"near", "nearby", "close to", "around", "within", "in the vicinity of", "within walking distance of", "adjacent to", "bordering", "neighboring", "local to", "surrounding", "not far from", "just off"};
@@ -156,23 +152,6 @@ public class Andromeda extends Client{
             this.tokens = Arrays.stream(unit.split("\\s+")).filter(token -> !token.isEmpty()).toArray(String[]::new);
         }
 
-        public static String correct(String text) {
-            Language language = new AmericanEnglish();
-            JLanguageTool langTool = new JLanguageTool(language);
-            List<RuleMatch> matches;
-            try {
-                matches = langTool.check(text);
-                for (int i = matches.size() - 1; i >= 0; i--) {
-                    RuleMatch match = matches.get(i);
-                    String replacement = match.getSuggestedReplacements().get(0);
-                    text = text.substring(0, match.getFromPos()) + replacement + text.substring(match.getToPos());
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return text;
-        }
-
         public String[] keywords(int numKeywords) {
             String wt = Andromeda.encoder.clean(this.text.replaceAll("[^a-zA-Z ]", "").toLowerCase());
             String[] words = wt.split("\\s+");
@@ -214,7 +193,7 @@ public class Andromeda extends Client{
             for (int i = 0; i < text.length(); i++) {
                 char c = text.charAt(i);
                 currentSentence.append(c);
-                if (Telifie.tools.equals(c, new char[] {'.', '!', '?'})) {
+                if (Andromeda.tools.equals(c, new char[] {'.', '!', '?'})) {
                     sentences.add(currentSentence.toString().trim());
                     currentSentence = new StringBuilder();
                 }
@@ -235,7 +214,7 @@ public class Andromeda extends Client{
         public static String clean(String text){
             String cleanedText = text.toLowerCase().trim();
             cleanedText = cleanedText.replaceAll("[\\d+]", "");
-            cleanedText = Telifie.tools.removeWords(cleanedText, STOPWORDS);
+            cleanedText = Andromeda.tools.removeWords(cleanedText, STOP_WORDS);
             cleanedText = cleanedText.replaceAll("[^a-zA-Z0-9 ]", "");
             return cleanedText;
         }
@@ -248,6 +227,66 @@ public class Andromeda extends Client{
 
     public static class decoder {
 
+    }
+
+    public static class tools {
+
+        public static String escapeMarkdownForJson(String markdownText) {
+            String escapedText = markdownText.replace("\\", "\\\\");
+            escapedText = escapedText.replace("\"", "\\\"");
+            escapedText = escapedText.replace("\n", "\\n");
+            escapedText = escapedText.replace("\r", "\\r");
+            escapedText = escapedText.replace("\t", "\\t");
+            escapedText = escapedText.replace("\b", "\\b");
+            escapedText = escapedText.replace("\f", "\\f");
+            return escapedText;
+        }
+
+        public static boolean contains(String[] things, String string){
+            for (String thing: things) {
+                if(string.contains(thing)){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static int has(String[] things, String string){
+            for(int i = 0; i < things.length; i++){
+                if(string.contains(things[i])){
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        public static String removeWords(String text, String[] wordsToRemove) {
+            StringBuilder sb = new StringBuilder();
+            String[] words = text.split("\\s+");
+            for (String word : words) {
+                if (!Arrays.asList(wordsToRemove).contains(word.toLowerCase())) {
+                    sb.append(word).append(" ");
+                }
+            }
+            return sb.toString().trim();
+        }
+
+        public static boolean equals(char sample, char[] chars){
+            for(char ch : chars){
+                if(sample == ch){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static String escape(String string){
+            return  StringEscapeUtils.escapeJson(string);
+        }
+
+        public static String htmlEscape(String string){
+            return  StringEscapeUtils.escapeHtml4(string);
+        }
     }
 
     public static double[] softmax(double[] inputs) {

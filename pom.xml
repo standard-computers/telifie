@@ -58,11 +58,6 @@
             <version>3.12.11</version>
         </dependency>
         <dependency>
-            <groupId>com.sun.mail</groupId>
-            <artifactId>javax.mail</artifactId>
-            <version>1.6.2</version>
-        </dependency>
-        <dependency>
             <groupId>com.microsoft.graph</groupId>
             <artifactId>microsoft-graph</artifactId>
             <version>5.58.0</version>
@@ -133,16 +128,6 @@
             <version>0.4</version>
         </dependency>
         <dependency>
-            <groupId>org.languagetool</groupId>
-            <artifactId>languagetool-core</artifactId>
-            <version>6.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.languagetool</groupId>
-            <artifactId>language-all</artifactId>
-            <version>6.1</version>
-        </dependency>
-        <dependency>
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
             <version>5.7.1</version>
@@ -156,6 +141,11 @@
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <version>8.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mariuszgromada.math</groupId>
+            <artifactId>MathParser.org-mXparser</artifactId>
+            <version>5.2.1</version>
         </dependency>
     </dependencies>
 </project>

@@ -25,7 +25,7 @@ public class Collection {
     }
 
     public Collection(Document document) throws NullPointerException {
-        this.id = (document.getString("id") == null ? Telifie.tools.make.md5(Telifie.tools.make.randomReferenceCode()) : document.getString("id") );
+        this.id = (document.getString("id") == null ? Telifie.md5(Telifie.randomReferenceCode()) : document.getString("id") );
         this.domain = document.getString("domain");
         this.user = document.getString("user");
         this.icon = document.getString("icon");

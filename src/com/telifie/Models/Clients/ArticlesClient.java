@@ -1,8 +1,5 @@
 package com.telifie.Models.Clients;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.MongoException;
-import com.mongodb.client.*;
 import com.telifie.Models.Andromeda;
 import com.telifie.Models.Domain;
 import com.telifie.Models.Utilities.Parameters;
@@ -10,8 +7,8 @@ import com.telifie.Models.Article;
 import com.telifie.Models.Utilities.Session;
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
-
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class ArticlesClient extends Client {
 
@@ -42,21 +39,12 @@ public class ArticlesClient extends Client {
     }
 
     public ArrayList<Article> linked(){
-        return this.get(
-            new Document("$or",
-                Arrays.asList(
-                        new Document("source.url", new Document("$exists", true)),
-                        new Document("link", new Document("$exists", true))
-                )
-            )
-        );
+        return this.get(new Document("$or", Arrays.asList(new Document("source.url", new Document("$exists", true)), new Document("link", new Document("$exists", true)))));
     }
 
     public boolean createMany(ArrayList<Article> articles){
         ArrayList<Document> documents = new ArrayList<>();
-        for(Article article : articles){
-            documents.add(Document.parse(article.toString()));
-        }
+        articles.forEach(a -> documents.add(Document.parse(a.toString())));
         return super.insertMany(documents);
     }
 
@@ -85,26 +73,36 @@ public class ArticlesClient extends Client {
         return articles;
     }
 
+    public Article findPlace(String place, Parameters params){
+        return this.get(
+                new Document("$and", Arrays.asList(
+                        new Document("title", Pattern.compile("\\b" + Pattern.quote(place) + "\\w*\\b", Pattern.CASE_INSENSITIVE)),
+                        new Document("description", "City"),
+                        new Document("location", new Document("$near",
+                                new Document("$geometry", new Document("type", "Point")
+                                        .append("coordinates", Arrays.asList(
+                                                params.getLongitude(),
+                                                params.getLatitude()
+                                        ))
+                                ).append("$maxDistance", Integer.MAX_VALUE)
+                        )
+                        )
+                ))
+        ).get(0);
+    }
+
     public ArrayList<Article> search(String query, Parameters params, Document filter){
-        try {
-            MongoDatabase database = super.mc.getDatabase("telifie");
-            MongoCollection<Document> collection = database.getCollection(super.collection);
-            FindIterable<Document> iterable = collection.find(filter).sort(new BasicDBObject("priority", -1));
-            ArrayList<Article> results = new ArrayList<>();
-            for (Document document : iterable) {
-                results.add(new Article(document));
+        ArrayList<Document> found = this.find(filter);
+        ArrayList<Article> results = new ArrayList<>();
+        found.forEach(a -> results.add(new Article(a)));
+        if(results != null && !query.contains(":")){
+            if(Andromeda.tools.has(Andromeda.PROXIMITY, query) > -1 || params.getIndex().equals("locations")) {
+                Collections.sort(results, new ArticlesClient.DistanceSorter(params.getLatitude(), params.getLongitude()));
+            }else{
+                Collections.sort(results, new ArticlesClient.CosmoScore(Andromeda.encoder.clean(query)));
             }
-            if(results != null && !query.contains(":")){
-                if(Telifie.tools.has(Andromeda.PROXIMITY, query) > -1) {
-                    Collections.sort(results, new ArticlesClient.DistanceSorter(params.getLatitude(), params.getLongitude()));
-                }else{
-                    Collections.sort(results, new ArticlesClient.CosmoScore(Andromeda.encoder.clean(query)));
-                }
-            }
-            return results;
-        }catch(MongoException e){
-            return null;
         }
+        return results;
     }
 
     public boolean delete(Article article) {
@@ -214,47 +212,6 @@ public class ArticlesClient extends Client {
                 }
             }
             return matches / words.length;
-        }
-    }
-
-    private static class RelevanceComparator implements Comparator<Article> {
-
-        private String query;
-
-        public RelevanceComparator(String query) {
-            this.query = query;
-        }
-
-        @Override
-        public int compare(Article a, Article b) {
-            int relevanceA = relevance(a.getTitle());
-            int relevanceB = relevance(b.getTitle());
-            return Integer.compare(relevanceB, relevanceA);
-        }
-
-        private int relevance(String title) {
-            int lenDiff = Math.abs(title.length() - query.length());
-            if (lenDiff > 3) {
-                return lenDiff;
-            }
-            int[] prev = new int[query.length() + 1];
-            int[] curr = new int[query.length() + 1];
-            for (int i = 0; i <= title.length(); i++) {
-                for (int j = 0; j <= query.length(); j++) {
-                    if (i == 0) {
-                        curr[j] = j;
-                    } else if (j == 0) {
-                        curr[j] = i;
-                    } else {
-                        curr[j] = Math.min(prev[j - 1] + (title.charAt(i - 1) == query.charAt(j - 1) ? 0 : 1),
-                                Math.min(prev[j], curr[j - 1]) + 1);
-                    }
-                }
-                int[] temp = prev;
-                prev = curr;
-                curr = temp;
-            }
-            return prev[query.length()];
         }
     }
 

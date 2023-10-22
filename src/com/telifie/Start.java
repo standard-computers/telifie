@@ -13,7 +13,7 @@ public class Start {
     private static final File configFile = new File(wrkDir + "/config.json");
 
     public static void main(String[] args){
-        Console.out.welcome();
+        Console.welcome();
         Log.out(Event.Type.MESSAGE, "TELIFIE STARTED");
         if (args.length > 0) {
             String mode = args[0].trim().toLowerCase();
@@ -22,7 +22,7 @@ public class Start {
                         install();
                 case "--purge" -> {
                     Log.out(Event.Type.MESSAGE, "PURGE MODE ENTERED");
-                    if (Console.in.string("Confirm purge, fresh install (y/n) -> ").equals("y")) {
+                    if (Console.in("Confirm purge, fresh install (y/n) -> ").equals("y")) {
                         configFile.delete();
                         Log.out(Event.Type.DELETE, "telifie.configuration deleted");
                     }
@@ -60,17 +60,17 @@ public class Start {
             }
         }
         config = new Configuration();
-        config.setMongodb(Console.in.string("MongoDB URI -> "));
-        config.setEmail(Console.in.string("Email -> "));
+        config.setMongodb(Console.in("MongoDB URI -> "));
+        config.setEmail(Console.in("Email -> "));
         exportConfiguration();
-        Console.out.line();
+        Console.line();
         System.out.println("Configuration saved!\nRun Telifie with no arguments to start the console.");
         System.exit(0);
     }
 
     private static void checkConfig(){
         if(configFile.exists()){
-            Console.out.message("Config file found :)");
+            Console.message("Config file found :)");
             importConfiguration();
             if (config != null) {
                 config.startMongo();
@@ -79,7 +79,7 @@ public class Start {
                 System.exit(-1);
             }
         }else{
-            Console.out.message("No config file found. Use option '--install'");
+            Console.message("No config file found. Use option '--install'");
             install();
         }
     }

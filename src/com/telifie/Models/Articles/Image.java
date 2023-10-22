@@ -24,20 +24,8 @@ public class Image {
         return url;
     }
 
-    public String getCaption() {
-        return caption;
-    }
-
-    public String getSource() {
-        return source;
-    }
-
     @Override
     public String toString() {
-        return new StringBuilder().append("{")
-            .append("\"url\" : \"").append(url).append("\", ")
-            .append("\"caption\" : \"").append(caption).append("\", ")
-            .append("\"source\" : \"").append(source).append("\"")
-            .append("}").toString();
+        return new StringBuilder().append("{").append("\"url\" : \"").append(url).append("\", ").append("\"caption\" : \"").append(caption).append("\", ").append("\"source\" : \"").append(source).append("\"").append("}").toString();
     }
 }

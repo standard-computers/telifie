@@ -1,4 +1,4 @@
-package com.telifie.Models.Network;
+package com.telifie.Models.Utilities.Network;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;

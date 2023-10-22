@@ -86,9 +86,6 @@ public class Result {
                 .append("\"status_code\" : ").append(statusCode)
                 .append(", \"id\" : \"").append(id).append('\"')
                 .append(", \"query\" : \"").append(query).append('\"');
-        if (params != null) {
-            sb.append(", \"params\" : ").append(params);
-        }
         if (!source.isEmpty()) {
             sb.append(", \"source\" : \"").append(source).append('\"');
         }

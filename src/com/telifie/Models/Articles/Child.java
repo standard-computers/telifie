@@ -16,10 +16,6 @@ public class Child {
 
     @Override
     public String toString() {
-        return new StringBuilder().append("{")
-            .append("\"image\" : \"").append(image).append('\"')
-            .append(", \"title\" : \"").append(title).append('\"')
-            .append(", \"reference\" : \"").append(reference).append('\"')
-            .append('}').toString();
+        return new StringBuilder().append("{").append("\"image\" : \"").append(image).append('\"').append(", \"title\" : \"").append(title).append('\"').append(", \"reference\" : \"").append(reference).append('\"').append('}').toString();
     }
 }

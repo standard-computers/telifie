@@ -54,12 +54,12 @@ public class Command {
                         return new Result(410, this.command, "NOT FOUND");
                     }
                 }
-                try {
                     Parameters params = new Parameters(content);
                     return new Search().execute(session, query, params);
-                }catch(NullPointerException n){
-                    return new Result(505, this.command, "SEARCH ERROR");
-                }
+//                try {
+//                }catch(NullPointerException n){
+//                    return new Result(505, this.command, "SEARCH ERROR");
+//                }
             }
             return new Result(428, this.command, "JSON BODY EXPECTED");
         }
@@ -541,7 +541,7 @@ public class Command {
         else if(primarySelector.startsWith("verify")){
             if(content != null){
                 String email = content.getString("email");
-                String code = Telifie.tools.make.md5(content.getString("code"));
+                String code = Telifie.md5(content.getString("code"));
                 UsersClient users = new UsersClient();
                 if(users.userExistsWithEmail(email)){
                     User user = users.getUserWithEmail(email);
@@ -626,6 +626,13 @@ public class Command {
         else if(primarySelector.equals("messaging")){
             String from  = content.getString("From");
             String message = content.getString("Body");
+
+        }
+        /**
+         * For mySQL services
+         * View tracking and messages
+         */
+        else if(primarySelector.equals("ping")){
 
         }
         return new Result(200, this.command, "NO COMMAND RECEIVED");

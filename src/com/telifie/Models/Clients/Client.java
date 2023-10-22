@@ -25,7 +25,7 @@ public class Client {
         try {
             MongoDatabase db = mc.getDatabase("telifie");
             MongoCollection<Document> c = db.getCollection(this.collection);
-            FindIterable<Document> iter = c.find(filter).limit(2500);
+            FindIterable<Document> iter = c.find(filter);
             ArrayList<Document> documents = new ArrayList<>();
             for(Document doc : iter){
                 documents.add(doc);
