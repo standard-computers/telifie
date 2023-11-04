@@ -36,6 +36,21 @@ public class Client {
         }
     }
 
+    protected ArrayList<Document> find(){
+        try {
+            MongoDatabase db = mc.getDatabase("telifie");
+            MongoCollection<Document> c = db.getCollection(this.collection);
+            FindIterable<Document> iter = c.find();
+            ArrayList<Document> documents = new ArrayList<>();
+            for(Document doc : iter){
+                documents.add(doc);
+            }
+            return documents;
+        }catch(MongoException e){
+            return null;
+        }
+    }
+
     protected Document findOne(Document filter){
         try {
             MongoDatabase db = mc.getDatabase("telifie");

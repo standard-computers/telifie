@@ -1,31 +1,23 @@
 package com.telifie.Models.Articles;
 
 import org.bson.Document;
-import java.util.UUID;
 
 public class Source {
 
-    private final String id;
     private final String icon;
     private String name;
     private final String url;
 
-    public Source(String id, String icon, String name, String url) {
-        this.id = id;
+    public Source(String icon, String name, String url) {
         this.icon = icon;
         this.name = name;
         this.url = url;
     }
 
     public Source(Document document) throws NullPointerException {
-        this.id = (document.getString("id") == null ? UUID.randomUUID().toString() : document.getString("id") );
         this.icon = document.getString("icon");
         this.name = document.getString("name");
         this.url = document.getString("url");
-    }
-
-    public String getId() {
-        return id;
     }
 
     public String getName() {
@@ -42,6 +34,6 @@ public class Source {
 
     @Override
     public String toString() {
-        return new StringBuilder().append("{\"id\" : \"").append(id).append('\"').append(", \"icon\" : \"").append(icon).append('\"').append(", \"name\" : \"").append(name).append('\"').append(", \"url\" : \"").append(url).append("\"}").toString();
+        return new StringBuilder().append("{\"id\" : \"").append('\"').append(", \"icon\" : \"").append(icon).append('\"').append(", \"name\" : \"").append(name).append('\"').append(", \"url\" : \"").append(url).append("\"}").toString();
     }
 }

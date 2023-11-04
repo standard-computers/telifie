@@ -3,8 +3,8 @@ package com.telifie.Models.Utilities;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import static com.telifie.Models.Andromeda.ALPHAS;
-import static com.telifie.Models.Andromeda.NUMERALS;
+import static com.telifie.Models.Andromeda.Andromeda.ALPHAS;
+import static com.telifie.Models.Andromeda.Andromeda.NUMERALS;
 
 public class Telifie {
 

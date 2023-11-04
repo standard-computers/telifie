@@ -1,13 +1,14 @@
 package com.telifie.Models.Actions;
 
 import com.mongodb.client.model.Filters;
-import com.telifie.Models.Andromeda;
+import com.telifie.Models.Andromeda.Andromeda;
+import com.telifie.Models.Andromeda.Encoder;
+import com.telifie.Models.Andromeda.Unit;
 import com.telifie.Models.Article;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Result;
 import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Utilities.Session;
-import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.mariuszgromada.math.mxparser.Expression;
@@ -18,17 +19,17 @@ import java.util.regex.Pattern;
 
 public class Search {
 
-    private ArticlesClient articles;
+    private Result result;
 
     public Result execute(Session session, String query, Parameters params){
         query = query.toLowerCase().trim();
-        articles = new ArticlesClient(session);
+        ArticlesClient articles = new ArticlesClient(session);
         ArrayList<Article> results = articles.search(query, params, filter(query, params));
         ArrayList<Article> paged = paginateArticles(results, params.getPage(), params.getResultsPerPage());
-        Result r = new Result(query, params, "articles", paged);
-        r.setTotal(results.size());
-        r.setGenerated(this.generated(query));
-        return r;
+        result = new Result(query, params, "articles", paged);
+        result.setTotal(results.size());
+        result.setGenerated(this.generated(query, params));
+        return result;
     }
 
     private Document filter(String query, Parameters params){
@@ -122,11 +123,12 @@ public class Search {
             ));
         }else if(Andromeda.tools.has(Andromeda.PROXIMITY, query) > -1){
             String splr = Andromeda.PROXIMITY[Andromeda.tools.has(Andromeda.PROXIMITY, query)];
+            params.setIndex("locations");
             String[] spl = query.split(splr);
             if(spl.length >= 2){
                 String subject = spl[0].trim();
                 String place = spl[1].trim();
-                Article pl = articles.findPlace(place, params);
+                Article pl = new ArticlesClient(new Session("", "telifie")).findPlace(place, params);
                 params.setLatitude( Double.parseDouble(pl.getAttribute("Longitude")));
                 params.setLongitude(Double.parseDouble(pl.getAttribute("Latitude")));
                 return new Document("$and", Arrays.asList(
@@ -146,8 +148,10 @@ public class Search {
                         )
                 ));
             }
+        }else if((query.contains("*") || query.contains("/") || query.contains("+") || query.contains("-")) && Andromeda.tools.contains(Andromeda.NUMERALS, query)){
+            return  new Document("description", "Calculator");
         }
-        String[] exploded = Andromeda.encoder.nova(Andromeda.encoder.clean(query));
+        String[] exploded = Encoder.clean(query).split("\\s+");
         ArrayList<Bson> or = new ArrayList<>();
         for (String word : exploded) {
             or.add(Filters.regex("title", pattern(word)));
@@ -165,29 +169,37 @@ public class Search {
         return new Document("$and", Arrays.asList( sf, Filters.or(or) ));
     }
 
-    private String generated(String q){
-        if((q.contains("*") || q.contains("/") || q.contains("+") || q.contains("-")) && Andromeda.tools.contains(Andromeda.NUMERALS, q)){
-            License.iConfirmNonCommercialUse("Telifie LLC");
-            Expression expression = new Expression(q);
-            if (expression.checkSyntax()) {
-                double result = expression.calculate();
-                return "#####Result \\n" + result;
-            }
-        }else if(q.contains("uuid")){
-            return "#####Here's a UUID  \\n" + UUID.randomUUID();
-        }else if(q.contains("weather")){
+    private String generated(String q, Parameters params){
+        if(params.getPage() == 1){
+            Unit u = new Unit(q);
+            if((q.contains("*") || q.contains("/") || q.contains("+") || q.contains("-")) && Andromeda.tools.contains(Andromeda.NUMERALS, q)){
+                License.iConfirmNonCommercialUse("Telifie LLC");
+                Expression expression = new Expression(q);
+                if (expression.checkSyntax()) {
+                    return String.valueOf(expression.calculate());
+                }
+            }else if(q.contains("uuid")){
+                return "Here's a UUID  \\n" + UUID.randomUUID();
+            }else if(q.contains("weather")){
 
-        }else if(q.contains("flip a coin")){
-            int random = new Random().nextInt(2);
-            return "#####Coin Flip  \\n" + ((random == 0) ? "Heads" : "Tails");
-        }else if(q.contains("roll") && q.contains("dice")){
-            int random = new Random().nextInt(6) + 1;
-            return "Your dice roll is " + random;
-        }else if(q.contains("random") && q.contains("color")){
-            Color c = new Color((int) (Math.random() * 256), (int) (Math.random() * 256), (int) (Math.random() * 256));
-            String rgb = String.format("#%02X%02X%02X", c.getRed(), c.getGreen(), c.getBlue());
-            String hex = String.format("RGB(%d, %d, %d)", c.getRed(), c.getGreen(), c.getBlue());
-            return "#####Random Color  \\n**Hex** " + hex + "  \\n**RGB** " + rgb;
+            }else if(q.contains("flip a coin")){
+                int random = new Random().nextInt(2);
+                return ((random == 0) ? "Heads" : "Tails");
+            }else if(q.contains("roll") && q.contains("dice")){
+                int random = new Random().nextInt(6) + 1;
+                return "Your dice roll is " + random;
+            }else if(q.contains("random") && q.contains("color")){
+                Color c = new Color((int) (Math.random() * 256), (int) (Math.random() * 256), (int) (Math.random() * 256));
+                String rgb = String.format("#%02X%02X%02X", c.getRed(), c.getGreen(), c.getBlue());
+                String hex = String.format("RGB(%d, %d, %d)", c.getRed(), c.getGreen(), c.getBlue());
+                return "Here is a random color: Hex is " + hex + " and RGB " + rgb;
+            }else if(u.startsWith("interrogative")){
+                String cleaned = Encoder.clean(q);
+                //TODO find subject and inquiry
+                //Remove all but subject and search through article in Result(s)
+                //Use Andromeda.classify() or something of the likes search through attributes with synonyms from Andromeda
+                //Create result from subject, inquiry, and answer
+            }
         }
         return "";
     }

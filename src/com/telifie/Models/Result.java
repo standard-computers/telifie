@@ -50,14 +50,6 @@ public class Result {
         this.results = results;
     }
 
-    public Result(String query, Parameters params, ArrayList<Article> quickResults, ArrayList<Article> results) {
-        this.query = query;
-        this.object = "articles";
-        this.results = results;
-        this.quickResults = quickResults;
-        this.count = results.size();
-    }
-
     public int getStatusCode() {
         return statusCode;
     }

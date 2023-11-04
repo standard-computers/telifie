@@ -22,6 +22,10 @@ public class UsersClient extends Client {
         return new User(this.findOne(new Document("id", id)));
     }
 
+    public User getUserWithPhone(String phone){
+        return new User(this.findOne(new Document("phone", phone)));
+    }
+
     public boolean userExistsWithEmail(String email){
         return this.findOne(new Document("email", email)) != null;
     }

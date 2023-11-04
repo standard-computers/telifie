@@ -7,7 +7,7 @@ public class Parameters {
     private final int resultsPerPage;
     private final int pages; // How many pages of search results
     private final int page; //Current page of the search results
-    private final String index;
+    private String index;
     private final String postalCode; //Index such as images, maps, developers, articles, etc.
     private double latitude;
     private double longitude;
@@ -34,6 +34,10 @@ public class Parameters {
 
     public String getIndex() {
         return index;
+    }
+
+    public void setIndex(String index) {
+        this.index = index;
     }
 
     public String getPostalCode() {

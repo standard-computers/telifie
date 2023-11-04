@@ -1,5 +1,6 @@
 package com.telifie.Models;
 
+import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Articles.*;
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
@@ -9,12 +10,11 @@ import java.util.stream.Collectors;
 
 public class Article {
 
-    private String owner, domain, id, title, link, icon, description;
+    private String owner, id, title, link, icon, description;
     private double priority = 1.01;
     private boolean verified = false;
     private String content;
     private ArrayList<String> tags = new ArrayList<>();
-    private ArrayList<Image> images = new ArrayList<>();
     private ArrayList<Attribute> attributes = new ArrayList<>();
     private ArrayList<Association> associations = new ArrayList<>();
     private ArrayList<DataSet> dataSets = new ArrayList<>();
@@ -28,7 +28,6 @@ public class Article {
 
     public Article(Document document) throws NullPointerException {
         this.owner = (document.getString("owner") == null ? null : document.getString("owner"));
-        this.domain = (document.getString("domain") == null ? null : document.getString("domain"));
         this.id = (document.getString("id") == null ? UUID.randomUUID().toString() : document.getString("id"));
         this.verified = (document.getBoolean("verified") != null && document.getBoolean("verified"));
         this.title = Andromeda.tools.escape(document.getString("title"));
@@ -40,10 +39,6 @@ public class Article {
         this.origin = (document.getInteger("origin") == null ? 0 : document.getInteger("origin"));
         this.tags = document.get("tags", ArrayList.class);
 
-        ArrayList<Document> iterable = (ArrayList<Document>) document.getList("images", Document.class);
-        if (iterable != null) {
-            iterable.forEach(doc -> this.addImage(new Image(doc)));
-        }
         ArrayList<Document> it2 = (ArrayList<Document>) document.getList("attributes", Document.class);
         if (it2 != null) {
             it2.forEach(doc -> this.addAttribute(new Attribute(doc.getString("key"), doc.getString("value"))));
@@ -68,14 +63,6 @@ public class Article {
 
     public void setOwner(String owner) {
         this.owner = owner;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
-
-    public String getDomain() {
-        return domain;
     }
 
     public boolean isVerified() {
@@ -148,12 +135,12 @@ public class Article {
         return tags;
     }
 
-    public ArrayList<Image> getImages() {
-        return images;
+    public ArrayList<Attribute> getAttributes() {
+        return attributes;
     }
 
-    public void addImage(Image image){
-        this.images.add(image);
+    public void setAttributes(ArrayList<Attribute> attributes) {
+        this.attributes = attributes;
     }
 
     public void addAttribute(Attribute attr){
@@ -209,7 +196,6 @@ public class Article {
     public String toString() {
         return "{\"id\" : \"" + id + '\"' +
                 (owner == null ? "" : ", \"owner\" : \"" + owner + "\"") +
-                (domain == null ? "" : ", \"domain\" : \"" + domain + "\"") +
                 ", \"verified\" : " + verified +
                 ", \"title\" : \"" + title + '\"' +
                 (link == null ? "" : ", \"link\" : \"" + link + '\"') +
@@ -218,7 +204,6 @@ public class Article {
                 (priority == 0 ? "" : ", \"priority\" : " + priority) +
                 (content == null ? "" : ", \"content\" : \"" + content + "\"") +
                 (tags == null ? "" : ", \"tags\" : " + tags.stream().map(tag -> "\"" + tag + "\"").collect(Collectors.joining(", ", "[", "]"))) +
-                (images == null ? "" : ", \"images\" : " + images) +
                 (attributes == null ? "" : ", \"attributes\" : " + attributes) +
                 (associations.isEmpty() ? "" : ", \"associations\" : " + associations) +
                 (dataSets.isEmpty() ? "" : ", \"data_sets\" : " + dataSets) +

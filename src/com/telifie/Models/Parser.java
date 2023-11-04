@@ -2,12 +2,14 @@ package com.telifie.Models;
 
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
+import com.telifie.Models.Andromeda.Andromeda;
+import com.telifie.Models.Andromeda.Unit;
+import com.telifie.Models.Utilities.Console;
 import com.telifie.Models.Utilities.Event;
 import com.telifie.Models.Articles.*;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Clients.TimelinesClient;
 import com.telifie.Models.Utilities.*;
-import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -73,7 +75,6 @@ public class Parser {
                 i++;
                 parsed.removeAll(parsed);
                 int lastCrawl = timelines.lastEvent(a.getId(), Event.Type.CRAWL);
-                System.out.println(i);
                 if(lastCrawl > 3602000 || lastCrawl == -1){ //7 days
                     timelines.addEvent(a.getId(), new Event(Event.Type.CRAWL, "com.telifie.web-app@parser", "Crawled"));
                     parsed.add(a.getLink());
@@ -115,9 +116,9 @@ public class Parser {
                     boolean created = true;
                     if(article.getSource() != null && !articles.existsWithSource(article.getSource().getUrl())){
                         created = articles.create(article);
-                        System.out.println("Created with source -> Created article " + article.getTitle());
+                        Console.log("Created with source -> Created article " + article.getTitle());
                     }else if(article.getSource() == null && (created = articles.create(article))){
-                        System.out.println("Created with link -> Created article " + article.getTitle());
+                        Console.log("Created with link -> Created article " + article.getTitle());
                     }
                     ArrayList<Element> links = root.getElementsByTag("a");
                     for(Element link : links){
@@ -137,7 +138,7 @@ public class Parser {
                                 try {
                                     Thread.sleep(3000);
                                     if(depth <= setDepth){
-                                        System.out.println("Fetching (" + parsed.size() + ")" + href);
+                                        Console.log("Fetching (" + parsed.size() + ")" + href);
                                         fetch(href, limit, depth, allowExternalCrawl);
                                     }
                                 } catch (InterruptedException e) {
@@ -240,13 +241,13 @@ public class Parser {
                         for (int g = 0; g < articleData.length; g++) {
                             String value = articleData[g];
                             if (g == titleIndex && titleIndex > -1) {
-                                article.setTitle(value);
+                                article.setTitle(Andromeda.tools.escape(value));
                             } else if (g == descriptionIndex && descriptionIndex > -1) {
                                 article.setDescription(value);
                             } else if (g == linkIndex && linkIndex > -1) {
                                 article.setLink(value);
                             } else if (g == contentIndex && contentIndex > -1) {
-                                article.setContent(value);
+                                article.setContent(Andromeda.tools.escape(value));
                             } else if(g == iconIndex && iconIndex > -1){
                                 article.setIcon(value);
                             } else if(g == tagsIndex){
@@ -264,7 +265,7 @@ public class Parser {
                     }
                     return articles;
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Log.error("FAILED BATCH UPLOAD");
                 }
             }
             return null;
@@ -322,7 +323,7 @@ public class Parser {
 
         public static Article markdown(Asset asset){
             Article a = new Article();
-            Andromeda.unit u = new Andromeda.unit(asset.getContents());
+            Unit u = new Unit(asset.getContents());
             String[] keywords = u.keywords(6);
             a.setTitle(uri.split("/")[uri.split("/").length - 1].split("\\.")[0]);
             a.setDescription("Markdown File");
@@ -337,7 +338,7 @@ public class Parser {
 
         public static Article text(Asset asset){
             Article a = new Article();
-            Andromeda.unit u = new Andromeda.unit(asset.getContents());
+            Unit u = new Unit(asset.getContents());
             String[] keywords = u.keywords(6);
             a.setTitle(uri.split("/")[uri.split("/").length - 1].split("\\.")[0]);
             a.setDescription("Text File");
@@ -371,7 +372,7 @@ public class Parser {
                             article.addTag(word.trim().toLowerCase());
                         }
                     }
-                    case "og:image" -> article.addImage(new Image(mtc, "", url));
+                    //TODO do images
                 }
             }
             Elements linkTags = document.getElementsByTag("link");
@@ -393,13 +394,11 @@ public class Parser {
                 if(!src.isEmpty() && !src.equals("null") && Asset.getType(src).equals("image") && !image.attr("src").trim().toLowerCase().startsWith("data:")){
                     String caption = Andromeda.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;").trim());
                     if(!caption.equals("Page semi-protected") && !caption.equals("Wikimedia Foundation") && !caption.equals("Powered by MediaWiki") && !caption.equals("Edit this at Wikidata") && !caption.equals("This is a good article. Click here for more information.")){
-                        Image img = new Image(src, caption, url);
-                        article.addImage(img);
+                        //TODO do images
                     }
                 }else if(!srcset.isEmpty() && !srcset.startsWith("data:")){
                     String caption =  Andromeda.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
-                    Image img = new Image(src, caption, url);
-                    article.addImage(img);
+                    //TODO do images
                 }
             }
             article.setTitle(Andromeda.tools.htmlEscape(document.title()));
@@ -415,14 +414,7 @@ public class Parser {
                 Element body = document.getElementsByTag("body").get(0);
                 body.select("table, script, header, style, img, svg, button, label, form, input, aside, code, nav").remove();
                 if(url.contains("wiki")){
-                    article.setSource(
-                            new Source(
-                                    "bb9ae95c2b59f2c7d8a81ded769d3bab",
-                                    "https://telifie-static.nyc3.digitaloceanspaces.com/wwdb-index-storage/wikipedia.png",
-                                    "Wikipedia",
-                                    article.getLink().trim()
-                            )
-                    );
+                    article.setSource(new Source("https://telifie-static.nyc3.digitaloceanspaces.com/wwdb-index-storage/wikipedia.png", "Wikipedia", article.getLink().trim()));
                     article.setLink(null);
                     article.setTitle(article.getTitle().replaceAll(" - Wikipedia", ""));
                     body.select("div.mw-jump-link, div#toc, div.navbox, table.infobox, div.vector-body-before-content, div.navigation-not-searchable, div.mw-footer-container, div.reflist, div#See_also, h2#See_also, h2#References, h2#External_links").remove();
@@ -438,7 +430,7 @@ public class Parser {
                 Elements paragraphs = body.select("p, h3");
                 for (Element element : paragraphs) {
                     if (element.tagName().equalsIgnoreCase("p")) {
-                        String text = StringEscapeUtils.escapeHtml4(element.text().replaceAll("\\s+", " ").trim());
+                        String text = Andromeda.tools.htmlEscape(element.text().replaceAll("\\s+", " ").trim());
                         if(!text.isEmpty()){
                             markdown.append("  \n").append(text).append("  \n");
                         }
@@ -447,7 +439,7 @@ public class Parser {
                         markdown.append("##### ").append(headerText).append("  \n");
                     }
                 }
-                String md = StringEscapeUtils.escapeJson(markdown.toString().replaceAll("\\[.*?]", "").trim());
+                String md = Andromeda.tools.escape(markdown.toString().replaceAll("\\[.*?]", "").trim());
                 article.setContent(md);
             }
             return article;
@@ -475,7 +467,7 @@ public class Parser {
                     }
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.error("HOST BLOCKED : " + host);
             }
         }
         public boolean isAllowed(String path) {

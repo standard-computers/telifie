@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public class Connector {
 
-    private String id, name, clientId, accessToken, secret, refreshToken, redirectUri;
+    private String id, name, clientId, accessToken, secret, refreshToken;
     private String user, userId; //User ID of the user in the connector, not Telifie's User ID
     private int origin;
 
@@ -20,7 +20,6 @@ public class Connector {
             this.user = (document.getString("user") != null ? document.getString("user") : "com.telifie.system.garbage"); //Garbage for collection if no user set
             this.userId = (document.getString("user_id") != null ? document.getString("user_id") : null);
             this.clientId = (document.getString("client_id") != null ? document.getString("client_id") : null);
-            this.redirectUri = (document.getString("redirect_uri") != null ? document.getString("redirect_uri") : "");
             this.origin = (document.getInteger("origin") != null ? document.getInteger("origin") : Telifie.epochTime());
         }
     }
@@ -65,10 +64,6 @@ public class Connector {
         return secret;
     }
 
-    public String getRedirectUri() {
-        return redirectUri;
-    }
-
     public Connector getConnector(){
         return this;
     }
@@ -81,7 +76,6 @@ public class Connector {
                 ", \"access_token\" : \"" + accessToken + '\"' +
                 ", \"secret\" : \"" + secret + '\"' +
                 ", \"refresh_token\" : \"" + refreshToken + '\"' +
-                ", \"redirect_uri\" : \"" + redirectUri + '\"' +
                 ", \"user\" : \"" + user + '\"' +
                 ", \"user_id\" : \"" + userId + '\"' +
                 ", \"origin\" : " + origin +

@@ -25,10 +25,8 @@ import java.net.Socket;
 public class Http {
 
     private Socket socket;
-    private Configuration config;
 
-    public Http (Configuration config) {
-        this.config = config;
+    public Http () {
         try {
             ServerSocket serverSocket = new ServerSocket(80);
             while (true) {

@@ -1,6 +1,6 @@
 package com.telifie.Models.Connectors;
 
-import com.telifie.Models.Andromeda;
+import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Article;
 import com.telifie.Models.Articles.Attribute;
 import com.telifie.Models.Articles.DataSet;
@@ -10,7 +10,6 @@ import com.telifie.Models.Clients.CollectionsClient;
 import com.telifie.Models.Collection;
 import com.telifie.Models.Connector;
 import com.telifie.Models.Utilities.Session;
-import com.telifie.Models.Utilities.Telifie;
 import org.apache.hc.core5.http.ParseException;
 import org.bson.Document;
 import se.michaelthelin.spotify.SpotifyApi;
@@ -33,7 +32,8 @@ public class Spotify extends Connector {
         this.spotifyApi = new SpotifyApi.Builder()
                 .setClientId(this.getClientId())
                 .setClientSecret(this.getSecret())
-                .setRedirectUri(SpotifyHttpManager.makeUri(super.getRedirectUri()))
+//                .setRedirectUri(SpotifyHttpManager.makeUri(super.getRedirectUri()))
+                .setRedirectUri(SpotifyHttpManager.makeUri(""))
                 .build();
         spotifyApi.setAccessToken(this.getAccessToken());
         User user = spotifyApi.getCurrentUsersProfile().build().execute();
@@ -49,7 +49,7 @@ public class Spotify extends Connector {
         session.setDomain(session.getUser());
         ArticlesClient articles = new ArticlesClient(session); //Put found articles in personal domain
         CollectionsClient collections = new CollectionsClient(session); //Put generated collections in personal domain
-        Source primarySource = new Source("com.telifie.connectors.spotify", "https://telifie-static.nyc3.cdn.digitaloceanspaces.com/images/connectors/spotify.png", "Connector / Spotify", "https://telifie.com/documentation/connectors/spotify");
+        Source primarySource = new Source("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/images/connectors/spotify.png", "Connector / Spotify", "https://telifie.com/documentation/connectors/spotify");
         Collection playlistsCollection = new Collection("Spotify Playlists").setDomain(session.getUser());
         playlistsCollection.setIcon("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/images/connectors/spotify.png");
         collections.create(playlistsCollection);

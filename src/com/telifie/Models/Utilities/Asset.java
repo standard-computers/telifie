@@ -1,5 +1,6 @@
 package com.telifie.Models.Utilities;
 
+import com.telifie.Models.Andromeda.Andromeda;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,8 +12,9 @@ import java.text.DecimalFormat;
 
 public class Asset {
 
-    private String uri, localUri;
-    private File f;
+    private final String uri;
+    private String localUri;
+    private final File f;
     private String contents;
 
     public Asset(String uri){
@@ -77,10 +79,6 @@ public class Asset {
         return String.valueOf(contents.split(" ").length);
     }
 
-    public boolean isFile(){
-        return uri.startsWith("file://") || uri.startsWith("c:/") || uri.startsWith("\\");
-    }
-
     public static boolean isFile(String uri){
         return uri.startsWith("file://") || uri.startsWith("c:/") || uri.startsWith("\\");
     }
@@ -90,15 +88,9 @@ public class Asset {
     }
 
     public boolean isWebpage(){
-        String[] fileExts = { ".jpg", ".jpeg", ".png", ".gif", ".md", ".txt" };
         String lowercaseUri = uri.toLowerCase();
         if (lowercaseUri.startsWith("https://") || lowercaseUri.startsWith("http://") || lowercaseUri.startsWith("www")) {
-            for (String extension : fileExts) {
-                if (lowercaseUri.endsWith(extension)) {
-                    return false;
-                }
-            }
-            return true;
+            return !Andromeda.tools.contains(new String[]{ ".jpg", ".jpeg", ".png", ".gif", ".md", ".txt" }, lowercaseUri);
         }
         return false;
     }
@@ -122,15 +114,9 @@ public class Asset {
     }
 
     public static boolean isWebpage(String uri){
-        String[] fileExts = { ".jpg", ".jpeg", ".png", ".gif", ".md", ".txt" };
         String lowercaseUri = uri.toLowerCase();
         if (lowercaseUri.startsWith("https://") || lowercaseUri.startsWith("http://") || lowercaseUri.startsWith("www")) {
-            for (String extension : fileExts) {
-                if (lowercaseUri.endsWith(extension)) {
-                    return false;
-                }
-            }
-            return true;
+            return !Andromeda.tools.contains(new String[]{ ".jpg", ".jpeg", ".png", ".gif", ".md", ".txt" }, lowercaseUri);
         }
         return false;
     }

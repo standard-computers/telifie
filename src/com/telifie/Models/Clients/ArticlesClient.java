@@ -1,11 +1,13 @@
 package com.telifie.Models.Clients;
 
-import com.telifie.Models.Andromeda;
+import com.mongodb.client.model.geojson.Point;
+import com.mongodb.client.model.geojson.Position;
+import com.telifie.Models.Andromeda.Andromeda;
+import com.telifie.Models.Andromeda.Encoder;
 import com.telifie.Models.Domain;
 import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Article;
 import com.telifie.Models.Utilities.Session;
-import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -29,13 +31,23 @@ public class ArticlesClient extends Client {
         if(article.getOwner() == null || article.getOwner().isEmpty()){
             article.setOwner(session.getUser());
         }
-        if(article.getLink() == null || article.getLink().isEmpty()){
-            return super.insertOne(Document.parse(article.toString()));
-        }else if(this.withLink(article.getLink()) == null){
-            return super.insertOne(Document.parse(article.toString()));
-        }else{
-            return false;
+        if((article.getLink() == null || article.getLink().isEmpty()) || this.withLink(article.getLink()) == null){
+            super.insertOne(Document.parse(article.toString()));
+            if(article.hasAttribute("Longitude") && article.hasAttribute("Latitude")){
+                String longitude = article.getAttribute("Longitude");
+                String latitude = article.getAttribute("Latitude");
+                if (longitude != null && latitude != null && !longitude.equals("null") && !latitude.equals("null")) {
+                    double longitudeValue = Double.parseDouble(longitude);
+                    double latitudeValue = Double.parseDouble(latitude);
+                    Position position = new Position(longitudeValue, latitudeValue);
+                    Point point = new Point(position);
+                    super.updateOne(new Document("id", article.getId()),
+                            new Document("$set", new Document("location", point)));
+                }
+            }
+            return true;
         }
+        return false;
     }
 
     public ArrayList<Article> linked(){
@@ -74,7 +86,9 @@ public class ArticlesClient extends Client {
     }
 
     public Article findPlace(String place, Parameters params){
-        return this.get(
+        params.setIndex("locations");
+        return this.search(
+                place, params,
                 new Document("$and", Arrays.asList(
                         new Document("title", Pattern.compile("\\b" + Pattern.quote(place) + "\\w*\\b", Pattern.CASE_INSENSITIVE)),
                         new Document("description", "City"),
@@ -99,7 +113,7 @@ public class ArticlesClient extends Client {
             if(Andromeda.tools.has(Andromeda.PROXIMITY, query) > -1 || params.getIndex().equals("locations")) {
                 Collections.sort(results, new ArticlesClient.DistanceSorter(params.getLatitude(), params.getLongitude()));
             }else{
-                Collections.sort(results, new ArticlesClient.CosmoScore(Andromeda.encoder.clean(query)));
+                Collections.sort(results, new ArticlesClient.CosmoScore(Encoder.clean(query)));
             }
         }
         return results;
@@ -178,7 +192,7 @@ public class ArticlesClient extends Client {
 
         public CosmoScore(String query){
             this.query = query;
-            this.words = Andromeda.encoder.nova(Andromeda.encoder.clean(query));
+            this.words = Encoder.clean(query).split("\\s+");
         }
 
         @Override

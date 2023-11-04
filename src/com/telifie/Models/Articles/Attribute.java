@@ -1,6 +1,6 @@
 package com.telifie.Models.Articles;
 
-import com.telifie.Models.Andromeda;
+import com.telifie.Models.Andromeda.Andromeda;
 
 public record Attribute(String key, String value) {
 

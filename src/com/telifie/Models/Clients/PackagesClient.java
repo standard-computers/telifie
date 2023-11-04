@@ -3,6 +3,7 @@ package com.telifie.Models.Clients;
 import com.telifie.Models.Utilities.Session;
 import com.telifie.Models.Utilities.Package;
 import org.bson.Document;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class PackagesClient extends Client {
@@ -16,12 +17,22 @@ public class PackagesClient extends Client {
         return new Package(this.findOne(new Document("id", id)));
     }
 
-    public Package get(String name, int version){
-        return new Package(this.findOne(new Document("$and", Arrays.asList(new Document("name", name), new Document("version", version)))));
+    public ArrayList<Package> get(){
+        ArrayList<Package> packages = new ArrayList<>();
+        this.find().forEach(p -> packages.add(new Package(p)));
+        return packages;
     }
 
-    public boolean delete(String name, int version){
-        return this.deleteOne(new Document("$and", Arrays.asList(new Document("name", name), new Document("version", version))));
+    public Package get(String id, int version){
+        return new Package(this.findOne(new Document("$and", Arrays.asList(new Document("id", id), new Document("version", version)))));
+    }
+
+    public int versions(String id){
+        return this.count(new Document("id", id));
+    }
+
+    public boolean delete(String id, int version){
+        return this.deleteOne(new Document("$and", Arrays.asList(new Document("id", id), new Document("version", version))));
     }
 
     public boolean create(Package p){

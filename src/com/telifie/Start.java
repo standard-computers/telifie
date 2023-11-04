@@ -23,48 +23,51 @@ public class Start {
                 case "--purge" -> {
                     Log.out(Event.Type.MESSAGE, "PURGE MODE ENTERED");
                     if (Console.in("Confirm purge, fresh install (y/n) -> ").equals("y")) {
-                        configFile.delete();
-                        Log.out(Event.Type.DELETE, "telifie.configuration deleted");
+                        if(configFile.delete()){
+                            Log.out(Event.Type.DELETE, "CONFIG FILE DELETED");
+                        }
                     }
                     System.exit(1);
                 }
                 case "--http" -> {
                     checkConfig();
                     try {
-                        System.out.println("Starting HTTP server [CONSIDER HTTPS FOR SECURITY]...");
-                        new Http(config);
+                        Console.log("Starting HTTP server [CONSIDER HTTPS FOR SECURITY]...");
+                        new Http();
                     } catch (Exception e) {
-                        Log.error("Failed to start HTTP server");
-                        e.printStackTrace();
+                        Log.error("HTTP SERVER FAILED");
                     }
                 }
             }
         }else{
             checkConfig();
-            new Console.command(config);
+            Console.command();
         }
     }
 
     private static void install(){
-        File wd = new File(wrkDir);
+        File[] folders = new File[]{
+                new File(wrkDir),
+                new File(wrkDir + "temp"),
+                new File(wrkDir + "andromeda"),
+        };
         if(configFile.exists()){
-            System.err.println("config.json file already set");
-            System.err.println("Run with --purge or run normally");
-            System.exit(-1);
-        }else if(!wd.exists()){
-            boolean made_dir = wd.mkdirs();
-            if(made_dir){
-                Log.out(Event.Type.PUT, "CREATED WORKING DIRECTORY : " + wd);
-            }else{
-                Log.error("FAILED CREATING WORKING DIRECTORY : " + wd);
+            Console.log("config.json file already set");
+            Console.command();
+        }else{
+            for(File folder : folders){
+                if(folder.mkdirs()){
+                    Log.out(Event.Type.PUT, "CREATED DIRECTORY : " + folder.getPath());
+                }else{
+                    Log.error("FAILED CREATING DIRECTORY : " + folder.getPath());
+                }
             }
         }
         config = new Configuration();
         config.setMongodb(Console.in("MongoDB URI -> "));
         config.setEmail(Console.in("Email -> "));
         exportConfiguration();
-        Console.line();
-        System.out.println("Configuration saved!\nRun Telifie with no arguments to start the console.");
+        Log.out(Event.Type.PUT, "CONFIGURATION SAVED");
         System.exit(0);
     }
 
@@ -89,9 +92,9 @@ public class Start {
         ObjectWriter objectWriter = objectMapper.writer().withDefaultPrettyPrinter();
         try {
             objectWriter.writeValue(configFile, config);
-            Log.out(Event.Type.PUT, "config.json written");
+            Log.out(Event.Type.PUT, "CONFIG FILE CREATED");
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.error("FAILED CONFIG.JSON EXPORT");
         }
     }
 
@@ -100,7 +103,7 @@ public class Start {
         try {
             config = objectMapper.readValue(configFile, Configuration.class);
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.error("FAILED CONFIG.JSON IMPORT");
         }
     }
 }

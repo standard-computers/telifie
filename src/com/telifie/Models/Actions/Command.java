@@ -1,7 +1,8 @@
 package com.telifie.Models.Actions;
 
 import com.telifie.Models.*;
-import com.telifie.Models.Andromeda;
+import com.telifie.Models.Andromeda.Encoder;
+import com.telifie.Models.Connectors.Twilio;
 import com.telifie.Models.Parser;
 import com.telifie.Models.Clients.*;
 import com.telifie.Models.Connectors.Spotify;
@@ -27,8 +28,21 @@ public class Command {
         this.selectors = this.command.split("(?!//)/");
     }
 
-    public String get(int index){
+    private String get(int index){
         return this.selectors[index].replaceAll("/", "");
+    }
+
+    private boolean hasDomainPermission(User user, Session session, boolean allowPublicDomainAction){
+        if((user.getPermissions() >= 12 && session.getDomain().equals("telifie") && !allowPublicDomainAction)
+                || (session.getDomain().equals("telifie") && allowPublicDomainAction)){
+            //TODO, share changes with data team for approval and change status on Article
+            return true;
+        }else if(session.getDomain().equals("telifie") && !allowPublicDomainAction){
+            return false;
+        }else if(!session.getDomain().equals("telifie")){
+            //TODO check separate permissions
+        }
+        return false;
     }
 
     public Result parseCommand(Session session, Document content){
@@ -182,18 +196,12 @@ public class Command {
         else if(primarySelector.equals("articles")){
 
             User user = new UsersClient().getUserWithId(session.getUser());
-            if(user.getPermissions() < 12 && !session.getDomain().equals("telifie")){
-                //TODO, share changes with data team for approval and change status on Article
-                return new Result(401, this.command, "INSUFFICIENT PERMISSIONS");
-            }
             if(content != null){
                 if(content.getString("domain") != null){
                     String targetDomain = content.getString("domain");
-                    DomainsClient domains = new DomainsClient(session);
                     try{
-                        Domain domain = domains.withId(targetDomain);
+                        Domain domain = new DomainsClient(session).withId(targetDomain);
                         session.setDomain(domain.getId());
-                        //TODO Check permissions with user
                     }catch (NullPointerException n) {
                         return new Result(404, this.command, "DOMAIN NOT FOUND");
                     }
@@ -206,7 +214,10 @@ public class Command {
                     switch (objectSelector) {
                         case "id" -> {
                             try {
-                                return new Result(this.command, "article", articles.withId(secSelector));
+                                if(hasDomainPermission(user, session, true)){
+                                    return new Result(this.command, "article", articles.withId(secSelector));
+                                }
+                                return new Result(401, this.command, "INSUFFICIENT PERMISSIONS");
                             } catch (NullPointerException n) {
                                 return new Result(404, this.command, "ARTICLE NOT FOUND");
                             }
@@ -218,17 +229,24 @@ public class Command {
                                 }
                                 Article ua = new Article(content);
                                 //TODO compare
-                                if (articles.update(a, ua)) {
-                                    return new Result(200, this.command, ua.toString());
+                                if(hasDomainPermission(user, session, false)){
+                                    if (articles.update(a, ua)) {
+                                        return new Result(200, this.command, ua.toString());
+                                    }
+                                    return new Result(204, "NO NEW ARTICLE");
                                 }
+                                return new Result(401, this.command, "INSUFFICIENT PERMISSIONS");
                             }
-                            return new Result(428, "NO NEW ARTICLE");
+                            return new Result(428, "JSON BODY EXPECTED");
                         }
                         case "delete" -> {
-                            if (articles.delete(articles.withId(secSelector))) {
-                                return new Result(200, this.command, "");
+                            if(hasDomainPermission(user, session, false)){
+                                if (articles.delete(articles.withId(secSelector))) {
+                                    return new Result(200, this.command, "");
+                                }
+                                return new Result(505, this.command, "FAILED ARTICLE DELETION");
                             }
-                            return new Result(505, this.command, "FAILED ARTICLE DELETION");
+                            return new Result(401, this.command, "INSUFFICIENT PERMISSIONS");
                         }
                         case "duplicate" -> {
                             if (this.selectors.length > 3) {
@@ -244,10 +262,13 @@ public class Command {
                             }
                         }
                         case "archive" -> {
-                            if (articles.archive(a)) {
-                                return new Result(200, this.command, "ARTICLE UNARCHIVED");
+                            if(hasDomainPermission(user, session, false)){
+                                if (articles.archive(a)) {
+                                    return new Result(200, this.command, "ARTICLE UNARCHIVED");
+                                }
+                                return new Result(505, this.command, "FAILED ARTICLE ARCHIVE");
                             }
-                            return new Result(505, this.command, "FAILED ARTICLE ARCHIVE");
+                            return new Result(401, this.command, "INSUFFICIENT PERMISSIONS");
                         }
                         case "unarchive" -> {
                             ArchiveClient archive = new ArchiveClient(session);
@@ -270,10 +291,13 @@ public class Command {
                             }
                         }
                         case "verify" -> {
-                            if (articles.verify(secSelector)) {
-                                return new Result(200, this.command, "");
+                            if(hasDomainPermission(user, session, false)){
+                                if (articles.verify(secSelector)) {
+                                    return new Result(200, this.command, "");
+                                }
+                                return new Result(505, this.command, "FAILED ARTICLE UPDATE");
                             }
-                            return new Result(505, this.command, "FAILED ARTICLE UPDATE");
+                            return new Result(401, this.command, "INSUFFICIENT PERMISSIONS");
                         }
                     }
                     return new Result(404, this.command, "BAD ARTICLED SELECTOR");
@@ -284,11 +308,14 @@ public class Command {
             }else if(objectSelector.equals("create")){
                 if(content != null){
                     try {
-                        Article na = new Article(content);
-                        if(articles.create(na)){
-                            return new Result(this.command, "article", na);
+                        if(hasDomainPermission(user, session, false)){
+                            Article na = new Article(content);
+                            if(articles.create(na)){
+                                return new Result(this.command, "article", na);
+                            }
+                            return new Result(505, this.command, "FAILED ARTICLE CREATION");
                         }
-                        return new Result(505, this.command, "FAILED ARTICLE CREATION");
+                        return new Result(401, this.command, "INSUFFICIENT PERMISSIONS");
                     }catch(JSONException e){
                         return new Result(505, this.command, "BAD ARTICLE JSON");
                     }
@@ -337,8 +364,8 @@ public class Command {
                         switch (objectSelector) {
                             case "update" -> {
                                 if (content != null) {
-                                    if (content.getString("name") != null && content.getString("name").equals("Pinned")) {
-                                        return new Result(304, this.command, "'Pinned' is a reserved Collection name");
+                                    if (content.getString("name") == null) {
+                                        return new Result(428, this.command, "COLLECTION NAME EXPECTED");
                                     }
                                     if(c.getUser().equals(session.getUser())){
                                         if (collections.update(c, content)) {
@@ -346,7 +373,7 @@ public class Command {
                                         }
                                         return new Result(505, this.command, "FAILED COLLECTION UPDATE");
                                     }
-                                    return new Result(428, this.command, "NO COLLECTION PERMISSIONS");
+                                    return new Result(401, this.command, "NO COLLECTION PERMISSIONS");
                                 }
                                 return new Result(428, this.command, "COLLECTION JSON EXPECTED");
                             }
@@ -360,7 +387,7 @@ public class Command {
                                 if(c.getUser().equals(session.getUser())) {
                                     return new Result(this.command, "collection", collections.withArticles(secSelector));
                                 }
-                                return new Result(428, this.command, "NO COLLECTION PERMISSIONS");
+                                return new Result(401, this.command, "NO COLLECTION PERMISSIONS");
                             }
                         }
                         return new Result(404, this.command, "BAD COLLECTIONS SELECTOR");
@@ -493,17 +520,13 @@ public class Command {
                         }
                         case "text" -> {
                             String text = content.getString("text");
-                            Andromeda.encoder.tokenize(text, false);
+                            Encoder.tokenize(text, false);
                         }
                         case "audit" -> {
                             String q = (content.getString("q") == null ? "" : content.getString("q"));
                             ArrayList<String> ids = new ArrayList<>();
                             articles.getIds(q).forEach(a -> ids.add(new Article(a).getId()));
                             return new Result(this.command, "ids", "" + ids);
-                        }
-                        case "recursive" -> {
-                            int start = (content.getInteger("start") == null ? 0 : content.getInteger("start"));
-                            Parser.engines.recursive(session, start);
                         }
                     }
                 }
@@ -627,7 +650,15 @@ public class Command {
         else if(primarySelector.equals("messaging")){
             String from  = content.getString("From");
             String message = content.getString("Body");
-
+            Console.log("Income message -> " + message);
+            UsersClient users = new UsersClient();
+            User user = users.getUserWithPhone(from);
+            if(user == null){
+                Twilio.send(from, "+15138029566", "The number you are texting from is not registered to a Telifie account.");
+                return new Result(404, this.command, "PHONE NUMBER NOT REGISTERED");
+            }
+            Twilio.send(user.getPhone(), "+15138029566", "Hello " + user.getName() + "!");
+            return new Result(200, "MESSAGE RECEIVED");
         }
         /*
          * For mySQL services
@@ -650,6 +681,7 @@ public class Command {
 
                 if(content != null){
                     Package p = new Package(content);
+                    p.setVersion(packages.versions(p.getId()) + 1);
                     if(packages.create(p)){
                         return new Result(200, this.command, "PACKAGED CREATED");
                     }
@@ -660,17 +692,20 @@ public class Command {
             }else if(objectSelector.equals("delete")){
                 try{
                     Package p = packages.get(secSelector);
-                    packages.delete(p.getName(), p.getVersion());
+                    packages.delete(p.getId(), p.getVersion());
                     return new Result(200, this.command, "PACKAGE DELETED");
                 }catch (NullPointerException e){
                     return new Result(404, this.command, "PACKAGE NOT FOUND");
                 }
+            }else if(this.selectors.length >= 2){
+
+                try{
+                    return new Result(this.command, "package", packages.get(objectSelector));
+                }catch (NullPointerException e){
+                    return new Result(404, this.command, "PACKAGE NOT FOUND");
+                }
             }
-            try{
-                return new Result(this.command, "package", packages.get(objectSelector));
-            }catch (NullPointerException e){
-                return new Result(404, this.command, "PACKAGE NOT FOUND");
-            }
+            return new Result(this.command, "packages", packages.get());
         }
         return new Result(200, this.command, "NO COMMAND RECEIVED");
     }
