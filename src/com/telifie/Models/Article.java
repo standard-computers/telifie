@@ -10,8 +10,8 @@ import java.util.stream.Collectors;
 
 public class Article {
 
-    private String owner, id, title, link, icon, description;
-    private double priority = 1.01;
+    private String owner, id, title, link, icon, description = "Webpage";
+    private double priority = 0.91;
     private boolean verified = false;
     private String content;
     private ArrayList<String> tags = new ArrayList<>();
@@ -35,7 +35,7 @@ public class Article {
         this.icon = document.getString("icon");
         this.description = document.getString("description");
         this.priority = (document.getDouble("priority") == null ? 1.01 : document.getDouble("priority"));
-        this.content = (document.getString("content") != null ?  Andromeda.tools.escapeMarkdownForJson(document.getString("content")) : "");
+        this.content = (document.getString("content") != null ?  Andromeda.tools.escape(document.getString("content")) : "");
         this.origin = (document.getInteger("origin") == null ? 0 : document.getInteger("origin"));
         this.tags = document.get("tags", ArrayList.class);
 
@@ -93,12 +93,12 @@ public class Article {
         this.link = link;
     }
 
-    public void setIcon(String icon) {
-        this.icon = icon;
+    public String getIcon() {
+        return icon;
     }
 
-    public String getDescription() {
-        return description;
+    public void setIcon(String icon) {
+        this.icon = icon;
     }
 
     public void setDescription(String description) {
@@ -133,14 +133,6 @@ public class Article {
 
     public ArrayList<String> getTags() {
         return tags;
-    }
-
-    public ArrayList<Attribute> getAttributes() {
-        return attributes;
-    }
-
-    public void setAttributes(ArrayList<Attribute> attributes) {
-        this.attributes = attributes;
     }
 
     public void addAttribute(Attribute attr){
@@ -182,10 +174,6 @@ public class Article {
 
     public void addDataSet(DataSet dataSet){
         this.dataSets.add(dataSet);
-    }
-
-    public Source getSource() {
-        return source;
     }
 
     public void setSource(Source source) {

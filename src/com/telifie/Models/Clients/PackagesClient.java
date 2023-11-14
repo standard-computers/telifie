@@ -19,7 +19,7 @@ public class PackagesClient extends Client {
 
     public ArrayList<Package> get(){
         ArrayList<Package> packages = new ArrayList<>();
-        this.find().forEach(p -> packages.add(new Package(p)));
+        this.find(new Document("public", true)).forEach(p -> packages.add(new Package(p)));
         return packages;
     }
 

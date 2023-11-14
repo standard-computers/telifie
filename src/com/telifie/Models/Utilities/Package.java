@@ -81,21 +81,6 @@ public class Package {
                 ", \"name\" : \"" + name + '\"' +
                 ", \"icon\" : \"" + icon + '\"' +
                 ", \"description\" : \"" + description + '\"' +
-                ", \"access\" : \"" + access + '\"' +
-                ", \"secret\" : \"" + secret + '\"' +
-                ", \"refresh\" : \"" + refresh + '\"' +
-                ", \"version\" : " + version +
-                ", \"origin\" : " + origin +
-                ", \"urls\" : " + urls +
-                '}';
-    }
-
-    public String toSafeString(){
-        return "{" +
-                "\"id\" : \"" + id + '\"' +
-                ", \"name\" : \"" + name + '\"' +
-                ", \"icon\" : \"" + icon + '\"' +
-                ", \"description\" : \"" + description + '\"' +
                 '}';
     }
 }

@@ -1,14 +1,12 @@
 package com.telifie.Models;
 
-import com.opencsv.CSVReader;
+import  com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Andromeda.Unit;
-import com.telifie.Models.Utilities.Console;
 import com.telifie.Models.Utilities.Event;
 import com.telifie.Models.Articles.*;
 import com.telifie.Models.Clients.ArticlesClient;
-import com.telifie.Models.Clients.TimelinesClient;
 import com.telifie.Models.Utilities.*;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -26,128 +24,87 @@ import java.util.regex.Pattern;
 
 public class Parser {
 
-    private static String uri, host, defaultDescription = "Webpage";
-    private static int setDepth = 1;
-    private static final ArrayList<Article> traversable = new ArrayList<>();
-    private static final ArrayList<String> parsed = new ArrayList<>();
     private static ArticlesClient articles;
 
     public Parser(Session session){
         articles = new ArticlesClient(session);
     }
 
+    /**
+     * Initial stage to parsing a URI
+     * This method determines which parsing engine to use.
+     * @param uri URI of asset location
+     * @return Article of parsed asset
+     */
+    public static Article parse(String uri){
+        if(Asset.isWebpage(uri)){
+            return Parser.engines.website(uri);
+        }else if(Asset.isFile(uri)){
+            File file = new File(uri);
+            if(file.exists()){
+                return Parser.engines.website(uri);
+            }
+        }else{
+            Asset asset = new Asset(uri);
+            asset.download();
+            if(asset.getExt().equals("md")){
+                return Parser.engines.markdown(asset);
+            }else if(asset.getExt().equals("txt")){
+                return Parser.engines.text(asset);
+            }else if(Asset.getType(uri).equals("image")){
+                return Parser.engines.image(uri);
+            }
+        }
+        return null;
+    }
+
     public static class engines {
 
-        public static Article parse(String uri){
-            traversable.removeAll(traversable);
-            Parser.uri = uri;
-            if(Asset.isWebpage(uri)){
-                try {
-                    host = new URL(uri).getHost();
-                } catch (MalformedURLException e) {
-                    throw new RuntimeException(e);
-                }
-                return Parser.engines.website(uri);
-            }else if(Asset.isFile(uri)){ //File URI provided
-                File file = new File(uri);
-                if(file.exists()){
-
-                }
-            }else{
-                Asset asset = new Asset(uri);
-                asset.download();
-                if(asset.getExt().equals("md")){
-                    return Parser.engines.markdown(asset);
-                }else if(asset.getExt().equals("txt")){
-                    return Parser.engines.text(asset);
-                }
-            }
-            return null;
+        /**
+         * Entry point to fetch for crawling websites
+         * @param uri URI of webpage being parsed
+         * @param maxDepth Max depth to crawl too
+         * @param allowExternalCrawl Allow crawling of websites not part of URI host?
+         * @return
+         */
+        public static Article crawl(String uri, int maxDepth, boolean allowExternalCrawl){
+            return Parser.engines.fetch(uri, 0, maxDepth, allowExternalCrawl);
         }
 
-        public static void recursive(Session session, int start){
-            articles = new ArticlesClient(session);
-            TimelinesClient timelines = new TimelinesClient(session);
-            ArrayList<Article> as = articles.linked();
-            List<Article> as2 = as.subList(start, as.size());
-            int i = 0;
-            for(Article a : as2){
-                i++;
-                parsed.removeAll(parsed);
-                int lastCrawl = timelines.lastEvent(a.getId(), Event.Type.CRAWL);
-                if(lastCrawl > 3602000 || lastCrawl == -1){ //7 days
-                    timelines.addEvent(a.getId(), new Event(Event.Type.CRAWL, "com.telifie.web-app@parser", "Crawled"));
-                    parsed.add(a.getLink());
-                    Parser.engines.crawl(a.getLink(), Integer.MAX_VALUE, 0, "Webpage", false);
-                }
-            }
-            recursive(session, start);
-        }
-
-        public static Article crawl(String uri, int limit, int depth, String desc, boolean allowExternalCrawl){
-            setDepth = depth;
-            defaultDescription = desc;
-            traversable.removeAll(traversable);
-            Parser.uri = uri;
-            try {
-                host = new URL(uri).getHost();
-            } catch (MalformedURLException e) {
-                throw new RuntimeException(e);
-            }
-            return Parser.engines.fetch(uri, limit, 0, allowExternalCrawl);
-        }
-
-        protected static Article fetch(String url, int limit, int depth, boolean allowExternalCrawl){
+        private static Article fetch(String url, int depth, int maxDepth, boolean allowExternalCrawl){
             depth++;
             try {
                 URL urlObj = new URL(url);
                 String host = urlObj.getProtocol() + "://" + urlObj.getHost();
                 RobotPermission robotPermission = new RobotPermission(host);
                 if(!robotPermission.isAllowed(urlObj.getPath())){
-                    Log.error("Robots Disallow: " + url);
+                    Log.error("ROBOTS DISALLOWED : " + url);
                     return null;
                 }
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
                 if(response.statusCode() == 200){
-                    Document root = response.parse();
-                    Article article = webpage.extract(url, root);
-                    article.setDescription(defaultDescription);
-                    Parser.traversable.add(article);
-                    boolean created = true;
-                    if(article.getSource() != null && !articles.existsWithSource(article.getSource().getUrl())){
-                        created = articles.create(article);
-                        Console.log("Created with source -> Created article " + article.getTitle());
-                    }else if(article.getSource() == null && (created = articles.create(article))){
-                        Console.log("Created with link -> Created article " + article.getTitle());
-                    }
-                    ArrayList<Element> links = root.getElementsByTag("a");
-                    for(Element link : links){
-                        String href = fixLink(host, link.attr("href").split("\\?")[0]);
-                        if(!isParsed(href)
-                                && Asset.isWebpage(href)
-                                && !Andromeda.tools.contains(new String[]{
-                                "facebook.com", "instagram.com", "spotify.com",
-                                "linkedin.com", "youtube.com", "pinterest.com",
-                                "twitter.com", "tumblr.com", "reddit.com"}, href)
-                        ) {
-                            if((allowExternalCrawl && !href.contains(host)) || (!allowExternalCrawl && href.contains(host))){
-                                parsed.add(href);
-                                if(parsed.size() >= limit){
-                                    return article;
-                                }
-                                try {
-                                    Thread.sleep(3000);
-                                    if(depth <= setDepth){
-                                        Console.log("Fetching (" + parsed.size() + ")" + href);
-                                        fetch(href, limit, depth, allowExternalCrawl);
+                    webpage wp = new webpage();
+                    Article article = wp.extract(url, response.parse());
+                    if(articles.create(article)){
+                        ArrayList<String> links = wp.getLinks();
+                        int finalDepth = depth;
+                        links.forEach(link -> {
+                            String href = fixLink(host, link.split("\\?")[0]);
+                            if(Asset.isWebpage(href) && !Andromeda.tools.contains(new String[]{"facebook.com", "instagram.com", "spotify.com", "linkedin.com", "youtube.com", "pinterest.com", "twitter.com", "tumblr.com", "reddit.com"}, href)){
+                                if((allowExternalCrawl && !href.contains(host)) || (!allowExternalCrawl && href.contains(host))){
+                                    try {
+                                        Thread.sleep(3000);
+                                        if(finalDepth <= maxDepth){
+                                            fetch(href, finalDepth, maxDepth, allowExternalCrawl);
+                                        }
+                                    } catch (InterruptedException e) {
+                                        Log.error("FAILED TO SLEEP THREAD : PARSER:147");
                                     }
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
                                 }
                             }
-                        }
+                        });
+                        return article;
                     }
-                    return article;
                 }
                 return null;
             } catch (IOException e) {
@@ -155,42 +112,23 @@ public class Parser {
             }
         }
 
+        /**
+         * Parsing a single webpage
+         * @param url URL of the webpage being parsed
+         * @return Article of webpage asset
+         */
         public static Article website(String url){
-            parsed.add(url);
             try {
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
-                Log.out(Event.Type.MESSAGE, "HTTP / " + response.statusCode() + ":" + url);
+                Log.out(Event.Type.MESSAGE, "PARSING : " + response.statusCode() + " : " + url);
                 if(response.statusCode() == 200){
-                    Document root = response.parse();
-                    Article article = webpage.extract(url, root);
-                    ArrayList<String> links = Parser.extractLinks(root.getElementsByTag("a"), uri);
-                    if(!links.isEmpty()){
-                        for(String link : links){
-                            if(Andromeda.tools.contains(new String[]{"facebook.com", "instagram.com", "spotify.com", "linkedin.com", "youtube.com", "pinterest.com", "github.com", "twitter.com", "tumblr.com", "reddit.com"}, link)){
-                                URI uri;
-                                try {
-                                    uri = new URI(link);
-                                    String domain = uri.getHost();
-                                    String k = (domain.split("\\.")[0].equals("www") ? domain.split("\\.")[1] : domain.split("\\.")[0]);
-                                    k = k.substring(0, 1).toUpperCase() + k.substring(1);
-                                    String[] l = link.split("\\?")[0].split("/");
-                                    String un = l[l.length - 1].trim();
-                                    if(!un.equals("watch")){
-                                        article.addAttribute(new Attribute(k, un));
-                                    }
-                                } catch (URISyntaxException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            }
-                        }
-                    }
-                    if(article.getLink() == null || article.getLink().contains(new URL(uri).getHost())) {
-                        Parser.traversable.add(article);
-                    }
-                    return article;
+                    Document root = response.parse(); //Convert HTML string to Document
+                    return new webpage().extract(url, root); //Create basic article from extracting webpage
                 }
+                Log.error(response.statusCode() + " : " + url);
                 return null;
             } catch (IOException e) {
+                Log.error("FAILED CONNECTING TO HOST : " + url);
                 return null;
             }
         }
@@ -216,7 +154,7 @@ public class Parser {
                             lines.add(fields);
                         }
                     } catch (IOException | CsvException e) {
-                        e.printStackTrace();
+                        Log.error("FAILED CSV FILE READ : PARSER / BATCH");
                     }
                     ArrayList<Article> articles = new ArrayList<>();
                     String[] headers = lines.get(0);
@@ -277,8 +215,11 @@ public class Parser {
          * @return Article representation of asset
          */
         public static Article image(String uri){
-
-            return null;
+            Article a = new Article();
+            a.setIcon(uri);
+            a.setLink(uri);
+            a.setDescription("Image");
+            return a;
         }
 
         /**
@@ -287,18 +228,8 @@ public class Parser {
          * @return Article representation of asset
          */
         public static Article video(String uri){
-
-            return null;
-        }
-
-        /**
-         * Parsing gif files into article
-         * Requires separate parser engine due to file format
-         * @param uri Location of asset on disk
-         * @return Article representation of asset
-         */
-        public static Article gif(String uri){
-
+            Article a = new Article();
+            a.setDescription("Video");
             return null;
         }
 
@@ -308,7 +239,8 @@ public class Parser {
          * @return Article representation of asset
          */
         public static Article document(String uri){
-
+            Article a = new Article();
+            a.setDescription("Document");
             return null;
         }
 
@@ -317,16 +249,22 @@ public class Parser {
          * @return Article representation of asset
          */
         public static Article pdf(){
-
+            Article a = new Article();
+            a.setDescription("Document");
             return null;
         }
 
+        /**
+         * Parsing markdown file into Article
+         * @param asset of Asset type. See Asset
+         * @return Article of asset
+         */
         public static Article markdown(Asset asset){
             Article a = new Article();
             Unit u = new Unit(asset.getContents());
             String[] keywords = u.keywords(6);
-            a.setTitle(uri.split("/")[uri.split("/").length - 1].split("\\.")[0]);
-            a.setDescription("Markdown File");
+            a.setTitle(asset.getUri().split("/")[asset.getUri().split("/").length - 1].split("\\.")[0]);
+            a.setDescription("Document");
             a.addTags(keywords);
             a.setContent(Andromeda.tools.escapeMarkdownForJson(Andromeda.tools.htmlEscape(asset.getContents())));
             a.addAttribute(new Attribute("File Type", "Markdown"));
@@ -336,12 +274,17 @@ public class Parser {
             return a;
         }
 
+        /**
+         * Parsing plain text files into Article
+         * @param asset Asset of text file. See Asset.
+         * @return Article of text file asset.
+         */
         public static Article text(Asset asset){
             Article a = new Article();
             Unit u = new Unit(asset.getContents());
             String[] keywords = u.keywords(6);
-            a.setTitle(uri.split("/")[uri.split("/").length - 1].split("\\.")[0]);
-            a.setDescription("Text File");
+            a.setTitle(asset.getUri().split("/")[asset.getUri().split("/").length - 1].split("\\.")[0]);
+            a.setDescription("Document");
             a.addTags(keywords);
             a.setContent(Andromeda.tools.escapeMarkdownForJson(Andromeda.tools.htmlEscape(asset.getContents())));
             a.addAttribute(new Attribute("File Type", "Plain Text"));
@@ -353,96 +296,150 @@ public class Parser {
     }
 
     public static class webpage {
-        public static Article extract(String url, Document document){
+
+        private ArrayList<String> links;
+        private String root;
+
+        public Article extract(String url, Document document){
             Article article = new Article();
-            article.setDescription("Webpage");
-            Elements metaTags = document.getElementsByTag("meta");
-            for (Element tag : metaTags){
+
+            try {
+                URL rootUri = new URL(url);
+                root = rootUri.getProtocol() + "://" + rootUri.getHost() + "/";
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+            article.setTitle(Andromeda.tools.htmlEscape(document.title()));
+            article.setLink(url);
+            document.getElementsByTag("meta").forEach(tag -> {
                 String mtn = tag.attr("name");
                 String mtc = Andromeda.tools.htmlEscape(tag.attr("content"));
                 switch (mtn) {
-                    case "description" -> {
-                        if (!tag.attr("content").trim().isEmpty()) {
-                            article.setContent(mtc);
-                        }
-                    }
                     case "keywords" -> {
                         String[] words = mtc.split(",");
                         for (String word : words) {
                             article.addTag(word.trim().toLowerCase());
                         }
                     }
-                    //TODO do images
                 }
+            });
+
+            links = Parser.extractLinks(document.getElementsByTag("a"), root); //Get urls
+            if(!links.isEmpty()){ //For parsing each link for attributes
+                links.forEach(link -> {
+                    if(Andromeda.tools.contains(new String[]{"dribbble.com", "facebook.com", "instagram.com", "spotify.com", "linkedin.com", "youtube.com", "pinterest.com", "github.com", "twitter.com", "tumblr.com", "reddit.com"}, link)){
+                        URI uri;
+                        try {
+                            uri = new URI(link);
+                            String domain = uri.getHost();
+                            String k = (domain.split("\\.")[0].equals("www") ? domain.split("\\.")[1] : domain.split("\\.")[0]);
+                            k = k.substring(0, 1).toUpperCase() + k.substring(1);
+                            String[] l = link.split("\\?")[0].split("/");
+                            String un = l[l.length - 1].trim();
+                            article.addAttribute(new Attribute(k, un));
+                        } catch (URISyntaxException e) {
+                            Log.error("CANNOT CONVERT URI TO URL : " + link);
+                        }
+                    }
+                });
             }
-            Elements linkTags = document.getElementsByTag("link");
-            for (Element linkTag : linkTags){
+
+            //Going through link tags for website icon
+            document.getElementsByTag("link").forEach(linkTag -> {
                 String rel = linkTag.attr("rel");
                 String href = linkTag.attr("href");
-                if(rel.contains("icon")){
+                if(rel.contains("icon") && !url.contains("/wiki")){
                     try {
                         article.setIcon(fixLink("https://" + new URL(url).getHost(), href));
                     } catch (MalformedURLException e) {
-                        throw new RuntimeException(e);
+                        Log.error("CANNOT CONVERT URI TO URL : " + url);
                     }
                 }
-            }
-            Elements images = document.getElementsByTag("img");
-            for(Element image : images){
+            });
+
+            document.getElementsByTag("img").forEach(image -> {
                 String src = fixLink(url, image.attr("src"));
-                String srcset = fixLink(url, image.attr("srcset"));
-                if(!src.isEmpty() && !src.equals("null") && Asset.getType(src).equals("image") && !image.attr("src").trim().toLowerCase().startsWith("data:")){
-                    String caption = Andromeda.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;").trim());
-                    if(!caption.equals("Page semi-protected") && !caption.equals("Wikimedia Foundation") && !caption.equals("Powered by MediaWiki") && !caption.equals("Edit this at Wikidata") && !caption.equals("This is a good article. Click here for more information.")){
-                        //TODO do images
-                    }
-                }else if(!srcset.isEmpty() && !srcset.startsWith("data:")){
-                    String caption =  Andromeda.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
-                    //TODO do images
-                }
-            }
-            article.setTitle(Andromeda.tools.htmlEscape(document.title()));
-            article.setLink(url);
-            String whole_text = document.text().replaceAll("[\n\r]", " ");
-            Pattern pattern = Pattern.compile("\\$\\d+(\\.\\d{2})?");
-            Matcher matcher = pattern.matcher(whole_text);
-            if (matcher.find()) {
-                String priceValue = matcher.group();
-                article.addAttribute(new Attribute("Price", priceValue));
-            }
-            if(article.getContent() == null || article.getContent().isEmpty()){
-                Element body = document.getElementsByTag("body").get(0);
-                body.select("table, script, header, style, img, svg, button, label, form, input, aside, code, nav").remove();
-                if(url.contains("wiki")){
-                    article.setSource(new Source("https://telifie-static.nyc3.digitaloceanspaces.com/wwdb-index-storage/wikipedia.png", "Wikipedia", article.getLink().trim()));
-                    article.setLink(null);
-                    article.setTitle(article.getTitle().replaceAll(" - Wikipedia", ""));
-                    body.select("div.mw-jump-link, div#toc, div.navbox, table.infobox, div.vector-body-before-content, div.navigation-not-searchable, div.mw-footer-container, div.reflist, div#See_also, h2#See_also, h2#References, h2#External_links").remove();
-                }else{
-                    Matcher phone_numbers = findPhoneNumbers(whole_text);
-                    while(phone_numbers.find()){
-                        String phone_number = phone_numbers.group().trim().replaceAll("[^0-9]", "").replaceFirst("(\\d{3})(\\d{3})(\\d+)", "($1) $2 – $3");
-                        Attribute attr = new Attribute("Phone", phone_number);
-                        article.addAttribute(attr);
-                    }
-                }
-                StringBuilder markdown = new StringBuilder();
-                Elements paragraphs = body.select("p, h3");
-                for (Element element : paragraphs) {
-                    if (element.tagName().equalsIgnoreCase("p")) {
-                        String text = Andromeda.tools.htmlEscape(element.text().replaceAll("\\s+", " ").trim());
-                        if(!text.isEmpty()){
-                            markdown.append("  \n").append(text).append("  \n");
+                if(!src.isEmpty() && !src.startsWith("data:") && Asset.getType(src).equals("image")){
+                        Asset ass = new Asset(src);
+                        int[] d = ass.getDimensions();
+                        if(d[0] > 46 && d[1] > 46 ){
+                            if(url.contains("/wiki")){
+                                if(article.getIcon() == null || article.getIcon().isEmpty()){
+                                    article.setIcon(src);
+                                }
+                            }
+                            String caption =  Andromeda.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
+                            Article ia = new Article();
+                            if(caption != null && !caption.isEmpty() && caption.length() < 100){
+                                ia.setTitle(caption);
+                            }else{
+                                ia.setTitle(article.getTitle());
+                                ia.setContent(caption);
+                            }
+                            ia.setLink(src);
+                            ia.setIcon(src);
+                            ia.setDescription("Image");
+                            ia.addAttribute(new Attribute("Width", d[0] + "px"));
+                            ia.addAttribute(new Attribute("Height", d[1] + "px"));
+                            ia.addAttribute(new Attribute("Size", ass.fileSize()));
+                            ia.addAttribute(new Attribute("File Type", ass.getExt()));
+                            Article source = articles.withLink(root);
+                            if(source == null){
+                                ia.setSource(new Source(source.getIcon(), source.getTitle(), url));
+                            }else{
+                                ia.setSource(new Source(article.getIcon(), article.getTitle(), url));
+                            }
+                            articles.create(ia);
                         }
-                    } else if (element.tagName().equalsIgnoreCase("h3")) {
-                        String headerText = Andromeda.tools.escape(element.text().trim());
-                        markdown.append("##### ").append(headerText).append("  \n");
-                    }
+//                    CompletableFuture.runAsync(() -> {
+//                    });
                 }
-                String md = Andromeda.tools.escape(markdown.toString().replaceAll("\\[.*?]", "").trim());
-                article.setContent(md);
+            });
+
+            //Preparing page content for Article content and other data extraction
+            Element body = document.getElementsByTag("body").get(0);
+            body.select("table, script, header, style, img, svg, button, label, form, input, aside, code, nav").remove();
+            if(url.contains("/wiki")){ //Wiki specific parsing
+                article.setSource(new Source("https://telifie-static.nyc3.digitaloceanspaces.com/wwdb-index-storage/wikipedia.png", "Wikipedia", article.getLink().trim()));
+                article.setLink(null);
+                article.setTitle(article.getTitle().replaceAll(" - Wikipedia", ""));
+                body.select("div.mw-jump-link, div#toc, div.navbox, table.infobox, div.vector-body-before-content, div.navigation-not-searchable, div.mw-footer-container, div.reflist, div#See_also, h2#See_also, h2#References, h2#External_links").remove();
+            }else{
+
+                String whole_text = document.text().replaceAll("[\n\r]", " "); //Extract Prices
+                Pattern pattern = Pattern.compile("\\$\\d+(\\.\\d{2})?");
+                Matcher matcher = pattern.matcher(whole_text);
+                if (matcher.find()) {
+                    String priceValue = matcher.group();
+                    article.addAttribute(new Attribute("Price", priceValue));
+                }
+                Pattern phones = Pattern.compile("\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b"); //Extract phone number
+                Matcher m = phones.matcher(whole_text);
+                if(m.find()){
+                    String phoneNumber = m.group().trim().replaceAll("[^0-9]", "").replaceFirst("(\\d{3})(\\d{3})(\\d+)", "($1) $2 – $3");
+                    article.addAttribute(new Attribute("Phone", phoneNumber));
+                }
+
             }
+            StringBuilder markdown = new StringBuilder();
+            Elements paragraphs = body.select("p, h3");
+            for (Element element : paragraphs) {
+                if (element.tagName().equalsIgnoreCase("p")) {
+                    String text = Andromeda.tools.htmlEscape(element.text().replaceAll("\\s+", " ").trim());
+                    if(!text.isEmpty()){
+                        markdown.append("  \n").append(text).append("  \n");
+                    }
+                } else if (element.tagName().equalsIgnoreCase("h3")) {
+                    String headerText = Andromeda.tools.htmlEscape(element.text().trim());
+                    markdown.append("##### ").append(headerText).append("  \n");
+                }
+            }
+            article.setContent(Andromeda.tools.escape(markdown.toString().replaceAll("\\[.*?]", "").trim()));
             return article;
+        }
+
+        public ArrayList<String> getLinks() {
+            return links;
         }
     }
 
@@ -470,64 +467,35 @@ public class Parser {
                 Log.error("HOST BLOCKED : " + host);
             }
         }
+
         public boolean isAllowed(String path) {
             return disallowed.stream().noneMatch(path::startsWith);
         }
     }
 
-    public ArrayList<Article> getTraversable() {
-        return traversable;
-    }
-
-    public void purge(){
-        traversable.clear();
-    }
-
-    public static boolean isParsed(String uri){
-        String alt = uri;
-        if(uri.endsWith("/")){
-            alt = uri.substring(0, uri.length() - 1);
-        }
-        for (String s : Parser.parsed) {
-            if (s.equals(alt) || s.equals(uri)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public static ArrayList<String> extractLinks(Elements elements, String root){
         ArrayList<String> links = new ArrayList<>();
-        for(Element el : elements){
-            String link = el.attr("href");
-            String fixed = fixLink(root, link);
-            if(Asset.isValidLink(fixed)){
-                links.add(fixed);
+        elements.forEach(el -> {
+            String fxd = fixLink(root, el.attr("href"));
+            if(Asset.isValidLink(fxd)){
+                links.add(fxd);
             }
-        }
+        });
         return links;
     }
 
-    public static Matcher findPhoneNumbers(String text){
-        String regex = "\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b";
-        Pattern pattern = Pattern.compile(regex);
-        return pattern.matcher(text);
-    }
-
     public static String fixLink(String url, String src){
-        if(src.startsWith("//")){
-            src = "https:" + src.trim();
-        }else if(src.startsWith("/")){
-            if(url.endsWith("/")){
-                src = url.substring(0, url.length() - 1) + src;
-            }else{
-                src = url + src;
+        if(src.startsWith("//")){ //SRC needs protocol
+            return "https:" + src.trim();
+        }else if(src.startsWith("/")){ //SRC is subdirectory of parent URL
+            if(url.endsWith("/")) {
+                return url.substring(0, url.length() - 1) + src;
             }
-        }else if(src.startsWith("www")){
-            src = "https://" + src;
+            return url + src;
+        }else if(src.startsWith("www")){ //SRC needs protocol
+            return "https://" + src;
         }else if(src.startsWith("./")){
-            src = url + "/" + src;
-            return src.replaceFirst("\\./", "");
+            return (url + "/" + src).replaceFirst("\\./", "");
         }
         return src;
     }

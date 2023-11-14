@@ -8,13 +8,16 @@ import java.io.IOException;
 
 public class Start {
 
-    private static final String wrkDir = Telifie.configDirectory();
     private static Configuration config;
-    private static final File configFile = new File(wrkDir + "/config.json");
+    private static final File configFile = new File(Telifie.configDirectory() + "/config.json");
 
     public static void main(String[] args){
         Console.welcome();
         Log.out(Event.Type.MESSAGE, "TELIFIE STARTED");
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            Log.out(Event.Type.FLAG, "TELIFIE EXITED");
+            Telifie.purgeTemp();
+        }));
         if (args.length > 0) {
             String mode = args[0].trim().toLowerCase();
             switch (mode) {
@@ -47,9 +50,9 @@ public class Start {
 
     private static void install(){
         File[] folders = new File[]{
-                new File(wrkDir),
-                new File(wrkDir + "temp"),
-                new File(wrkDir + "andromeda"),
+                new File(Telifie.configDirectory()),
+                new File(Telifie.configDirectory() + "temp"),
+                new File(Telifie.configDirectory() + "andromeda"),
         };
         if(configFile.exists()){
             Console.log("config.json file already set");

@@ -1,10 +1,12 @@
 package com.telifie.Models.Utilities;
 
 import com.telifie.Models.Andromeda.Andromeda;
-import java.io.File;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -14,27 +16,60 @@ public class Asset {
 
     private final String uri;
     private String localUri;
-    private final File f;
     private String contents;
+    private long length;
+    private int[] dimensions;
 
     public Asset(String uri){
+        this(uri, false);
+    }
+
+    public Asset(String uri, boolean doContents){
         this.uri = uri;
-        f = new File(uri);
         if(isURL() && !isWebpage()){
+            try {
+                analyseFile();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        if(doContents){
             download();
             getContents();
         }
     }
 
-    public String download(){
+    private void analyseFile() throws IOException {
+        URL url = new URL(this.uri);
+        URLConnection connection = url.openConnection();
+        connection.connect();
+        length = connection.getContentLength();
+        if(getType(this.uri).equals("image")){
+            try {
+                BufferedImage image = ImageIO.read(url);
+                this.dimensions = new int[]{image.getWidth(), image.getHeight()};
+            } catch (IOException e) {
+                this.dimensions = new int[]{0,0};
+            }
+        }
+    }
+
+    public int[] getDimensions(){
+        return this.dimensions;
+    }
+
+    public String getUri() {
+        return uri;
+    }
+
+    public void download(){
         try {
             URL url = new URL(uri);
             localUri = Telifie.configDirectory() + "temp/" + url.getPath().split("/")[url.getPath().split("/").length - 1];
             InputStream inputStream = url.openStream();
             Files.copy(inputStream, Paths.get(localUri), StandardCopyOption.REPLACE_EXISTING);
-            return localUri;
         } catch (IOException e) {
-            return "";
+            Log.error("FAILED TO DOWNLOAD : " + uri);
         }
     }
 
@@ -51,13 +86,12 @@ public class Asset {
     }
 
     public String fileSize(){
-        long fs = f.length();
-        if (fs <= 0) {
+        if (this.length <= 0) {
             return "0 B";
         }
         final String[] units = {"B", "KB", "MB", "GB", "TB"};
-        int digitGroups = (int) (Math.log10(fs) / Math.log10(1024));
-        double fileSize = fs / Math.pow(1024, digitGroups);
+        int digitGroups = (int) (Math.log10(this.length) / Math.log10(1024));
+        double fileSize = this.length / Math.pow(1024, digitGroups);
         DecimalFormat decimalFormat = new DecimalFormat("#,##0.#");
         return decimalFormat.format(fileSize) + " " + units[digitGroups];
     }
@@ -96,6 +130,7 @@ public class Asset {
     }
 
     public static String getType(String uri){
+        uri = uri.toLowerCase();
         if(isWebpage(uri) || uri.endsWith("html")){
             return "webpage";
         }else if(uri.endsWith("png") || uri.endsWith("gif") || uri.endsWith("jpeg") || uri.endsWith("jpg") || uri.endsWith("psd")){

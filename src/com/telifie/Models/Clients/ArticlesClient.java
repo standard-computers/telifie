@@ -50,10 +50,6 @@ public class ArticlesClient extends Client {
         return false;
     }
 
-    public ArrayList<Article> linked(){
-        return this.get(new Document("$or", Arrays.asList(new Document("source.url", new Document("$exists", true)), new Document("link", new Document("$exists", true)))));
-    }
-
     public boolean createMany(ArrayList<Article> articles){
         ArrayList<Document> documents = new ArrayList<>();
         articles.forEach(a -> documents.add(Document.parse(a.toString())));
@@ -136,14 +132,6 @@ public class ArticlesClient extends Client {
     public boolean duplicate(Article article, Domain domain){
         session.setDomain(domain.getId());
         return this.create(article);
-    }
-
-    public boolean exists(String id){
-        return super.exists(new Document("id", id));
-    }
-
-    public boolean existsWithSource(String source){
-        return (super.findOne(new Document("source.url", source)) == null ? false : true);
     }
 
     public ArrayList<Document> withSource(String source){

@@ -153,16 +153,16 @@
             <artifactId>opencsv</artifactId>
             <version>5.8</version>
         </dependency>
-        <dependency>
-            <groupId>org.deeplearning4j</groupId>
-            <artifactId>deeplearning4j-core</artifactId>
-            <version>1.0.0-M2.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.deeplearning4j</groupId>
-            <artifactId>deeplearning4j-nlp</artifactId>
-            <version>1.0.0-M2.1</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.deeplearning4j</groupId>-->
+<!--            <artifactId>deeplearning4j-core</artifactId>-->
+<!--            <version>1.0.0-M2.1</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.deeplearning4j</groupId>-->
+<!--            <artifactId>deeplearning4j-nlp</artifactId>-->
+<!--            <version>1.0.0-M2.1</version>-->
+<!--        </dependency>-->
 
     </dependencies>
 </project>

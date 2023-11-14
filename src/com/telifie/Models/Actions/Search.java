@@ -24,7 +24,15 @@ public class Search {
     public Result execute(Session session, String query, Parameters params){
         query = query.toLowerCase().trim();
         ArticlesClient articles = new ArticlesClient(session);
-        ArrayList<Article> results = articles.search(query, params, filter(query, params));
+        Document filter = filter(query, params);
+        Bson sf = Filters.ne("description", "Image");
+        if(params.getIndex().equals("images")){
+            sf = Filters.eq("description", "Image");
+        }else if(params.getIndex().equals("locations")){
+            sf = Filters.exists("location");
+        }
+        filter = new Document("$and", Arrays.asList( sf, Filters.or(filter) ));
+        ArrayList<Article> results = articles.search(query, params, filter);
         ArrayList<Article> paged = paginateArticles(results, params.getPage(), params.getResultsPerPage());
         result = new Result(query, params, "articles", paged);
         result.setTotal(results.size());
@@ -57,15 +65,6 @@ public class Search {
             String[] spl = query.split(":");
             if(spl.length >= 2){
                 return new Document("link", pattern(spl[1].trim() ));
-            }
-        }else if(query.matches("^source\\s*:\\s*.*")){
-
-            String[] spl = query.split(":");
-            if(spl.length >= 2){
-                if(spl[1].startsWith("http")){
-                    return new Document("source.url", spl[1].trim());
-                }
-                return new Document("source.name", pattern(spl[1].trim() ));
             }
         }else if(query.matches("^attribute\\s*:\\s*.*")){
 
@@ -139,10 +138,7 @@ public class Search {
                         )),
                         new Document("location", new Document("$near",
                                 new Document("$geometry", new Document("type", "Point")
-                                        .append("coordinates", Arrays.asList(
-                                                Double.parseDouble(pl.getAttribute("Longitude")),
-                                                Double.parseDouble(pl.getAttribute("Latitude"))
-                                        ))
+                                        .append("coordinates", Arrays.asList(Double.parseDouble(pl.getAttribute("Longitude")), Double.parseDouble(pl.getAttribute("Latitude"))))
                                 ).append("$maxDistance", 16000)
                         )
                         )
@@ -152,21 +148,15 @@ public class Search {
             return  new Document("description", "Calculator");
         }
         String[] exploded = Encoder.clean(query).split("\\s+");
-        ArrayList<Bson> or = new ArrayList<>();
+        ArrayList<Document> or = new ArrayList<>();
         for (String word : exploded) {
-            or.add(Filters.regex("title", pattern(word)));
+            or.add(new Document("title", ignoreCase(word)));
         }
         if (query.contains("/") || query.contains(".")) {
-            or.add(Filters.regex("link", pattern(query)));
+            or.add(new Document("link", pattern(query)));
         }
-        or.add(Filters.in("tags", ignoreCase(query)));
-        Bson sf = Filters.ne("description", "Image");
-        if(params.getIndex().equals("images")){
-            sf = Filters.eq("description", "Image");
-        }else if(params.getIndex().equals("locations")){
-            sf = Filters.exists("location");
-        }
-        return new Document("$and", Arrays.asList( sf, Filters.or(or) ));
+        or.add(new Document("tags", new Document("$in", Collections.singletonList(query))));
+        return new Document("$or", or);
     }
 
     private String generated(String q, Parameters params){
@@ -190,8 +180,8 @@ public class Search {
                 return "Your dice roll is " + random;
             }else if(q.contains("random") && q.contains("color")){
                 Color c = new Color((int) (Math.random() * 256), (int) (Math.random() * 256), (int) (Math.random() * 256));
-                String rgb = String.format("#%02X%02X%02X", c.getRed(), c.getGreen(), c.getBlue());
-                String hex = String.format("RGB(%d, %d, %d)", c.getRed(), c.getGreen(), c.getBlue());
+                String hex = String.format("#%02X%02X%02X", c.getRed(), c.getGreen(), c.getBlue());
+                String rgb = String.format("RGB(%d, %d, %d)", c.getRed(), c.getGreen(), c.getBlue());
                 return "Here is a random color: Hex is " + hex + " and RGB " + rgb;
             }else if(u.startsWith("interrogative")){
                 String cleaned = Encoder.clean(q);

@@ -1,26 +1,30 @@
 package com.telifie.Models.Utilities;
 
+import com.google.protobuf.Message;
+import com.telifie.Models.Actions.Search;
 import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Andromeda.Taxon;
-
+import org.bson.Document;
 import java.util.Scanner;
 
 public class Console {
 
     public static void welcome() {
-        System.out.println("\n");
-        System.out.println("||===========================================================||");
-        System.out.println("||                                                           ||");
-        System.out.println("||  ,--------. ,------. ,--.    ,--. ,------. ,--. ,------.  ||");
-        System.out.println("||  '--.  .--' |  .---' |  |    |  | |  .---' |  | |  .---'  ||");
-        System.out.println("||     |  |    |  `--,  |  |    |  | |  `--,  |  | |  `--,   ||");
-        System.out.println("||     |  |    |  `---. |  '--. |  | |  |`    |  | |  `---.  ||");
-        System.out.println("||     `--'    `------' `-----' `--' `--'     `--' `------'  ||");
-        System.out.println("||                                                           ||");
-        System.out.println("||===========================================================||\n");
-        String operatingSystem = System.getProperty("os.name");
-        System.out.println("Operating System : " + operatingSystem);
-        System.out.println("System Architecture : " + System.getProperty("os.arch"));
+        Console.log("\n");
+        Console.log("||===========================================================||");
+        Console.log("||                                                           ||");
+        Console.log("||  ,--------. ,------. ,--.    ,--. ,------. ,--. ,------.  ||");
+        Console.log("||  '--.  .--' |  .---' |  |    |  | |  .---' |  | |  .---'  ||");
+        Console.log("||     |  |    |  `--,  |  |    |  | |  `--,  |  | |  `--,   ||");
+        Console.log("||     |  |    |  `---. |  '--. |  | |  |`    |  | |  `---.  ||");
+        Console.log("||     `--'    `------' `-----' `--' `--'     `--' `------'  ||");
+        Console.log("||                                                           ||");
+        Console.log("||===========================================================||");
+        Console.log("       COPYRIGHT (C) TELIFIE LLC 2024, CINCINNATI, OHIO        ");
+        Console.line();
+        Console.log("Operating System    : " + System.getProperty("os.name"));
+        Console.log("System OS Version   : " + System.getProperty("os.version"));
+        Console.log("System Architecture : " + System.getProperty("os.arch"));
         Console.line();
     }
 
@@ -60,6 +64,7 @@ public class Console {
     }
 
     public static void command(){
+        Log.out(Event.Type.FLAG, "ENTERING CLI");
         while(true){
             String cmd = Console.in("telifie -> ");
             switch (cmd) {
@@ -90,6 +95,8 @@ public class Console {
                             Console.log(t.items().toString());
                         }else if(c.equals("exit")){
                             loop = false;
+                        }else{ //TODO Accept input to 'Search' and allow input/output of JSON
+                            new Search().execute(new Session("com.telifie.app", "telifie"), c, new Parameters(new Document()));
                         }
                     }
                 }

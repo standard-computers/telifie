@@ -132,9 +132,9 @@ public class Command {
                                     int p = d.getPermissions(session.getUser());
                                     if(p == 0){
                                         return new Result(200, "OWNER");
-                                    }else if(p == 1){
+                                    }else if(p == Telifie.PROTECTED){
                                         return new Result(206, "VIEWER");
-                                    }else if(p == 2){
+                                    }else if(p == Telifie.PUBLIC){
                                         return new Result(207, "EDITOR");
                                     }
                                     return new Result(403, "DOMAIN ACCESS DENIED");
@@ -486,12 +486,12 @@ public class Command {
                             }
                             return new Result(404, this.command, "NO ARTICLES");
                         }
-                        case "uri" -> {
+                        case "uri" -> { //Single file parsing
                             String uri = content.getString("uri");
                             if (uri != null && !uri.isEmpty()) {
+                                new Parser(session);
                                 if(articles.withLink(uri) == null){
-                                    new Parser(session);
-                                    Article parsed = Parser.engines.parse(uri);
+                                    Article parsed = Parser.parse(uri);
                                     if(parsed != null){
                                         if (content.getBoolean("insert") != null && content.getBoolean("insert")) {
                                             articles.create(parsed);
@@ -504,17 +504,13 @@ public class Command {
                             }
                             return new Result(428, this.command, "URI REQUIRED");
                         }
-                        case "crawl" -> {
+                        case "crawl" -> { //Crawling uri, admin purposes only
                             String url = content.getString("uri");
-                            String desc = (content.getString("description") == null ? "Webpage" : content.getString("description"));
-                            int depth = (content.getInteger("depth") == null ? 1 : content.getInteger("depth"));
                             if (url != null && !url.isEmpty()) {
-                                Parser parser = new Parser(session);
-                                parser.purge();
                                 int limit = (content.getInteger("limit") == null ? Integer.MAX_VALUE : content.getInteger("limit"));
                                 boolean allowExternalCrawl = (content.getBoolean("allow_external") != null && content.getBoolean("allow_external"));
-                                Parser.engines.crawl(url, limit, depth, desc, allowExternalCrawl);
-                                return new Result(this.command, "articles", parser.getTraversable());
+                                Parser.engines.crawl(url, limit, allowExternalCrawl);
+                                return new Result(this.command, "articles", null);
                             }
                             return new Result(428, this.command, "URI REQUIRED");
                         }

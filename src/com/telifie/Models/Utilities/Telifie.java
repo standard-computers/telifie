@@ -1,5 +1,6 @@
 package com.telifie.Models.Utilities;
 
+import java.io.File;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -21,6 +22,25 @@ public class Telifie {
             return Telifie.WINDOWS_SYSTEM_DIR + "/";
         }else{
             return Telifie.UNIX_SYSTEM_DIR + "/";
+        }
+    }
+
+    public static void purgeTemp(){
+        //TODO DELETE ALL FILES IN TEMP FOLDER
+        File tempDir = new File(Telifie.configDirectory() + "temp");
+        if(tempDir.exists() && tempDir.isDirectory()){
+            File[] files = tempDir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile()) {
+                        if (!file.delete()) {
+                            Console.log(" FAILED TO DELETE FILE : " + file.getName());
+                        }
+                    }
+                }
+            } else {
+                Console.log("TEMP DIR EMPTY");
+            }
         }
     }
 

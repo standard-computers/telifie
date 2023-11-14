@@ -1,5 +1,6 @@
 package com.telifie.Models.Andromeda;
 
+import com.google.common.html.HtmlEscapers;
 import com.telifie.Models.Utilities.*;
 import org.apache.commons.text.StringEscapeUtils;
 import java.io.*;
@@ -126,7 +127,7 @@ public class Andromeda {
         }
 
         public static String htmlEscape(String string){
-            return  StringEscapeUtils.escapeHtml4(string);
+            return  HtmlEscapers.htmlEscaper().escape(string);
         }
     }
 }
