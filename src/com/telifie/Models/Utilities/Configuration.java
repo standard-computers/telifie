@@ -10,11 +10,11 @@ public class Configuration {
 
     private String installation = "REMOTE", email;
     private String mongodb; //JSON of database configuration
-    private Connection file_storage, mysql;
     private ArrayList<String> ip_list; //List of IP to externally connect
     private ArrayList<String> ip_access; //List of IP to allowed to access server
     private ArrayList<String> ip_block; //List of IP to allowed to access server
 
+    public static Connection file_storage, mysql;
     public static MongoClient mongoClient;
     private String license;
 
@@ -117,7 +117,7 @@ public class Configuration {
                 '}';
     }
 
-    private class Connection {
+    public class Connection {
 
         private String uri, user, psswd;
 

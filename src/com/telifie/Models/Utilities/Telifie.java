@@ -9,7 +9,6 @@ import static com.telifie.Models.Andromeda.Andromeda.NUMERALS;
 
 public class Telifie {
 
-    public static final int PRIVATE = 0, PROTECTED = 1, PUBLIC = 2;
     public static final String WINDOWS_SYSTEM_DIR = "/Program\\ Files/telifie/";
     public static final String MAC_SYSTEM_DIR = System.getProperty("user.home") + "/Library/Application Support/telifie";
     public static final String UNIX_SYSTEM_DIR = "/usr/bin/telifie/";
@@ -26,7 +25,6 @@ public class Telifie {
     }
 
     public static void purgeTemp(){
-        //TODO DELETE ALL FILES IN TEMP FOLDER
         File tempDir = new File(Telifie.configDirectory() + "temp");
         if(tempDir.exists() && tempDir.isDirectory()){
             File[] files = tempDir.listFiles();
@@ -52,11 +50,7 @@ public class Telifie {
         return ALPHAS[(int) random(0, 25)] + ALPHAS[(int) random(0, 25)] + ALPHAS[(int) random(0, 25)] + ALPHAS[(int) random(0, 25)] + ALPHAS[(int) random(0, 25)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)];
     }
 
-    public static String shortEid(){
-        return ALPHAS[(int) random(0, 25)] + NUMERALS[(int) random(0, 9)] + ALPHAS[(int) random(0, 25)] + NUMERALS[(int) random(0, 9)] + ALPHAS[(int) random(0, 25)] + NUMERALS[(int) random(0, 9)];
-    }
-
-    public static String simpleCode(){
+    public static String digitCode(){
         return NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)];
     }
 

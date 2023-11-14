@@ -12,7 +12,7 @@ public class AuthenticationClient extends Client {
     }
 
     public boolean authenticate(Authentication authentication){
-        return super.insertOne(authentication.document());
+        return super.insertOne(Document.parse(authentication.toString()));
     }
 
     public boolean isAuthenticated(Authentication authentication){

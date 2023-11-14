@@ -1,6 +1,6 @@
 package com.telifie.Models;
 
-import  com.opencsv.CSVReader;
+import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Andromeda.Unit;
@@ -63,15 +63,14 @@ public class Parser {
         /**
          * Entry point to fetch for crawling websites
          * @param uri URI of webpage being parsed
-         * @param maxDepth Max depth to crawl too
          * @param allowExternalCrawl Allow crawling of websites not part of URI host?
          * @return
          */
-        public static Article crawl(String uri, int maxDepth, boolean allowExternalCrawl){
-            return Parser.engines.fetch(uri, 0, maxDepth, allowExternalCrawl);
+        public static Article crawler(String uri, boolean allowExternalCrawl){
+            return Parser.engines.fetch(uri, 0, allowExternalCrawl);
         }
 
-        private static Article fetch(String url, int depth, int maxDepth, boolean allowExternalCrawl){
+        private static Article fetch(String url, int depth, boolean allowExternalCrawl){
             depth++;
             try {
                 URL urlObj = new URL(url);
@@ -85,26 +84,24 @@ public class Parser {
                 if(response.statusCode() == 200){
                     webpage wp = new webpage();
                     Article article = wp.extract(url, response.parse());
-                    if(articles.create(article)){
-                        ArrayList<String> links = wp.getLinks();
-                        int finalDepth = depth;
-                        links.forEach(link -> {
-                            String href = fixLink(host, link.split("\\?")[0]);
-                            if(Asset.isWebpage(href) && !Andromeda.tools.contains(new String[]{"facebook.com", "instagram.com", "spotify.com", "linkedin.com", "youtube.com", "pinterest.com", "twitter.com", "tumblr.com", "reddit.com"}, href)){
-                                if((allowExternalCrawl && !href.contains(host)) || (!allowExternalCrawl && href.contains(host))){
-                                    try {
-                                        Thread.sleep(3000);
-                                        if(finalDepth <= maxDepth){
-                                            fetch(href, finalDepth, maxDepth, allowExternalCrawl);
-                                        }
-                                    } catch (InterruptedException e) {
-                                        Log.error("FAILED TO SLEEP THREAD : PARSER:147");
+                    ArrayList<String> links = wp.getLinks();
+                    int finalDepth = depth;
+                    links.forEach(link -> {
+                        String href = fixLink(host, link.split("\\?")[0]);
+                        if(Asset.isWebpage(href) && !Andromeda.tools.contains(new String[]{"facebook.com", "instagram.com", "spotify.com", "linkedin.com", "youtube.com", "pinterest.com", "twitter.com", "tumblr.com", "reddit.com"}, href)){
+                            if((allowExternalCrawl && !href.contains(host)) || (!allowExternalCrawl && href.contains(host))){
+                                try {
+                                    Thread.sleep(3000);
+                                    if(finalDepth <= 2){
+                                        fetch(href, finalDepth, allowExternalCrawl);
                                     }
+                                } catch (InterruptedException e) {
+                                    Log.error("FAILED TO SLEEP THREAD : PARSER");
                                 }
                             }
-                        });
-                        return article;
-                    }
+                        }
+                    });
+                    return article;
                 }
                 return null;
             } catch (IOException e) {
@@ -170,7 +167,7 @@ public class Parser {
                             case "tags" -> tagsIndex = i;
                         }
                     }
-                    String batchId = Telifie.shortEid().toLowerCase();
+                    String batchId = String.valueOf(Telifie.epochTime());
                     for (int i = 1; i < lines.size(); i++) {
                         String[] articleData = lines.get(i);
                         Article article = new Article();

@@ -14,7 +14,7 @@ public class Collection {
     private String name;
     private String connector = "";
     private final int origin;
-    private int permissions = Telifie.PRIVATE;
+    private int permissions = 0;
     private ArrayList articles;
     private ArrayList<Article> detailedList;
 

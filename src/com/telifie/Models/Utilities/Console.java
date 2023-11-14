@@ -1,6 +1,5 @@
 package com.telifie.Models.Utilities;
 
-import com.google.protobuf.Message;
 import com.telifie.Models.Actions.Search;
 import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Andromeda.Taxon;

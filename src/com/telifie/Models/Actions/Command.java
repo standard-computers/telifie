@@ -132,9 +132,9 @@ public class Command {
                                     int p = d.getPermissions(session.getUser());
                                     if(p == 0){
                                         return new Result(200, "OWNER");
-                                    }else if(p == Telifie.PROTECTED){
+                                    }else if(p == 1){
                                         return new Result(206, "VIEWER");
-                                    }else if(p == Telifie.PUBLIC){
+                                    }else if(p == 2){
                                         return new Result(207, "EDITOR");
                                     }
                                     return new Result(403, "DOMAIN ACCESS DENIED");
@@ -509,7 +509,7 @@ public class Command {
                             if (url != null && !url.isEmpty()) {
                                 int limit = (content.getInteger("limit") == null ? Integer.MAX_VALUE : content.getInteger("limit"));
                                 boolean allowExternalCrawl = (content.getBoolean("allow_external") != null && content.getBoolean("allow_external"));
-                                Parser.engines.crawl(url, limit, allowExternalCrawl);
+                                Parser.engines.crawler(url, allowExternalCrawl);
                                 return new Result(this.command, "articles", null);
                             }
                             return new Result(428, this.command, "URI REQUIRED");
@@ -574,7 +574,7 @@ public class Command {
                         AuthenticationClient auths = new AuthenticationClient();
                         auths.authenticate(auth);
                         JSONObject json = new JSONObject(user.toString());
-                        json.put("authentication", auth.toJson());
+                        json.put("authentication", new JSONObject(auth.toString()));
                         return new Result(this.command, "user", json);
                     }
                     return new Result(403, "INVALID CODE");

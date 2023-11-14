@@ -23,7 +23,6 @@ public class Timeline {
 
     @Override
     public String toString() {
-        return "{\"object\" : \"" + object + '\"' +
-                ", \"events\" :" + events + '}';
+        return "{\"object\" : \"" + object + '\"' + ", \"events\" :" + events + "}";
     }
 }

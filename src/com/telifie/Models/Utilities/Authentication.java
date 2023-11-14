@@ -2,7 +2,6 @@ package com.telifie.Models.Utilities;
 
 import com.telifie.Models.User;
 import org.bson.Document;
-import org.json.JSONObject;
 
 public class Authentication {
 
@@ -59,13 +58,5 @@ public class Authentication {
     @Override
     public String toString() {
         return new StringBuilder().append("{").append("\"user\" : \"").append(user).append('\"').append(", \"token\" : \"").append(token).append('\"').append(", \"refresh_token\" : \"").append(refreshToken).append('\"').append(", \"origin\" : ").append(origin).append(", \"expiration\" : ").append(expiration).append("}").toString();
-    }
-
-    public JSONObject toJson(){
-        return new JSONObject(this.toString());
-    }
-
-    public Document document(){
-        return Document.parse(this.toString());
     }
 }

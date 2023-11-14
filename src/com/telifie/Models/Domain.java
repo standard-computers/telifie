@@ -18,7 +18,7 @@ public class Domain implements Serializable {
         this.name = name;
         this.icon = icon;
         this.origin = Telifie.epochTime();
-        this.permissions = (permissions <= 2 && permissions >= 0 ? permissions : Telifie.PRIVATE); //Private is default mode if none
+        this.permissions = (permissions <= 2 && permissions >= 0 ? permissions : 0); //Private is default mode if none
     }
 
     public Domain(Document document) throws NullPointerException {
@@ -26,7 +26,7 @@ public class Domain implements Serializable {
         this.icon = document.getString("icon");
         this.owner = document.getString("owner");
         this.name = document.getString("name");
-        this.permissions = (document.getInteger("permissions") == null ? Telifie.PRIVATE : document.getInteger("permissions"));
+        this.permissions = (document.getInteger("permissions") == null ? 0 : document.getInteger("permissions"));
         ArrayList<Document> m = (ArrayList<Document>) document.getList("users", Document.class);
         if (m != null) {
             m.forEach(d -> this.addUser(new Member(d)));
