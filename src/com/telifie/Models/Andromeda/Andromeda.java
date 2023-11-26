@@ -1,8 +1,13 @@
 package com.telifie.Models.Andromeda;
 
 import com.google.common.html.HtmlEscapers;
+import com.telifie.Models.Article;
+import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Utilities.*;
+import com.telifie.Models.Utilities.Console;
 import org.apache.commons.text.StringEscapeUtils;
+import org.bson.Document;
+
 import java.io.*;
 import java.util.*;
 
@@ -15,7 +20,7 @@ public class Andromeda {
     public static final String[] PROXIMITY = {"near", "nearby", "close to", "around", "within", "in the vicinity of", "within walking distance of", "adjacent to", "bordering", "neighboring", "local to", "surrounding", "not far from", "just off"};
 
     public Andromeda(){
-        Log.out(Event.Type.MESSAGE, "INITIALIZING ANDROMEDA");
+        Log.message("INITIALIZING ANDROMEDA");
         if(new File(Telifie.configDirectory() + "andromeda/taxon.telifie").exists()){
             try (FileInputStream fileIn = new FileInputStream(Telifie.configDirectory() + "andromeda/taxon.telifie");
                  ObjectInputStream in = new ObjectInputStream(fileIn)) {
@@ -25,6 +30,33 @@ public class Andromeda {
             }
         }
     }
+
+    public void index(){
+        ArticlesClient articles = new ArticlesClient(new Session("com.telifie.master_data_team", "telifie"));
+        ArrayList<Article> al = articles.withProjection(new Document("$and", Arrays.asList(
+                new Document("link", new Document("$ne", null)),
+                new Document("description", new Document("$ne", "Image")),
+                new Document("description", new Document("$ne", "Definition")),
+                new Document("description", new Document("$ne", "Webpage"))
+        )), new Document("icon", 1)
+                .append("title", 1)
+                .append("description", 1)
+                .append("link", 1)
+                .append("_id", 0));
+        int it = al.size();
+        Console.log("ESTIMATED INDEX : " + it);
+        final int[] i = {0};
+        al.forEach(a -> {
+            i[0]++;
+            Console.log("INDEXING " + i[0] + "/" + it);
+            String t = a.getDescription().toLowerCase().trim();
+            String tn = a.getTitle().trim().toLowerCase();
+            add(t, tn);
+        });
+        save();
+    }
+
+
 
     public Taxon taxon(String name) {
         for (Taxon t : taxon) {
@@ -59,7 +91,6 @@ public class Andromeda {
             taxon.add(item);
             Andromeda.taxon.add(taxon);
         }
-        save();
     }
 
     private void save(){

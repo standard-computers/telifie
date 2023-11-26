@@ -36,11 +36,11 @@ public class Client {
         }
     }
 
-    protected ArrayList<Document> find(){
+    protected ArrayList<Document> findWithProjection(Document filter, Document projection){
         try {
             MongoDatabase db = mc.getDatabase("telifie");
             MongoCollection<Document> c = db.getCollection(this.collection);
-            FindIterable<Document> iter = c.find();
+            FindIterable<Document> iter = c.find(filter).projection(projection);
             ArrayList<Document> documents = new ArrayList<>();
             for(Document doc : iter){
                 documents.add(doc);

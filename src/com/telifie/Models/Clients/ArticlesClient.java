@@ -2,6 +2,7 @@ package com.telifie.Models.Clients;
 
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
+import com.telifie.Models.Actions.Search;
 import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Andromeda.Encoder;
 import com.telifie.Models.Domain;
@@ -9,6 +10,9 @@ import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Article;
 import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -75,11 +79,17 @@ public class ArticlesClient extends Client {
     public ArrayList<Article> get(Document filter){
         ArrayList<Document> found = this.find(filter);
         ArrayList<Article> articles = new ArrayList<>();
-        for(Document doc : found){
-            articles.add(new Article(doc));
-        }
+        found.forEach(f -> articles.add(new Article(f)));
         return articles;
     }
+
+    public ArrayList<Article> withProjection(Document filter, Document projection){
+        ArrayList<Document> found = this.findWithProjection(filter, projection);
+        ArrayList<Article> articles = new ArrayList<>();
+        found.forEach(f -> articles.add(new Article(f)));
+        return articles;
+    }
+
 
     public Article findPlace(String place, Parameters params){
         params.setIndex("locations");
@@ -97,15 +107,26 @@ public class ArticlesClient extends Client {
                                 ).append("$maxDistance", Integer.MAX_VALUE)
                         )
                         )
-                ))
-        ).get(0);
+                )),
+        true).get(0);
     }
 
-    public ArrayList<Article> search(String query, Parameters params, Document filter){
-        ArrayList<Document> found = this.find(filter);
+    public ArrayList<Article> search(String query, Parameters params, Document filter, boolean quickResults){
+        ArrayList<Document> found;
+        if(quickResults){
+            found = this.findWithProjection(filter, new Document("icon", 1)
+                    .append("title", 1)
+                    .append("description", 1)
+                    .append("link", 1)
+                    .append("tags", 1)
+                    .append("priority", 1)
+                    .append("attributes", 1));
+        }else{
+            found = this.find(filter);
+        }
         ArrayList<Article> results = new ArrayList<>();
         found.forEach(a -> results.add(new Article(a)));
-        if(results != null && !query.contains(":")){
+        if(!query.contains(":")){
             if(Andromeda.tools.has(Andromeda.PROXIMITY, query) > -1 || params.getIndex().equals("locations")) {
                 Collections.sort(results, new ArticlesClient.DistanceSorter(params.getLatitude(), params.getLongitude()));
             }else{
@@ -119,7 +140,7 @@ public class ArticlesClient extends Client {
         return super.deleteOne(new Document("id", article.getId()));
     }
 
-    public ArrayList<Document> getIds(String q){
+    public ArrayList<Document> getIds(){
         return super.find(new Document("verified", false));
     }
 
@@ -163,7 +184,7 @@ public class ArticlesClient extends Client {
             sortedDescriptions.put(description, descriptionStats);
         }
         Document descriptions = new Document();
-        sortedDescriptions.forEach((key, value) -> descriptions.append(key, value));
+        sortedDescriptions.forEach(descriptions::append);
         stats.append("descriptions", descriptions);
         return stats;
     }
@@ -171,6 +192,40 @@ public class ArticlesClient extends Client {
     public boolean archive(Article article){
         ArchiveClient archive = new ArchiveClient(session);
         return archive.archive(article);
+    }
+
+    /**
+     * Returns Levenshtein difference for link and link provided of most relevant article found
+     * @param uri URI for link of Article
+     * @return int Levenshtein difference
+     */
+    public boolean lookup(String uri){
+        ArrayList<Article> matches = get(new Document("link", Search.pattern(uri)));
+        for (Article a : matches) {
+            String link = a.getLink();
+            try {
+                URI storedURI = new URI(link);
+                URI providedURI = new URI(uri);
+                if (areSimilarURLs(storedURI, providedURI)) {
+                    return true;
+                }
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
+
+    private boolean areSimilarURLs(URI uri1, URI uri2) {
+        return uri1.getHost().equalsIgnoreCase(uri2.getHost()) &&
+                removeTrailingSlash(uri1.getPath()).equalsIgnoreCase(removeTrailingSlash(uri2.getPath()));
+    }
+
+    private String removeTrailingSlash(String path) {
+        if (path.endsWith("/")) {
+            return path.substring(0, path.length() - 1);
+        }
+        return path;
     }
 
     private static class CosmoScore implements Comparator<Article> {

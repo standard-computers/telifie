@@ -69,12 +69,12 @@ public class Command {
                         return new Result(410, this.command, "NOT FOUND");
                     }
                 }
-                try {
-                    Parameters params = new Parameters(content);
-                    return new Search().execute(session, query, params);
-                }catch(NullPointerException n){
-                    return new Result(505, this.command, "SEARCH ERROR");
-                }
+                Parameters params = new Parameters(content);
+                return new Search().execute(session, query, params);
+//                try {
+//                }catch(NullPointerException n){
+//                    return new Result(505, this.command, "SEARCH ERROR");
+//                }
             }
             return new Result(428, this.command, "JSON BODY EXPECTED");
         }
@@ -521,7 +521,7 @@ public class Command {
                         case "audit" -> {
                             String q = (content.getString("q") == null ? "" : content.getString("q"));
                             ArrayList<String> ids = new ArrayList<>();
-                            articles.getIds(q).forEach(a -> ids.add(new Article(a).getId()));
+                            articles.getIds().forEach(a -> ids.add(new Article(a).getId()));
                             return new Result(this.command, "ids", "" + ids);
                         }
                     }
@@ -701,7 +701,7 @@ public class Command {
                     return new Result(404, this.command, "PACKAGE NOT FOUND");
                 }
             }
-            return new Result(this.command, "packages", packages.get());
+            return new Result(this.command, "packages", packages.get(true));
         }
         return new Result(200, this.command, "NO COMMAND RECEIVED");
     }

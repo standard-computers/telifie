@@ -6,7 +6,9 @@ import com.telifie.Models.Andromeda.Encoder;
 import com.telifie.Models.Andromeda.Unit;
 import com.telifie.Models.Article;
 import com.telifie.Models.Clients.ArticlesClient;
+import com.telifie.Models.Connectors.OpenWeatherMap;
 import com.telifie.Models.Result;
+import com.telifie.Models.Utilities.Packages;
 import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
@@ -32,7 +34,7 @@ public class Search {
             sf = Filters.exists("location");
         }
         filter = new Document("$and", Arrays.asList( sf, Filters.or(filter) ));
-        ArrayList<Article> results = articles.search(query, params, filter);
+        ArrayList<Article> results = articles.search(query, params, filter, params.isQuickResults());
         ArrayList<Article> paged = paginateArticles(results, params.getPage(), params.getResultsPerPage());
         result = new Result(query, params, "articles", paged);
         result.setTotal(results.size());
@@ -171,7 +173,8 @@ public class Search {
             }else if(q.contains("uuid")){
                 return "Here's a UUID  \\n" + UUID.randomUUID();
             }else if(q.contains("weather")){
-
+                result.setSource(Andromeda.tools.escape(Packages.get("com.telifie.connectors.openweathermap").toString()));
+                return OpenWeatherMap.get(params);
             }else if(q.contains("flip a coin")){
                 int random = new Random().nextInt(2);
                 return ((random == 0) ? "Heads" : "Tails");
@@ -207,7 +210,7 @@ public class Search {
         return paginatedResults;
     }
 
-    private static Pattern pattern(String value){
+    public static Pattern pattern(String value){
         return Pattern.compile("\\b" + Pattern.quote(value) + "\\w*\\b", Pattern.CASE_INSENSITIVE);
     }
 

@@ -3,6 +3,7 @@ package com.telifie.Models.Utilities;
 import com.telifie.Models.Actions.Search;
 import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Andromeda.Taxon;
+import com.telifie.Models.Parser;
 import org.bson.Document;
 import java.util.Scanner;
 
@@ -43,11 +44,6 @@ public class Console {
 
     public static void string(String message){
         System.out.println(message);
-    }
-
-    public static String in(){
-        Scanner in = new Scanner(System.in);
-        return in.nextLine();
     }
 
     /**
@@ -92,6 +88,8 @@ public class Console {
                             String tname = c.split(" ")[1];
                             Taxon t = andromeda.taxon(tname);
                             Console.log(t.items().toString());
+                        }else if(c.equals("index")){
+                            andromeda.index();
                         }else if(c.equals("exit")){
                             loop = false;
                         }else{ //TODO Accept input to 'Search' and allow input/output of JSON

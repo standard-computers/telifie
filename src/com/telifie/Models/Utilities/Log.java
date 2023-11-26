@@ -15,8 +15,11 @@ public class Log {
     }
 
     public static void error(String message){
-        System.err.println(message);
-        appendToCSV(Event.Type.ERROR, message);
+        out(Event.Type.ERROR, message);
+    }
+
+    public static void message(String message){
+        out(Event.Type.MESSAGE, message);
     }
 
     private static void appendToCSV(Event.Type event, String message) {

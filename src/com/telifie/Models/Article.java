@@ -101,6 +101,10 @@ public class Article {
         this.icon = icon;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
     public void setDescription(String description) {
         this.description = description;
     }
@@ -172,6 +176,10 @@ public class Article {
         this.dataSets.add(dataSet);
     }
 
+    public Source getSource() {
+        return source;
+    }
+
     public void setSource(Source source) {
         this.source = source;
     }
@@ -189,7 +197,7 @@ public class Article {
                 (content == null ? "" : ", \"content\" : \"" + content + "\"") +
                 (tags == null ? "" : ", \"tags\" : " + tags.stream().map(tag -> "\"" + tag + "\"").collect(Collectors.joining(", ", "[", "]"))) +
                 (attributes == null ? "" : ", \"attributes\" : " + attributes) +
-                (associations.isEmpty() ? "" : ", \"associations\" : " + associations) +
+                ", \"associations\" : " + (associations ==  null || associations.isEmpty() ? "[]" : associations) +
                 (dataSets.isEmpty() ? "" : ", \"data_sets\" : " + dataSets) +
                 (source == null ? ", \"source\" : null" : ", \"source\" : " + source) +
                 ", \"origin\" : " + origin +

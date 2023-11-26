@@ -47,7 +47,11 @@ public class Asset {
         if(getType(this.uri).equals("image")){
             try {
                 BufferedImage image = ImageIO.read(url);
-                this.dimensions = new int[]{image.getWidth(), image.getHeight()};
+                if(image != null){
+                    this.dimensions = new int[]{image.getWidth(), image.getHeight()};
+                }else{
+                    this.dimensions = new int[]{0,0};
+                }
             } catch (IOException e) {
                 this.dimensions = new int[]{0,0};
             }
@@ -130,7 +134,7 @@ public class Asset {
     }
 
     public static String getType(String uri){
-        uri = uri.toLowerCase();
+        uri = uri.split("\\?")[0].toLowerCase();
         if(isWebpage(uri) || uri.endsWith("html")){
             return "webpage";
         }else if(uri.endsWith("png") || uri.endsWith("gif") || uri.endsWith("jpeg") || uri.endsWith("jpg") || uri.endsWith("psd")){

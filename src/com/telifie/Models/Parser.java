@@ -4,6 +4,9 @@ import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Andromeda.Unit;
+import com.telifie.Models.Clients.Sql;
+import com.telifie.Models.Clients.TimelinesClient;
+import com.telifie.Models.Utilities.Console;
 import com.telifie.Models.Utilities.Event;
 import com.telifie.Models.Articles.*;
 import com.telifie.Models.Clients.ArticlesClient;
@@ -18,9 +21,12 @@ import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import com.telifie.Models.Actions.Search;
 
 public class Parser {
 
@@ -28,6 +34,25 @@ public class Parser {
 
     public Parser(Session session){
         articles = new ArticlesClient(session);
+    }
+
+    public static boolean isParsed(String uri){
+        return new Sql().isParsed(uri);
+    }
+
+    /**
+     * Will start reparsing the domain
+     */
+    public static void reparse(){
+        Log.message("STARTING REPARSE");
+        ArticlesClient articles =  new ArticlesClient(new Session("com.telifie.master_data_team", "telifie"));
+        TimelinesClient timelines = new TimelinesClient(new Session("com.telifie.master_data_team", "telifie"));
+        ArrayList<Article> parsing = articles.withProjection(new org.bson.Document("link", Search.pattern("https://")), new org.bson.Document("link", 1));
+        Console.log("RE-PARSE TOTAL : " + parsing.size());
+        parsing.forEach(a -> {
+            timelines.addEvent(a.getId(), Event.Type.CRAWL);
+            engines.fetch(a.getLink(), 0, false);
+        });
     }
 
     /**
@@ -72,6 +97,9 @@ public class Parser {
 
         private static Article fetch(String url, int depth, boolean allowExternalCrawl){
             depth++;
+            if(isParsed(url)){
+                return null;
+            }
             try {
                 URL urlObj = new URL(url);
                 String host = urlObj.getProtocol() + "://" + urlObj.getHost();
@@ -82,8 +110,20 @@ public class Parser {
                 }
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
                 if(response.statusCode() == 200){
+                    Log.message("PARSING : " + url);
+                    new Sql().parsed("com.telifie.master_data_team", url);
                     webpage wp = new webpage();
                     Article article = wp.extract(url, response.parse());
+                    Article refArticle = articles.withLink(url);
+                    if(refArticle != null || articles.lookup(article.getLink())){ //article exists with requested parse url
+                        //TODO update article
+                        if(refArticle.getSource() != null){//TODO this line is good don't change
+
+                        }
+                    }else{
+                        articles.create(article);
+                        Console.log("ARTICLE CREATED : " + url);
+                    }
                     ArrayList<String> links = wp.getLinks();
                     int finalDepth = depth;
                     links.forEach(link -> {
@@ -117,7 +157,7 @@ public class Parser {
         public static Article website(String url){
             try {
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
-                Log.out(Event.Type.MESSAGE, "PARSING : " + response.statusCode() + " : " + url);
+                Log.message("PARSING : " + response.statusCode() + " : " + url);
                 if(response.statusCode() == 200){
                     Document root = response.parse(); //Convert HTML string to Document
                     return new webpage().extract(url, root); //Create basic article from extracting webpage
@@ -299,7 +339,6 @@ public class Parser {
 
         public Article extract(String url, Document document){
             Article article = new Article();
-
             try {
                 URL rootUri = new URL(url);
                 root = rootUri.getProtocol() + "://" + rootUri.getHost() + "/";
@@ -357,19 +396,25 @@ public class Parser {
             document.getElementsByTag("img").forEach(image -> {
                 String src = fixLink(url, image.attr("src"));
                 if(!src.isEmpty() && !src.startsWith("data:") && Asset.getType(src).equals("image")){
+                    CompletableFuture.runAsync(() -> {
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException e) {
+                            Log.error("FAILED TO SLEEP THREAD : PARSER");
+                        }
                         Asset ass = new Asset(src);
                         int[] d = ass.getDimensions();
-                        if(d[0] > 46 && d[1] > 46 ){
-                            if(url.contains("/wiki")){
-                                if(article.getIcon() == null || article.getIcon().isEmpty()){
+                        if (d[0] > 46 && d[1] > 46) {
+                            if (url.contains("/wiki")) {
+                                if (article.getIcon() == null || article.getIcon().isEmpty()) {
                                     article.setIcon(src);
                                 }
                             }
-                            String caption =  Andromeda.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
+                            String caption = Andromeda.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
                             Article ia = new Article();
-                            if(caption != null && !caption.isEmpty() && caption.length() < 100){
+                            if (caption != null && !caption.isEmpty() && caption.length() < 100) {
                                 ia.setTitle(caption);
-                            }else{
+                            } else {
                                 ia.setTitle(article.getTitle());
                                 ia.setContent(caption);
                             }
@@ -381,21 +426,22 @@ public class Parser {
                             ia.addAttribute(new Attribute("Size", ass.fileSize()));
                             ia.addAttribute(new Attribute("File Type", ass.getExt()));
                             Article source = articles.withLink(root);
-                            if(source == null){
+                            if (source != null) {
                                 ia.setSource(new Source(source.getIcon(), source.getTitle(), url));
-                            }else{
+                            } else {
                                 ia.setSource(new Source(article.getIcon(), article.getTitle(), url));
                             }
-                            articles.create(ia);
+                            if(articles.create(ia)){
+                                Console.log("IMAGE CREATED : " + src);
+                            }
                         }
-//                    CompletableFuture.runAsync(() -> {
-//                    });
+                    });
                 }
             });
 
             //Preparing page content for Article content and other data extraction
             Element body = document.getElementsByTag("body").get(0);
-            body.select("table, script, header, style, img, svg, button, label, form, input, aside, code, nav").remove();
+            body.select("table, script, header, style, img, svg, button, label, form, input, aside, code, footer, nav").remove();
             if(url.contains("/wiki")){ //Wiki specific parsing
                 article.setSource(new Source("https://telifie-static.nyc3.digitaloceanspaces.com/wwdb-index-storage/wikipedia.png", "Wikipedia", article.getLink().trim()));
                 article.setLink(null);

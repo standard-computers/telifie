@@ -36,7 +36,7 @@ public class Http {
                 th.start();
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            Log.error("FAILED STARTING HTTP SERVER ON :80");
         }
     }
 

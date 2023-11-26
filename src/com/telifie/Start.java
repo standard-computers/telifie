@@ -2,6 +2,7 @@ package com.telifie;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.telifie.Models.Parser;
 import com.telifie.Models.Utilities.*;
 import java.io.File;
 import java.io.IOException;
@@ -11,9 +12,10 @@ public class Start {
     private static Configuration config;
     private static final File configFile = new File(Telifie.configDirectory() + "/config.json");
 
+
     public static void main(String[] args){
         Console.welcome();
-        Log.out(Event.Type.MESSAGE, "TELIFIE STARTED");
+        Log.message("TELIFIE STARTED");
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             Log.out(Event.Type.FLAG, "TELIFIE EXITED");
             Telifie.purgeTemp();
@@ -24,7 +26,7 @@ public class Start {
                 case "--install" ->
                         install();
                 case "--purge" -> {
-                    Log.out(Event.Type.MESSAGE, "PURGE MODE ENTERED");
+                    Log.message("PURGE MODE ENTERED");
                     if (Console.in("Confirm purge, fresh install (y/n) -> ").equals("y")) {
                         if(configFile.delete()){
                             Log.out(Event.Type.DELETE, "CONFIG FILE DELETED");
@@ -40,6 +42,11 @@ public class Start {
                     } catch (Exception e) {
                         Log.error("HTTP SERVER FAILED");
                     }
+                }
+                case "--reparse" -> {
+                    checkConfig();
+                    new Parser(new Session("com.telifie.master_data_team", "telifie"));
+                    Parser.reparse();
                 }
             }
         }else{
@@ -80,6 +87,8 @@ public class Start {
             importConfiguration();
             if (config != null) {
                 config.startMongo();
+                Log.message("LOADING PACKAGES...");
+                new Packages(new Session("com.telifie.system", "telifie"));
             }else{
                 Log.error("FAILED CONFIG FILE LOAD");
                 System.exit(-1);

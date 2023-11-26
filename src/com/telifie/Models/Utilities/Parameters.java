@@ -4,14 +4,11 @@ import org.bson.Document;
 
 public class Parameters {
 
-    private final int resultsPerPage;
-    private final int pages; // How many pages of search results
-    private final int page; //Current page of the search results
+    private final int resultsPerPage, pages, page;
     private String index;
     private final String postalCode; //Index such as images, maps, developers, articles, etc.
-    private double latitude;
-    private double longitude;
-    private final boolean disableQuickResults;
+    private double latitude, longitude;
+    private final boolean quickResults;
 
     public Parameters(Document document) throws NullPointerException {
         this.resultsPerPage = (document.getInteger("results_per_page") == null ? 50 : document.getInteger("results_per_page"));
@@ -21,7 +18,7 @@ public class Parameters {
         this.postalCode = (document.getString("postal_code") == null ? "" : document.getString("postal_code"));
         this.latitude = (document.getDouble("latitude") == null ? 39.103699 : document.getDouble("latitude"));
         this.longitude = (document.getDouble("longitude") == null ? -84.513611 : document.getDouble("longitude"));
-        this.disableQuickResults = (document.getBoolean("disable_quick_results") != null && document.getBoolean("disable_quick_results"));
+        this.quickResults = (document.getBoolean("quick_results") == null ? false : document.getBoolean("quick_results"));
     }
 
     public int getResultsPerPage() {
@@ -40,10 +37,6 @@ public class Parameters {
         this.index = index;
     }
 
-    public String getPostalCode() {
-        return postalCode;
-    }
-
     public double getLatitude() {
         return latitude;
     }
@@ -60,6 +53,10 @@ public class Parameters {
         this.longitude = longitude;
     }
 
+    public boolean isQuickResults() {
+        return quickResults;
+    }
+
     @Override
     public String toString() {
         return new StringBuilder().append("{ \"results_per_page\" : ").append(resultsPerPage)
@@ -68,7 +65,7 @@ public class Parameters {
                 .append(", \"postal_code\" : \"").append(postalCode).append("\"")
                 .append(", \"latitude\" : ").append(latitude)
                 .append(", \"longitude\" : ").append(longitude)
-                .append(", \"disable_quick_results\" : ").append(disableQuickResults)
+                .append(", \"quick_results\" : ").append(quickResults)
                 .append(", \"index\" : \"").append(index).append("\"}").toString();
     }
 }
