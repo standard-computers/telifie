@@ -10,7 +10,6 @@ import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Article;
 import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -77,16 +76,14 @@ public class ArticlesClient extends Client {
     }
 
     public ArrayList<Article> get(Document filter){
-        ArrayList<Document> found = this.find(filter);
         ArrayList<Article> articles = new ArrayList<>();
-        found.forEach(f -> articles.add(new Article(f)));
+        this.find(filter).forEach(f -> articles.add(new Article(f)));
         return articles;
     }
 
     public ArrayList<Article> withProjection(Document filter, Document projection){
-        ArrayList<Document> found = this.findWithProjection(filter, projection);
         ArrayList<Article> articles = new ArrayList<>();
-        found.forEach(f -> articles.add(new Article(f)));
+        this.findWithProjection(filter, projection).forEach(f -> articles.add(new Article(f)));
         return articles;
     }
 
@@ -112,9 +109,10 @@ public class ArticlesClient extends Client {
     }
 
     public ArrayList<Article> search(String query, Parameters params, Document filter, boolean quickResults){
-        ArrayList<Document> found;
+        List<Document> found;
         if(quickResults){
-            found = this.findWithProjection(filter, new Document("icon", 1)
+            found = this.findWithProjection(filter, new Document("id", 1)
+                    .append("icon", 1)
                     .append("title", 1)
                     .append("description", 1)
                     .append("link", 1)
@@ -140,10 +138,6 @@ public class ArticlesClient extends Client {
         return super.deleteOne(new Document("id", article.getId()));
     }
 
-    public ArrayList<Document> getIds(){
-        return super.find(new Document("verified", false));
-    }
-
     public boolean move(Article article, Domain domain){
         this.delete(article);
         session.setDomain(domain.getId());
@@ -155,18 +149,11 @@ public class ArticlesClient extends Client {
         return this.create(article);
     }
 
-    public ArrayList<Document> withSource(String source){
-        if(source.startsWith("http")){
-            return super.find(new Document("source.url", source));
-        }
-        return super.find(new Document("source.name", source));
-    }
-
     public Document stats() {
         Document groupFields = new Document("_id", "$description");
         groupFields.put("count", new Document("$sum", 1));
         Document groupStage = new Document("$group", groupFields);
-        ArrayList<Document> iterable = super.aggregate(groupStage);
+        List<Document> iterable = super.aggregate(groupStage);
         Document stats = new Document();
         int total = super.count();
         stats.append("total", total);
@@ -231,11 +218,12 @@ public class ArticlesClient extends Client {
     private static class CosmoScore implements Comparator<Article> {
 
         private final String query;
-        private final String[] words;
+        private final ArrayList<String> words;
 
         public CosmoScore(String query){
             this.query = query;
-            this.words = Encoder.clean(query).split("\\s+");
+            this.words = new ArrayList<>(Arrays.asList(Encoder.clean(query).split("\\s+")));
+            this.words.add(0, query);
         }
 
         @Override
@@ -249,26 +237,26 @@ public class ArticlesClient extends Client {
             if(a.getTitle().trim().toLowerCase().equals(query)){
                 return Integer.MAX_VALUE;
             }
-            double titleGrade = (countMatches(a.getTitle(), words) / words.length) * 5;
-            double linkGrade = (countMatches((a.getLink() == null ? "" : a.getLink()), words) / words.length) * 2;
+            double titleGrade = (countMatches(a.getTitle(), words) / words.size()) * 5;
+            double linkGrade = (countMatches((a.getLink() == null ? "" : a.getLink()), words) / words.size()) * 2;
             double tagsGrade = 0;
             if(a.getTags() != null && !a.getTags().isEmpty()){
                 for(String tag : a.getTags()){
                     tagsGrade += countMatches(tag, words);
                 }
             }
-            double retroGrade = ((titleGrade + linkGrade) + ((tagsGrade / words.length) * 0.25)) * a.getPriority();
+            double retroGrade = ((titleGrade + linkGrade) + ((tagsGrade / words.size()) * 0.25)) * a.getPriority();
             return (a.isVerified() ? (retroGrade * 2) : retroGrade);
         }
 
-        private double countMatches(String text, String[] words) {
+        private double countMatches(String text, ArrayList<String> words) {
             int matches = 0;
             for(String word : words) {
                 if(text.contains(word)) {
                     matches++;
                 }
             }
-            return matches / words.length;
+            return matches / words.size();
         }
     }
 

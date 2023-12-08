@@ -9,7 +9,7 @@ import java.util.UUID;
 public class Domain implements Serializable {
 
     private String id, icon, owner, name;
-    private int count, origin, permissions;
+    private int origin, permissions;
     private final ArrayList<Member> users = new ArrayList<>();
 
     public Domain(String owner, String name, String icon, int permissions){
@@ -54,16 +54,8 @@ public class Domain implements Serializable {
         return this;
     }
 
-    public ArrayList<Member> getUsers() {
-        return users;
-    }
-
     public void addUser(Member member){
         this.users.add(member);
-    }
-
-    public void setCount(int count){
-        this.count = count;
     }
 
     public boolean hasPermission(String userId){
@@ -90,7 +82,6 @@ public class Domain implements Serializable {
     public String toString() {
         return "{" +
                 "\"id\" : \"" + id + '\"' +
-                ", \"count\" : " + count +
                 ", \"icon\" : \"" + icon + '\"' +
                 ", \"owner\" : \"" + owner + '\"' +
                 ", \"name\" : \"" + name + '\"' +

@@ -32,7 +32,7 @@ public class Telifie {
                 for (File file : files) {
                     if (file.isFile()) {
                         if (!file.delete()) {
-                            Console.log(" FAILED TO DELETE FILE : " + file.getName());
+                            Console.log("FAILED TO DELETE FILE : " + file.getName());
                         }
                     }
                 }

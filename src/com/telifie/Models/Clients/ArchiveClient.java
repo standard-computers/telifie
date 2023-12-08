@@ -29,9 +29,8 @@ public class ArchiveClient extends Client {
     }
 
     public ArrayList<Article> get(){
-        ArrayList<Document> found = this.find(new Document());
         ArrayList<Article> articles = new ArrayList<>();
-        found.forEach(a -> articles.add(new Article(a)));
+        this.find(new Document()).forEach(a -> articles.add(new Article(a)));
         return articles;
     }
 }

@@ -15,6 +15,7 @@ import org.json.JSONObject;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,7 +56,7 @@ public class Command {
 
         if(primarySelector.equals("search")){
             if(content != null){
-                String query = content.getString("query");
+                String query = (content.getString("query") == null ? "" : content.getString("query"));
                 if(query.isEmpty()){
                     return new Result(428, this.command, "Query expected");
                 }
@@ -304,7 +305,6 @@ public class Command {
                 }catch (NullPointerException n){
                     return new Result(404, this.command, "ARTICLE NOT FOUND");
                 }
-
             }else if(objectSelector.equals("create")){
                 if(content != null){
                     try {
@@ -507,22 +507,16 @@ public class Command {
                         case "crawl" -> { //Crawling uri, admin purposes only
                             String url = content.getString("uri");
                             if (url != null && !url.isEmpty()) {
-                                int limit = (content.getInteger("limit") == null ? Integer.MAX_VALUE : content.getInteger("limit"));
                                 boolean allowExternalCrawl = (content.getBoolean("allow_external") != null && content.getBoolean("allow_external"));
-                                Parser.engines.crawler(url, allowExternalCrawl);
-                                return new Result(this.command, "articles", null);
+                                new Parser(session);
+                                CompletableFuture.runAsync(() -> Parser.engines.crawler(url, allowExternalCrawl));
+                                return new Result(200, this.command, "CRAWLING");
                             }
                             return new Result(428, this.command, "URI REQUIRED");
                         }
                         case "text" -> {
                             String text = content.getString("text");
                             Encoder.tokenize(text, false);
-                        }
-                        case "audit" -> {
-                            String q = (content.getString("q") == null ? "" : content.getString("q"));
-                            ArrayList<String> ids = new ArrayList<>();
-                            articles.getIds().forEach(a -> ids.add(new Article(a).getId()));
-                            return new Result(this.command, "ids", "" + ids);
                         }
                     }
                 }

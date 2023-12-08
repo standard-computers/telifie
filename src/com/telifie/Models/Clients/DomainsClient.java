@@ -19,15 +19,8 @@ public class DomainsClient extends Client {
      * @return ArrayList<Domain>
      */
     public ArrayList<Domain> mine(){
-        ArrayList<Document> found = super.find(new Document("owner", session.getUser()));
         ArrayList<Domain> domains = new ArrayList<>();
-        for(Document doc : found){
-            session.setDomain(doc.getString("id"));
-            ArticlesClient articles = new ArticlesClient(session);
-            Domain d = new Domain(doc);
-            d.setCount(articles.count(new Document("domain", d.getId())));
-            domains.add(d);
-        }
+        super.find(new Document("owner", session.getUser())).forEach(f -> domains.add(new Domain(f)));
         return domains;
     }
 
@@ -43,8 +36,7 @@ public class DomainsClient extends Client {
      */
     public ArrayList<Domain> forMember(String userId){
         ArrayList<Domain> domains = new ArrayList<>();
-        ArrayList<Document> fnd = super.find(new Document("$or", Arrays.asList(new Document("owner", userId), new Document("users.email", userId))));
-        fnd.forEach(doc -> domains.add(new Domain(doc)));
+        super.find(new Document("$or", Arrays.asList(new Document("owner", userId), new Document("users.email", userId)))).forEach(doc -> domains.add(new Domain(doc)));
         return domains;
     }
 

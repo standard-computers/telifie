@@ -21,7 +21,6 @@ import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
@@ -131,7 +130,7 @@ public class Parser {
                         if(Asset.isWebpage(href) && !Andromeda.tools.contains(new String[]{"facebook.com", "instagram.com", "spotify.com", "linkedin.com", "youtube.com", "pinterest.com", "twitter.com", "tumblr.com", "reddit.com"}, href)){
                             if((allowExternalCrawl && !href.contains(host)) || (!allowExternalCrawl && href.contains(host))){
                                 try {
-                                    Thread.sleep(3000);
+                                    Thread.sleep(2000);
                                     if(finalDepth <= 2){
                                         fetch(href, finalDepth, allowExternalCrawl);
                                     }
@@ -395,16 +394,11 @@ public class Parser {
 
             document.getElementsByTag("img").forEach(image -> {
                 String src = fixLink(url, image.attr("src"));
-                if(!src.isEmpty() && !src.startsWith("data:") && Asset.getType(src).equals("image")){
+                if(!src.isEmpty() && !src.startsWith("data:")){
                     CompletableFuture.runAsync(() -> {
-                        try {
-                            Thread.sleep(2000);
-                        } catch (InterruptedException e) {
-                            Log.error("FAILED TO SLEEP THREAD : PARSER");
-                        }
                         Asset ass = new Asset(src);
                         int[] d = ass.getDimensions();
-                        if (d[0] > 46 && d[1] > 46) {
+                        if (d[0] > 42 && d[1] > 42) {
                             if (url.contains("/wiki")) {
                                 if (article.getIcon() == null || article.getIcon().isEmpty()) {
                                     article.setIcon(src);

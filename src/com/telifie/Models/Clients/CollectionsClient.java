@@ -33,9 +33,8 @@ public class CollectionsClient extends Client {
     }
 
     public ArrayList<Collection> forUser(String userId){
-        ArrayList<Document> groups = this.find(new Document("user", userId));
         ArrayList<Collection> found = new ArrayList<>();
-        groups.forEach(g -> found.add(new Collection(g)));
+        this.find(new Document("user", userId)).forEach(g -> found.add(new Collection(g)));
         return found;
     }
 

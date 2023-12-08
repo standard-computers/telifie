@@ -9,6 +9,7 @@ import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class Client {
 
@@ -21,31 +22,19 @@ public class Client {
         mc = Configuration.mongoClient;
     }
 
-    protected ArrayList<Document> find(Document filter){
+    protected List<Document> find(Document filter){
         try {
-            MongoDatabase db = mc.getDatabase("telifie");
-            MongoCollection<Document> c = db.getCollection(this.collection);
-            FindIterable<Document> iter = c.find(filter);
-            ArrayList<Document> documents = new ArrayList<>();
-            for(Document doc : iter){
-                documents.add(doc);
-            }
-            return documents;
+            MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
+            return c.find(filter).limit(500).into(new ArrayList<>());
         }catch(MongoException e){
             return null;
         }
     }
 
-    protected ArrayList<Document> findWithProjection(Document filter, Document projection){
+    protected List<Document> findWithProjection(Document filter, Document projection){
         try {
-            MongoDatabase db = mc.getDatabase("telifie");
-            MongoCollection<Document> c = db.getCollection(this.collection);
-            FindIterable<Document> iter = c.find(filter).projection(projection);
-            ArrayList<Document> documents = new ArrayList<>();
-            for(Document doc : iter){
-                documents.add(doc);
-            }
-            return documents;
+            MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
+            return c.find(filter).projection(projection).limit(250).into(new ArrayList<>());
         }catch(MongoException e){
             return null;
         }
@@ -53,9 +42,7 @@ public class Client {
 
     protected Document findOne(Document filter){
         try {
-            MongoDatabase db = mc.getDatabase("telifie");
-            MongoCollection<Document> c = db.getCollection(this.collection);
-            return c.find(filter).first();
+            return mc.getDatabase("telifie").getCollection(this.collection).find(filter).first();
         }catch(MongoException e){
             return null;
         }
@@ -63,8 +50,7 @@ public class Client {
 
     protected int count(Document filter){
         try {
-            MongoDatabase db = mc.getDatabase("telifie");
-            MongoCollection<Document> c = db.getCollection(this.collection);
+            MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
             return (int) c.countDocuments(filter);
         }catch(MongoException e){
             return -1;
@@ -73,8 +59,7 @@ public class Client {
 
     protected boolean updateOne(Document filter, Document update){
         try {
-            MongoDatabase db = mc.getDatabase("telifie");
-            MongoCollection<Document> c = db.getCollection(this.collection);
+            MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
             UpdateResult result = c.updateOne(filter, update);
             return result.getModifiedCount() > 0;
         }catch(MongoException e){
@@ -84,8 +69,7 @@ public class Client {
 
     protected boolean updateOne(Document filter, Document update, UpdateOptions options){
         try {
-            MongoDatabase db = mc.getDatabase("telifie");
-            MongoCollection<Document> c = db.getCollection(this.collection);
+            MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
             UpdateResult result = c.updateOne(filter, update, options);
             return result.getModifiedCount() > 0;
         }catch(MongoException e){
@@ -95,8 +79,7 @@ public class Client {
 
     protected boolean insertOne(Document document){
         try {
-            MongoDatabase db = mc.getDatabase("telifie");
-            MongoCollection<Document> c = db.getCollection(this.collection);
+            MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
             c.insertOne(document);
             return true;
         }catch(MongoException e){
@@ -106,8 +89,7 @@ public class Client {
 
     protected boolean insertMany(ArrayList<Document> documents){
         try {
-            MongoDatabase db = mc.getDatabase("telifie");
-            MongoCollection<Document> c = db.getCollection(this.collection);
+            MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
             c.insertMany(documents);
             return true;
         }catch(MongoException e){
@@ -115,16 +97,10 @@ public class Client {
         }
     }
 
-    protected ArrayList<Document> aggregate(Document filter){
+    protected List<Document> aggregate(Document filter){
         try {
-            MongoDatabase db = mc.getDatabase("telifie");
-            MongoCollection<Document> c = db.getCollection(this.collection);
-            AggregateIterable<Document> i = c.aggregate(Arrays.asList(filter));
-            ArrayList<Document> documents = new ArrayList<>();
-            for(Document doc : i){
-                documents.add(doc);
-            }
-            return documents;
+            MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
+            return c.aggregate(Arrays.asList(filter)).into(new ArrayList<>());
         }catch(MongoException e){
             return null;
         }
@@ -132,8 +108,7 @@ public class Client {
 
     protected int count(){
         try {
-            MongoDatabase db = mc.getDatabase("telifie");
-            MongoCollection<Document> c = db.getCollection(this.collection);
+            MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
             return (int) c.countDocuments();
         }catch(MongoException e){
             return -1;
@@ -147,8 +122,7 @@ public class Client {
 
     protected boolean deleteOne(Document filter){
         try {
-            MongoDatabase db = mc.getDatabase("telifie");
-            MongoCollection<Document> c = db.getCollection(this.collection);
+            MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
             c.deleteOne(filter);
             return true;
         }catch(MongoException e){

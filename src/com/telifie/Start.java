@@ -12,7 +12,6 @@ public class Start {
     private static Configuration config;
     private static final File configFile = new File(Telifie.configDirectory() + "/config.json");
 
-
     public static void main(String[] args){
         Console.welcome();
         Log.message("TELIFIE STARTED");
@@ -75,6 +74,10 @@ public class Start {
         }
         config = new Configuration();
         config.setMongodb(Console.in("MongoDB URI -> "));
+        String sql_uri = Console.in("SQL URL -> ");
+        String sql_user = Console.in("SQL Username -> ");
+        String sql_psswd = Console.in("SQL Password -> ");
+        config.setMysql(new Configuration.Connection(sql_uri, sql_user, sql_psswd));
         config.setEmail(Console.in("Email -> "));
         exportConfiguration();
         Log.out(Event.Type.PUT, "CONFIGURATION SAVED");

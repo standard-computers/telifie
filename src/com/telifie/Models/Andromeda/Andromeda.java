@@ -7,7 +7,6 @@ import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Console;
 import org.apache.commons.text.StringEscapeUtils;
 import org.bson.Document;
-
 import java.io.*;
 import java.util.*;
 
@@ -153,8 +152,8 @@ public class Andromeda {
             return false;
         }
 
-        public static String escape(String string){
-            return  StringEscapeUtils.escapeJson(string);
+        public static String escape(String input){
+            return new StringEscapeUtils().escapeJson(input);
         }
 
         public static String htmlEscape(String string){

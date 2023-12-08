@@ -60,11 +60,11 @@ public class Http {
             HttpRequestHandler requestHandler = (request, response, context) -> {
                 String query = request.getRequestLine().getUri().substring(1);
                 Authentication auth = (request.getFirstHeader("Authorization") == null ? null : new Authentication(request.getFirstHeader("Authorization").getValue()));
-                Result result = new Result(200, query, "\"okay\"");
+                Result result = new Result(200, query, "OK");
                 Session session;
                 if (auth == null) {
                     result.setStatusCode(406);
-                    result.setResult("result", "No Authentication credentials provided");
+                    result.setResult("result", "NO AUTH PROVIDED");
                 } else {
                     AuthenticationClient authenticationClient = new AuthenticationClient();
                     if (authenticationClient.isAuthenticated(auth)) {
@@ -77,7 +77,7 @@ public class Http {
                         session = new Session(users.getUserWithId(auth.getUser()).getId(), "telifie");
                         result = processRequest(session, request.getRequestLine().getMethod(), query, body);
                     } else {
-                        result = new Result(403, "Invalid Credentials");
+                        result = new Result(403, "INVALID CREDENTIALS");
                     }
                 }
                 response.setStatusCode(result.getStatusCode());
@@ -95,7 +95,7 @@ public class Http {
                 connection.bind(socket);
                 httpService.handleRequest(connection, new BasicHttpContext());
             } catch (IOException | HttpException e) {
-                throw new RuntimeException(e);
+                Log.error("CONNECTION INTERUPTED");
             }
         }
     }

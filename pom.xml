@@ -158,6 +158,5 @@
 <!--            <artifactId>deeplearning4j-nlp</artifactId>-->
 <!--            <version>1.0.0-M2.1</version>-->
 <!--        </dependency>-->
-
     </dependencies>
 </project>

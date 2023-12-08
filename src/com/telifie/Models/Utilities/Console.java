@@ -29,7 +29,7 @@ public class Console {
     }
 
     public static void line(){
-        System.out.println("--------------------------------------------------------------");
+        System.out.println("---------------------------------------------------------------");
     }
 
     public static void message(String message){

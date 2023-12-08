@@ -23,10 +23,10 @@ public class Search {
 
     private Result result;
 
-    public Result execute(Session session, String query, Parameters params){
-        query = query.toLowerCase().trim();
+    public Result execute(Session session, String q, Parameters params){
+        q = q.toLowerCase().trim();
         ArticlesClient articles = new ArticlesClient(session);
-        Document filter = filter(query, params);
+        Document filter = filter(q, params);
         Bson sf = Filters.ne("description", "Image");
         if(params.getIndex().equals("images")){
             sf = Filters.eq("description", "Image");
@@ -34,23 +34,17 @@ public class Search {
             sf = Filters.exists("location");
         }
         filter = new Document("$and", Arrays.asList( sf, Filters.or(filter) ));
-        ArrayList<Article> results = articles.search(query, params, filter, params.isQuickResults());
+        ArrayList<Article> results = articles.search(q, params, filter, params.isQuickResults());
         ArrayList<Article> paged = paginateArticles(results, params.getPage(), params.getResultsPerPage());
-        result = new Result(query, params, "articles", paged);
+        result = new Result(q, params, "articles", paged);
         result.setTotal(results.size());
-        result.setGenerated(this.generated(query, params));
+        result.setGenerated(this.generated(q, params));
         return result;
     }
 
     private Document filter(String query, Parameters params){
 
-        if(query.matches("^id\\s*:\\s*.*")){
-
-            String[] spl = query.split(":");
-            if(spl.length >= 2) {
-                return new Document("id", spl[1].trim());
-            }
-        }else if(query.matches("^description\\s*:\\s*.*")){
+        if(query.matches("^description\\s*:\\s*.*")){
 
             String[] spl = query.split(":");
             if(spl.length >= 2) {
@@ -61,12 +55,6 @@ public class Search {
             String[] spl = query.split(":");
             if(spl.length >= 2){
                 return new Document("title", pattern(spl[1].trim() ));
-            }
-        }else if(query.matches("^link\\s*:\\s*.*")){
-
-            String[] spl = query.split(":");
-            if(spl.length >= 2){
-                return new Document("link", pattern(spl[1].trim() ));
             }
         }else if(query.matches("^attribute\\s*:\\s*.*")){
 
@@ -84,12 +72,9 @@ public class Search {
         }else if(query.matches("^define\\s*.*")) {
 
             return new Document("$and", Arrays.asList(new Document("description", "Definition"), new Document("title", pattern(query.replaceFirst("define", "").trim()))));
-        }else if(query.matches("(?i)\\bhttps?://\\S+\\b")){
-
-            return new Document("link", new Document("$in", Arrays.asList(pattern(query), pattern(query))));
         }else if(query.matches("^(\\d+)\\s+([A-Za-z\\s]+),\\s+([A-Za-z\\s]+),\\s+([A-Za-z]{2})\\s+(\\d{5})$")){
 
-            return new Document("$and", Arrays.asList(new Document("attribute.key", "Address"), new Document("attribute.value", pattern(query)) ) );
+            return new Document("$and", Arrays.asList(new Document("attribute.key", "Address"), new Document("attribute.value", pattern(query))));
         }else if(query.matches("^\\+\\d{1,3}\\s*\\(\\d{1,3}\\)\\s*\\d{3}-\\d{4}$")){
 
             return new Document("$and", Arrays.asList( new Document("attribute.key", "Phone"), new Document("attribute.value", query) ) );
@@ -97,15 +82,8 @@ public class Search {
 
             return new Document("$and", Arrays.asList( new Document("attribute.key", "Email"), new Document("attribute.value", query.toLowerCase()) ));
         }else if(query.matches("\\b(\\d{4}-\\d{2}-\\d{2}|\\d{2}/\\d{2}/\\d{4}|\\d{2}-[a-zA-Z]{3}-\\d{4}|[a-zA-Z]+ \\d{1,2}, \\d{4})\\b")){
-            return new Document("$and", Arrays.asList(
-                    new Document("attribute.key", new Document("$in", Arrays.asList(
-                            ignoreCase("date"),
-                            ignoreCase("founded"),
-                            ignoreCase("established"),
-                            ignoreCase("started")
-                    ))),
-                    new Document("attribute.value", query)
-            ));
+
+            return new Document("attribute.value", query);
         }else if(query.endsWith("near me")){
 
             String q = query.replace("near me", "").trim();
@@ -151,11 +129,10 @@ public class Search {
         }
         String[] exploded = Encoder.clean(query).split("\\s+");
         ArrayList<Document> or = new ArrayList<>();
+        or.add(new Document("title", pattern(query)));
+        or.add(new Document("link", pattern(query)));
         for (String word : exploded) {
-            or.add(new Document("title", ignoreCase(word)));
-        }
-        if (query.contains("/") || query.contains(".")) {
-            or.add(new Document("link", pattern(query)));
+            or.add(new Document("title", pattern(word)));
         }
         or.add(new Document("tags", new Document("$in", Collections.singletonList(query))));
         return new Document("$or", or);
@@ -189,9 +166,6 @@ public class Search {
             }else if(u.startsWith("interrogative")){
                 String cleaned = Encoder.clean(q);
                 //TODO find subject and inquiry
-                //Remove all but subject and search through article in Result(s)
-                //Use Andromeda.classify() or something of the likes search through attributes with synonyms from Andromeda
-                //Create result from subject, inquiry, and answer
             }
         }
         return "";
@@ -212,9 +186,5 @@ public class Search {
 
     public static Pattern pattern(String value){
         return Pattern.compile("\\b" + Pattern.quote(value) + "\\w*\\b", Pattern.CASE_INSENSITIVE);
-    }
-
-    private static Pattern ignoreCase(String value) { //Doesn't allow extra stuff at end
-        return Pattern.compile("\\b" + Pattern.quote(value) + "\\b", Pattern.CASE_INSENSITIVE);
     }
 }
