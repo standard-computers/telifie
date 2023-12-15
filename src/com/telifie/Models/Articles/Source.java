@@ -4,9 +4,9 @@ import org.bson.Document;
 
 public class Source {
 
-    private final String icon;
-    private final String name;
-    private final String url;
+    public final String icon;
+    public final String name;
+    public final String url;
 
     public Source(String icon, String name, String url) {
         this.icon = icon;

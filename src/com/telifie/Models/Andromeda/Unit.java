@@ -6,7 +6,6 @@ import java.util.Map;
 
 public class Unit {
 
-
     private final String[] tokens;
     private final String text;
 

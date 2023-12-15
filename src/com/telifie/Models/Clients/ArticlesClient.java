@@ -34,23 +34,20 @@ public class ArticlesClient extends Client {
         if(article.getOwner() == null || article.getOwner().isEmpty()){
             article.setOwner(session.getUser());
         }
-        if((article.getLink() == null || article.getLink().isEmpty()) || this.withLink(article.getLink()) == null){
-            super.insertOne(Document.parse(article.toString()));
-            if(article.hasAttribute("Longitude") && article.hasAttribute("Latitude")){
-                String longitude = article.getAttribute("Longitude");
-                String latitude = article.getAttribute("Latitude");
-                if (longitude != null && latitude != null && !longitude.equals("null") && !latitude.equals("null")) {
-                    double longitudeValue = Double.parseDouble(longitude);
-                    double latitudeValue = Double.parseDouble(latitude);
-                    Position position = new Position(longitudeValue, latitudeValue);
-                    Point point = new Point(position);
-                    super.updateOne(new Document("id", article.getId()),
-                            new Document("$set", new Document("location", point)));
-                }
+        super.insertOne(Document.parse(article.toString()));
+        if(article.hasAttribute("Longitude") && article.hasAttribute("Latitude")){
+            String longitude = article.getAttribute("Longitude");
+            String latitude = article.getAttribute("Latitude");
+            if (longitude != null && latitude != null && !longitude.equals("null") && !latitude.equals("null")) {
+                double longitudeValue = Double.parseDouble(longitude);
+                double latitudeValue = Double.parseDouble(latitude);
+                Position position = new Position(longitudeValue, latitudeValue);
+                Point point = new Point(position);
+                super.updateOne(new Document("id", article.getId()),
+                        new Document("$set", new Document("location", point)));
             }
-            return true;
         }
-        return false;
+        return true;
     }
 
     public boolean createMany(ArrayList<Article> articles){

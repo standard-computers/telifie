@@ -311,6 +311,11 @@ public class Command {
                         if(hasDomainPermission(user, session, false)){
                             Article na = new Article(content);
                             if(articles.create(na)){
+                                if(na.getLink()!= null){
+                                    new Sql().queue(user.getId(), na.getLink());
+                                }else if(na.getSource().url != null){
+                                    new Sql().queue(user.getId(), na.getSource().url);
+                                }
                                 return new Result(this.command, "article", na);
                             }
                             return new Result(505, this.command, "FAILED ARTICLE CREATION");
@@ -657,6 +662,14 @@ public class Command {
         else if(primarySelector.equals("ping")){
             if(content != null){
 
+            }
+            return new Result(428, this.command, "JSON BODY EXPECTED");
+        }
+        else if(primarySelector.equals("queue")){
+            if(content != null){
+                String url = content.getString("url");
+                new Sql().queue(actingUser, url);
+                return new Result(428, this.command, "QUEUED");
             }
             return new Result(428, this.command, "JSON BODY EXPECTED");
         }

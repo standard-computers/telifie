@@ -135,6 +135,10 @@ public class Article {
         return tags;
     }
 
+    public void setTags(ArrayList<String> tags) {
+        this.tags = tags;
+    }
+
     public void addAttribute(Attribute attr){
         if (!attributeExists(attr)) {
             this.attributes.add(attr);

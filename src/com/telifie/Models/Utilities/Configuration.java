@@ -8,12 +8,12 @@ import java.util.ArrayList;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Configuration {
 
-    private String installation = "REMOTE", server_name, email;
+    private static String server_name = "";
+    private String installation = "REMOTE", email;
     private String mongodb; //JSON of database configuration
     private ArrayList<String> ip_list; //List of IP to externally connect
     private ArrayList<String> ip_access; //List of IP to allowed to access server
     private ArrayList<String> ip_block; //List of IP to allowed to access server
-
     public static Connection file_storage, mysql;
     public static MongoClient mongoClient;
     private String license;
@@ -26,7 +26,7 @@ public class Configuration {
         this.installation = installation;
     }
 
-    public String getServer_name() {
+    public static String getServer_name() {
         return server_name;
     }
 

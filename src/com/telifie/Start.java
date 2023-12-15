@@ -37,15 +37,20 @@ public class Start {
                     checkConfig();
                     try {
                         Console.log("Starting HTTP server [CONSIDER HTTPS FOR SECURITY]...");
-                        new Http();
+                        new HttpServer();
                     } catch (Exception e) {
                         Log.error("HTTP SERVER FAILED");
                     }
                 }
                 case "--reparse" -> {
                     checkConfig();
-                    new Parser(new Session("com.telifie.master_data_team", "telifie"));
-                    Parser.reparse();
+                    new Parser(new Session("com.telifie." + Configuration.getServer_name(), "telifie"));
+                    Parser.reparse(true);
+                }
+                case "--worker" -> {
+                    checkConfig();
+                    new Parser(new Session("com.telifie." + Configuration.getServer_name(), "telifie"));
+                    Parser.reparse(false);
                 }
             }
         }else{
@@ -73,6 +78,7 @@ public class Start {
             }
         }
         config = new Configuration();
+        config.setServer_name(Console.in("Server Name (i.e 'telifie-sv1')-> "));
         config.setMongodb(Console.in("MongoDB URI -> "));
         String sql_uri = Console.in("SQL URL -> ");
         String sql_user = Console.in("SQL Username -> ");
