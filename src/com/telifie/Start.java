@@ -2,6 +2,7 @@ package com.telifie;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Parser;
 import com.telifie.Models.Utilities.*;
 import java.io.File;
@@ -98,6 +99,10 @@ public class Start {
                 config.startMongo();
                 Log.message("LOADING PACKAGES...");
                 new Packages(new Session("com.telifie.system", "telifie"));
+                Andromeda andromeda = new Andromeda();
+
+
+
             }else{
                 Log.error("FAILED CONFIG FILE LOAD");
                 System.exit(-1);

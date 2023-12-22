@@ -49,10 +49,9 @@ public class HttpServer {
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
             if (msg instanceof FullHttpRequest request) {
-                Log.out(Event.Type.valueOf(request.method().toString()), "INBOUND FROM : " + ctx.channel().remoteAddress().toString());
                 String authHeader = request.headers().get(HttpHeaderNames.AUTHORIZATION);
-                String uri = request.uri();
-                String query = new QueryStringDecoder(uri).path().substring(1);
+                String query = new QueryStringDecoder(request.uri()).path().substring(1);
+                Log.out(Event.Type.valueOf(request.method().toString()), "INBOUND HTTP REQUEST : " + ctx.channel().remoteAddress().toString() + "/" + query);
                 Result result = new Result(406, "NO AUTH PROVIDED");
                 if(authHeader != null){
                     AuthenticationClient auths = new AuthenticationClient();

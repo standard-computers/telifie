@@ -300,7 +300,6 @@ public class Parser {
                 String mtc = Andromeda.tools.htmlEscape(tag.attr("content"));
                 switch (mtn) {
                     case "keywords" -> {
-                        Console.log("DOING KEYWORDS");
                         String[] words = mtc.split(",");
                         for (String word : words) {
                             article.addTag(word.trim().toLowerCase());
@@ -378,8 +377,6 @@ public class Parser {
                     }
                 }
             });
-
-            Console.log("WORKING BODY");
             Element body = document.getElementsByTag("body").get(0);
             body.select("table, script, header, style, img, svg, button, label, form, input, aside, code, footer, nav").remove();
             if(url.contains("/wiki")){
@@ -387,40 +384,51 @@ public class Parser {
                 article.setLink(null);
                 article.setTitle(article.getTitle().replaceAll(" - Wikipedia", ""));
                 body.select("div.mw-jump-link, div#toc, div.navbox, table.infobox, div.vector-body-before-content, div.navigation-not-searchable, div.mw-footer-container, div.reflist, div#See_also, h2#See_also, h2#References, h2#External_links").remove();
-            }else{
-                String whole_text = document.text().replaceAll("[\n\r]", " "); //Extract Prices
-                String[] keywords = new Unit(whole_text).keywords(15);
-                for(String kw : keywords){
-                    article.addTag(kw);
-                }
-                Pattern pattern = Pattern.compile("\\$\\d+(\\.\\d{2})?");
-                Matcher matcher = pattern.matcher(whole_text);
-                if (matcher.find()) {
-                    String priceValue = matcher.group();
-                    article.addAttribute(new Attribute("Price", priceValue));
-                }
-                Pattern phones = Pattern.compile("\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b"); //Extract phone number
-                Matcher m = phones.matcher(whole_text);
-                if(m.find()){
-                    String phoneNumber = m.group().trim().replaceAll("[^0-9]", "").replaceFirst("(\\d{3})(\\d{3})(\\d+)", "($1) $2 – $3");
-                    article.addAttribute(new Attribute("Phone", phoneNumber));
-                }
-                Pattern addressPattern = Pattern.compile("\\d+\\s[\\w\\s]+(?:St\\.?|Street|Rd\\.?|Road|Ave\\.?|Avenue|Blvd\\.?|Boulevard|Ln\\.?|Lane|Dr\\.?|Drive|Ct\\.?|Court)\\s*(?:\\n?[\\w\\s]*?)*?(?:,\\s*(?:Ohio|OH|Ala|AL|Alaska|AK|Ariz|AZ|Ark|AR|Calif|CA|Colo|CO|Conn|CT|Del|DE|Fla|FL|Ga|GA|Hawaii|HI|Idaho|ID|Ill|IL|Ind|IN|Iowa|IA|Kans|KS|Ky|KY|La|LA|Maine|ME|Md|MD|Mass|MA|Mich|MI|Minn|MN|Miss|MS|Mo|MO|Mont|MT|Nebr|NE|Nev|NV|N\\.H\\.|NH|N\\.J\\.|NJ|N\\.M\\.|NM|N\\.Y\\.|NY|N\\.C\\.|NC|N\\.D\\.|ND|Okla|OK|Ore|OR|Pa|PA|R\\.I\\.|RI|S\\.C\\.|SC|S\\.D\\.|SD|Tenn|TN|Tex|TX|Utah|UT|Vt|VT|Va|VA|Wash|WA|W\\.Va|WV|Wis|WI|Wyo|WY|U\\.S\\.A|USA|United States|America|American))\\s*(\\d{5}(?:[-\\s]\\d{4})?)?");
-                Matcher am = addressPattern.matcher(whole_text);
-                while (am.find()) {
-                    String fullAddress = am.group(0);
-                    article.addAttribute(new Attribute("Address", fullAddress));
-                    try {
-                        JSONObject location = Radar.get(fullAddress);
-                        Console.log(location.toString());
-                        article.addAttribute(new Attribute("Longitude", String.valueOf(location.getFloat("longitude"))));
-                        article.addAttribute(new Attribute("Latitude", String.valueOf(location.getFloat("latitude"))));
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-
+            }
+            String whole_text = document.text().replaceAll("[\n\r]", " ");
+            String[] keywords = new Unit(whole_text).keywords(15);
+            for(String kw : keywords){
+                article.addTag(kw);
+            }
+            Pattern pattern = Pattern.compile("\\$\\d+(\\.\\d{2})?");
+            Matcher matcher = pattern.matcher(whole_text);
+            if (matcher.find()) {
+                article.addAttribute(new Attribute("Price", matcher.group()));
+            }
+            Pattern phones = Pattern.compile("\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b"); //Extract phone number
+            Matcher m = phones.matcher(whole_text);
+            if(m.find()){
+                String phoneNumber = m.group().trim().replaceAll("[^0-9]", "").replaceFirst("(\\d{3})(\\d{3})(\\d+)", "($1) $2 - $3");
+                article.addAttribute(new Attribute("Phone", phoneNumber));
+            }
+            Pattern emails = Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\\\.[A-Za-z]{2,6}", Pattern.CASE_INSENSITIVE); // Extract email address
+            Matcher em = emails.matcher(whole_text);
+            if (em.find()) {
+                article.addAttribute(new Attribute("Email", em.group().trim()));
+            }
+//                Pattern addressPattern = Pattern.compile("\\d+\\s[\\w\\s]+(?:St\\.?|Street|Rd\\.?|Road|Ave\\.?|Avenue|Blvd\\.?|Boulevard|Ln\\.?|Lane|Dr\\.?|Drive|Ct\\.?|Court)\\s*(?:\\n?[\\w\\s]*?)*?(?:,\\s*(?:Ohio|OH|Ala|AL|Alaska|AK|Ariz|AZ|Ark|AR|Calif|CA|Colo|CO|Conn|CT|Del|DE|Fla|FL|Ga|GA|Hawaii|HI|Idaho|ID|Ill|IL|Ind|IN|Iowa|IA|Kans|KS|Ky|KY|La|LA|Maine|ME|Md|MD|Mass|MA|Mich|MI|Minn|MN|Miss|MS|Mo|MO|Mont|MT|Nebr|NE|Nev|NV|N\\.H\\.|NH|N\\.J\\.|NJ|N\\.M\\.|NM|N\\.Y\\.|NY|N\\.C\\.|NC|N\\.D\\.|ND|Okla|OK|Ore|OR|Pa|PA|R\\.I\\.|RI|S\\.C\\.|SC|S\\.D\\.|SD|Tenn|TN|Tex|TX|Utah|UT|Vt|VT|Va|VA|Wash|WA|W\\.Va|WV|Wis|WI|Wyo|WY|U\\.S\\.A|USA|United States|America|American))\\s*(\\d{5}(?:[-\\s]\\d{4})?)?");
+            Pattern addressPattern = Pattern.compile(
+                    "\\b\\d+\\s+([A-Za-z0-9\\.\\-\\'\\s]+)\\s+" + // Street number and name
+                            "(St\\.?|Street|Rd\\.?|Road|Ave\\.?|Avenue|Blvd\\.?|Boulevard|Ln\\.?|Lane|Dr\\.?|Drive|Ct\\.?|Court)\\s+" + // Street type
+                            "(\\w+),\\s+" + // City
+                            "(Ohio|OH|Ala|AL|Alaska|AK|Ariz|AZ|Ark|AR|Calif|CA|Colo|CO|Conn|CT|Del|DE|Fla|FL|Ga|GA|Hawaii|HI|Idaho|ID|Ill|IL|Ind|IN|Iowa|IA|Kans|KS|Ky|KY|La|LA|Maine|ME|Md|MD|Mass|MA|Mich|MI|Minn|MN|Miss|MS|Mo|MO|Mont|MT|Nebr|NE|Nev|NV|N\\.H\\.|NH|N\\.J\\.|NJ|N\\.M\\.|NM|N\\.Y\\.|NY|N\\.C\\.|NC|N\\.D\\.|ND|Okla|OK|Ore|OR|Pa|PA|R\\.I\\.|RI|S\\.C\\.|SC|S\\.D\\.|SD|Tenn|TN|Tex|TX|Utah|UT|Vt|VT|Va|VA|Wash|WA|W\\.Va|WV|Wis|WI|Wyo|WY)\\s+" + // State
+                            "(\\d{5}(?:[-\\s]\\d{4})?)", // ZIP code
+                    Pattern.CASE_INSENSITIVE
+            );
+            Matcher am = addressPattern.matcher(whole_text);
+            while (am.find()) {
+                String fullAddress = am.group(0);
+                article.setDescription("Building");
+                try {
+                    JSONObject location = Radar.get(fullAddress);
+                    Console.log(location.toString());
+                    article.addAttribute(new Attribute("Longitude", String.valueOf(location.getFloat("longitude"))));
+                    article.addAttribute(new Attribute("Latitude", String.valueOf(location.getFloat("latitude"))));
+                    article.addAttribute(new Attribute("Address", location.getString("formattedAddress")));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
                 }
             }
             StringBuilder markdown = new StringBuilder();
@@ -436,7 +444,17 @@ public class Parser {
                     markdown.append("##### ").append(headerText).append("  \n");
                 }
             }
-            article.setContent(Andromeda.tools.escape(markdown.toString().replaceAll("\\[.*?]", "").trim()));
+            String prtxt = markdown.toString().replaceAll("\\[.*?]", "").trim();
+            Pattern dates = Pattern.compile("\\b(\\d{1,2})\\s(January|February|March|April|May|June|July|August|September|October|November|December)\\s(\\d{4})\\b");
+            Matcher dm = dates.matcher(prtxt);
+            StringBuffer sb = new StringBuffer();
+            while (dm.find()) {
+                String replacement = dm.group(2) + " " + dm.group(1) + ", " + dm.group(3);
+                dm.appendReplacement(sb, replacement);
+            }
+            dm.appendTail(sb);
+            prtxt = sb.toString();
+            article.setContent(Andromeda.tools.escape(prtxt));
             return article;
         }
     }

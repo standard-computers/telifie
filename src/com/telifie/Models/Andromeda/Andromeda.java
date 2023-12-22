@@ -13,7 +13,7 @@ import java.util.*;
 public class Andromeda {
 
     private static ArrayList<Taxon> taxon = new ArrayList<>();
-    public static String[] STOP_WORDS = new String[]{"we", "need", "all", "any", "us", "top", "more", "our", "youll", "your", "get", "put", "a", "an", "and", "are", "as", "at", "or", "make", "be", "by", "for", "from", "has", "he", "in", "is", "it", "its", "of", "on", "that", "the", "to", "was", "were", "with", "who", "what", "when", "where", "why", "how", "you"};
+    public static String[] STOP_WORDS = new String[]{"we", "can", "will", "then", "have", "they", "need", "all", "any", "us", "top", "more", "our", "youll", "your", "get", "put", "a", "an", "their", "and", "are", "as", "at", "or", "make", "be", "by", "for", "from", "has", "he", "in", "is", "it", "its", "of", "on", "that", "the", "to", "was", "were", "with", "who", "what", "when", "where", "why", "how", "you"};
     public static final String[] ALPHAS = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"};
     public static final String[] NUMERALS = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
     public static final String[] PROXIMITY = {"near", "nearby", "close to", "around", "within", "in the vicinity of", "within walking distance of", "adjacent to", "bordering", "neighboring", "local to", "surrounding", "not far from", "just off"};
@@ -30,7 +30,7 @@ public class Andromeda {
         }
     }
 
-    public void index(){
+    public static void index(){
         ArticlesClient articles = new ArticlesClient(new Session("com.telifie.master_data_team", "telifie"));
         ArrayList<Article> al = articles.withProjection(new Document("$and", Arrays.asList(
                 new Document("link", new Document("$ne", null)),
@@ -55,7 +55,7 @@ public class Andromeda {
         save();
     }
 
-    public Taxon taxon(String name) {
+    public static Taxon taxon(String name) {
         for (Taxon t : taxon) {
             if (t.getName().equals(name.toLowerCase().trim())) {
                 return t;
@@ -64,7 +64,7 @@ public class Andromeda {
         return null;
     }
 
-    public ArrayList<Taxon> taxon(){
+    public static ArrayList<Taxon> taxon(){
         return taxon;
     }
 
@@ -79,7 +79,7 @@ public class Andromeda {
         return null;
     }
 
-    public void add(String name, String item){
+    public static void add(String name, String item){
         Taxon taxon = taxon(name);
         if(taxon != null){
             taxon.add(item);
@@ -90,10 +90,11 @@ public class Andromeda {
         }
     }
 
-    private void save(){
+    public static void save(){
         try (FileOutputStream fileOut = new FileOutputStream(Telifie.configDirectory() + "andromeda/taxon.telifie");
              ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
             out.writeObject(taxon);
+            Log.out(Event.Type.PUT, "TAXON.TELIFIE SAVED");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -135,6 +136,18 @@ public class Andromeda {
             String[] words = text.split("\\s+");
             for (String word : words) {
                 if (!Arrays.asList(wordsToRemove).contains(word.toLowerCase())) {
+                    sb.append(word).append(" ");
+                }
+            }
+            return sb.toString().trim();
+        }
+
+        public static String removeWords(String text, Taxon wordsToRemove) {
+            StringBuilder sb = new StringBuilder();
+            Set<String> toRemoveSet = new HashSet<>(wordsToRemove.items()); // Convert list to a set for efficient lookups.
+            String[] words = text.split("\\W+"); // Split on non-word characters to handle punctuation.
+            for (String word : words) {
+                if (!toRemoveSet.contains(word.toLowerCase().trim())) {
                     sb.append(word).append(" ");
                 }
             }

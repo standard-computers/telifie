@@ -62,7 +62,7 @@ public class Console {
         while(true){
             String cmd = Console.in("telifie -> ");
             switch (cmd) {
-                case "exit", "logout", "close" -> System.exit(1);
+                case "exit", "logout", "close" -> System.exit(0);
                 case "http" -> {
                     try {
                         new HttpServer();
@@ -71,7 +71,6 @@ public class Console {
                     }
                 }
                 case "andromeda" -> {
-                    Andromeda andromeda = new Andromeda();
                     boolean loop = true;
                     while(loop){
                         String c = Console.in("telifie -> andromeda -> ");
@@ -79,16 +78,21 @@ public class Console {
                             String tn = Console.in("Taxon Name -> ");
                             String[] ti = Console.in("Taxon Items -> ").split(",");
                             for(String i : ti){
-                                andromeda.add(tn, i.trim().toLowerCase().replaceAll("'", ""));
+                                Andromeda.add(tn, i.trim().toLowerCase().replaceAll("'", ""));
                             }
+                            Andromeda.save();
                         }else if(c.equals("print")){
-                            andromeda.taxon().forEach(t -> Console.log(t.getName()));
+                            Andromeda.taxon().forEach(t -> Console.log(t.getName()));
                         }else if(c.startsWith("print")){
                             String tname = c.split(" ")[1];
-                            Taxon t = andromeda.taxon(tname);
-                            Console.log(t.items().toString());
+                            Taxon t = Andromeda.taxon(tname);
+                            if(t == null){
+                                Console.log("Does not exist!");
+                            }else{
+                                Console.log(t.items().toString());
+                            }
                         }else if(c.equals("index")){
-                            andromeda.index();
+                            Andromeda.index();
                         }else if(c.equals("exit")){
                             loop = false;
                         }else{ //TODO Accept input to 'Search' and allow input/output of JSON

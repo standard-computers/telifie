@@ -4,7 +4,7 @@
 sudo ufw allow OpenSSH
 
 #Allow HTTP on crawler
-sudo ufw allow from 192.168.1.100 to any port 80 proto tcp
+sudo ufw allow from 24.199.92.185 to any port 80 proto tcp
 sudo ufw allow from 192.168.1.100 to any port 22+
 
 ufw allow from 159.89.185.127 to any port 3306
