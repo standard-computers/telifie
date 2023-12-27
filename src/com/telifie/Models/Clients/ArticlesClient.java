@@ -4,8 +4,8 @@ import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
 import com.telifie.Models.Actions.Search;
 import com.telifie.Models.Andromeda.Andromeda;
-import com.telifie.Models.Andromeda.Encoder;
 import com.telifie.Models.Domain;
+import com.telifie.Models.Utilities.Console;
 import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Article;
 import com.telifie.Models.Utilities.Session;
@@ -19,11 +19,7 @@ public class ArticlesClient extends Client {
 
     public ArticlesClient(Session session){
         super(session);
-        if(!session.getDomain().equals("telifie")){
-            super.collection = "domain-articles";
-        }else{
-            super.collection = "articles";
-        }
+        super.collection = "articles";
     }
 
     public boolean update(Article article, Article newArticle){
@@ -88,7 +84,7 @@ public class ArticlesClient extends Client {
     public Article findPlace(String place, Parameters params){
         params.setIndex("locations");
         return this.search(
-                place, params,
+                place, place, params,
                 new Document("$and", Arrays.asList(
                         new Document("title", Pattern.compile("\\b" + Pattern.quote(place) + "\\w*\\b", Pattern.CASE_INSENSITIVE)),
                         new Document("description", "City"),
@@ -105,7 +101,7 @@ public class ArticlesClient extends Client {
         true).get(0);
     }
 
-    public ArrayList<Article> search(String query, Parameters params, Document filter, boolean quickResults){
+    public ArrayList<Article> search(String query, String cleaned, Parameters params, Document filter, boolean quickResults){
         List<Document> found;
         if(quickResults){
             found = this.findWithProjection(filter, new Document("id", 1)
@@ -125,7 +121,7 @@ public class ArticlesClient extends Client {
             if(Andromeda.tools.has(Andromeda.PROXIMITY, query) > -1 || params.getIndex().equals("locations")) {
                 Collections.sort(results, new ArticlesClient.DistanceSorter(params.getLatitude(), params.getLongitude()));
             }else{
-                Collections.sort(results, new ArticlesClient.CosmoScore(Encoder.clean(query)));
+                Collections.sort(results, new ArticlesClient.CosmoScore(cleaned));
             }
         }
         return results;
@@ -149,6 +145,7 @@ public class ArticlesClient extends Client {
     public Document stats() {
         Document groupFields = new Document("_id", "$description");
         groupFields.put("count", new Document("$sum", 1));
+        groupFields.put("priority", new Document("$avg", "$priority"));
         Document groupStage = new Document("$group", groupFields);
         List<Document> iterable = super.aggregate(groupStage);
         Document stats = new Document();
@@ -158,13 +155,15 @@ public class ArticlesClient extends Client {
         for (Document document : iterable) {
             String description = document.getString("_id");
             int count = document.getInteger("count");
+            Double averagePriority = document.getDouble("priority");
             if (description == null) {
                 description = "Unclassified";
             }
-            double percent = (double) count / total * 100; // Calculate the percentage
+            double percent = (double) count / total * 100;
             Document descriptionStats = new Document();
             descriptionStats.append("count", count);
             descriptionStats.append("percent", percent);
+            descriptionStats.append("priority", averagePriority);
             sortedDescriptions.put(description, descriptionStats);
         }
         Document descriptions = new Document();
@@ -178,11 +177,6 @@ public class ArticlesClient extends Client {
         return archive.archive(article);
     }
 
-    /**
-     * Returns Levenshtein difference for link and link provided of most relevant article found
-     * @param uri URI for link of Article
-     * @return int Levenshtein difference
-     */
     public boolean lookup(String uri){
         ArrayList<Article> matches = get(new Document("link", Search.pattern(uri)));
         for (Article a : matches) {
@@ -194,15 +188,14 @@ public class ArticlesClient extends Client {
                     return true;
                 }
             } catch (URISyntaxException e) {
-                e.printStackTrace();
+                Console.log("Failed converting url in lookup");
             }
         }
         return false;
     }
 
     private boolean areSimilarURLs(URI uri1, URI uri2) {
-        return uri1.getHost().equalsIgnoreCase(uri2.getHost()) &&
-                removeTrailingSlash(uri1.getPath()).equalsIgnoreCase(removeTrailingSlash(uri2.getPath()));
+        return uri1.getHost().equalsIgnoreCase(uri2.getHost()) && removeTrailingSlash(uri1.getPath()).equalsIgnoreCase(removeTrailingSlash(uri2.getPath()));
     }
 
     private String removeTrailingSlash(String path) {
@@ -214,13 +207,13 @@ public class ArticlesClient extends Client {
 
     private static class CosmoScore implements Comparator<Article> {
 
-        private final String query;
+        private final String q;
         private final ArrayList<String> words;
 
-        public CosmoScore(String query){
-            this.query = query;
-            this.words = new ArrayList<>(Arrays.asList(Encoder.clean(query).split("\\s+")));
-            this.words.add(0, query);
+        public CosmoScore(String q){
+            this.q = q;
+            this.words = new ArrayList<>(Arrays.asList(q.split("\\s+")));
+            this.words.add(0, q);
         }
 
         @Override
@@ -231,18 +224,19 @@ public class ArticlesClient extends Client {
         }
 
         private double relevance(Article a) {
-            if(a.getTitle().trim().toLowerCase().equals(query)){
-                return Integer.MAX_VALUE;
-            }
-            double titleGrade = (countMatches(a.getTitle(), words) / words.size()) * 5;
-            double linkGrade = (countMatches((a.getLink() == null ? "" : a.getLink()), words) / words.size()) * 2;
+            double bonus = (a.getTitle().trim().toLowerCase().equals(q) ? a.getPriority() * words.size() : a.getPriority());
+            double titleGrade = countMatches(a.getTitle(), words) * 5;
+            double linkGrade = ((a.getLink() == null ? 0 : countMatches(a.getLink(), words)) / words.size()) * 2;
             double tagsGrade = 0;
             if(a.getTags() != null && !a.getTags().isEmpty()){
                 for(String tag : a.getTags()){
-                    tagsGrade += countMatches(tag, words);
+                    if(words.contains(tag)){
+                        tagsGrade += 1;
+                    }
                 }
+                tagsGrade = tagsGrade / a.getTags().size();
             }
-            double retroGrade = ((titleGrade + linkGrade) + ((tagsGrade / words.size()) * 0.25)) * a.getPriority();
+            double retroGrade =  bonus + ((titleGrade + linkGrade + tagsGrade) * a.getPriority());
             return (a.isVerified() ? (retroGrade * 2) : retroGrade);
         }
 
@@ -253,18 +247,11 @@ public class ArticlesClient extends Client {
                     matches++;
                 }
             }
-            return matches / words.size();
+            return (double) matches / words.size();
         }
     }
 
-    private static class DistanceSorter implements Comparator<Article> {
-
-        private final double latitude, longitude;
-
-        public DistanceSorter(double latitude, double longitude) {
-            this.latitude = latitude;
-            this.longitude = longitude;
-        }
+    private record DistanceSorter(double latitude, double longitude) implements Comparator<Article> {
 
         @Override
         public int compare(Article a, Article b) {

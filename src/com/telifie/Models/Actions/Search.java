@@ -24,9 +24,10 @@ public class Search {
     private Result result;
 
     public Result execute(Session session, String q, Parameters params){
+        String cleanedQuery = Encoder.clean(q);
         q = q.toLowerCase().trim();
         ArticlesClient articles = new ArticlesClient(session);
-        Document filter = filter(q, params);
+        Document filter = filter(q, cleanedQuery, params);
         Bson sf = Filters.ne("description", "Image");
         if(params.getIndex().equals("images")){
             sf = Filters.eq("description", "Image");
@@ -34,7 +35,7 @@ public class Search {
             sf = Filters.exists("location");
         }
         filter = new Document("$and", Arrays.asList( sf, Filters.or(filter) ));
-        ArrayList<Article> results = articles.search(q, params, filter, params.isQuickResults());
+        ArrayList<Article> results = articles.search(q, cleanedQuery, params, filter, params.isQuickResults());
         ArrayList<Article> paged = paginateArticles(results, params.getPage(), params.getResultsPerPage());
         result = new Result(q, params, "articles", paged);
         result.setTotal(results.size());
@@ -42,7 +43,7 @@ public class Search {
         return result;
     }
 
-    private Document filter(String query, Parameters params){
+    private Document filter(String query, String cleanedQuery, Parameters params){
 
         if(query.matches("^description\\s*:\\s*.*")){
 
@@ -127,7 +128,7 @@ public class Search {
         }else if((query.contains("*") || query.contains("/") || query.contains("+") || query.contains("-")) && Andromeda.tools.contains(Andromeda.NUMERALS, query)){
             return  new Document("description", "Calculator");
         }
-        String[] exploded = Encoder.clean(query).split("\\s+");
+        String[] exploded = cleanedQuery.split("\\s+");
         ArrayList<Document> or = new ArrayList<>();
         or.add(new Document("title", pattern(query)));
         or.add(new Document("link", pattern(query)));
@@ -164,7 +165,6 @@ public class Search {
                 String rgb = String.format("RGB(%d, %d, %d)", c.getRed(), c.getGreen(), c.getBlue());
                 return "Here is a random color: Hex is " + hex + " and RGB " + rgb;
             }else if(u.startsWith("interrogative")){
-                String cleaned = Encoder.clean(q);
                 //TODO find subject and inquiry
             }
         }

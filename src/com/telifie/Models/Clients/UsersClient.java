@@ -26,7 +26,7 @@ public class UsersClient extends Client {
         return new User(this.findOne(new Document("phone", phone)));
     }
 
-    public boolean userExistsWithEmail(String email){
+    public boolean existsWithEmail(String email){
         return this.findOne(new Document("email", email)) != null;
     }
 
@@ -46,15 +46,15 @@ public class UsersClient extends Client {
         return this.lock(user, code);
     }
 
-    public boolean updateUserTheme(User user, Theme theme){
+    public boolean updateTheme(User user, Theme theme){
         return super.updateOne(new Document("id", user.getId()), new Document("$set", new Document("theme", Document.parse(theme.toString()))));
     }
 
-    public boolean updateUserPhoto(User user, String photoUri){
+    public boolean updatePhoto(User user, String photoUri){
         return super.updateOne(new Document("id", user.getId()), new Document("$set", new Document("photo", photoUri)));
     }
 
-    public boolean createUser(User user){
+    public boolean create(User user){
         return super.insertOne(Document.parse(user.toString()));
     }
 

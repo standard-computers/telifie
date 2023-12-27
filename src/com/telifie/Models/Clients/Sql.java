@@ -60,11 +60,9 @@ public class Sql {
         }
     }
 
-
     public void purgeQueue() {
         try {
-            PreparedStatement command = this.sql.prepareStatement("TRUNCATE queue");
-            command.execute();
+            this.sql.prepareStatement("TRUNCATE queue").execute();
             this.sql.close();
             Log.message("QUEUE PURGED");
         } catch (SQLException e) {

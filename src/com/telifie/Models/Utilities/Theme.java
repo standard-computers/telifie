@@ -15,12 +15,12 @@ public class Theme implements Serializable {
         this.name = document.getString("name");
         this.background = document.getString("background");
         this.style = document.getString("style");
-        this.font = document.getString("font");
+        this.font = (document.getString("font") == null ? "Inter" : document.getString("font"));
         this.cornerRadius = document.getInteger("corner_radius");
-        this.fontSize = document.getInteger("font_size");
-        this.scheme = document.getInteger("scheme");
+        this.fontSize = (document.getInteger("font_size") == null ? 15 : document.getInteger("font_size"));
+        this.scheme = (document.getInteger("scheme") == null ? 0 : document.getInteger("scheme")); // 0 = System Scheme, 1 = Light, 2 = Dark
         this.color = new Color(document.get("color", Document.class));
-        this.foreground = new Color(document.get("foreground", Document.class));
+        this.foreground = (document.get("foreground", Document.class) == null ? null : new Color(document.get("foreground", Document.class)));
     }
 
     @Override
@@ -37,7 +37,7 @@ public class Theme implements Serializable {
                 '}';
     }
 
-    static class Color {
+    class Color {
 
         private final String name;
         private final String color;

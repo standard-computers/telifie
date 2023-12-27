@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Parser;
 import com.telifie.Models.Utilities.*;
+import com.telifie.Models.Utilities.Servers.Http;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -38,7 +40,7 @@ public class Start {
                     checkConfig();
                     try {
                         Console.log("Starting HTTP server [CONSIDER HTTPS FOR SECURITY]...");
-                        new HttpServer();
+                        new Http();
                     } catch (Exception e) {
                         Log.error("HTTP SERVER FAILED");
                     }

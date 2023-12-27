@@ -1,9 +1,12 @@
-package com.telifie.Models.Utilities;
+package com.telifie.Models.Utilities.Servers;
 
 import com.telifie.Models.Actions.Command;
 import com.telifie.Models.Clients.AuthenticationClient;
-import com.telifie.Models.Clients.UsersClient;
 import com.telifie.Models.Result;
+import com.telifie.Models.Utilities.Authentication;
+import com.telifie.Models.Utilities.Event;
+import com.telifie.Models.Utilities.Log;
+import com.telifie.Models.Utilities.Session;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
@@ -15,9 +18,9 @@ import io.netty.util.CharsetUtil;
 import org.bson.BsonInvalidOperationException;
 import org.bson.Document;
 
-public class HttpServer {
+public class Http {
 
-    public HttpServer() throws Exception {
+    public Http() throws Exception {
         this.start();
     }
 
@@ -57,8 +60,7 @@ public class HttpServer {
                     AuthenticationClient auths = new AuthenticationClient();
                     Authentication auth = new Authentication(authHeader);
                     if(auths.isAuthenticated(auth)){
-                        UsersClient users = new UsersClient();
-                        Session session = new Session(users.getUserWithId(auth.getUser()).getId(), "telifie");
+                        Session session = new Session(auth.getUser(), "telifie");
                         if(request.method().name().equals("POST")){
                             try {
                                 HttpContent content = (HttpContent) msg;

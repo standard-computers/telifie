@@ -34,7 +34,6 @@ public class Encoder {
     public static String clean(String text){
         String cleanedText = text.toLowerCase().trim();
         cleanedText = cleanedText.replaceAll("[\\d+]", "");
-        Console.log(Andromeda.taxon("stop_words").toString());
         cleanedText = Andromeda.tools.removeWords(cleanedText, Andromeda.taxon("stop_words"));
         cleanedText = cleanedText.replaceAll("[^a-zA-Z0-9 ]", "");
         return cleanedText;

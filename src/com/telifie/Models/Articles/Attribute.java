@@ -11,6 +11,6 @@ public record Attribute(String key, String value) {
 
     @Override
     public String toString() {
-        return new StringBuilder().append("{").append("\"key\" : \"").append(key).append("\", ").append("\"value\" : \"").append(value).append("\"").append("}").toString();
+        return new StringBuilder().append("{\"key\" : \"").append(key).append("\", \"value\" : \"").append(value).append("\"}").toString();
     }
 }

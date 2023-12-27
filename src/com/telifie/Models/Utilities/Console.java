@@ -3,6 +3,7 @@ package com.telifie.Models.Utilities;
 import com.telifie.Models.Actions.Search;
 import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Andromeda.Taxon;
+import com.telifie.Models.Utilities.Servers.Http;
 import org.bson.Document;
 import java.util.Scanner;
 
@@ -65,7 +66,7 @@ public class Console {
                 case "exit", "logout", "close" -> System.exit(0);
                 case "http" -> {
                     try {
-                        new HttpServer();
+                        new Http();
                     } catch (Exception e) {
                         Log.error("Failed to start HTTP server");
                     }

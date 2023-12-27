@@ -13,7 +13,6 @@ import java.util.*;
 public class Andromeda {
 
     private static ArrayList<Taxon> taxon = new ArrayList<>();
-    public static String[] STOP_WORDS = new String[]{"we", "can", "will", "then", "have", "they", "need", "all", "any", "us", "top", "more", "our", "youll", "your", "get", "put", "a", "an", "their", "and", "are", "as", "at", "or", "make", "be", "by", "for", "from", "has", "he", "in", "is", "it", "its", "of", "on", "that", "the", "to", "was", "were", "with", "who", "what", "when", "where", "why", "how", "you"};
     public static final String[] ALPHAS = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"};
     public static final String[] NUMERALS = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
     public static final String[] PROXIMITY = {"near", "nearby", "close to", "around", "within", "in the vicinity of", "within walking distance of", "adjacent to", "bordering", "neighboring", "local to", "surrounding", "not far from", "just off"};
@@ -169,6 +168,34 @@ public class Andromeda {
 
         public static String htmlEscape(String string){
             return  HtmlEscapers.htmlEscaper().escape(string);
+        }
+
+        public static int levenshtein(String x, String y) {
+            int[][] dp = new int[x.length() + 1][y.length() + 1];
+            for (int i = 0; i <= x.length(); i++) {
+                for (int j = 0; j <= y.length(); j++) {
+                    if (i == 0) {
+                        dp[i][j] = j;
+                    } else if (j == 0) {
+                        dp[i][j] = i;
+                    } else {
+                        dp[i][j] = min(
+                                dp[i - 1][j - 1] + costOfSubstitution(x.charAt(i - 1), y.charAt(j - 1)),
+                                dp[i - 1][j] + 1,
+                                dp[i][j - 1] + 1);
+                    }
+                }
+            }
+
+            return dp[x.length()][y.length()];
+        }
+
+        private static int costOfSubstitution(char a, char b) {
+            return a == b ? 0 : 1;
+        }
+
+        private static int min(int... numbers) {
+            return java.util.Arrays.stream(numbers).min().orElse(Integer.MAX_VALUE);
         }
     }
 }

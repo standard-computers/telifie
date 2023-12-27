@@ -35,18 +35,15 @@ public class Parser {
         articles = new ArticlesClient(session);
     }
 
-    public static void reparse(boolean reQueue){
-        ArticlesClient articles =  new ArticlesClient(new Session("com.telifie." + Configuration.getServer_name(), "telifie"));
-        if(reQueue){
+    public void reparse(boolean purgeQueue){
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        ArticlesClient articles =  new ArticlesClient(new Session("telifie." + Configuration.getServer_name(), "telifie"));
+        if(purgeQueue){
             Log.message("STARTING REPARSE");
             new Sql().purgeQueue();
             ArrayList<Article> parsing = articles.withProjection(
-                    new org.bson.Document("$or",
-                            Arrays.asList(
-                                    new org.bson.Document("link", Search.pattern("https://")),
-                                    new org.bson.Document("link", Search.pattern("http://"))
-                            )
-                    ),
+                    new org.bson.Document("$or", Arrays.asList(new org.bson.Document("link", Search.pattern("https://")), new org.bson.Document("link", Search.pattern("http://")))),
                     new org.bson.Document("link", 1)
             );
             Console.log("RE-PARSE TOTAL : " + parsing.size());
@@ -55,11 +52,18 @@ public class Parser {
         }
         Console.log("Grabbing from queue.");
         String nil = new Sql().nextQueued();
-        Article a = engines.fetch(nil, 0, true);
-        reparse(false);
+        Future<Article> future = executor.submit(() -> engines.fetch(nil, 0, true));
+        try {
+            Article a = future.get();
+            reparse(false);
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        } finally {
+            executor.shutdown();
+        }
     }
 
-    public static Article parse(String uri){
+    public Article parse(String uri){
         if(Asset.isWebpage(uri)){
             return Parser.engines.website(uri);
         }else if(Asset.isFile(uri)){
@@ -291,6 +295,7 @@ public class Parser {
                 URL rootUri = new URL(url);
                 root = rootUri.getProtocol() + "://" + rootUri.getHost() + "/";
             } catch (MalformedURLException e) {
+                Console.log("FILED URL!!!");
                 throw new RuntimeException(e);
             }
             article.setTitle(Andromeda.tools.htmlEscape(document.title()));
@@ -330,11 +335,9 @@ public class Parser {
                 if(rel.contains("icon") && !url.contains("/wiki")){
                     try {
                         article.setIcon(fixLink("https://" + new URL(url).getHost(), href));
-                    } catch (MalformedURLException e) {            Console.log("DOING IMAGES");
                         document.getElementsByTag("img").forEach(image -> {
                             String src = fixLink(url, image.attr("src"));
                             if(!src.isEmpty() && !src.startsWith("data:") && articles.withLink(src) == null){
-                                Console.log("INSPECTING : " + src);
                                 CompletableFuture.runAsync(() -> {
                                     Asset ass = new Asset(src);
                                     int[] d = ass.getDimensions();
@@ -368,12 +371,15 @@ public class Parser {
                                         }
                                         if(articles.create(ia)){
                                             Console.log("IMAGE CREATED : " + src);
+                                        }else{
+                                            Console.log("NOT HAPPENING");
                                         }
                                     }
                                 });
                             }
                         });
-                        Log.error("CANNOT CONVERT URI TO URL : " + url);
+                    } catch (MalformedURLException e) {
+                        Log.error("FAILED URI TO URL P0x0377: " + url);
                     }
                 }
             });
@@ -406,15 +412,13 @@ public class Parser {
             if (em.find()) {
                 article.addAttribute(new Attribute("Email", em.group().trim()));
             }
-//                Pattern addressPattern = Pattern.compile("\\d+\\s[\\w\\s]+(?:St\\.?|Street|Rd\\.?|Road|Ave\\.?|Avenue|Blvd\\.?|Boulevard|Ln\\.?|Lane|Dr\\.?|Drive|Ct\\.?|Court)\\s*(?:\\n?[\\w\\s]*?)*?(?:,\\s*(?:Ohio|OH|Ala|AL|Alaska|AK|Ariz|AZ|Ark|AR|Calif|CA|Colo|CO|Conn|CT|Del|DE|Fla|FL|Ga|GA|Hawaii|HI|Idaho|ID|Ill|IL|Ind|IN|Iowa|IA|Kans|KS|Ky|KY|La|LA|Maine|ME|Md|MD|Mass|MA|Mich|MI|Minn|MN|Miss|MS|Mo|MO|Mont|MT|Nebr|NE|Nev|NV|N\\.H\\.|NH|N\\.J\\.|NJ|N\\.M\\.|NM|N\\.Y\\.|NY|N\\.C\\.|NC|N\\.D\\.|ND|Okla|OK|Ore|OR|Pa|PA|R\\.I\\.|RI|S\\.C\\.|SC|S\\.D\\.|SD|Tenn|TN|Tex|TX|Utah|UT|Vt|VT|Va|VA|Wash|WA|W\\.Va|WV|Wis|WI|Wyo|WY|U\\.S\\.A|USA|United States|America|American))\\s*(\\d{5}(?:[-\\s]\\d{4})?)?");
             Pattern addressPattern = Pattern.compile(
                     "\\b\\d+\\s+([A-Za-z0-9\\.\\-\\'\\s]+)\\s+" + // Street number and name
                             "(St\\.?|Street|Rd\\.?|Road|Ave\\.?|Avenue|Blvd\\.?|Boulevard|Ln\\.?|Lane|Dr\\.?|Drive|Ct\\.?|Court)\\s+" + // Street type
                             "(\\w+),\\s+" + // City
                             "(Ohio|OH|Ala|AL|Alaska|AK|Ariz|AZ|Ark|AR|Calif|CA|Colo|CO|Conn|CT|Del|DE|Fla|FL|Ga|GA|Hawaii|HI|Idaho|ID|Ill|IL|Ind|IN|Iowa|IA|Kans|KS|Ky|KY|La|LA|Maine|ME|Md|MD|Mass|MA|Mich|MI|Minn|MN|Miss|MS|Mo|MO|Mont|MT|Nebr|NE|Nev|NV|N\\.H\\.|NH|N\\.J\\.|NJ|N\\.M\\.|NM|N\\.Y\\.|NY|N\\.C\\.|NC|N\\.D\\.|ND|Okla|OK|Ore|OR|Pa|PA|R\\.I\\.|RI|S\\.C\\.|SC|S\\.D\\.|SD|Tenn|TN|Tex|TX|Utah|UT|Vt|VT|Va|VA|Wash|WA|W\\.Va|WV|Wis|WI|Wyo|WY)\\s+" + // State
                             "(\\d{5}(?:[-\\s]\\d{4})?)", // ZIP code
-                    Pattern.CASE_INSENSITIVE
-            );
+                    Pattern.CASE_INSENSITIVE);
             Matcher am = addressPattern.matcher(whole_text);
             while (am.find()) {
                 String fullAddress = am.group(0);
@@ -425,10 +429,8 @@ public class Parser {
                     article.addAttribute(new Attribute("Longitude", String.valueOf(location.getFloat("longitude"))));
                     article.addAttribute(new Attribute("Latitude", String.valueOf(location.getFloat("latitude"))));
                     article.addAttribute(new Attribute("Address", location.getString("formattedAddress")));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                } catch (IOException | InterruptedException e) {
+                    Log.error("RADAR PACKAGE ERROR");
                 }
             }
             StringBuilder markdown = new StringBuilder();

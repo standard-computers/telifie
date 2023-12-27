@@ -34,7 +34,17 @@ public class Article {
         this.link = document.getString("link");
         this.icon = document.getString("icon");
         this.description = document.getString("description");
-        this.priority = (document.getDouble("priority") == null ? 1.01 : document.getDouble("priority"));
+        double priority = 32.0;
+        Object priorityObj = document.get("priority");
+        if (priorityObj != null) {
+            if (priorityObj instanceof Double) {
+                priority = (Double) priorityObj;
+            }
+            else if (priorityObj instanceof Integer) {
+                priority = ((Integer) priorityObj).doubleValue();
+            }
+        }
+        this.priority = priority;
         this.content = (document.getString("content") != null ?  Andromeda.tools.escape(document.getString("content")) : "");
         this.origin = (document.getInteger("origin") == null ? 0 : document.getInteger("origin"));
         this.tags = document.get("tags", ArrayList.class);
