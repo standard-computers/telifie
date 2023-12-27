@@ -119,7 +119,7 @@ public class ArticlesClient extends Client {
         found.forEach(a -> results.add(new Article(a)));
         if(!query.contains(":")){
             if(Andromeda.tools.has(Andromeda.PROXIMITY, query) > -1 || params.getIndex().equals("locations")) {
-                Collections.sort(results, new ArticlesClient.DistanceSorter(params.getLatitude(), params.getLongitude()));
+                results.sort(new DistanceSorter(params.getLatitude(), params.getLongitude()));
             }else{
                 Collections.sort(results, new ArticlesClient.CosmoScore(cleaned));
             }
@@ -224,26 +224,30 @@ public class ArticlesClient extends Client {
         }
 
         private double relevance(Article a) {
-            double bonus = (a.getTitle().trim().toLowerCase().equals(q) ? a.getPriority() * words.size() : a.getPriority());
-            double titleGrade = countMatches(a.getTitle(), words) * 5;
-            double linkGrade = ((a.getLink() == null ? 0 : countMatches(a.getLink(), words)) / words.size()) * 2;
-            double tagsGrade = 0;
+            double score = a.getPriority();
+            score += (a.getLink() == null ? -1 : compareMatches(a.getLink(), words)); //Link Score
+            score += (a.getLink().contains(q) ? words.size() : 0); //Link Match
+            score += (a.getTitle().trim().toLowerCase().equals(q) ? words.size() : 0); //Title Match
+            score += compareMatches(a.getTitle(), words); //Title Score
             if(a.getTags() != null && !a.getTags().isEmpty()){
                 for(String tag : a.getTags()){
                     if(words.contains(tag)){
-                        tagsGrade += 1;
+                        score += 2;
                     }
                 }
-                tagsGrade = tagsGrade / a.getTags().size();
+                score += score / a.getTags().size();
             }
-            double retroGrade =  bonus + ((titleGrade + linkGrade + tagsGrade) * a.getPriority());
-            return (a.isVerified() ? (retroGrade * 2) : retroGrade);
+            score = score * a.getPriority();
+            return (a.isVerified() ? (score * 2) : score);
         }
 
-        private double countMatches(String text, ArrayList<String> words) {
+        private double compareMatches(String text, ArrayList<String> words) {
             int matches = 0;
-            for(String word : words) {
-                if(text.contains(word)) {
+            for(int i = 0; i < words.size(); i++){
+                if(text.contains(words.get(i))) {
+                    if(i == 0){
+                        matches *= 5;
+                    }
                     matches++;
                 }
             }

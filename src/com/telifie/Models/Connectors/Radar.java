@@ -1,6 +1,7 @@
 package com.telifie.Models.Connectors;
 
 import com.telifie.Models.Utilities.Packages;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -20,6 +21,10 @@ public class Radar {
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        return new JSONObject(response.body()).getJSONArray("addresses").getJSONObject(0);
+        JSONArray addressed = new JSONObject(response.body()).getJSONArray("addresses");
+        if(addressed.length() > 0){
+            return addressed.getJSONObject(0);
+        }
+        return null;
     }
 }

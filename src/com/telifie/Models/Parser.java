@@ -303,12 +303,10 @@ public class Parser {
             document.getElementsByTag("meta").forEach(tag -> {
                 String mtn = tag.attr("name");
                 String mtc = Andromeda.tools.htmlEscape(tag.attr("content"));
-                switch (mtn) {
-                    case "keywords" -> {
-                        String[] words = mtc.split(",");
-                        for (String word : words) {
-                            article.addTag(word.trim().toLowerCase());
-                        }
+                if (mtn.equals("keywords")) {
+                    String[] words = mtc.split(",");
+                    for (String word : words) {
+                        article.addTag(word.trim().toLowerCase());
                     }
                 }
             });
@@ -349,7 +347,7 @@ public class Parser {
                                         }
                                         String caption = Andromeda.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
                                         Article ia = new Article();
-                                        if (caption != null && !caption.isEmpty() && caption.length() < 100) {
+                                        if (!caption.isEmpty() && caption.length() < 100) {
                                             ia.setTitle(caption);
                                         } else {
                                             ia.setTitle(article.getTitle());
@@ -359,6 +357,7 @@ public class Parser {
                                         ia.setIcon(src);
                                         ia.setTags(article.getTags());
                                         ia.setDescription("Image");
+                                        ia.setPriority(32.0);
                                         ia.addAttribute(new Attribute("Width", d[0] + "px"));
                                         ia.addAttribute(new Attribute("Height", d[1] + "px"));
                                         ia.addAttribute(new Attribute("Size", ass.fileSize()));
@@ -425,11 +424,10 @@ public class Parser {
                 article.setDescription("Building");
                 try {
                     JSONObject location = Radar.get(fullAddress);
-                    Console.log(location.toString());
                     article.addAttribute(new Attribute("Longitude", String.valueOf(location.getFloat("longitude"))));
                     article.addAttribute(new Attribute("Latitude", String.valueOf(location.getFloat("latitude"))));
                     article.addAttribute(new Attribute("Address", location.getString("formattedAddress")));
-                } catch (IOException | InterruptedException e) {
+                } catch (IOException | InterruptedException | NullPointerException e) {
                     Log.error("RADAR PACKAGE ERROR");
                 }
             }

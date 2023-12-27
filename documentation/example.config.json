@@ -1,0 +1,16 @@
+{
+  "server_name" : "telifie-example-sv1",
+  "installation" : "REMOTE",
+  "email" : "john.doe@example.com",
+  "mongodb" : "mongodb://127.0.0.1:27017",
+  "file_storage" : null,
+  "mysql" : {
+    "uri" : "jdbc:mysql://127.0.0.1/telifie",
+    "user" : "USERNAME",
+    "psswd" : "PASSWORD"
+  },
+  "ip_list" : [],
+  "ip_access" : [],
+  "ip_block" : [],
+  "license" : "MIICXAIBAAKBgQCLl0XYrgbg0mSOv+OmhGFVtXEQYBw5BqgEHsO3SaVUjZyD1h+I\n3L70WImeFQfm4wk/NnC2dV8Tua073WbyoaLFky6wXXPLeDaKjpZXRkKwxJdIFxfn\nz5L9WprOb6ju6nkuTYHTPhX80kCqTucxqRXWsJIqQYS4EYeYJm0x0YwcLwIDAQAB\nAoGAYmFqI617QYZmwsjw/BH+u7ZWClGCcpqDXewEyjAIatAniC8oKIBTwMiJrTVr\nTUmj4b5Pr/iG2tMZCcEf5k8O9RTsy5IiUNdG4D2tNH1YaEQn7mzrmyVpWW782W96\nZQIlACP2P7tKexHwrQ+1o1yaJ9KFt3e+0j8arprcnEK5G8kCQQD8lAH7iR4UgZ13\n523OUaJ067APD6fOzY62XNtWkh0GZauy4ohobWU86D4nklmx8pvD1IVWQjFU2fcL\n/CErWY8zAkEAjXtnBLLueJvfFGzM/914lwt4Ky6nOx/4CXN1pgMlpTa4QUxLwGyd\nhcXE9UYSliRXg7VekPBGxxIat9iNinMvFQJATLmZMJOic5A8CWRf0sCxnNrLjIew\n7f07UOI8LrwL3RmdYqW10iMJEctqthKa9JdCAebY6i8JVUEw7o8UdFqsSQJAPkk5\njUQI4GgeyasshOhHkpemC7y6OrlURTTjcnaoOBfi/jxMjSZEIwRyNVjoDdlp/b33\nJ+/f+Pvrb0yS44TaEQJBAMV9Q6ESIqQntuGOxfeo68r5doylaIVXubJTzHbqRKHC\nsVnJSL4dihyc9xtt9qVy4CJKpD1d97BPm8o4pXiH4m8="
+}

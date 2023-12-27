@@ -47,13 +47,11 @@ public class Start {
                 }
                 case "--reparse" -> {
                     checkConfig();
-                    new Parser(new Session("com.telifie." + Configuration.getServer_name(), "telifie"));
-                    Parser.reparse(true);
+                    new Parser(new Session("com.telifie." + Configuration.getServer_name(), "telifie")).reparse(true);
                 }
                 case "--worker" -> {
                     checkConfig();
-                    new Parser(new Session("com.telifie." + Configuration.getServer_name(), "telifie"));
-                    Parser.reparse(false);
+                    new Parser(new Session("com.telifie." + Configuration.getServer_name(), "telifie")).reparse(false);
                 }
             }
         }else{
