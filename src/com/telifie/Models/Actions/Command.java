@@ -330,6 +330,8 @@ public class Command {
                 DraftsClient drafts = new DraftsClient(session);
                 if(secSelector.equals("id")){
 
+                }else if(secSelector.equals("create")){
+
                 }
                 return new Result(this.command, "articles", drafts.forUser());
             }
@@ -487,17 +489,27 @@ public class Command {
                     switch (mode) {
                         case "batch" -> {
                             String uri = content.getString("uri");
-                            double priority = (content.getDouble("priority") == null ? 1.01 : content.getDouble("priority"));
-                            ArrayList<Article> extractedArticles = Parser.engines.batch(uri, priority);
-                            if (extractedArticles != null) {
+                            ArrayList<Article> parsed = Parser.engines.batch(uri);
+                            if (parsed != null) {
                                 if (content.getBoolean("insert") != null && content.getBoolean("insert")) {
-                                    articles.createMany(extractedArticles);
+                                    articles.createMany(parsed);
                                 }
-                                return new Result(this.command, "articles", extractedArticles);
+                                return new Result(this.command, "articles", parsed);
                             }
                             return new Result(404, this.command, "NO ARTICLES");
                         }
-                        case "uri" -> { //Single file parsing
+                        case "group" -> {
+                            String uri = content.getString("uri");
+                            ArrayList<Article> parsed = Parser.engines.group(uri);
+                            if (parsed != null) {
+                                if (content.getBoolean("insert") != null && content.getBoolean("insert")) {
+                                    articles.createMany(parsed);
+                                }
+                                return new Result(this.command, "articles", parsed);
+                            }
+                            return new Result(404, this.command, "NO ARTICLES");
+                        }
+                        case "uri" -> {
                             String uri = content.getString("uri");
                             if (uri != null && !uri.isEmpty()) {
                                 if(articles.withLink(uri) == null){

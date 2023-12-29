@@ -158,8 +158,7 @@ public class Parser {
             }
         }
 
-        public static ArrayList<Article> batch(String uri, Double withPriority){
-
+        public static ArrayList<Article> batch(String uri){
             if(uri.endsWith("csv")) {
                 try {
                     URL url = new URL(uri);
@@ -192,7 +191,6 @@ public class Parser {
                     for (int i = 1; i < lines.size(); i++) {
                         String[] articleData = lines.get(i);
                         Article article = new Article();
-                        article.setPriority(withPriority);
                         article.addAttribute(new Attribute("*batch", batchId));
                         for (int g = 0; g < articleData.length; g++) {
                             String value = articleData[g];
@@ -222,6 +220,37 @@ public class Parser {
                     return articles;
                 } catch (IOException e) {
                     Log.error("FAILED BATCH UPLOAD", "PARx224");
+                }
+            }
+            return null;
+        }
+
+
+        public static ArrayList<Article> group(String uri){
+            if(uri.endsWith("csv")) {
+                try {
+                    URL url = new URL(uri);
+                    InputStream inputStream = url.openStream();
+                    Files.copy(inputStream, Paths.get(Telifie.configDirectory() + "temp/" + url.getPath().split("/")[url.getPath().split("/").length - 1]), StandardCopyOption.REPLACE_EXISTING);
+                    ArrayList<String[]> lines = new ArrayList<>();
+                    try (CSVReader reader = new CSVReader(new FileReader(Telifie.configDirectory() + "temp/" + url.getPath().split("/")[url.getPath().split("/").length - 1]))) {
+                        String[] fields;
+                        while ((fields = reader.readNext()) != null) {
+                            lines.add(fields);
+                        }
+                    } catch (IOException | CsvException e) {
+                        Log.error("FAILED CSV FILE READ : PARSER / BATCH", "PARx243");
+                    }
+                    ArrayList<Article> articles = new ArrayList<>();
+                    for (int i = 1; i < lines.size(); i++) {
+                        String[] articleData = lines.get(i);
+                        Article article = Parser.engines.website(articleData[0]);
+                        article.setDescription(articleData[1]);
+                        articles.add(article);
+                    }
+                    return articles;
+                } catch (IOException e) {
+                    Log.error("FAILED BATCH UPLOAD", "PARx273");
                 }
             }
             return null;

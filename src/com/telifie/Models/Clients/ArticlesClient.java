@@ -80,7 +80,6 @@ public class ArticlesClient extends Client {
         return articles;
     }
 
-
     public Article findPlace(String place, Parameters params){
         params.setIndex("locations");
         return this.search(
@@ -264,7 +263,7 @@ public class ArticlesClient extends Client {
         }
 
         private double distance(double latitude, double longitude) {
-            final int R = 6371; // Radius of the earth in km
+            final int R = 6371;
             double latDistance = Math.toRadians(latitude - this.latitude);
             double lonDistance = Math.toRadians(longitude - this.longitude);
             double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2) + Math.cos(Math.toRadians(this.latitude)) * Math.cos(Math.toRadians(this.longitude)) * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
