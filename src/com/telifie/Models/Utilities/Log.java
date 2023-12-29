@@ -9,23 +9,22 @@ import java.time.ZoneId;
 
 public class Log {
 
-    public static void out(Event.Type event, String message){
-        System.out.println(message);
-        appendToCSV(event, message);
+    public static void out(Event.Type event, String message, String code){
+        System.out.println("[" + readableTimeDate() + "] " + event + " -> CODE _: " + code + " >> " + message);
+        appendToCSV(event, message, code);
     }
 
-    public static void error(String message){
-        out(Event.Type.ERROR, message);
+    public static void error(String message, String code){
+        out(Event.Type.ERROR, message, code);
     }
 
-    public static void message(String message){
-        out(Event.Type.MESSAGE, message);
+    public static void message(String message, String code){
+        out(Event.Type.MESSAGE, message, code);
     }
 
-    private static void appendToCSV(Event.Type event, String message) {
+    private static void appendToCSV(Event.Type event, String message, String code) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(Telifie.configDirectory() + "/telifie_log.csv", true))) {
-            String dataToAppend = event.toString() + "," + message + "," + Telifie.epochTime() + "," + readableTimeDate();
-            writer.write(dataToAppend);
+            writer.write(event.toString() + "," + message + "," + Telifie.epochTime() + "," + readableTimeDate() + ", " + code);
             writer.newLine();
         } catch (IOException e) {
             e.printStackTrace();

@@ -10,7 +10,7 @@ public class Packages {
 
     public Packages(Session session){
         packages = new PackagesClient(session).get();
-        Log.message(packages.size() + " PACKAGES LOADED");
+        Log.message(packages.size() + " PACKAGES LOADED", "PACx013");
     }
 
     public static Package get(String id){

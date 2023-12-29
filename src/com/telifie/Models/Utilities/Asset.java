@@ -73,7 +73,7 @@ public class Asset {
             InputStream inputStream = url.openStream();
             Files.copy(inputStream, Paths.get(localUri), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            Log.error("FAILED TO DOWNLOAD : " + uri);
+            Log.error("FAILED TO DOWNLOAD : " + uri, "A0x076");
         }
     }
 

@@ -7,6 +7,7 @@ import com.telifie.Models.Andromeda.Unit;
 import com.telifie.Models.Article;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Connectors.OpenWeatherMap;
+import com.telifie.Models.Connectors.Radar;
 import com.telifie.Models.Result;
 import com.telifie.Models.Utilities.Packages;
 import com.telifie.Models.Utilities.Parameters;
@@ -16,6 +17,7 @@ import org.bson.conversions.Bson;
 import org.mariuszgromada.math.mxparser.Expression;
 import org.mariuszgromada.math.mxparser.License;
 import java.awt.*;
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -51,12 +53,6 @@ public class Search {
             if(spl.length >= 2) {
                 return new Document("description", Pattern.compile("\\b" + Pattern.quote(spl[1].trim()) + "\\b", Pattern.CASE_INSENSITIVE));
             }
-        }else if(query.matches("^title\\s*:\\s*.*")){
-
-            String[] spl = query.split(":");
-            if(spl.length >= 2){
-                return new Document("title", pattern(spl[1].trim() ));
-            }
         }else if(query.matches("^attribute\\s*:\\s*.*")){
 
             String[] spl = query.split(":");
@@ -70,9 +66,9 @@ public class Search {
                 }
                 return new Document("attributes.key", Pattern.compile(Pattern.quote(key), Pattern.CASE_INSENSITIVE));
             }
-        }else if(query.matches("^define\\s*.*")) {
+        }else if(query.matches("^define\\s*.*") || query.matches("^title\\s*.*")) {
 
-            return new Document("$and", Arrays.asList(new Document("description", "Definition"), new Document("title", pattern(query.replaceFirst("define", "").trim()))));
+            return new Document("title", pattern(query.replaceFirst("define", "").trim()));
         }else if(query.matches("^(\\d+)\\s+([A-Za-z\\s]+),\\s+([A-Za-z\\s]+),\\s+([A-Za-z]{2})\\s+(\\d{5})$")){
 
             return new Document("$and", Arrays.asList(new Document("attribute.key", "Address"), new Document("attribute.value", pattern(query))));
@@ -164,6 +160,21 @@ public class Search {
                 String hex = String.format("#%02X%02X%02X", c.getRed(), c.getGreen(), c.getBlue());
                 String rgb = String.format("RGB(%d, %d, %d)", c.getRed(), c.getGreen(), c.getBlue());
                 return "Here is a random color: Hex is " + hex + " and RGB " + rgb;
+            }else if(q.matches("\\b\\d+\\s+([A-Za-z0-9\\.\\-\\'\\s]+)\\s+" + // Street number and name
+                    "(St\\.?|Street|Rd\\.?|Road|Ave\\.?|Avenue|Blvd\\.?|Boulevard|Ln\\.?|Lane|Dr\\.?|Drive|Ct\\.?|Court)\\s+" + // Street type
+                    "(\\w+),\\s+" + // City
+                    "(Ohio|OH|Ala|AL|Alaska|AK|Ariz|AZ|Ark|AR|Calif|CA|Colo|CO|Conn|CT|Del|DE|Fla|FL|Ga|GA|Hawaii|HI|Idaho|ID|Ill|IL|Ind|IN|Iowa|IA|Kans|KS|Ky|KY|La|LA|Maine|ME|Md|MD|Mass|MA|Mich|MI|Minn|MN|Miss|MS|Mo|MO|Mont|MT|Nebr|NE|Nev|NV|N\\.H\\.|NH|N\\.J\\.|NJ|N\\.M\\.|NM|N\\.Y\\.|NY|N\\.C\\.|NC|N\\.D\\.|ND|Okla|OK|Ore|OR|Pa|PA|R\\.I\\.|RI|S\\.C\\.|SC|S\\.D\\.|SD|Tenn|TN|Tex|TX|Utah|UT|Vt|VT|Va|VA|Wash|WA|W\\.Va|WV|Wis|WI|Wyo|WY)\\s+" + // State
+                    "(\\d{5}(?:[-\\s]\\d{4})?)")){
+
+                try {
+                    Radar.get(q);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+                //TODO map/radar lookup
             }else if(u.startsWith("interrogative")){
                 //TODO find subject and inquiry
             }

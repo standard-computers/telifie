@@ -18,7 +18,7 @@ public class Andromeda {
     public static final String[] PROXIMITY = {"near", "nearby", "close to", "around", "within", "in the vicinity of", "within walking distance of", "adjacent to", "bordering", "neighboring", "local to", "surrounding", "not far from", "just off"};
 
     public Andromeda(){
-        Log.message("INITIALIZING ANDROMEDA");
+        Log.message("INITIALIZING ANDROMEDA", "ANDx021");
         if(new File(Telifie.configDirectory() + "andromeda/taxon.telifie").exists()){
             try (FileInputStream fileIn = new FileInputStream(Telifie.configDirectory() + "andromeda/taxon.telifie");
                  ObjectInputStream in = new ObjectInputStream(fileIn)) {
@@ -93,7 +93,7 @@ public class Andromeda {
         try (FileOutputStream fileOut = new FileOutputStream(Telifie.configDirectory() + "andromeda/taxon.telifie");
              ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
             out.writeObject(taxon);
-            Log.out(Event.Type.PUT, "TAXON.TELIFIE SAVED");
+            Log.out(Event.Type.PUT, "TAXON.TELIFIE SAVED", "ANDx096");
         } catch (IOException e) {
             e.printStackTrace();
         }

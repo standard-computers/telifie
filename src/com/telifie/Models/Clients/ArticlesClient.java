@@ -224,34 +224,33 @@ public class ArticlesClient extends Client {
         }
 
         private double relevance(Article a) {
-            double score = a.getPriority();
-            score += (a.getLink() == null ? -1 : compareMatches(a.getLink(), words)); //Link Score
-            score += (a.getLink().contains(q) ? words.size() : 0); //Link Match
-            score += (a.getTitle().trim().toLowerCase().equals(q) ? words.size() : 0); //Title Match
-            score += compareMatches(a.getTitle(), words); //Title Score
+            double s = a.getPriority();
+            s += (a.getLink() == null ? s - s * 2 : compareMatches(a.getLink(), words)); //Link Score
+            s += (a.getLink() != null && a.getLink().contains(q) ? words.size() : 0); //Link Match
+            s += (a.getTitle().trim().toLowerCase().equals(q) ? words.size() * 100 : 0); //Title Match
+            s += compareMatches(a.getTitle(), words) * words.size(); //Title Score
             if(a.getTags() != null && !a.getTags().isEmpty()){
                 for(String tag : a.getTags()){
                     if(words.contains(tag)){
-                        score += 2;
+                        s += 2;
                     }
                 }
-                score += score / a.getTags().size();
+                s += s / a.getTags().size();
             }
-            score = score * a.getPriority();
-            return (a.isVerified() ? (score * 2) : score);
+            return (a.isVerified() ? (s * 3) : s);
         }
 
         private double compareMatches(String text, ArrayList<String> words) {
-            int matches = 0;
+            int m = 1;
             for(int i = 0; i < words.size(); i++){
                 if(text.contains(words.get(i))) {
                     if(i == 0){
-                        matches *= 5;
+                        m = m * 3;
                     }
-                    matches++;
+                    m++;
                 }
             }
-            return (double) matches / words.size();
+            return (double) m / words.size();
         }
     }
 

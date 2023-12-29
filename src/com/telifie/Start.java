@@ -6,7 +6,6 @@ import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Parser;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Servers.Http;
-
 import java.io.File;
 import java.io.IOException;
 
@@ -17,9 +16,9 @@ public class Start {
 
     public static void main(String[] args){
         Console.welcome();
-        Log.message("TELIFIE STARTED");
+        Log.message("TELIFIE STARTED", "STRx020");
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            Log.out(Event.Type.FLAG, "TELIFIE EXITED");
+            Log.out(Event.Type.FLAG, "TELIFIE EXITED", "STRx022");
             Telifie.purgeTemp();
         }));
         if (args.length > 0) {
@@ -28,10 +27,10 @@ public class Start {
                 case "--install" ->
                         install();
                 case "--purge" -> {
-                    Log.message("PURGE MODE ENTERED");
+                    Log.message("PURGE MODE ENTERED", "STRx031");
                     if (Console.in("Confirm purge, fresh install (y/n) -> ").equals("y")) {
                         if(configFile.delete()){
-                            Log.out(Event.Type.DELETE, "CONFIG FILE DELETED");
+                            Log.out(Event.Type.DELETE, "CONFIG FILE DELETED", "STRx034");
                         }
                     }
                     System.exit(1);
@@ -42,7 +41,16 @@ public class Start {
                         Console.log("Starting HTTP server [CONSIDER HTTPS FOR SECURITY]...");
                         new Http();
                     } catch (Exception e) {
-                        Log.error("HTTP SERVER FAILED");
+                        Log.error("HTTP SERVER FAILED", "STRx045");
+                    }
+                }
+                case "--https" -> {
+                    checkConfig();
+                    try {
+                        Console.log("Starting HTTPS server...");
+                        new Http();
+                    } catch (Exception e) {
+                        Log.error("HTTPS SERVER FAILED", "STRx054");
                     }
                 }
                 case "--reparse" -> {
@@ -72,9 +80,9 @@ public class Start {
         }else{
             for(File folder : folders){
                 if(folder.mkdirs()){
-                    Log.out(Event.Type.PUT, "CREATED DIRECTORY : " + folder.getPath());
+                    Log.out(Event.Type.PUT, "CREATED DIRECTORY : " + folder.getPath(), "STRx075");
                 }else{
-                    Log.error("FAILED CREATING DIRECTORY : " + folder.getPath());
+                    Log.error("FAILED CREATING DIRECTORY : " + folder.getPath(), "STRx077");
                 }
             }
         }
@@ -87,7 +95,7 @@ public class Start {
         config.setMysql(new Configuration.Connection(sql_uri, sql_user, sql_psswd));
         config.setEmail(Console.in("Email -> "));
         exportConfiguration();
-        Log.out(Event.Type.PUT, "CONFIGURATION SAVED");
+        Log.out(Event.Type.PUT, "CONFIGURATION SAVED", "STRx090");
         System.exit(0);
     }
 
@@ -97,14 +105,11 @@ public class Start {
             importConfiguration();
             if (config != null) {
                 config.startMongo();
-                Log.message("LOADING PACKAGES...");
+                Log.message("LOADING PACKAGES...", "STRx100");
                 new Packages(new Session("com.telifie.system", "telifie"));
-                Andromeda andromeda = new Andromeda();
-
-
-
+                new Andromeda();
             }else{
-                Log.error("FAILED CONFIG FILE LOAD");
+                Log.error("FAILED CONFIG FILE LOAD", "STRx107");
                 System.exit(-1);
             }
         }else{
@@ -118,9 +123,9 @@ public class Start {
         ObjectWriter objectWriter = objectMapper.writer().withDefaultPrettyPrinter();
         try {
             objectWriter.writeValue(configFile, config);
-            Log.out(Event.Type.PUT, "CONFIG FILE CREATED");
+            Log.out(Event.Type.PUT, "CONFIG FILE CREATED", "STRx121");
         } catch (IOException e) {
-            Log.error("FAILED CONFIG.JSON EXPORT");
+            Log.error("FAILED CONFIG.JSON EXPORT", "STRx123");
         }
     }
 
@@ -129,7 +134,7 @@ public class Start {
         try {
             config = objectMapper.readValue(configFile, Configuration.class);
         } catch (IOException e) {
-            Log.error("FAILED CONFIG.JSON IMPORT");
+            Log.error("FAILED CONFIG.JSON IMPORT", "STRx132");
         }
     }
 }

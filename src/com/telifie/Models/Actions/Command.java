@@ -332,10 +332,6 @@ public class Command {
 
                 }
                 return new Result(this.command, "articles", drafts.forUser());
-            }else if(objSelector.equals("audit")){
-                if(content != null){
-                }
-                return new Result(428, "ARTICLE JSON DATA EXPECTED");
             }
             return new Result(this.command,"stats", articles.stats());
         }

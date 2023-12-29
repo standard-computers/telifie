@@ -22,6 +22,8 @@ public class Console {
         Console.log("||===========================================================||");
         Console.log("       COPYRIGHT (C) TELIFIE LLC 2024, CINCINNATI, OHIO        ");
         Console.line();
+        Console.log("More Info -> https://telifie.com/documentation");
+        Console.line();
         Console.log("Operating System    : " + System.getProperty("os.name"));
         Console.log("System OS Version   : " + System.getProperty("os.version"));
         Console.log("System Architecture : " + System.getProperty("os.arch"));
@@ -59,7 +61,7 @@ public class Console {
     }
 
     public static void command(){
-        Log.out(Event.Type.FLAG, "ENTERING CLI");
+        Log.out(Event.Type.FLAG, "ENTERING CLI", "CLIx062");
         while(true){
             String cmd = Console.in("telifie -> ");
             switch (cmd) {
@@ -68,7 +70,7 @@ public class Console {
                     try {
                         new Http();
                     } catch (Exception e) {
-                        Log.error("Failed to start HTTP server");
+                        Log.error("Failed to start HTTP server", "CLIx071");
                     }
                 }
                 case "andromeda" -> {

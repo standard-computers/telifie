@@ -54,7 +54,7 @@ public class Http {
             if (msg instanceof FullHttpRequest request) {
                 String authHeader = request.headers().get(HttpHeaderNames.AUTHORIZATION);
                 String query = new QueryStringDecoder(request.uri()).path().substring(1);
-                Log.out(Event.Type.valueOf(request.method().toString()), "INBOUND HTTP REQUEST : " + ctx.channel().remoteAddress().toString() + "/" + query);
+                Log.out(Event.Type.valueOf(request.method().toString()), "INBOUND HTTP REQUEST : " + ctx.channel().remoteAddress().toString() + "/" + query, "HTTx057");
                 Result result = new Result(406, "NO AUTH PROVIDED");
                 if(authHeader != null){
                     AuthenticationClient auths = new AuthenticationClient();

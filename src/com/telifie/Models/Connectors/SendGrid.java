@@ -29,7 +29,7 @@ public class SendGrid {
             if (response.getStatusCode() == 202) {
                 return true;
             } else {
-                Log.error("FAILED TO EMAIL: " + response.getStatusCode());
+                Log.error("FAILED TO EMAIL: " + response.getStatusCode(), "SGRx032");
                 return false;
             }
         } catch (IOException e) {

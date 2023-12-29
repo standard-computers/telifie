@@ -6,7 +6,7 @@ public class Event {
 
     private final Type type;
     private final int origin;
-    private String user;
+    private final String user;
     private final String content;
 
     public enum Type {
@@ -25,22 +25,6 @@ public class Event {
         this.origin = document.getInteger("origin");
         this.user = document.getString("user");
         this.content = document.getString("content");
-    }
-
-    public Type getType() {
-        return type;
-    }
-
-    public int getOrigin() {
-        return origin;
-    }
-
-    public String getUser() {
-        return user;
-    }
-
-    public void setUser(String user) {
-        this.user = user;
     }
 
     @Override

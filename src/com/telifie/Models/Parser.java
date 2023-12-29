@@ -40,7 +40,7 @@ public class Parser {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         ArticlesClient articles =  new ArticlesClient(new Session("telifie." + Configuration.getServer_name(), "telifie"));
         if(purgeQueue){
-            Log.message("STARTING REPARSE");
+            Log.message("STARTING REPARSE", "PARx043");
             new Sql().purgeQueue();
             ArrayList<Article> parsing = articles.withProjection(
                     new org.bson.Document("$or", Arrays.asList(new org.bson.Document("link", Search.pattern("https://")), new org.bson.Document("link", Search.pattern("http://")))),
@@ -48,7 +48,7 @@ public class Parser {
             );
             Console.log("RE-PARSE TOTAL : " + parsing.size());
             parsing.forEach(a -> new Sql().queue("com.telifie." + Configuration.getServer_name(), a.getLink()));
-            Log.message(parsing.size() + " RE-QUEUED");
+            Log.message(parsing.size() + " RE-QUEUED", "PARx051");
         }
         Console.log("Grabbing from queue.");
         String nil = new Sql().nextQueued();
@@ -102,12 +102,12 @@ public class Parser {
                 String host = urlObj.getProtocol() + "://" + urlObj.getHost();
                 RobotPermission robotPermission = new RobotPermission(host);
                 if(!robotPermission.isAllowed(urlObj.getPath())){
-                    Log.error("ROBOTS DISALLOWED : " + url);
+                    Log.error("ROBOTS DISALLOWED : " + url, "PARx105");
                     return null;
                 }
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
                 if(response.statusCode() == 200){
-                    Log.message("PARSING : " + url);
+                    Log.message("PARSING : " + url, "PARx110");
                     new Sql().parsed("com.telifie." + Configuration.getServer_name(), url);
                     webpage wp = new webpage();
                     Article article = wp.extract(url, response.parse());
@@ -129,7 +129,7 @@ public class Parser {
                                         fetch(href, finalDepth, allowExternalCrawl);
                                     }
                                 } catch (InterruptedException e) {
-                                    Log.error("FAILED TO SLEEP THREAD : PARSER");
+                                    Log.error("FAILED TO SLEEP THREAD : PARSER", "PARx132");
                                 }
                             }
                         }
@@ -145,15 +145,15 @@ public class Parser {
         public static Article website(String url){
             try {
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
-                Log.message("PARSING : " + response.statusCode() + " : " + url);
+                Log.message("PARSING : " + response.statusCode() + " : " + url, "PARx148");
                 if(response.statusCode() == 200){
                     Document root = response.parse();
                     return new webpage().extract(url, root);
                 }
-                Log.error(response.statusCode() + " : " + url);
+                Log.error(response.statusCode() + " : " + url, "PARx153");
                 return null;
             } catch (IOException e) {
-                Log.error("FAILED CONNECTING TO HOST : " + url);
+                Log.error("FAILED CONNECTING TO HOST : " + url, "PARx156");
                 return null;
             }
         }
@@ -172,7 +172,7 @@ public class Parser {
                             lines.add(fields);
                         }
                     } catch (IOException | CsvException e) {
-                        Log.error("FAILED CSV FILE READ : PARSER / BATCH");
+                        Log.error("FAILED CSV FILE READ : PARSER / BATCH", "PARx175");
                     }
                     ArrayList<Article> articles = new ArrayList<>();
                     String[] headers = lines.get(0);
@@ -221,7 +221,7 @@ public class Parser {
                     }
                     return articles;
                 } catch (IOException e) {
-                    Log.error("FAILED BATCH UPLOAD");
+                    Log.error("FAILED BATCH UPLOAD", "PARx224");
                 }
             }
             return null;
@@ -322,7 +322,7 @@ public class Parser {
                             String un = l[l.length - 1].trim();
                             article.addAttribute(new Attribute(k, un));
                         } catch (URISyntaxException e) {
-                            Log.error("CANNOT CONVERT URI TO URL : " + link);
+                            Log.error("CANNOT CONVERT URI TO URL : " + link, "PARx325");
                         }
                     }
                 });
@@ -378,7 +378,7 @@ public class Parser {
                             }
                         });
                     } catch (MalformedURLException e) {
-                        Log.error("FAILED URI TO URL P0x0377: " + url);
+                        Log.error("FAILED URI TO URL : " + url, "PARx377");
                     }
                 }
             });
@@ -428,7 +428,7 @@ public class Parser {
                     article.addAttribute(new Attribute("Latitude", String.valueOf(location.getFloat("latitude"))));
                     article.addAttribute(new Attribute("Address", location.getString("formattedAddress")));
                 } catch (IOException | InterruptedException | NullPointerException e) {
-                    Log.error("RADAR PACKAGE ERROR");
+                    Log.error("RADAR PACKAGE ERROR", "PARx431");
                 }
             }
             StringBuilder markdown = new StringBuilder();
@@ -465,12 +465,12 @@ public class Parser {
             try {
                 URL url = new URL(host + "/robots.txt");
                 try (Scanner scanner = new Scanner(url.openStream())) {
-                    boolean isUserAgent = false;
+                    boolean userAgent = false;
                     while (scanner.hasNextLine()) {
                         String line = scanner.nextLine().trim();
                         if (line.toLowerCase().startsWith("user-agent")) {
-                            isUserAgent = line.substring(11).trim().equals("*") || line.substring(11).trim().equals("telifie/1.0");
-                        } else if (isUserAgent) {
+                            userAgent = line.substring(11).trim().equals("*") || line.substring(11).trim().equals("telifie/1.0");
+                        } else if (userAgent) {
                             if (line.toLowerCase().startsWith("disallow")) {
                                 disallowed.add(line.substring(9).trim());
                             } else if (line.toLowerCase().startsWith("user-agent")) {
@@ -480,7 +480,7 @@ public class Parser {
                     }
                 }
             } catch (IOException e) {
-                Log.error("HOST BLOCKED : " + host);
+                Log.error("HOST BLOCKED : " + host, "PARx483");
             }
         }
 

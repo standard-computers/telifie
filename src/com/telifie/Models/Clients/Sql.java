@@ -64,7 +64,7 @@ public class Sql {
         try {
             this.sql.prepareStatement("TRUNCATE queue").execute();
             this.sql.close();
-            Log.message("QUEUE PURGED");
+            Log.message("QUEUE PURGED", "SQLx067");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
