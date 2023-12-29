@@ -451,13 +451,17 @@ public class Parser {
             while (am.find()) {
                 String fullAddress = am.group(0);
                 article.setDescription("Building");
-                try {
-                    JSONObject location = Radar.get(fullAddress);
-                    article.addAttribute(new Attribute("Longitude", String.valueOf(location.getFloat("longitude"))));
-                    article.addAttribute(new Attribute("Latitude", String.valueOf(location.getFloat("latitude"))));
-                    article.addAttribute(new Attribute("Address", location.getString("formattedAddress")));
-                } catch (IOException | InterruptedException | NullPointerException e) {
-                    Log.error("RADAR PACKAGE ERROR", "PARx431");
+                if(article.hasAttribute("Address")){
+
+                }else{
+                    try {
+                        JSONObject location = Radar.get(fullAddress);
+                        article.addAttribute(new Attribute("Longitude", String.valueOf(location.getFloat("longitude"))));
+                        article.addAttribute(new Attribute("Latitude", String.valueOf(location.getFloat("latitude"))));
+                        article.addAttribute(new Attribute("Address", location.getString("formattedAddress")));
+                    } catch (IOException | InterruptedException | NullPointerException e) {
+                        Log.error("RADAR PACKAGE ERROR", "PARx463");
+                    }
                 }
             }
             StringBuilder markdown = new StringBuilder();

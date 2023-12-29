@@ -329,9 +329,24 @@ public class Command {
             }else if(objSelector.equals("drafts")){
                 DraftsClient drafts = new DraftsClient(session);
                 if(secSelector.equals("id")){
-
+                    try {
+                        return new Result(this.command, "article", drafts.withId(secSelector));
+                    } catch (NullPointerException n) {
+                        return new Result(404, this.command, "DRAFT NOT FOUND");
+                    }
                 }else if(secSelector.equals("create")){
-
+                    if(content != null){
+                        try {
+                            Article na = new Article(content);
+                            if(drafts.create(na)){
+                                return new Result(this.command, "article", na);
+                            }
+                            return new Result(505, this.command, "FAILED DRAFT ARTICLE");
+                        }catch(JSONException e){
+                            return new Result(505, this.command, "BAD DRAFT JSON");
+                        }
+                    }
+                    return new Result(428, "DRAFT JSON DATA EXPECTED");
                 }
                 return new Result(this.command, "articles", drafts.forUser());
             }
