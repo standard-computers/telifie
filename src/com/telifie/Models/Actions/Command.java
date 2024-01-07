@@ -14,6 +14,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
@@ -501,9 +503,14 @@ public class Command {
             if(content != null){
                 String mode = content.getString("mode");
                 if(mode != null){
+                    String uri = "";
+                    try {
+                        uri = URLDecoder.decode(content.getString("uri"), "UTF-8");
+                    } catch (UnsupportedEncodingException e) {
+                        throw new RuntimeException(e);
+                    }
                     switch (mode) {
                         case "batch" -> {
-                            String uri = content.getString("uri");
                             ArrayList<Article> parsed = Parser.engines.batch(uri);
                             if (parsed != null) {
                                 if (content.getBoolean("insert") != null && content.getBoolean("insert")) {
@@ -514,18 +521,15 @@ public class Command {
                             return new Result(404, this.command, "NO ARTICLES");
                         }
                         case "group" -> {
-                            String uri = content.getString("uri");
-                            ArrayList<Article> parsed = Parser.engines.group(uri);
+                            boolean insert = (content.getBoolean("insert") != null ? content.getBoolean("insert") : false);
+                            new Parser(session);
+                            ArrayList<Article> parsed = Parser.engines.group(uri, insert);
                             if (parsed != null) {
-                                if (content.getBoolean("insert") != null && content.getBoolean("insert")) {
-                                    articles.createMany(parsed);
-                                }
                                 return new Result(this.command, "articles", parsed);
                             }
                             return new Result(404, this.command, "NO ARTICLES");
                         }
                         case "uri" -> {
-                            String uri = content.getString("uri");
                             if (uri != null && !uri.isEmpty()) {
                                 if(articles.withLink(uri) == null){
                                     Article parsed = new Parser(session).parse(uri);
@@ -541,12 +545,11 @@ public class Command {
                             }
                             return new Result(428, this.command, "URI REQUIRED");
                         }
-                        case "crawl" -> { //Crawling uri, admin purposes only
-                            String url = content.getString("uri");
-                            if (url != null && !url.isEmpty()) {
+                        case "crawl" -> {
+                            if (uri != null && !uri.isEmpty()) {
                                 boolean allowExternalCrawl = (content.getBoolean("allow_external") != null && content.getBoolean("allow_external"));
                                 new Parser(session);
-                                CompletableFuture.runAsync(() -> Parser.engines.crawler(url, allowExternalCrawl));
+                                Parser.engines.crawler(uri, allowExternalCrawl);
                                 return new Result(200, this.command, "CRAWLING");
                             }
                             return new Result(428, this.command, "URI REQUIRED");

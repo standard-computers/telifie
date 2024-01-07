@@ -226,7 +226,7 @@ public class Parser {
         }
 
 
-        public static ArrayList<Article> group(String uri){
+        public static ArrayList<Article> group(String uri, boolean insert){
             if(uri.endsWith("csv")) {
                 try {
                     URL url = new URL(uri);
@@ -239,18 +239,32 @@ public class Parser {
                             lines.add(fields);
                         }
                     } catch (IOException | CsvException e) {
-                        Log.error("FAILED CSV FILE READ : PARSER / BATCH", "PARx243");
+                        Log.error("FAILED CSV FILE READ : PARSER / GROUP", "PARx243");
                     }
-                    ArrayList<Article> articles = new ArrayList<>();
+                    ArrayList<Article> parsed = new ArrayList<>();
                     for (int i = 1; i < lines.size(); i++) {
                         String[] articleData = lines.get(i);
-                        Article article = Parser.engines.website(articleData[0]);
-                        article.setDescription(articleData[1]);
-                        articles.add(article);
+                        String l = articleData[0];
+                        try {
+                            l = URLDecoder.decode(l, "UTF-8");
+                        } catch (UnsupportedEncodingException e) {
+                            throw new RuntimeException(e);
+                        }
+                        try {
+                            Thread.sleep(4000);
+                            Article article = Parser.engines.website(l);
+                            article.setDescription(articleData[1]);
+                            parsed.add(article);
+                            if(insert){
+                                articles.create(article);
+                            }
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
-                    return articles;
+                    return parsed;
                 } catch (IOException e) {
-                    Log.error("FAILED BATCH UPLOAD", "PARx273");
+                    Log.error("FAILED GROUP UPLOAD", "PARx273");
                 }
             }
             return null;
@@ -362,59 +376,59 @@ public class Parser {
                 if(rel.contains("icon") && !url.contains("/wiki")){
                     try {
                         article.setIcon(fixLink("https://" + new URL(url).getHost(), href));
-                        document.getElementsByTag("img").forEach(image -> {
-                            String src = fixLink(url, image.attr("src"));
-                            if(!src.isEmpty() && !src.startsWith("data:") && articles.withLink(src) == null){
-                                CompletableFuture.runAsync(() -> {
-                                    Asset ass = new Asset(src);
-                                    int[] d = ass.getDimensions();
-                                    if (d[0] > 42 && d[1] > 42) {
-                                        if (url.contains("/wiki")) {
-                                            if (article.getIcon() == null || article.getIcon().isEmpty()) {
-                                                article.setIcon(src);
-                                            }
-                                        }
-                                        String caption = Andromeda.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
-                                        Article ia = new Article();
-                                        if (!caption.isEmpty() && caption.length() < 100) {
-                                            ia.setTitle(caption);
-                                        } else {
-                                            ia.setTitle(article.getTitle());
-                                            ia.setContent(caption);
-                                        }
-                                        ia.setLink(src);
-                                        ia.setIcon(src);
-                                        ia.setTags(article.getTags());
-                                        ia.setDescription("Image");
-                                        ia.setPriority(32.0);
-                                        ia.addAttribute(new Attribute("Width", d[0] + "px"));
-                                        ia.addAttribute(new Attribute("Height", d[1] + "px"));
-                                        ia.addAttribute(new Attribute("Size", ass.fileSize()));
-                                        ia.addAttribute(new Attribute("File Type", ass.getExt()));
-                                        Article source = articles.withLink(root);
-                                        if (source != null) {
-                                            ia.setSource(new Source(source.getIcon(), source.getTitle(), url));
-                                        } else {
-                                            ia.setSource(new Source(article.getIcon(), article.getTitle(), url));
-                                        }
-                                        if(articles.create(ia)){
-                                            Console.log("IMAGE CREATED : " + src);
-                                        }else{
-                                            Console.log("NOT HAPPENING");
-                                        }
-                                    }
-                                });
-                            }
-                        });
                     } catch (MalformedURLException e) {
                         Log.error("FAILED URI TO URL : " + url, "PARx377");
                     }
                 }
             });
+            document.getElementsByTag("img").forEach(image -> {
+                String src = fixLink(url, image.attr("src"));
+                if(!src.isEmpty() && !src.startsWith("data:") && articles.withLink(src) == null){
+                    CompletableFuture.runAsync(() -> {
+                        Asset ass = new Asset(src);
+                        int[] d = ass.getDimensions();
+                        if (d[0] > 42 && d[1] > 42) {
+                            if (url.contains("/wiki")) {
+                                if (article.getIcon() == null || article.getIcon().isEmpty()) {
+                                    article.setIcon(src);
+                                }
+                            }
+                            String caption = Andromeda.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
+                            Article ia = new Article();
+                            if (!caption.isEmpty() && caption.length() < 100) {
+                                ia.setTitle(caption);
+                            } else {
+                                ia.setTitle(article.getTitle());
+                                ia.setContent(caption);
+                            }
+                            ia.setLink(src);
+                            ia.setIcon(src);
+                            ia.setTags(article.getTags());
+                            ia.setDescription("Image");
+                            ia.setPriority(32.0);
+                            ia.addAttribute(new Attribute("Width", d[0] + "px"));
+                            ia.addAttribute(new Attribute("Height", d[1] + "px"));
+                            ia.addAttribute(new Attribute("Size", ass.fileSize()));
+                            ia.addAttribute(new Attribute("File Type", ass.getExt()));
+                            Article source = articles.withLink(root);
+                            if (source != null) {
+                                ia.setSource(new Source(source.getIcon(), source.getTitle(), url));
+                            } else {
+                                ia.setSource(new Source(article.getIcon(), article.getTitle(), url));
+                            }
+                            if(articles.create(ia)){
+                                Console.log("IMAGE CREATED : " + src);
+                            }else{
+                                Console.log("NOT HAPPENING");
+                            }
+                        }
+                    });
+                }
+            });
             Element body = document.getElementsByTag("body").get(0);
             body.select("table, script, header, style, img, svg, button, label, form, input, aside, code, footer, nav").remove();
             if(url.contains("/wiki")){
-                article.setSource(new Source("https://telifie-static.nyc3.digitaloceanspaces.com/wwdb-index-storage/wikipedia.png", "Wikipedia", article.getLink().trim()));
+                article.setSource(new Source("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/mirror/uploads/sources/wikipedia.png", "Wikipedia", article.getLink().trim()));
                 article.setLink(null);
                 article.setTitle(article.getTitle().replaceAll(" - Wikipedia", ""));
                 body.select("div.mw-jump-link, div#toc, div.navbox, table.infobox, div.vector-body-before-content, div.navigation-not-searchable, div.mw-footer-container, div.reflist, div#See_also, h2#See_also, h2#References, h2#External_links").remove();

@@ -66,9 +66,9 @@ public class Search {
                 }
                 return new Document("attributes.key", Pattern.compile(Pattern.quote(key), Pattern.CASE_INSENSITIVE));
             }
-        }else if(query.matches("^define\\s*.*") || query.matches("^title\\s*.*")) {
+        }else if(query.startsWith("define ") || query.startsWith("title ")) {
 
-            return new Document("title", pattern(query.replaceFirst("define", "").trim()));
+            return new Document("title", pattern(query.replaceFirst("^(define|title)", "").trim()));
         }else if(query.matches("^(\\d+)\\s+([A-Za-z\\s]+),\\s+([A-Za-z\\s]+),\\s+([A-Za-z]{2})\\s+(\\d{5})$")){
 
             return new Document("$and", Arrays.asList(new Document("attribute.key", "Address"), new Document("attribute.value", pattern(query))));
@@ -130,6 +130,7 @@ public class Search {
         or.add(new Document("link", pattern(query)));
         for (String word : exploded) {
             or.add(new Document("title", pattern(word)));
+            or.add(new Document("description", pattern(word)));
         }
         or.add(new Document("tags", new Document("$in", Collections.singletonList(query))));
         return new Document("$or", or);
@@ -196,6 +197,6 @@ public class Search {
     }
 
     public static Pattern pattern(String value){
-        return Pattern.compile("\\b" + Pattern.quote(value) + "\\w*\\b", Pattern.CASE_INSENSITIVE);
+        return Pattern.compile("\\b" + Pattern.quote(value) + "\\b", Pattern.CASE_INSENSITIVE);
     }
 }

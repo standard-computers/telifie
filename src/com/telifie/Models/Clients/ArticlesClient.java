@@ -228,6 +228,7 @@ public class ArticlesClient extends Client {
             s += (a.getLink() != null && a.getLink().contains(q) ? words.size() : 0); //Link Match
             s += (a.getTitle().trim().toLowerCase().equals(q) ? words.size() * 100 : 0); //Title Match
             s += compareMatches(a.getTitle(), words) * words.size(); //Title Score
+            s += compareMatches(a.getDescription(), words) * words.size() * 10; //Description Score
             if(a.getTags() != null && !a.getTags().isEmpty()){
                 for(String tag : a.getTags()){
                     if(words.contains(tag)){

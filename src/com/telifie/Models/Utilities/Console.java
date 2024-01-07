@@ -3,8 +3,13 @@ package com.telifie.Models.Utilities;
 import com.telifie.Models.Actions.Search;
 import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Andromeda.Taxon;
+import com.telifie.Models.Article;
+import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Utilities.Servers.Http;
 import org.bson.Document;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Console {
@@ -71,6 +76,22 @@ public class Console {
                         new Http();
                     } catch (Exception e) {
                         Log.error("Failed to start HTTP server", "CLIx071");
+                    }
+                }
+                case "routine" -> {
+                    ArticlesClient articles = new ArticlesClient(new Session("telifie." + Configuration.getServer_name(), "telifie"));
+                    ArrayList<Article> as = articles.get(new Document("$and", Arrays.asList(
+                            new Document("description", "Color"),
+                            new Document("attributes.value", "v8j7l5")
+                        )));
+                    Console.log("Found = " + as.size());
+                    for(int i = 0; i < as.size(); i++){
+                        Article a = as.get(i);
+                        a.setIcon("https://singlecolorimage.com/get/" + a.getAttribute("Hex").replace("#", "") + "/64x64.png");
+                        Console.log(a.toString());
+                        if( articles.update(a, a)){
+                            Console.log("Article Updated");
+                        }
                     }
                 }
                 case "andromeda" -> {

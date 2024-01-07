@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 public class Article {
 
     private String owner, id, title, link, icon, description = "Webpage";
-    private double priority = 0.91;
+    private double priority = 2.0;
     private boolean verified = false;
     private String content;
     private ArrayList<String> tags = new ArrayList<>();
