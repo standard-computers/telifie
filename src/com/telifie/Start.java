@@ -42,6 +42,7 @@ public class Start {
                         new Http();
                     } catch (Exception e) {
                         Log.error("HTTP SERVER FAILED", "STRx045");
+                        throw new RuntimeException(e);
                     }
                 }
                 case "--https" -> {

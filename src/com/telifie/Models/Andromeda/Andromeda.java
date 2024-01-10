@@ -170,6 +170,30 @@ public class Andromeda {
             return  HtmlEscapers.htmlEscaper().escape(string);
         }
 
+        public static String sentenceCase(String text) {
+            if (text == null || text.isEmpty()) {
+                return "";
+            }
+            Set<String> excludedWords = Set.of("of", "it", "to", "and");
+            StringBuilder result = new StringBuilder();
+            boolean capitalizeNext = true;
+            for (String word : text.split("\\s+")) {
+                String lowerCaseWord = word.toLowerCase();
+                boolean isAbbreviation = lowerCaseWord.endsWith(".");
+                if (capitalizeNext || !excludedWords.contains(lowerCaseWord) || isAbbreviation) {
+                    result.append(isAbbreviation ? word : capitalize(word)).append(" ");
+                    capitalizeNext = !isAbbreviation;
+                } else {
+                    result.append(word.toLowerCase());
+                }
+            }
+            return result.toString().trim();
+        }
+
+        private static String capitalize(String word) {
+            return Character.toUpperCase(word.charAt(0)) + word.substring(1).toLowerCase();
+        }
+
         public static int levenshtein(String x, String y) {
             int[][] dp = new int[x.length() + 1][y.length() + 1];
             for (int i = 0; i <= x.length(); i++) {

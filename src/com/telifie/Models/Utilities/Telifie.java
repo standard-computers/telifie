@@ -9,7 +9,7 @@ import static com.telifie.Models.Andromeda.Andromeda.NUMERALS;
 
 public class Telifie {
 
-    public static final String WINDOWS_SYSTEM_DIR = "/Program\\ Files/telifie/";
+    public static final String WINDOWS_SYSTEM_DIR = System.getenv("APPDATA") + "/Telifie/";
     public static final String MAC_SYSTEM_DIR = System.getProperty("user.home") + "/Library/Application Support/telifie";
     public static final String UNIX_SYSTEM_DIR = "/usr/bin/telifie/";
 

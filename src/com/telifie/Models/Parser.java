@@ -426,11 +426,26 @@ public class Parser {
                 }
             });
             Element body = document.getElementsByTag("body").get(0);
+            Element infobox = body.selectFirst(".infobox"); // Assuming the infobox has a class named "infobox"
             body.select("table, script, header, style, img, svg, button, label, form, input, aside, code, footer, nav").remove();
             if(url.contains("/wiki")){
                 article.setSource(new Source("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/mirror/uploads/sources/wikipedia.png", "Wikipedia", article.getLink().trim()));
                 article.setLink(null);
                 article.setTitle(article.getTitle().replaceAll(" - Wikipedia", ""));
+                if (infobox != null) {
+                    Elements infoboxRows = infobox.select("tr");
+                    for (Element row : infoboxRows) {
+                        Element label = row.selectFirst("th.infobox-label");
+                        Element data = row.selectFirst("td.infobox-data");
+                        if (label != null && data != null) {
+                            String key = Andromeda.tools.sentenceCase(label.text().trim());
+                            String value = Andromeda.tools.htmlEscape(Andromeda.tools.sentenceCase(data.text().trim()));
+                            if(!key.toLowerCase().equals("references")){
+                                article.addAttribute(new Attribute(key, value));
+                            }
+                        }
+                    }
+                }
                 body.select("div.mw-jump-link, div#toc, div.navbox, table.infobox, div.vector-body-before-content, div.navigation-not-searchable, div.mw-footer-container, div.reflist, div#See_also, h2#See_also, h2#References, h2#External_links").remove();
             }
             String whole_text = document.text().replaceAll("[\n\r]", " ");
@@ -445,7 +460,7 @@ public class Parser {
             }
             Pattern phones = Pattern.compile("\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b"); //Extract phone number
             Matcher m = phones.matcher(whole_text);
-            if(m.find()){
+            if(m.find() && !url.contains("/wiki")){
                 String phoneNumber = m.group().trim().replaceAll("[^0-9]", "").replaceFirst("(\\d{3})(\\d{3})(\\d+)", "($1) $2 - $3");
                 article.addAttribute(new Attribute("Phone", phoneNumber));
             }

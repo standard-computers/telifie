@@ -7,7 +7,6 @@ import com.telifie.Models.Article;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Utilities.Servers.Http;
 import org.bson.Document;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
@@ -32,6 +31,7 @@ public class Console {
         Console.log("Operating System    : " + System.getProperty("os.name"));
         Console.log("System OS Version   : " + System.getProperty("os.version"));
         Console.log("System Architecture : " + System.getProperty("os.arch"));
+        Console.log("Working Directory : " + Telifie.configDirectory());
         Console.line();
     }
 
