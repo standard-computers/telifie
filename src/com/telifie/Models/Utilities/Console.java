@@ -7,9 +7,9 @@ import com.telifie.Models.Article;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Utilities.Servers.Http;
 import org.bson.Document;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Scanner;
+import org.checkerframework.checker.units.qual.A;
+
+import java.util.*;
 
 public class Console {
 
@@ -92,6 +92,39 @@ public class Console {
                         if( articles.update(a, a)){
                             Console.log("Article Updated");
                         }
+                    }
+                }
+                case "reporting" -> {
+                    Console.message("PLEASE DO NOT EXIT OR IT WILL NOT FINISH");
+                    Console.message("Access domain stats report through web or API");
+                    ArticlesClient articles = new ArticlesClient(new Session("com.telifie." + Configuration.getServer_name(), "telifie"));
+                    ArrayList<Article> all = articles.get(new Document());
+                    Map<String, Integer> duplicatedLinks = new HashMap<>();
+                    Map<String, Integer> duplicatedTitles = new HashMap<>();
+
+                    for (Article article : all) {
+                        String link = article.getLink();
+                        String title = article.getTitle();
+
+                        if (link != null && !link.isEmpty()) {
+                            duplicatedLinks.put(link, duplicatedLinks.getOrDefault(link, 0) + 1);
+                        }
+                        if (title != null && !title.isEmpty()) {
+                            duplicatedTitles.put(title, duplicatedTitles.getOrDefault(title, 0) + 1);
+                        }
+                    }
+                    Console.log("Creating duplicate LINKS report...");
+                    new Files("reports/duplicate_links.csv");
+                    Files.csv.append("Link,Count");
+                    for (Map.Entry<String, Integer> entry : duplicatedLinks.entrySet()) {
+                        Files.csv.append(entry.getKey() + "," + entry.getValue());
+                    }
+
+                    Console.log("Creating duplicate TITLES report...");
+                    new Files("reports/duplicate_titles.csv");
+                    Files.csv.append("Title,Count");
+                    for (Map.Entry<String, Integer> entry : duplicatedTitles.entrySet()) {
+                        Files.csv.append(entry.getKey() + "," + entry.getValue());
                     }
                 }
                 case "andromeda" -> {

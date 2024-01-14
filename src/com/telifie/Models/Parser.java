@@ -254,6 +254,10 @@ public class Parser {
                             Thread.sleep(4000);
                             Article article = Parser.engines.website(l);
                             article.setDescription(articleData[1]);
+                            String[] tags = articleData[2].split(",");
+                            for(int t = 0; t<tags.length; t++){
+                                article.addTag(tags[t].trim().toLowerCase());
+                            }
                             parsed.add(article);
                             if(insert){
                                 articles.create(article);

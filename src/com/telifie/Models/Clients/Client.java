@@ -25,7 +25,7 @@ public class Client {
     protected List<Document> find(Document filter){
         try {
             MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
-            return c.find(filter).into(new ArrayList<>());
+            return c.find(filter).limit(300000).into(new ArrayList<>());
         }catch(MongoException e){
             return null;
         }

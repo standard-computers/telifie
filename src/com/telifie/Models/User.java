@@ -16,6 +16,7 @@ public class User implements Serializable {
     private final int origin;
     private int permissions;
     private Theme theme;
+    private String settings;
 
     /**
      * Constructor for creating user.
