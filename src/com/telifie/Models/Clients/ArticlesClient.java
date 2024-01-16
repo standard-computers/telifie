@@ -223,21 +223,17 @@ public class ArticlesClient extends Client {
         }
 
         private double relevance(Article a) {
-            double s = a.getPriority();
+            double s = 0;
             s += (a.getLink() == null ? 0 : compareMatches(a.getLink(), words)); //Link Score
-            s += (a.getLink() != null && a.getLink().contains(q) ? words.size() : 0); //Link Match
             s += (a.getTitle().trim().toLowerCase().equals(q) ? words.size() * s : 0); //Title Match
             s += compareMatches(a.getTitle(), words); //Title Score
             s += compareMatches(a.getDescription(), words); //Description Score
-            if(a.getTags() != null && !a.getTags().isEmpty()){
-                for(String tag : a.getTags()){
-                    if(words.contains(tag)){
-                        s += 2;
-                    }
+            for(String tag : a.getTags()){
+                if(words.contains(tag)){
+                    s += 2;
                 }
-                s += s / a.getTags().size();
             }
-            return (a.isVerified() ? (s * 3) : s);
+            return (a.isVerified() ? (s + s * 1.05) : s);
         }
 
         private double compareMatches(String text, ArrayList<String> words) {

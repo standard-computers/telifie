@@ -101,11 +101,9 @@ public class Console {
                     ArrayList<Article> all = articles.get(new Document());
                     Map<String, Integer> duplicatedLinks = new HashMap<>();
                     Map<String, Integer> duplicatedTitles = new HashMap<>();
-
                     for (Article article : all) {
                         String link = article.getLink();
                         String title = article.getTitle();
-
                         if (link != null && !link.isEmpty()) {
                             duplicatedLinks.put(link, duplicatedLinks.getOrDefault(link, 0) + 1);
                         }

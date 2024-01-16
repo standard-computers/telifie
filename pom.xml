@@ -152,8 +152,7 @@
             <artifactId>netty-all</artifactId>
             <version>4.1.103.Final</version>
         </dependency>
-
-        <!--        <dependency>-->
+<!--        <dependency>-->
 <!--            <groupId>org.deeplearning4j</groupId>-->
 <!--            <artifactId>deeplearning4j-core</artifactId>-->
 <!--            <version>1.0.0-M2.1</version>-->

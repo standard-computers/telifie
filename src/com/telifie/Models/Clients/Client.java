@@ -34,7 +34,7 @@ public class Client {
     protected List<Document> findWithProjection(Document filter, Document projection){
         try {
             MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
-            return c.find(filter).projection(projection).limit(420).into(new ArrayList<>());
+            return c.find(filter).projection(projection).limit(4200).into(new ArrayList<>());
         }catch(MongoException e){
             return null;
         }
