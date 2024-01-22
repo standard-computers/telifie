@@ -22,19 +22,19 @@ public class Client {
         mc = Configuration.mongoClient;
     }
 
-    protected List<Document> find(Document filter){
+    protected FindIterable<Document> find(Document filter){
         try {
             MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
-            return c.find(filter).limit(300000).into(new ArrayList<>());
+            return c.find(filter).limit(300000);
         }catch(MongoException e){
             return null;
         }
     }
 
-    protected List<Document> findWithProjection(Document filter, Document projection){
+    protected FindIterable<Document> findWithProjection(Document filter, Document projection){
         try {
             MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
-            return c.find(filter).projection(projection).limit(4200).into(new ArrayList<>());
+            return c.find(filter).projection(projection).limit(42000);
         }catch(MongoException e){
             return null;
         }

@@ -118,15 +118,15 @@ public class Parser {
                         Console.log("ARTICLE CREATED : " + url);
                     }
                     ArrayList<String> links = wp.links;
-                    int finalDepth = depth;
+                    int fd = depth;
                     links.forEach(link -> {
                         String href = fixLink(host, link.split("\\?")[0]);
                         if(Asset.isWebpage(href) && !Andromeda.tools.contains(new String[]{"facebook.com", "instagram.com", "spotify.com", "linkedin.com", "youtube.com", "pinterest.com", "twitter.com", "tumblr.com", "reddit.com"}, href)){
                             if((allowExternalCrawl && !href.contains(host)) || (!allowExternalCrawl && href.contains(host))){
                                 try {
                                     Thread.sleep(2000);
-                                    if(finalDepth <= 2){
-                                        fetch(href, finalDepth, allowExternalCrawl);
+                                    if(fd <= 3){
+                                        fetch(href, fd, allowExternalCrawl);
                                     }
                                 } catch (InterruptedException e) {
                                     Log.error("FAILED TO SLEEP THREAD : PARSER", "PARx132");
@@ -153,6 +153,7 @@ public class Parser {
                 Log.error(response.statusCode() + " : " + url, "PARx153");
                 return null;
             } catch (IOException e) {
+                Console.log(e.toString());
                 Log.error("FAILED CONNECTING TO HOST : " + url, "PARx156");
                 return null;
             }
@@ -443,7 +444,7 @@ public class Parser {
                         Element data = row.selectFirst("td.infobox-data");
                         if (label != null && data != null) {
                             String key = Andromeda.tools.sentenceCase(label.text().trim());
-                            String value = Andromeda.tools.htmlEscape(Andromeda.tools.sentenceCase(data.text().trim()));
+                            String value = Andromeda.tools.htmlEscape(Andromeda.tools.sentenceCase(data.text().replaceAll("\\[.*?\\]", "").trim()));
                             if(!key.toLowerCase().equals("references")){
                                 article.addAttribute(new Attribute(key, value));
                             }

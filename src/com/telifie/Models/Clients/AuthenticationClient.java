@@ -25,6 +25,6 @@ public class AuthenticationClient extends Client {
         if(epoch > found.getExpiration()){
             return false;
         }
-        return found.hasToken(authentication.getToken()) && found.hasRefreshToken(authentication.getRefreshToken());
+        return found.hasToken(authentication.getToken()) && found.hasRefreshToken(authentication.getRefresh());
     }
 }

@@ -10,13 +10,11 @@ public class User implements Serializable {
     private String id;
     private final String email;
     private String name;
-    private String photo = "";
     private String phone;
     private String token;
     private final int origin;
     private int permissions;
     private Theme theme;
-    private String settings;
 
     /**
      * Constructor for creating user.
@@ -38,7 +36,6 @@ public class User implements Serializable {
         this.id = document.getString("id");
         this.email = document.getString("email");
         this.name = document.getString("name");
-        this.photo = document.getString("photo");
         this.phone = document.getString("phone");
         this.token = document.getString("token");
         this.origin = document.getInteger("origin");
@@ -84,7 +81,6 @@ public class User implements Serializable {
                 "\"id\" : \"" + id + '\"' +
                 ", \"email\" : \"" + email + '\"' +
                 ", \"name\" : \"" + name + '\"' +
-                ", \"photo\" : \"" + photo + '\"' +
                 ", \"phone\" : \"" + phone + '\"' +
                 ", \"origin\" : " + origin +
                 ", \"permissions\" : " + permissions +

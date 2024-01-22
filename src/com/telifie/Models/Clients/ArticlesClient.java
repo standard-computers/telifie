@@ -1,9 +1,11 @@
 package com.telifie.Models.Clients;
 
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
 import com.telifie.Models.Actions.Search;
 import com.telifie.Models.Andromeda.Andromeda;
+import com.telifie.Models.Andromeda.Unit;
 import com.telifie.Models.Domain;
 import com.telifie.Models.Utilities.Console;
 import com.telifie.Models.Utilities.Parameters;
@@ -69,21 +71,18 @@ public class ArticlesClient extends Client {
     }
 
     public ArrayList<Article> get(Document filter){
-        ArrayList<Article> articles = new ArrayList<>();
-        this.find(filter).forEach(f -> articles.add(new Article(f)));
-        return articles;
+        return this.find(filter).map(Article::new).into(new ArrayList<>());
     }
 
     public ArrayList<Article> withProjection(Document filter, Document projection){
         ArrayList<Article> articles = new ArrayList<>();
-        this.findWithProjection(filter, projection).forEach(f -> articles.add(new Article(f)));
+        this.findWithProjection(filter, projection).map(Article::new).into(new ArrayList<>());
         return articles;
     }
 
     public Article findPlace(String place, Parameters params){
         params.setIndex("locations");
-        return this.search(
-                place, place, params,
+        return this.search(new Unit(place), params,
                 new Document("$and", Arrays.asList(
                         new Document("title", Pattern.compile("\\b" + Pattern.quote(place) + "\\w*\\b", Pattern.CASE_INSENSITIVE)),
                         new Document("description", "City"),
@@ -96,13 +95,12 @@ public class ArticlesClient extends Client {
                                 ).append("$maxDistance", Integer.MAX_VALUE)
                         )
                         )
-                )),
-        true).get(0);
+                ))).get(0);
     }
 
-    public ArrayList<Article> search(String query, String cleaned, Parameters params, Document filter, boolean quickResults){
-        List<Document> found;
-        if(quickResults){
+    public ArrayList<Article> search(Unit query, Parameters params, Document filter){
+        FindIterable<Document> found;
+        if(params.isQuickResults()){
             found = this.findWithProjection(filter, new Document("id", 1)
                     .append("icon", 1)
                     .append("title", 1)
@@ -114,14 +112,11 @@ public class ArticlesClient extends Client {
         }else{
             found = this.find(filter);
         }
-        ArrayList<Article> results = new ArrayList<>();
-        found.forEach(a -> results.add(new Article(a)));
-        if(!query.contains(":")){
-            if(Andromeda.tools.has(Andromeda.PROXIMITY, query) > -1 || params.getIndex().equals("locations")) {
-                results.sort(new DistanceSorter(params.getLatitude(), params.getLongitude()));
-            }else{
-                Collections.sort(results, new ArticlesClient.CosmoScore(cleaned));
-            }
+        ArrayList<Article> results = found.map(Article::new).into(new ArrayList<>());
+        if(Andromeda.tools.has(Andromeda.PROXIMITY, query.text()) > -1 || params.getIndex().equals("locations")) {
+            results.sort(new DistanceSorter(params.getLatitude(), params.getLongitude()));
+        }else{
+            results.sort(new CosmoScore(query.cleaned()));
         }
         return results;
     }
@@ -233,7 +228,7 @@ public class ArticlesClient extends Client {
                     s += 2;
                 }
             }
-            return (a.isVerified() ? (s + s * 1.05) : s);
+            return (a.isVerified() ? (s + 1) : s);
         }
 
         private double compareMatches(String text, ArrayList<String> words) {

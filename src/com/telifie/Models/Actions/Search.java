@@ -2,20 +2,17 @@ package com.telifie.Models.Actions;
 
 import com.mongodb.client.model.Filters;
 import com.telifie.Models.Andromeda.Andromeda;
-import com.telifie.Models.Andromeda.Encoder;
 import com.telifie.Models.Andromeda.Unit;
 import com.telifie.Models.Article;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Connectors.OpenWeatherMap;
 import com.telifie.Models.Connectors.Radar;
+import com.telifie.Models.Connectors.Wolfram;
 import com.telifie.Models.Result;
-import com.telifie.Models.Utilities.Packages;
 import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.mariuszgromada.math.mxparser.Expression;
-import org.mariuszgromada.math.mxparser.License;
 import java.awt.*;
 import java.io.IOException;
 import java.util.*;
@@ -26,36 +23,34 @@ public class Search {
     private Result result;
 
     public Result execute(Session session, String q, Parameters params){
-        String cleanedQuery = Encoder.clean(q);
-        q = q.toLowerCase().trim();
         ArticlesClient articles = new ArticlesClient(session);
-        Document filter = filter(q, cleanedQuery, params);
+        Unit query = new Unit(q);
+        Document filter = filter(query, params);
         Bson sf = Filters.ne("description", "Image");
         if(params.getIndex().equals("images")){
             sf = Filters.eq("description", "Image");
         }else if(params.getIndex().equals("locations")){
             sf = Filters.exists("location");
         }
-        filter = new Document("$and", Arrays.asList( sf, Filters.or(filter) ));
-        ArrayList<Article> results = articles.search(q, cleanedQuery, params, filter, params.isQuickResults());
+        filter = new Document("$and", Arrays.asList(sf, Filters.or(filter)));
+        ArrayList<Article> results = articles.search(query, params, filter);
         ArrayList<Article> paged = paginateArticles(results, params.getPage(), params.getResultsPerPage());
-        result = new Result(q, params, "articles", paged);
+        result = new Result(query.text(), params, "articles", paged);
         result.setTotal(results.size());
         result.setGenerated(this.generated(q, params));
         return result;
     }
 
-    private Document filter(String query, String cleanedQuery, Parameters params){
+    private Document filter(Unit q, Parameters params){
 
-        if(query.matches("^description\\s*:\\s*.*")){
+        if(q.text().startsWith("@")){
 
-            String[] spl = query.split(":");
-            if(spl.length >= 2) {
-                return new Document("description", Pattern.compile("\\b" + Pattern.quote(spl[1].trim()) + "\\b", Pattern.CASE_INSENSITIVE));
-            }
-        }else if(query.matches("^attribute\\s*:\\s*.*")){
+            String p = q.text().split(" ")[0].replace("@","");
+            String spl = q.text().replace("@" + p, "");
+            return new Document(p, Pattern.compile("\\b" + Pattern.quote(spl.trim()) + "\\b", Pattern.CASE_INSENSITIVE));
+        }else if(q.text().matches("^attribute\\s*:\\s*.*")){
 
-            String[] spl = query.split(":");
+            String[] spl = q.text().split(":");
             if(spl.length >= 2){
                 String[] spl2 = spl[1].split("=");
                 String key = spl2[0].trim().toLowerCase();
@@ -66,29 +61,17 @@ public class Search {
                 }
                 return new Document("attributes.key", Pattern.compile(Pattern.quote(key), Pattern.CASE_INSENSITIVE));
             }
-        }else if(query.startsWith("define ") || query.startsWith("title ")) {
+        }else if(q.text().startsWith("define")) {
 
-            return new Document("title", pattern(query.replaceFirst("^(define|title)", "").trim()));
-        }else if(query.matches("^(\\d+)\\s+([A-Za-z\\s]+),\\s+([A-Za-z\\s]+),\\s+([A-Za-z]{2})\\s+(\\d{5})$")){
+            return new Document("title", pattern(q.text().replaceFirst("^define", "").trim()));
+        }else if(q.text().endsWith("near me")){
 
-            return new Document("$and", Arrays.asList(new Document("attribute.key", "Address"), new Document("attribute.value", pattern(query))));
-        }else if(query.matches("^\\+\\d{1,3}\\s*\\(\\d{1,3}\\)\\s*\\d{3}-\\d{4}$")){
-
-            return new Document("$and", Arrays.asList( new Document("attribute.key", "Phone"), new Document("attribute.value", query) ) );
-        }else if (query.matches("^\\w+@\\w+\\.[a-zA-Z]{2,3}$")) {
-
-            return new Document("$and", Arrays.asList( new Document("attribute.key", "Email"), new Document("attribute.value", query.toLowerCase()) ));
-        }else if(query.matches("\\b(\\d{4}-\\d{2}-\\d{2}|\\d{2}/\\d{2}/\\d{4}|\\d{2}-[a-zA-Z]{3}-\\d{4}|[a-zA-Z]+ \\d{1,2}, \\d{4})\\b")){
-
-            return new Document("attribute.value", query);
-        }else if(query.endsWith("near me")){
-
-            String q = query.replace("near me", "").trim();
+            String me = q.text().replace("near me", "").trim();
             return new Document("$and", Arrays.asList(
                     new Document("$or", Arrays.asList(
-                            new Document("tags", pattern(q)),
-                            new Document("description", pattern(q)),
-                            new Document("title", pattern(q))
+                            new Document("tags", pattern(me)),
+                            new Document("description", pattern(me)),
+                            new Document("title", pattern(me))
                     )),
                     new Document("location", new Document("$near",
                             new Document("$geometry", new Document("type", "Point")
@@ -97,10 +80,10 @@ public class Search {
                     )
                 )
             ));
-        }else if(Andromeda.tools.has(Andromeda.PROXIMITY, query) > -1){
-            String splr = Andromeda.PROXIMITY[Andromeda.tools.has(Andromeda.PROXIMITY, query)];
+        }else if(Andromeda.tools.has(Andromeda.PROXIMITY, q.text()) > -1){
+            String splr = Andromeda.PROXIMITY[Andromeda.tools.has(Andromeda.PROXIMITY, q.text())];
             params.setIndex("locations");
-            String[] spl = query.split(splr);
+            String[] spl = q.text().split(splr);
             if(spl.length >= 2){
                 String subject = spl[0].trim();
                 String place = spl[1].trim();
@@ -121,34 +104,32 @@ public class Search {
                         )
                 ));
             }
-        }else if((query.contains("*") || query.contains("/") || query.contains("+") || query.contains("-")) && Andromeda.tools.contains(Andromeda.NUMERALS, query)){
-            return  new Document("description", "Calculator");
         }
-        String[] exploded = cleanedQuery.split("\\s+");
         ArrayList<Document> or = new ArrayList<>();
-        or.add(new Document("title", pattern(query)));
-        or.add(new Document("link", pattern(query)));
-        for (String word : exploded) {
+        or.add(new Document("title", pattern(q.text())));
+        or.add(new Document("link", pattern(q.text())));
+        for (String word : q.tokens()) {
             or.add(new Document("title", pattern(word)));
             or.add(new Document("description", pattern(word)));
         }
-        or.add(new Document("tags", new Document("$in", Collections.singletonList(query))));
+        or.add(new Document("tags", new Document("$in", Collections.singletonList(q.text()))));
         return new Document("$or", or);
     }
 
     private String generated(String q, Parameters params){
         if(params.getPage() == 1){
             Unit u = new Unit(q);
-            if((q.contains("*") || q.contains("/") || q.contains("+") || q.contains("-")) && Andromeda.tools.contains(Andromeda.NUMERALS, q)){
-                License.iConfirmNonCommercialUse("Telifie LLC");
-                Expression expression = new Expression(q);
-                if (expression.checkSyntax()) {
-                    return String.valueOf(expression.calculate());
+            if(Andromeda.tools.contains(Andromeda.NUMERALS, q)){
+
+                String answer = Wolfram.compute(q);
+                if(!answer.isEmpty()){
+                    result.setSource("com.telifie.connectors.wolfram");
+                    return answer;
                 }
             }else if(q.contains("uuid")){
                 return "Here's a UUID  \\n" + UUID.randomUUID();
             }else if(q.contains("weather")){
-                result.setSource(Andromeda.tools.escape(Packages.get("com.telifie.connectors.openweathermap").toString()));
+                result.setSource("com.telifie.connectors.openweathermap");
                 return OpenWeatherMap.get(params);
             }else if(q.contains("flip a coin")){
                 int random = new Random().nextInt(2);

@@ -18,15 +18,11 @@ public class PackagesClient extends Client {
     }
 
     public ArrayList<Package> get(boolean isPublic){
-        ArrayList<Package> packages = new ArrayList<>();
-        this.find(new Document("public", isPublic)).forEach(p -> packages.add(new Package(p)));
-        return packages;
+        return this.find(new Document("public", isPublic)).map(Package::new).into(new ArrayList<>());
     }
 
     public ArrayList<Package> get(){
-        ArrayList<Package> packages = new ArrayList<>();
-        this.find(new Document()).forEach(p -> packages.add(new Package(p)));
-        return packages;
+        return this.find(new Document()).map(Package::new).into(new ArrayList<>());
     }
 
     public Package get(String id, int version){

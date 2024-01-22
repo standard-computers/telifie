@@ -34,14 +34,10 @@ public class DraftsClient extends Client {
     }
 
     public ArrayList<Article> get(Document filter){
-        ArrayList<Article> articles = new ArrayList<>();
-        this.find(filter).forEach(f -> articles.add(new Article(f)));
-        return articles;
+        return this.find(filter).map(Article::new).into(new ArrayList<>());
     }
 
     public ArrayList<Article> forUser(){
-        ArrayList<Article> articles = new ArrayList<>();
-        this.find(new Document("owner", session.getUser())).forEach(f -> articles.add(new Article(f)));
-        return articles;
+        return this.find(new Document("owner", session.getUser())).map(Article::new).into(new ArrayList<>());
     }
 }

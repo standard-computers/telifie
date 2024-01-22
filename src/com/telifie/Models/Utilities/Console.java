@@ -5,9 +5,10 @@ import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Andromeda.Taxon;
 import com.telifie.Models.Article;
 import com.telifie.Models.Clients.ArticlesClient;
+import com.telifie.Models.Clients.AuthenticationClient;
 import com.telifie.Models.Utilities.Servers.Http;
 import org.bson.Document;
-import org.checkerframework.checker.units.qual.A;
+import org.json.JSONObject;
 
 import java.util.*;
 
@@ -94,37 +95,6 @@ public class Console {
                         }
                     }
                 }
-                case "reporting" -> {
-                    Console.message("PLEASE DO NOT EXIT OR IT WILL NOT FINISH");
-                    Console.message("Access domain stats report through web or API");
-                    ArticlesClient articles = new ArticlesClient(new Session("com.telifie." + Configuration.getServer_name(), "telifie"));
-                    ArrayList<Article> all = articles.get(new Document());
-                    Map<String, Integer> duplicatedLinks = new HashMap<>();
-                    Map<String, Integer> duplicatedTitles = new HashMap<>();
-                    for (Article article : all) {
-                        String link = article.getLink();
-                        String title = article.getTitle();
-                        if (link != null && !link.isEmpty()) {
-                            duplicatedLinks.put(link, duplicatedLinks.getOrDefault(link, 0) + 1);
-                        }
-                        if (title != null && !title.isEmpty()) {
-                            duplicatedTitles.put(title, duplicatedTitles.getOrDefault(title, 0) + 1);
-                        }
-                    }
-                    Console.log("Creating duplicate LINKS report...");
-                    new Files("reports/duplicate_links.csv");
-                    Files.csv.append("Link,Count");
-                    for (Map.Entry<String, Integer> entry : duplicatedLinks.entrySet()) {
-                        Files.csv.append(entry.getKey() + "," + entry.getValue());
-                    }
-
-                    Console.log("Creating duplicate TITLES report...");
-                    new Files("reports/duplicate_titles.csv");
-                    Files.csv.append("Title,Count");
-                    for (Map.Entry<String, Integer> entry : duplicatedTitles.entrySet()) {
-                        Files.csv.append(entry.getKey() + "," + entry.getValue());
-                    }
-                }
                 case "andromeda" -> {
                     boolean loop = true;
                     while(loop){
@@ -153,6 +123,16 @@ public class Console {
                         }else{ //TODO Accept input to 'Search' and allow input/output of JSON
                             new Search().execute(new Session("com.telifie.app", "telifie"), c, new Parameters(new Document()));
                         }
+                    }
+                }
+                case "auth" -> {
+                    String name = Console.in("App (or user) Name (No '.') -> ").replace("\\.", "").replace(" ", "-");
+                    Authentication auth = new Authentication(name, 13);
+                    Console.log("Authorizing as database admin...");
+                    AuthenticationClient auths = new AuthenticationClient();
+                    if(auths.authenticate(auth)){
+                        Console.message("AUTHORIZED!");
+                        Console.log(new JSONObject(auth.toString()).toString(4));
                     }
                 }
             }

@@ -138,11 +138,6 @@
             <version>8.1.0</version>
         </dependency>
         <dependency>
-            <groupId>org.mariuszgromada.math</groupId>
-            <artifactId>MathParser.org-mXparser</artifactId>
-            <version>5.2.1</version>
-        </dependency>
-        <dependency>
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
             <version>5.8</version>
@@ -152,7 +147,8 @@
             <artifactId>netty-all</artifactId>
             <version>4.1.103.Final</version>
         </dependency>
-<!--        <dependency>-->
+
+        <!--        <dependency>-->
 <!--            <groupId>org.deeplearning4j</groupId>-->
 <!--            <artifactId>deeplearning4j-core</artifactId>-->
 <!--            <version>1.0.0-M2.1</version>-->

@@ -37,8 +37,6 @@ public class ConnectorsClient extends Client{
     }
 
     public ArrayList<Connector> mine(){
-        ArrayList<Connector> connectors = new ArrayList<>();
-        super.find(new Document("user", session.getUser())).forEach(c -> connectors.add(new Connector(c)));
-        return connectors;
+        return super.find(new Document("user", session.getUser())).map(Connector::new).into(new ArrayList<>());
     }
 }

@@ -33,9 +33,7 @@ public class CollectionsClient extends Client {
     }
 
     public ArrayList<Collection> forUser(String userId){
-        ArrayList<Collection> found = new ArrayList<>();
-        this.find(new Document("user", userId)).forEach(g -> found.add(new Collection(g)));
-        return found;
+        return this.find(new Document("user", userId)).map(Collection::new).into(new ArrayList<>());
     }
 
     public Collection create(Collection collection){

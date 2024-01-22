@@ -7,10 +7,11 @@ import java.util.Map;
 public class Unit {
 
     private final String[] tokens;
-    private final String text;
+    private final String text, cleaned;
 
     public Unit(String text) {
-        this.text = text;
+        this.text = text.trim();
+        this.cleaned = Encoder.clean(text);
         this.tokens = Arrays.stream(text.split("\\s+")).filter(token -> !token.isEmpty()).toArray(String[]::new);
     }
 
@@ -25,6 +26,18 @@ public class Unit {
         Arrays.sort(sortedWords, (a, b) -> wordFreq.get(b) - wordFreq.get(a));
         int numKeywordsToExtract = Math.min(numKeywords, sortedWords.length);
         return Arrays.copyOfRange(sortedWords, 0, numKeywordsToExtract);
+    }
+
+    public String text() {
+        return this.text;
+    }
+
+    public String cleaned() {
+        return this.cleaned;
+    }
+
+    public String[] tokens() {
+        return this.tokens;
     }
 
     public boolean startsWith(String t){

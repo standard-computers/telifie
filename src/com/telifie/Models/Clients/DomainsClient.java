@@ -19,9 +19,7 @@ public class DomainsClient extends Client {
      * @return ArrayList<Domain>
      */
     public ArrayList<Domain> mine(){
-        ArrayList<Domain> domains = new ArrayList<>();
-        super.find(new Document("owner", session.getUser())).forEach(f -> domains.add(new Domain(f)));
-        return domains;
+        return super.find(new Document("owner", session.getUser())).map(Domain::new).into(new ArrayList<>());
     }
 
     public boolean delete(Domain domain){
@@ -35,9 +33,7 @@ public class DomainsClient extends Client {
      * @return ArrayList<Domain>
      */
     public ArrayList<Domain> forMember(String userId){
-        ArrayList<Domain> domains = new ArrayList<>();
-        super.find(new Document("$or", Arrays.asList(new Document("owner", userId), new Document("users.email", userId)))).forEach(doc -> domains.add(new Domain(doc)));
-        return domains;
+        return super.find(new Document("$or", Arrays.asList(new Document("owner", userId), new Document("users.email", userId)))).map(Domain::new).into(new ArrayList<>());
     }
 
     public boolean create(Domain domain){
