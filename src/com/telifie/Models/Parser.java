@@ -40,7 +40,7 @@ public class Parser {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         ArticlesClient articles =  new ArticlesClient(new Session("telifie." + Configuration.getServer_name(), "telifie"));
         if(purgeQueue){
-            Log.message("STARTING REPARSE", "PARx043");
+            Log.message("STARTING REPARSE", "PARx011");
             new Sql().purgeQueue();
             ArrayList<Article> parsing = articles.withProjection(
                     new org.bson.Document("$or", Arrays.asList(new org.bson.Document("link", Search.pattern("https://")), new org.bson.Document("link", Search.pattern("http://")))),
@@ -48,7 +48,7 @@ public class Parser {
             );
             Console.log("RE-PARSE TOTAL : " + parsing.size());
             parsing.forEach(a -> new Sql().queue("com.telifie." + Configuration.getServer_name(), a.getLink()));
-            Log.message(parsing.size() + " RE-QUEUED", "PARx051");
+            Log.message(parsing.size() + " RE-QUEUED", "PARx012");
         }
         Console.log("Grabbing from queue.");
         String nil = new Sql().nextQueued();
@@ -57,7 +57,7 @@ public class Parser {
             Article a = future.get();
             reparse(false);
         } catch (InterruptedException | ExecutionException e) {
-            Log.error("FAILED ASYNC QUEUE TASK", "PARX00");
+            Log.error("FAILED ASYNC QUEUE TASK", "PARx010");
         } finally {
             executor.shutdown();
         }
@@ -102,12 +102,12 @@ public class Parser {
                 String host = urlObj.getProtocol() + "://" + urlObj.getHost();
                 RobotPermission robotPermission = new RobotPermission(host);
                 if(!robotPermission.isAllowed(urlObj.getPath())){
-                    Log.error("ROBOTS DISALLOWED : " + url, "PARx105");
+                    Log.flag("ROBOTS DISALLOWED : " + url, "PARx101");
                     return null;
                 }
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
                 if(response.statusCode() == 200){
-                    Log.message("PARSING : " + url, "PARx110");
+                    Log.message("PARSING : " + url, "PARx102");
                     new Sql().parsed("com.telifie." + Configuration.getServer_name(), url);
                     webpage wp = new webpage();
                     Article article = wp.extract(url, response.parse());
@@ -129,7 +129,7 @@ public class Parser {
                                         fetch(href, fd, allowExternalCrawl);
                                     }
                                 } catch (InterruptedException e) {
-                                    Log.error("FAILED TO SLEEP THREAD : PARSER", "PARx132");
+                                    Console.log("Failed to sleep thread?");
                                 }
                             }
                         }
@@ -145,16 +145,16 @@ public class Parser {
         public static Article website(String url){
             try {
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
-                Log.message("PARSING : " + response.statusCode() + " : " + url, "PARx148");
+                Log.message("PARSING : " + response.statusCode() + " : " + url, "PARx103");
                 if(response.statusCode() == 200){
                     Document root = response.parse();
                     return new webpage().extract(url, root);
                 }
-                Log.error(response.statusCode() + " : " + url, "PARx153");
+                Log.error(response.statusCode() + " : " + url, "PARx113");
                 return null;
             } catch (IOException e) {
                 Console.log(e.toString());
-                Log.error("FAILED CONNECTING TO HOST : " + url, "PARx156");
+                Log.error("FAILED CONNECTING TO HOST : " + url, "PARx123");
                 return null;
             }
         }
@@ -171,8 +171,9 @@ public class Parser {
                         while ((fields = reader.readNext()) != null) {
                             lines.add(fields);
                         }
+                        Log.message("PARSING CSV BATCH UPLOAD", "PARx104");
                     } catch (IOException | CsvException e) {
-                        Log.error("FAILED CSV FILE READ : PARSER / BATCH", "PARx175");
+                        Log.error("FAILED CSV FILE READ : PARSER / BATCH", "PARx114");
                     }
                     ArrayList<Article> articles = new ArrayList<>();
                     String[] headers = lines.get(0);
@@ -220,7 +221,7 @@ public class Parser {
                     }
                     return articles;
                 } catch (IOException e) {
-                    Log.error("FAILED BATCH UPLOAD", "PARx224");
+                    Log.error("FAILED BATCH UPLOAD", "PARx124");
                 }
             }
             return null;
@@ -239,8 +240,9 @@ public class Parser {
                         while ((fields = reader.readNext()) != null) {
                             lines.add(fields);
                         }
+                        Log.message("PARSING CSV GROUP UPLOAD", "PARx105");
                     } catch (IOException | CsvException e) {
-                        Log.error("FAILED CSV FILE READ : PARSER / GROUP", "PARx243");
+                        Log.error("FAILED CSV FILE READ : PARSER / GROUP", "PARx115");
                     }
                     ArrayList<Article> parsed = new ArrayList<>();
                     for (int i = 1; i < lines.size(); i++) {
@@ -269,7 +271,7 @@ public class Parser {
                     }
                     return parsed;
                 } catch (IOException e) {
-                    Log.error("FAILED GROUP UPLOAD", "PARx273");
+                    Log.error("FAILED GROUP UPLOAD", "PARx125");
                 }
             }
             return null;
@@ -370,7 +372,7 @@ public class Parser {
                             String un = l[l.length - 1].trim();
                             article.addAttribute(new Attribute(k, un));
                         } catch (URISyntaxException e) {
-                            Log.error("CANNOT CONVERT URI TO URL : " + link, "PARx325");
+                            Log.error("FAILED URI TO URL : " + link, "PARx110");
                         }
                     }
                 });
@@ -382,7 +384,7 @@ public class Parser {
                     try {
                         article.setIcon(fixLink("https://" + new URL(url).getHost(), href));
                     } catch (MalformedURLException e) {
-                        Log.error("FAILED URI TO URL : " + url, "PARx377");
+                        Log.error("FAILED URI TO URL : " + url, "PARx111");
                     }
                 }
             });
@@ -494,7 +496,7 @@ public class Parser {
                         article.addAttribute(new Attribute("Latitude", String.valueOf(location.getFloat("latitude"))));
                         article.addAttribute(new Attribute("Address", location.getString("formattedAddress")));
                     } catch (IOException | InterruptedException | NullPointerException e) {
-                        Log.error("RADAR PACKAGE ERROR", "PARx463");
+                        Log.error("RADAR PACKAGE ERROR", "PARx112");
                     }
                 }
             }
@@ -547,7 +549,7 @@ public class Parser {
                     }
                 }
             } catch (IOException e) {
-                Log.error("HOST BLOCKED : " + host, "PARx483");
+                Log.flag("HOST BLOCKED : " + host, "PARx121");
             }
         }
 

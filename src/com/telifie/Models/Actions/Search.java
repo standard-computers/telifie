@@ -77,8 +77,8 @@ public class Search {
                     )
                 )
             ));
-        }else if(Andromeda.tools.has(Andromeda.PROXIMITY, q.text()) > -1){
-            String splr = Andromeda.PROXIMITY[Andromeda.tools.has(Andromeda.PROXIMITY, q.text())];
+        }else if(q.contains(Andromeda.taxon("proximity"))){
+            String splr = q.get(Andromeda.taxon("proximity"));
             params.setIndex("locations");
             String[] spl = q.text().split(splr);
             if(spl.length >= 2){

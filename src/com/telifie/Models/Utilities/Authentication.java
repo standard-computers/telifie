@@ -1,7 +1,9 @@
 package com.telifie.Models.Utilities;
 
+import com.telifie.Models.Clients.Client;
 import com.telifie.Models.User;
 import org.bson.Document;
+import java.util.Arrays;
 
 public class Authentication {
 
@@ -31,28 +33,8 @@ public class Authentication {
         this.expiration = this.origin + 2419000;
     }
 
-    public Authentication(String user, int access){
-        this.user = user;
-        this.token = Telifie.md5(Telifie.randomReferenceCode());
-        this.refresh = Telifie.md5(Telifie.randomReferenceCode());
-        this.origin = Telifie.epochTime();
-        this.expiration = this.origin + 2419000;
-    }
-
     public String getUser() {
         return user;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public String getRefresh() {
-        return refresh;
-    }
-
-    public int getExpiration() {
-        return expiration;
     }
 
     public boolean hasToken(String token){
@@ -63,8 +45,41 @@ public class Authentication {
         return token.equals(this.refresh);
     }
 
+    public boolean authenticate(){
+        return new AuthenticationClient().authenticate(this);
+    }
+
+    public boolean isAuthenticated(){
+        return new AuthenticationClient().isAuthenticated(this);
+    }
+
     @Override
     public String toString() {
         return new StringBuilder().append("{").append("\"user\" : \"").append(user).append('\"').append(", \"token\" : \"").append(token).append('\"').append(", \"refresh\" : \"").append(refresh).append('\"').append(", \"origin\" : ").append(origin).append(", \"expiration\" : ").append(expiration).append("}").toString();
+    }
+
+    private class AuthenticationClient extends Client {
+
+        public AuthenticationClient() {
+            super(null);
+            super.collection = "authentications";
+        }
+
+        public boolean authenticate(Authentication authentication){
+            return super.insertOne(Document.parse(authentication.toString()));
+        }
+
+        public boolean isAuthenticated(Authentication authentication){
+            Document findAuthentication = this.findOne(new Document("$and", Arrays.asList(new Document("user", authentication.user), new Document("token", authentication.token))));
+            if(findAuthentication == null){
+                return false;
+            }
+            Authentication found = new Authentication(findAuthentication);
+            int epoch = (int) (System.currentTimeMillis() / 1000);
+            if(epoch > found.expiration){
+                return false;
+            }
+            return found.hasToken(authentication.token) && found.hasRefreshToken(authentication.refresh);
+        }
     }
 }

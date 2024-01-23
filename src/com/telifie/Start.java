@@ -16,9 +16,9 @@ public class Start {
 
     public static void main(String[] args){
         Console.welcome();
-        Log.message("TELIFIE STARTED", "STRx020");
+        Log.message("TELIFIE STARTED", "STRx001");
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            Log.out(Event.Type.FLAG, "TELIFIE EXITED", "STRx022");
+            Log.flag("TELIFIE EXITED", "STRx022");
             Telifie.purgeTemp();
         }));
         if (args.length > 0) {
@@ -52,6 +52,7 @@ public class Start {
                         new Http();
                     } catch (Exception e) {
                         Log.error("HTTPS SERVER FAILED", "STRx054");
+                        throw new RuntimeException(e);
                     }
                 }
                 case "--reparse" -> {
@@ -81,9 +82,9 @@ public class Start {
         }else{
             for(File folder : folders){
                 if(folder.mkdirs()){
-                    Log.out(Event.Type.PUT, "CREATED DIRECTORY : " + folder.getPath(), "STRx075");
+                    Log.put("CREATED DIRECTORY : " + folder.getPath(), "STRx002");
                 }else{
-                    Log.error("FAILED CREATING DIRECTORY : " + folder.getPath(), "STRx077");
+                    Log.error("FAILED CREATING DIRECTORY : " + folder.getPath(), "STRx072");
                 }
             }
         }
@@ -96,7 +97,7 @@ public class Start {
         config.setMysql(new Configuration.Connection(sql_uri, sql_user, sql_psswd));
         config.setEmail(Console.in("Email -> "));
         exportConfiguration();
-        Log.out(Event.Type.PUT, "CONFIGURATION SAVED", "STRx090");
+        Log.put("CONFIGURATION SAVED", "STRx003");
         System.exit(0);
     }
 
@@ -110,7 +111,7 @@ public class Start {
                 new Packages(new Session("com.telifie.system", "telifie"));
                 new Andromeda();
             }else{
-                Log.error("FAILED CONFIG FILE LOAD", "STRx107");
+                Log.error("FAILED CONFIG FILE LOAD", "STRx110");
                 System.exit(-1);
             }
         }else{
@@ -124,9 +125,9 @@ public class Start {
         ObjectWriter objectWriter = objectMapper.writer().withDefaultPrettyPrinter();
         try {
             objectWriter.writeValue(configFile, config);
-            Log.out(Event.Type.PUT, "CONFIG FILE CREATED", "STRx121");
+            Log.put("CONFIG FILE CREATED", "STRx120");
         } catch (IOException e) {
-            Log.error("FAILED CONFIG.JSON EXPORT", "STRx123");
+            Log.error("FAILED CONFIG.JSON EXPORT", "STRx121");
         }
     }
 
@@ -135,7 +136,7 @@ public class Start {
         try {
             config = objectMapper.readValue(configFile, Configuration.class);
         } catch (IOException e) {
-            Log.error("FAILED CONFIG.JSON IMPORT", "STRx132");
+            Log.error("FAILED CONFIG.JSON IMPORT", "STRx131");
         }
     }
 }

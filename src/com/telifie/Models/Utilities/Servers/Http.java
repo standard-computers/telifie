@@ -1,7 +1,6 @@
 package com.telifie.Models.Utilities.Servers;
 
 import com.telifie.Models.Actions.Command;
-import com.telifie.Models.Clients.AuthenticationClient;
 import com.telifie.Models.Result;
 import com.telifie.Models.Utilities.Authentication;
 import com.telifie.Models.Utilities.Event;
@@ -57,9 +56,8 @@ public class Http {
                 Log.out(Event.Type.valueOf(request.method().toString()), "INBOUND HTTP REQUEST : " + ctx.channel().remoteAddress().toString() + "/" + query, "HTTx057");
                 Result result = new Result(406, "NO AUTH PROVIDED");
                 if(authHeader != null){
-                    AuthenticationClient auths = new AuthenticationClient();
                     Authentication auth = new Authentication(authHeader);
-                    if(auths.isAuthenticated(auth)){
+                    if(auth.isAuthenticated()){
                         Session session = new Session(auth.getUser(), "telifie");
                         if(request.method().name().equals("POST")){
                             try {

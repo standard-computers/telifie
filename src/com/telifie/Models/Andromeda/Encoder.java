@@ -22,18 +22,10 @@ public class Encoder {
         }
         for(String sentence : sentences){
             if(cleaned){
-                sentence = clean(sentence);
+                sentence = new Unit(sentence).cleaned();
             }
             tokenized.add(new Unit(sentence));
         }
         return tokenized;
-    }
-
-    public static String clean(String text){
-        String ct = text.toLowerCase().trim();
-        ct = ct.replaceAll("[\\d+]", "");
-        ct = Andromeda.tools.removeWords(ct, Andromeda.taxon("stop_words"));
-        ct = ct.replaceAll("[^a-zA-Z0-9 ]", "");
-        return ct;
     }
 }

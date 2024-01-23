@@ -5,7 +5,7 @@ import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Andromeda.Taxon;
 import com.telifie.Models.Article;
 import com.telifie.Models.Clients.ArticlesClient;
-import com.telifie.Models.Clients.AuthenticationClient;
+import com.telifie.Models.User;
 import com.telifie.Models.Utilities.Servers.Http;
 import org.bson.Document;
 import org.json.JSONObject;
@@ -58,7 +58,7 @@ public class Console {
     }
 
     public static void command(){
-        Log.out(Event.Type.FLAG, "ENTERING CLI", "CLIx001");
+        Log.flag("ENTERING CLI", "CLIx001");
         while(true){
             String cmd = Console.in("telifie -> ");
             switch (cmd) {
@@ -67,7 +67,7 @@ public class Console {
                     try {
                         new Http();
                     } catch (Exception e) {
-                        Log.error("Failed to start HTTP server", "CLIx071");
+                        Log.error("Failed to start HTTP server", "CLIx002");
                     }
                 }
                 case "routine" -> {
@@ -77,11 +77,8 @@ public class Console {
                             new Document("attributes.value", "v8j7l5")
                         )));
                     Console.log("Found = " + as.size());
-                    for(int i = 0; i < as.size(); i++){
-                        Article a = as.get(i);
-                        a.setIcon("https://singlecolorimage.com/get/" + a.getAttribute("Hex").replace("#", "") + "/64x64.png");
-                        Console.log(a.toString());
-                        if( articles.update(a, a)){
+                    for (Article a : as) {
+                        if (articles.update(a, a)) {
                             Console.log("Article Updated");
                         }
                     }
@@ -117,12 +114,11 @@ public class Console {
                     }
                 }
                 case "auth" -> {
-                    String name = Console.in("App (or user) Name (No '.') -> ").replace("\\.", "").replace(" ", "-");
-                    Authentication auth = new Authentication(name, 13);
+                    //TODO Create user or API/Org
+                    Authentication auth = new Authentication(new User("", Configuration.getServer_name(), ""));
                     Console.log("Authorizing as database admin...");
-                    AuthenticationClient auths = new AuthenticationClient();
-                    if(auths.authenticate(auth)){
-                        Console.message("AUTHORIZED!");
+                    if(auth.authenticate()){
+                        Log.flag("NEW USER ADMIN AUTHENTICATED : " + Configuration.getServer_name(), "CLIx003");
                         Console.log(new JSONObject(auth.toString()).toString(4));
                     }
                 }

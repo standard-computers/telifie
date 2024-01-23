@@ -1,8 +1,6 @@
 package com.telifie.Models.Andromeda;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class Unit {
 
@@ -11,7 +9,7 @@ public class Unit {
 
     public Unit(String text) {
         this.text = text.trim();
-        this.cleaned = Encoder.clean(text);
+        this.cleaned = clean(text);
         this.tokens = Arrays.stream(text.split("\\s+")).filter(token -> !token.isEmpty()).toArray(String[]::new);
     }
 
@@ -39,12 +37,55 @@ public class Unit {
         return this.tokens;
     }
 
+    public String clean(String text){
+        String ct = text.toLowerCase().trim();
+        ct = ct.replaceAll("[\\d+]", "");
+        ct = remove(Andromeda.taxon("stop_words"));
+        ct = ct.replaceAll("[^a-zA-Z0-9 ]", "");
+        return ct;
+    }
+
     public boolean startsWith(String t){
         String start = this.tokens[0];
         if(t.equals(Andromeda.classify(start))){
             return true;
         }
         return false;
+    }
+
+    /**
+     * Returns true if Unit text contains any words part of the identified taxon.
+     * @param t Taxon of words to search for
+     * @return
+     */
+    public boolean contains(Taxon t){
+        for(String s : t.items()){
+            if(text.contains(s)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public String remove(Taxon t){
+        StringBuilder sb = new StringBuilder();
+        Set<String> toRemoveSet = new HashSet<>(t.items());
+        String[] words = text.split("\\W+");
+        for (String word : words) {
+            if (!toRemoveSet.contains(word.toLowerCase().trim())) {
+                sb.append(word).append(" ");
+            }
+        }
+        return sb.toString().trim();
+    }
+
+    public String get(Taxon t){
+        for(String s : t.items()){
+            if(text.contains(s)){
+                return s;
+            }
+        }
+        return "";
     }
 
     @Override

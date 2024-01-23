@@ -599,8 +599,7 @@ public class Command {
                             user.setPermissions(user.getPermissions() + 1);
                         }
                         Authentication auth = new Authentication(user);
-                        AuthenticationClient auths = new AuthenticationClient();
-                        auths.authenticate(auth);
+                        auth.authenticate();
                         JSONObject json = new JSONObject(user.toString());
                         json.put("authentication", new JSONObject(auth.toString()));
                         return new Result(this.command, "user", json);

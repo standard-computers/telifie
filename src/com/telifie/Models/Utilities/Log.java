@@ -18,6 +18,14 @@ public class Log {
         out(Event.Type.ERROR, message, code);
     }
 
+    public static void flag(String message, String code){
+        out(Event.Type.FLAG, message, code);
+    }
+
+    public static void put(String message, String code){
+        out(Event.Type.PUT, message, code);
+    }
+
     public static void message(String message, String code){
         out(Event.Type.MESSAGE, message, code);
     }

@@ -42,10 +42,6 @@ public class Collection {
         return user;
     }
 
-    public void setIcon(String icon) {
-        this.icon = icon;
-    }
-
     public ArrayList<String> getArticles() {
         return articles;
     }

@@ -113,7 +113,7 @@ public class ArticlesClient extends Client {
             found = this.find(filter);
         }
         ArrayList<Article> results = found.map(Article::new).into(new ArrayList<>());
-        if(Andromeda.tools.has(Andromeda.PROXIMITY, query.text()) > -1 || params.getIndex().equals("locations")) {
+        if(query.contains(Andromeda.taxon("proximity")) || params.getIndex().equals("locations")) {
             results.sort(new DistanceSorter(params.getLatitude(), params.getLongitude()));
         }else{
             results.sort(new CosmoScore(query.cleaned()));
