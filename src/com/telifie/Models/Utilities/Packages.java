@@ -1,7 +1,6 @@
 package com.telifie.Models.Utilities;
 
 import com.telifie.Models.Clients.PackagesClient;
-
 import java.util.ArrayList;
 
 public class Packages {

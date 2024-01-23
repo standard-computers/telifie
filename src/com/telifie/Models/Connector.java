@@ -6,17 +6,16 @@ import java.util.UUID;
 
 public class Connector {
 
-    private String id, name, clientId, accessToken, secret, refreshToken;
+    private String id, clientId, access, secret, refresh;
     private String user, userId; //User ID of the user in the connector, not Telifie's User ID
     private int origin;
 
     public Connector(Document document) {
         if (document != null) {
             this.id = (document.getString("id") != null ? document.getString("id") : null);
-            this.name = (document.getString("name") != null ? document.getString("name") : null);
-            this.accessToken = (document.getString("access_token") != null ? document.getString("access_token") : null);
+            this.access = (document.getString("access") != null ? document.getString("access") : null);
             this.secret = (document.getString("secret") != null ? document.getString("secret") : UUID.randomUUID().toString());
-            this.refreshToken = (document.getString("refresh_token") != null ? document.getString("refresh_token") : null);
+            this.refresh = (document.getString("refresh") != null ? document.getString("refresh_") : null);
             this.user = (document.getString("user") != null ? document.getString("user") : "com.telifie.system.garbage"); //Garbage for collection if no user set
             this.userId = (document.getString("user_id") != null ? document.getString("user_id") : null);
             this.clientId = (document.getString("client_id") != null ? document.getString("client_id") : null);
@@ -28,8 +27,8 @@ public class Connector {
         return clientId;
     }
 
-    public String getAccessToken() {
-        return accessToken;
+    public String getAccess() {
+        return access;
     }
 
     public String getUser() {
@@ -52,14 +51,6 @@ public class Connector {
         return id;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getSecret() {
         return secret;
     }
@@ -71,11 +62,10 @@ public class Connector {
     @Override
     public String toString() {
         return "{\"id\" : \"" + id + '\"' +
-                ", \"name\" : \"" + name + '\"' +
                 ", \"client_id\" : \"" + clientId + '\"' +
-                ", \"access_token\" : \"" + accessToken + '\"' +
+                ", \"access\" : \"" + access + '\"' +
                 ", \"secret\" : \"" + secret + '\"' +
-                ", \"refresh_token\" : \"" + refreshToken + '\"' +
+                ", \"refresh\" : \"" + refresh + '\"' +
                 ", \"user\" : \"" + user + '\"' +
                 ", \"user_id\" : \"" + userId + '\"' +
                 ", \"origin\" : " + origin +

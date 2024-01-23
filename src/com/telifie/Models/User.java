@@ -1,6 +1,5 @@
 package com.telifie.Models;
 
-import com.telifie.Models.Utilities.*;
 import org.bson.Document;
 import java.io.Serializable;
 import java.util.UUID;
@@ -14,7 +13,7 @@ public class User implements Serializable {
     private String token;
     private final int origin;
     private int permissions;
-    private Theme theme;
+    private String settings;
 
     /**
      * Constructor for creating user.
@@ -40,7 +39,7 @@ public class User implements Serializable {
         this.token = document.getString("token");
         this.origin = document.getInteger("origin");
         this.permissions = document.getInteger("permissions");
-        this.theme = ( document.get("theme", Document.class) == null ? null : new Theme(document.get("theme", Document.class)) );
+        this.settings = document.getString("settings");
     }
 
     public String getId() {
@@ -84,7 +83,7 @@ public class User implements Serializable {
                 ", \"phone\" : \"" + phone + '\"' +
                 ", \"origin\" : " + origin +
                 ", \"permissions\" : " + permissions +
-                ", \"theme\" : " + theme +
+                ", \"settings\" : " + settings +
                 '}';
     }
 }

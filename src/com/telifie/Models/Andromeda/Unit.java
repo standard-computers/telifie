@@ -16,8 +16,7 @@ public class Unit {
     }
 
     public String[] keywords(int numKeywords) {
-        String wt = Encoder.clean(this.text.replaceAll("[^a-zA-Z ]", "").toLowerCase());
-        String[] words = wt.split("\\s+");
+        String[] words = cleaned.split("\\s+");
         Map<String, Integer> wordFreq = new HashMap<>();
         for (String word : words) {
             wordFreq.put(word, wordFreq.getOrDefault(word, 0) + 1);

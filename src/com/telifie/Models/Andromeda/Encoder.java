@@ -1,7 +1,5 @@
 package com.telifie.Models.Andromeda;
 
-import com.telifie.Models.Utilities.Console;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,10 +30,10 @@ public class Encoder {
     }
 
     public static String clean(String text){
-        String cleanedText = text.toLowerCase().trim();
-        cleanedText = cleanedText.replaceAll("[\\d+]", "");
-        cleanedText = Andromeda.tools.removeWords(cleanedText, Andromeda.taxon("stop_words"));
-        cleanedText = cleanedText.replaceAll("[^a-zA-Z0-9 ]", "");
-        return cleanedText;
+        String ct = text.toLowerCase().trim();
+        ct = ct.replaceAll("[\\d+]", "");
+        ct = Andromeda.tools.removeWords(ct, Andromeda.taxon("stop_words"));
+        ct = ct.replaceAll("[^a-zA-Z0-9 ]", "");
+        return ct;
     }
 }

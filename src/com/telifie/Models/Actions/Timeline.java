@@ -17,10 +17,6 @@ public class Timeline {
         }
     }
 
-    public ArrayList<Event> getEvents() {
-        return events;
-    }
-
     @Override
     public String toString() {
         return "{\"object\" : \"" + object + '\"' + ", \"events\" :" + events + "}";

@@ -36,10 +36,6 @@ public class Association {
         this.articles.add(article);
     }
 
-    public int size(){
-        return this.articles.size();
-    }
-
     @Override
     public String toString() {
         return new StringBuilder().append("{\"icon\" : \"").append(icon).append('\"').append(", \"name\" : \"").append(name).append('\"').append(", \"articles\" : ").append(articles).append('}').toString();

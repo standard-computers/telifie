@@ -5,10 +5,10 @@ import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Andromeda.Unit;
 import com.telifie.Models.Article;
 import com.telifie.Models.Clients.ArticlesClient;
-import com.telifie.Models.Connectors.OpenWeatherMap;
 import com.telifie.Models.Connectors.Radar;
-import com.telifie.Models.Connectors.Wolfram;
+import com.telifie.Models.Connectors.Rest;
 import com.telifie.Models.Result;
+import com.telifie.Models.Utilities.Packages;
 import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
@@ -61,9 +61,6 @@ public class Search {
                 }
                 return new Document("attributes.key", Pattern.compile(Pattern.quote(key), Pattern.CASE_INSENSITIVE));
             }
-        }else if(q.text().startsWith("define")) {
-
-            return new Document("title", pattern(q.text().replaceFirst("^define", "").trim()));
         }else if(q.text().endsWith("near me")){
 
             String me = q.text().replace("near me", "").trim();
@@ -106,9 +103,8 @@ public class Search {
             }
         }
         ArrayList<Document> or = new ArrayList<>();
-        or.add(new Document("title", pattern(q.text())));
-        or.add(new Document("link", pattern(q.text())));
         for (String word : q.tokens()) {
+            or.add(new Document("link", pattern(word)));
             or.add(new Document("title", pattern(word)));
             or.add(new Document("description", pattern(word)));
         }
@@ -121,28 +117,39 @@ public class Search {
             Unit u = new Unit(q);
             if(Andromeda.tools.contains(Andromeda.NUMERALS, q)){
 
-                String answer = Wolfram.compute(q);
-                if(!answer.isEmpty()){
-                    result.setSource("com.telifie.connectors.wolfram");
-                    return answer;
-                }
+                result.setSource("com.telifie.connectors.wolfram");
+                return Rest.get(Packages.get("com.telifie.connectors.wolfram"), new HashMap<String, String>() {{
+                    put("i", "q");
+                    put("appid", Packages.get("com.telifie.connectors.wolfram").getAccess());
+                }});
             }else if(q.contains("uuid")){
+
                 return "Here's a UUID  \\n" + UUID.randomUUID();
             }else if(q.contains("weather")){
+
                 result.setSource("com.telifie.connectors.openweathermap");
-                return OpenWeatherMap.get(params);
+                return Rest.get(Packages.get("com.telifie.connectors.openweathermap"), new HashMap<String, String>() {{
+                    put("units", "imperial");
+                    put("excluded", "hourly,minutely,current");
+                    put("lat", String.valueOf(params.getLatitude()));
+                    put("lon", String.valueOf(params.getLongitude()));
+                    put("appid", Packages.get("com.telifie.connectors.openweathermap").getAccess());
+                }});
             }else if(q.contains("flip a coin")){
+
                 int random = new Random().nextInt(2);
                 return ((random == 0) ? "Heads" : "Tails");
             }else if(q.contains("roll") && q.contains("dice")){
+
                 int random = new Random().nextInt(6) + 1;
                 return "Your dice roll is " + random;
             }else if(q.contains("random") && q.contains("color")){
+
                 Color c = new Color((int) (Math.random() * 256), (int) (Math.random() * 256), (int) (Math.random() * 256));
                 String hex = String.format("#%02X%02X%02X", c.getRed(), c.getGreen(), c.getBlue());
                 String rgb = String.format("RGB(%d, %d, %d)", c.getRed(), c.getGreen(), c.getBlue());
                 return "Here is a random color: Hex is " + hex + " and RGB " + rgb;
-            }else if(q.matches("\\b\\d+\\s+([A-Za-z0-9\\.\\-\\'\\s]+)\\s+" + // Street number and name
+            }else if(q.matches("\\b\\d+\\s+([A-Za-z0-9.\\-\\'\\s]+)\\s+" + // Street number and name
                     "(St\\.?|Street|Rd\\.?|Road|Ave\\.?|Avenue|Blvd\\.?|Boulevard|Ln\\.?|Lane|Dr\\.?|Drive|Ct\\.?|Court)\\s+" + // Street type
                     "(\\w+),\\s+" + // City
                     "(Ohio|OH|Ala|AL|Alaska|AK|Ariz|AZ|Ark|AR|Calif|CA|Colo|CO|Conn|CT|Del|DE|Fla|FL|Ga|GA|Hawaii|HI|Idaho|ID|Ill|IL|Ind|IN|Iowa|IA|Kans|KS|Ky|KY|La|LA|Maine|ME|Md|MD|Mass|MA|Mich|MI|Minn|MN|Miss|MS|Mo|MO|Mont|MT|Nebr|NE|Nev|NV|N\\.H\\.|NH|N\\.J\\.|NJ|N\\.M\\.|NM|N\\.Y\\.|NY|N\\.C\\.|NC|N\\.D\\.|ND|Okla|OK|Ore|OR|Pa|PA|R\\.I\\.|RI|S\\.C\\.|SC|S\\.D\\.|SD|Tenn|TN|Tex|TX|Utah|UT|Vt|VT|Va|VA|Wash|WA|W\\.Va|WV|Wis|WI|Wyo|WY)\\s+" + // State
@@ -150,12 +157,9 @@ public class Search {
 
                 try {
                     Radar.get(q);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (InterruptedException e) {
+                } catch (IOException | InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-
                 //TODO map/radar lookup
             }else if(u.startsWith("interrogative")){
                 //TODO find subject and inquiry

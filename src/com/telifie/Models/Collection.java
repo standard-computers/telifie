@@ -8,7 +8,6 @@ import java.util.UUID;
 public class Collection {
 
     private final String id;
-    private String domain;
     private String user;
     private String icon;
     private String name;
@@ -26,7 +25,6 @@ public class Collection {
 
     public Collection(Document document) throws NullPointerException {
         this.id = (document.getString("id") == null ? Telifie.md5(Telifie.randomReferenceCode()) : document.getString("id") );
-        this.domain = document.getString("domain");
         this.user = document.getString("user");
         this.icon = document.getString("icon");
         this.name = document.getString("name");
@@ -40,33 +38,12 @@ public class Collection {
         return id;
     }
 
-    public String getDomain() {
-        return (domain == null ? "telifie" : domain);
-    }
-
-    public Collection setDomain(String domain) {
-        this.domain = domain;
-        return this;
-    }
-
     public String getUser() {
         return user;
     }
 
-    public void setUser(String user) {
-        this.user = user;
-    }
-
     public void setIcon(String icon) {
         this.icon = icon;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public ArrayList<String> getArticles() {
@@ -102,7 +79,6 @@ public class Collection {
 
         return "{" +
                 "\"id\" : \"" + id + '\"' +
-                (this.domain == null ? (", \"domain\" : \"telifie\"") : (", \"domain\" : \"" + domain + '\"')) +
                 ", \"user\" : \"" + user + '\"' +
                 ", \"icon\" : \"" + icon + '\"' +
                 ", \"name\" : \"" + name + '\"' +

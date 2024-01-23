@@ -10,10 +10,6 @@ public class Twilio {
 
     public static void send(String to, String from, String content){
         com.twilio.Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
-        Message.creator(
-                new com.twilio.type.PhoneNumber(to),
-                new com.twilio.type.PhoneNumber(from),
-                content).create();
+        Message.creator(new com.twilio.type.PhoneNumber(to), new com.twilio.type.PhoneNumber(from), content).create();
     }
-
 }

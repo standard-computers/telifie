@@ -58,17 +58,8 @@ public class Result {
         return statusCode;
     }
 
-    public void setStatusCode(int statusCode) {
-        this.statusCode = statusCode;
-    }
-
     public void setTotal(int total) {
         this.total = total;
-    }
-
-    public void setResult(String object, Object results){
-        this.object = object;
-        this.results = results;
     }
 
     public void setGenerated(String generated) {

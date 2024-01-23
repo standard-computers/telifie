@@ -9,7 +9,6 @@ import com.telifie.Models.Clients.AuthenticationClient;
 import com.telifie.Models.Utilities.Servers.Http;
 import org.bson.Document;
 import org.json.JSONObject;
-
 import java.util.*;
 
 public class Console {
@@ -26,9 +25,7 @@ public class Console {
         Console.log("||                                                           ||");
         Console.log("||===========================================================||");
         Console.log("       COPYRIGHT (C) TELIFIE LLC 2024, CINCINNATI, OHIO        ");
-        Console.line();
-        Console.log("More Info -> https://telifie.com/documentation");
-        Console.line();
+        Console.message("More Info -> https://telifie.com/documentation");
         Console.log("Operating System    : " + System.getProperty("os.name"));
         Console.log("System OS Version   : " + System.getProperty("os.version"));
         Console.log("System Architecture : " + System.getProperty("os.arch"));
@@ -54,12 +51,6 @@ public class Console {
         System.out.println(message);
     }
 
-    /**
-     * Accepts String for prompt.
-     * Returns String of users input.
-     * @param prompt Prompt to user for requested input.
-     * @return Users input.
-     */
     public static String in(String prompt){
         System.out.print(prompt);
         Scanner in = new Scanner(System.in);
@@ -67,7 +58,7 @@ public class Console {
     }
 
     public static void command(){
-        Log.out(Event.Type.FLAG, "ENTERING CLI", "CLIx062");
+        Log.out(Event.Type.FLAG, "ENTERING CLI", "CLIx001");
         while(true){
             String cmd = Console.in("telifie -> ");
             switch (cmd) {

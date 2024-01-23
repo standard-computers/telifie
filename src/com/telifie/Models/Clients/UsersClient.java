@@ -4,7 +4,6 @@ import com.telifie.Models.Connectors.SendGrid;
 import com.telifie.Models.Connectors.Twilio;
 import com.telifie.Models.User;
 import com.telifie.Models.Utilities.Telifie;
-import com.telifie.Models.Utilities.Theme;
 import org.bson.Document;
 
 public class UsersClient extends Client {
@@ -46,8 +45,8 @@ public class UsersClient extends Client {
         return this.lock(user, code);
     }
 
-    public boolean updateTheme(User user, Theme theme){
-        return super.updateOne(new Document("id", user.getId()), new Document("$set", new Document("theme", Document.parse(theme.toString()))));
+    public boolean updateTheme(User user, String settings){
+        return super.updateOne(new Document("id", user.getId()), new Document("$set", new Document("settings", settings)));
     }
 
     public boolean updatePhoto(User user, String photoUri){

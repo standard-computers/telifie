@@ -5,15 +5,11 @@ import com.telifie.Models.Andromeda.Encoder;
 import com.telifie.Models.Connectors.Twilio;
 import com.telifie.Models.Parser;
 import com.telifie.Models.Clients.*;
-import com.telifie.Models.Connectors.Spotify;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Package;
-import org.apache.hc.core5.http.ParseException;
 import org.bson.Document;
 import org.json.JSONException;
 import org.json.JSONObject;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -448,9 +444,8 @@ public class Command {
             if(this.selectors.length >= 3){
                 if(objSelector.equals("update") && content != null){
                     User changedUser = users.getUserWithId(session.getUser());
-                    if(secSelector.equals("theme")){
-                        Theme theme = new Theme(content);
-                        if(users.updateTheme(changedUser, theme)){
+                    if(secSelector.equals("settings")){
+                        if(users.updateTheme(changedUser, content.getString("settings"))){
                             return new Result(this.command, "user", changedUser);
                         }
                         return new Result(400, "Bad Request");
@@ -643,17 +638,7 @@ public class Command {
                 connector.setUser(actingUser);
                 boolean connectorUsed = connectors.exists(connector);
                 if(connector.getId().equals("com.telifie.connectors.spotify")){
-                    Spotify spotify;
-                    try {
-                        spotify = new Spotify(connector);
-                        if(!connectorUsed){ //User hasn't used this connector before
-                            connectors.create(spotify.getConnector());
-                        }
-                        spotify.parse(session);
-                        return new Result(this.command, "spotify", "done");
-                    } catch (IOException | ParseException | SpotifyWebApiException e) {
-                        return new Result(501, this.command, "FAILED PARSING SPOTIFY");
-                    }
+                    return new Result(501, this.command, "FAILED PARSING SPOTIFY");
                 }else{
                     if(connectorUsed){
                         return new Result(409, this.command, "CONNECTOR EXISTS");

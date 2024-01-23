@@ -17,11 +17,9 @@ public class CollectionsClient extends Client {
     public Collection withArticles(String id){
         Collection collection = new Collection(this.findOne(new Document("id", id)));
         ArrayList<Article> articles = new ArrayList<>();
-        if(!collection.getDomain().equals("telifie")){
-            session.setDomain(collection.getDomain());
-        }
         ArticlesClient articlesClient = new ArticlesClient(session);
         if(collection.getArticles() != null || !collection.getArticles().isEmpty()){
+            //TODO check for '/' in article to see if in another domain
             collection.getArticles().forEach(articleId -> articles.add(articlesClient.withId(articleId)));
             collection.setDetailedList(articles);
         }
@@ -37,7 +35,6 @@ public class CollectionsClient extends Client {
     }
 
     public Collection create(Collection collection){
-        collection.setUser(session.getUser());
         if(super.insertOne( Document.parse(collection.toString()) )){
             return collection;
         }

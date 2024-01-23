@@ -57,7 +57,7 @@ public class Parser {
             Article a = future.get();
             reparse(false);
         } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
+            Log.error("FAILED ASYNC QUEUE TASK", "PARX00");
         } finally {
             executor.shutdown();
         }
@@ -444,7 +444,7 @@ public class Parser {
                         Element data = row.selectFirst("td.infobox-data");
                         if (label != null && data != null) {
                             String key = Andromeda.tools.sentenceCase(label.text().trim());
-                            String value = Andromeda.tools.htmlEscape(Andromeda.tools.sentenceCase(data.text().replaceAll("\\[.*?\\]", "").trim()));
+                            String value = Andromeda.tools.htmlEscape(Andromeda.tools.sentenceCase(data.text().replaceAll("\\[.*?]", "").trim()));
                             if(!key.toLowerCase().equals("references")){
                                 article.addAttribute(new Attribute(key, value));
                             }
