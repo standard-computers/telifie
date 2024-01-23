@@ -219,11 +219,12 @@ public class ArticlesClient extends Client {
 
         private double relevance(Article a) {
             double s = 0;
-            s += (a.getLink() == null ? 0 : compareMatches(a.getLink(), words)); //Link Score
-            s += (a.getTitle().trim().toLowerCase().equals(q) ? words.size() * s : 0); //Title Match
+            s += (a.getTitle().trim().toLowerCase().equals(q) ? words.size() : 0); //Title Match
+            s += (a.getLink() != null && a.getLink().contains(q) ? words.size() : 0); //Link Match
             s += compareMatches(a.getTitle(), words); //Title Score
+            s += (a.getLink() == null ? 0 : compareMatches(a.getLink(), words)); //Link Score
             s += compareMatches(a.getDescription(), words); //Description Score
-            for(String tag : a.getTags()){
+            for(String tag : a.getTags()){ //Tag Score
                 if(words.contains(tag)){
                     s += 2;
                 }

@@ -4,13 +4,14 @@ import java.util.*;
 
 public class Unit {
 
-    private final String[] tokens;
+    private final String[] tokens, cleanedTokens;
     private final String text, cleaned;
 
     public Unit(String text) {
         this.text = text.trim();
         this.cleaned = clean(text);
         this.tokens = Arrays.stream(text.split("\\s+")).filter(token -> !token.isEmpty()).toArray(String[]::new);
+        this.cleanedTokens = Arrays.stream(cleaned.split("\\s+")).filter(token -> !token.isEmpty()).toArray(String[]::new);
     }
 
     public String[] keywords(int numKeywords) {
@@ -37,18 +38,21 @@ public class Unit {
         return this.tokens;
     }
 
+    public String[] cleanedTokens() {
+        return this.cleanedTokens;
+    }
+
     public String clean(String text){
-        String ct = text.toLowerCase().trim();
-        ct = ct.replaceAll("[\\d+]", "");
-        ct = remove(Andromeda.taxon("stop_words"));
+        String ct = remove(Andromeda.taxon("stop_words"));
         ct = ct.replaceAll("[^a-zA-Z0-9 ]", "");
         return ct;
     }
 
-    public boolean startsWith(String t){
-        String start = this.tokens[0];
-        if(t.equals(Andromeda.classify(start))){
-            return true;
+    public boolean startsWith(Taxon t){
+        for(String s : t.items()){
+            if(text.startsWith(s)){
+                return true;
+            }
         }
         return false;
     }

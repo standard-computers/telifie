@@ -102,6 +102,7 @@ public class Console {
                             if(t == null){
                                 Console.log("Does not exist!");
                             }else{
+                                Console.log(t.items().size() + " Items");
                                 Console.log(t.items().toString());
                             }
                         }else if(c.equals("index")){

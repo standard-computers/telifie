@@ -65,12 +65,12 @@ public class Authentication {
             super.collection = "authentications";
         }
 
-        public boolean authenticate(Authentication authentication){
-            return super.insertOne(Document.parse(authentication.toString()));
+        public boolean authenticate(Authentication auth){
+            return super.insertOne(Document.parse(auth.toString()));
         }
 
-        public boolean isAuthenticated(Authentication authentication){
-            Document findAuthentication = this.findOne(new Document("$and", Arrays.asList(new Document("user", authentication.user), new Document("token", authentication.token))));
+        public boolean isAuthenticated(Authentication auth){
+            Document findAuthentication = this.findOne(new Document("$and", Arrays.asList(new Document("user", auth.user), new Document("token", auth.token))));
             if(findAuthentication == null){
                 return false;
             }
@@ -79,7 +79,7 @@ public class Authentication {
             if(epoch > found.expiration){
                 return false;
             }
-            return found.hasToken(authentication.token) && found.hasRefreshToken(authentication.refresh);
+            return found.hasToken(auth.token) && found.hasRefreshToken(auth.refresh);
         }
     }
 }

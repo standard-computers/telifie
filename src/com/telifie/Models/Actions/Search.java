@@ -8,6 +8,7 @@ import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Connectors.Radar;
 import com.telifie.Models.Connectors.Rest;
 import com.telifie.Models.Result;
+import com.telifie.Models.Utilities.Console;
 import com.telifie.Models.Utilities.Packages;
 import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Utilities.Session;
@@ -34,7 +35,7 @@ public class Search {
         }
         filter = new Document("$and", Arrays.asList(sf, Filters.or(filter)));
         ArrayList<Article> results = articles.search(query, params, filter);
-        ArrayList<Article> paged = paginateArticles(results, params.getPage(), params.getResultsPerPage());
+        ArrayList<Article> paged = paginate(results, params.getPage(), params.getResultsPerPage());
         result = new Result(query.text(), params, "articles", paged);
         result.setTotal(results.size());
         result.setGenerated(this.generated(q, params));
@@ -56,8 +57,7 @@ public class Search {
                 String key = spl2[0].trim().toLowerCase();
                 if(spl2.length >= 2){
                     String value = spl2[1].trim().toLowerCase();
-                    return new Document("attributes", new Document("$elemMatch", new Document("key", Pattern.compile(Pattern.quote(key), Pattern.CASE_INSENSITIVE))
-                            .append("value", Pattern.compile(Pattern.quote(value), Pattern.CASE_INSENSITIVE))));
+                    return new Document("attributes", new Document("$elemMatch", new Document("key", Pattern.compile(Pattern.quote(key), Pattern.CASE_INSENSITIVE)).append("value", Pattern.compile(Pattern.quote(value), Pattern.CASE_INSENSITIVE))));
                 }
                 return new Document("attributes.key", Pattern.compile(Pattern.quote(key), Pattern.CASE_INSENSITIVE));
             }
@@ -65,18 +65,9 @@ public class Search {
 
             String me = q.text().replace("near me", "").trim();
             return new Document("$and", Arrays.asList(
-                    new Document("$or", Arrays.asList(
-                            new Document("tags", pattern(me)),
-                            new Document("description", pattern(me)),
-                            new Document("title", pattern(me))
-                    )),
-                    new Document("location", new Document("$near",
-                            new Document("$geometry", new Document("type", "Point")
-                                .append("coordinates", Arrays.asList( params.getLongitude(), params.getLatitude() ))
-                            ).append("$maxDistance", 16000)
-                    )
-                )
-            ));
+                new Document("$or", Arrays.asList( new Document("tags", pattern(me)),new Document("description", pattern(me)), new Document("title", pattern(me)) )),
+                new Document("location", new Document("$near", new Document("$geometry", new Document("type", "Point").append("coordinates", Arrays.asList( params.getLongitude(), params.getLatitude() )) ).append("$maxDistance", 16000) )
+            )));
         }else if(q.contains(Andromeda.taxon("proximity"))){
             String splr = q.get(Andromeda.taxon("proximity"));
             params.setIndex("locations");
@@ -88,22 +79,16 @@ public class Search {
                 params.setLatitude( Double.parseDouble(pl.getAttribute("Longitude")));
                 params.setLongitude(Double.parseDouble(pl.getAttribute("Latitude")));
                 return new Document("$and", Arrays.asList(
-                        new Document("$or", Arrays.asList(
-                                new Document("tags", pattern(subject)),
-                                new Document("description", pattern(subject)),
-                                new Document("title", pattern(subject))
-                        )),
-                        new Document("location", new Document("$near",
-                                new Document("$geometry", new Document("type", "Point")
-                                        .append("coordinates", Arrays.asList(Double.parseDouble(pl.getAttribute("Longitude")), Double.parseDouble(pl.getAttribute("Latitude"))))
-                                ).append("$maxDistance", 16000)
-                        )
-                        )
+                    new Document("$or", Arrays.asList(
+                            new Document("tags", pattern(subject)),
+                            new Document("description", pattern(subject)),
+                            new Document("title", pattern(subject))
+                    )), new Document("location", new Document("$near", new Document("$geometry", new Document("type", "Point").append("coordinates", Arrays.asList(Double.parseDouble(pl.getAttribute("Longitude")), Double.parseDouble(pl.getAttribute("Latitude")))) ).append("$maxDistance", 16000)))
                 ));
             }
         }
         ArrayList<Document> or = new ArrayList<>();
-        for (String word : q.tokens()) {
+        for (String word : q.cleanedTokens()) {
             or.add(new Document("link", pattern(word)));
             or.add(new Document("title", pattern(word)));
             or.add(new Document("description", pattern(word)));
@@ -118,7 +103,7 @@ public class Search {
             if(Andromeda.tools.contains(Andromeda.NUMERALS, q)){
 
                 result.setSource("com.telifie.connectors.wolfram");
-                return Rest.get(Packages.get("com.telifie.connectors.wolfram"), new HashMap<String, String>() {{
+                return Rest.get(Packages.get("com.telifie.connectors.wolfram"), new HashMap<>() {{
                     put("i", "q");
                     put("appid", Packages.get("com.telifie.connectors.wolfram").getAccess());
                 }});
@@ -128,7 +113,7 @@ public class Search {
             }else if(q.contains("weather")){
 
                 result.setSource("com.telifie.connectors.openweathermap");
-                return Rest.get(Packages.get("com.telifie.connectors.openweathermap"), new HashMap<String, String>() {{
+                return Rest.get(Packages.get("com.telifie.connectors.openweathermap"), new HashMap<>() {{
                     put("units", "imperial");
                     put("excluded", "hourly,minutely,current");
                     put("lat", String.valueOf(params.getLatitude()));
@@ -161,14 +146,18 @@ public class Search {
                     throw new RuntimeException(e);
                 }
                 //TODO map/radar lookup
-            }else if(u.startsWith("interrogative")){
-                //TODO find subject and inquiry
+            }else if(u.startsWith(Andromeda.taxon("interrogative"))){
+
+
+            }else if(u.startsWith(Andromeda.taxon("verb"))){
+
+
             }
         }
         return "";
     }
 
-    private ArrayList<Article> paginateArticles(ArrayList<Article> results, int page, int pageSize) {
+    private ArrayList<Article> paginate(ArrayList<Article> results, int page, int pageSize) {
         if(results.size() < pageSize){
             return results;
         }

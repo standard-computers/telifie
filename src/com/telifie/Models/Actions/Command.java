@@ -1,7 +1,6 @@
 package com.telifie.Models.Actions;
 
 import com.telifie.Models.*;
-import com.telifie.Models.Andromeda.Encoder;
 import com.telifie.Models.Connectors.Twilio;
 import com.telifie.Models.Parser;
 import com.telifie.Models.Clients.*;
@@ -10,8 +9,8 @@ import com.telifie.Models.Utilities.Package;
 import org.bson.Document;
 import org.json.JSONException;
 import org.json.JSONObject;
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -39,6 +38,7 @@ public class Command {
             return false;
         }else if(!session.getDomain().equals("telifie")){
             //TODO check separate permissions
+            return false;
         }
         return false;
     }
@@ -67,12 +67,13 @@ public class Command {
                         return new Result(410, this.command, "NOT FOUND");
                     }
                 }
-                Parameters params = new Parameters(content);
-                return new Search().execute(session, query, params);
-//                try {
-//                }catch(NullPointerException n){
-//                    return new Result(505, this.command, "SEARCH ERROR");
-//                }
+                try {
+                    //TODO common undo for search debugging
+                    Parameters params = new Parameters(content);
+                    return new Search().execute(session, query, params);
+                }catch(NullPointerException n){
+                    return new Result(505, this.command, "SEARCH ERROR");
+                }
             }
             return new Result(428, this.command, "JSON BODY EXPECTED");
         }
@@ -107,51 +108,48 @@ public class Command {
                     }
                     return new Result(428, this.command, "JSON BODY EXPECTED");
                 }else if(this.selectors.length == 3){ //telifie.com/domains/{delete|id}/{domainID}
-                    if(secSelector != null){
-                        try{
-                            Domain d = domains.withId(secSelector);
-                            switch (objSelector) {
-                                case "delete" -> {
-                                    if (d.getOwner().equals(actingUser)) {
-                                        if (domains.delete(d)) {
-                                            return new Result(200, this.command, "DOMAIN DELETED");
-                                        }
-                                        return new Result(505, this.command, "FAILED DOMAIN DELETION");
+                    try{
+                        Domain d = domains.withId(secSelector);
+                        switch (objSelector) {
+                            case "delete" -> {
+                                if (d.getOwner().equals(actingUser)) {
+                                    if (domains.delete(d)) {
+                                        return new Result(200, this.command, "DOMAIN DELETED");
                                     }
-                                    return new Result(401, this.command, "DOMAIN ACCESS DENIED");
+                                    return new Result(505, this.command, "FAILED DOMAIN DELETION");
                                 }
-                                case "id" -> {
-                                    if(d.hasPermission(session.getUser())){
+                                return new Result(401, this.command, "DOMAIN ACCESS DENIED");
+                            }
+                            case "id" -> {
+                                if(d.hasPermission(session.getUser())){
+                                    return new Result(this.command, "domain", d);
+                                }
+                                return new Result(403, "DOMAIN ACCESS DENIED");
+                            }
+                            case "check" -> {
+                                int p = d.getPermissions(session.getUser());
+                                if(p == 0){
+                                    return new Result(200, "OWNER");
+                                }else if(p == 1){
+                                    return new Result(206, "VIEWER");
+                                }else if(p == 2){
+                                    return new Result(207, "EDITOR");
+                                }
+                                return new Result(403, "DOMAIN ACCESS DENIED");
+                            }
+                            case "update" -> {
+                                if (content != null) {
+                                    if (domains.update(d, content)) { //TODO content check
                                         return new Result(this.command, "domain", d);
                                     }
-                                    return new Result(403, "DOMAIN ACCESS DENIED");
                                 }
-                                case "check" -> {
-                                    int p = d.getPermissions(session.getUser());
-                                    if(p == 0){
-                                        return new Result(200, "OWNER");
-                                    }else if(p == 1){
-                                        return new Result(206, "VIEWER");
-                                    }else if(p == 2){
-                                        return new Result(207, "EDITOR");
-                                    }
-                                    return new Result(403, "DOMAIN ACCESS DENIED");
-                                }
-                                case "update" -> {
-                                    if (content != null) {
-                                        if (domains.update(d, content)) { //TODO content check
-                                            return new Result(this.command, "domain", d);
-                                        }
-                                    }
-                                    return new Result(428, this.command, "JSON BODY EXPECTED");
-                                }
+                                return new Result(428, this.command, "JSON BODY EXPECTED");
                             }
-                            return new Result(404, this.command, "BAD DOMAIN SELECTOR");
-                        }catch (NullPointerException n){
-                            return new Result(404, this.command, "DOMAIN NOT FOUND");
                         }
+                        return new Result(404, this.command, "BAD DOMAIN OPTION");
+                    }catch (NullPointerException n){
+                        return new Result(404, this.command, "DOMAIN NOT FOUND");
                     }
-                    return new Result(428, this.command, "DOMAIN ID EXPECTED");
                 }else if(this.selectors.length == 4){ //telifie.com/domains/{id}/users/{add|remove}
                     try{
                         Domain d = domains.withId(objSelector);
@@ -178,7 +176,7 @@ public class Command {
                                     return new Result(505, this.command, "FAILED DOMAIN USERS UPDATE");
                                 }
                             }
-                            return new Result(428, this.command, "BAD DOMAIN USER SELECTOR");
+                            return new Result(428, this.command, "BAD DOMAIN USER OPTION");
                         }
                         return new Result(428, this.command, "JSON BODY EXPECTED");
                     }catch (NullPointerException n){
@@ -186,7 +184,7 @@ public class Command {
                     }
                 }
             }
-            return new Result(200, this.command, "BAD DOMAINS SELECTOR");
+            return new Result(200, this.command, "BAD DOMAINS OPTION");
         }
         /*
          * Accessing Articles
@@ -298,7 +296,7 @@ public class Command {
                             return new Result(401, this.command, "INSUFFICIENT PERMISSIONS");
                         }
                     }
-                    return new Result(404, this.command, "BAD ARTICLES SELECTOR");
+                    return new Result(404, this.command, "BAD ARTICLES OPTION");
                 }catch (NullPointerException n){
                     return new Result(404, this.command, "ARTICLE NOT FOUND");
                 }
@@ -325,27 +323,30 @@ public class Command {
                 return new Result(428, "ARTICLE JSON DATA EXPECTED");
             }else if(objSelector.equals("drafts")){
                 DraftsClient drafts = new DraftsClient(session);
-                if(secSelector.equals("id")){
-                    try {
-                        return new Result(this.command, "article", drafts.withId(secSelector));
-                    } catch (NullPointerException n) {
-                        return new Result(404, this.command, "DRAFT NOT FOUND");
-                    }
-                }else if(secSelector.equals("create")){
-                    if(content != null){
+                if(secSelector != null){
+                    if(secSelector.equals("id")){
                         try {
-                            Article na = new Article(content);
-                            if(drafts.create(na)){
-                                return new Result(this.command, "article", na);
-                            }
-                            return new Result(505, this.command, "FAILED DRAFT ARTICLE");
-                        }catch(JSONException e){
-                            return new Result(505, this.command, "BAD DRAFT JSON");
+                            return new Result(this.command, "article", drafts.withId(secSelector));
+                        } catch (NullPointerException n) {
+                            return new Result(404, this.command, "DRAFT NOT FOUND");
                         }
+                    }else if(secSelector.equals("create")){
+                        if(content != null){
+                            try {
+                                Article na = new Article(content);
+                                if(drafts.create(na)){
+                                    return new Result(this.command, "article", na);
+                                }
+                                return new Result(505, this.command, "FAILED DRAFT ARTICLE");
+                            }catch(JSONException e){
+                                return new Result(505, this.command, "BAD DRAFT JSON");
+                            }
+                        }
+                        return new Result(428, "DRAFT JSON DATA EXPECTED");
                     }
-                    return new Result(428, "DRAFT JSON DATA EXPECTED");
+                    return new Result(this.command, "articles", drafts.forUser());
                 }
-                return new Result(this.command, "articles", drafts.forUser());
+                return new Result(404, this.command, "BAD DRAFTS OPTION");
             }
             return new Result(this.command,"stats", articles.stats());
         }
@@ -374,7 +375,7 @@ public class Command {
                             }
                             return new Result(505, this.command, "FAILED ARTICLE UNSAVE");
                         }
-                        return new Result(404, this.command, "BAD COLLECTION SELECTOR");
+                        return new Result(404, this.command, "BAD COLLECTION OPTION");
                     }catch (NullPointerException n){
                         return new Result(404, this.command, "ARTICLE NOT FOUND");
                     }
@@ -415,7 +416,7 @@ public class Command {
                                 return new Result(401, this.command, "NO COLLECTION PERMISSIONS");
                             }
                         }
-                        return new Result(404, this.command, "BAD COLLECTIONS SELECTOR");
+                        return new Result(404, this.command, "BAD COLLECTIONS OPTION");
                     }catch (NullPointerException n){
                         return new Result(404, this.command, "COLLECTION NOT FOUND");
                     }
@@ -459,9 +460,9 @@ public class Command {
                         }
                         return new Result(428, this.command, "JSON 'photo' EXPECTED");
                     }
-                    return new Result(404, this.command, "BAD USERS SELECTOR");
+                    return new Result(404, this.command, "BAD USERS OPTION");
                 }
-                return new Result(404, this.command, "BAD USERS SELECTOR");
+                return new Result(404, this.command, "BAD USERS OPTION");
 
             }else if(objSelector.equals("create")){
                 if(content != null){
@@ -497,12 +498,8 @@ public class Command {
             if(content != null){
                 String mode = content.getString("mode");
                 if(mode != null){
-                    String uri = "";
-                    try {
-                        uri = URLDecoder.decode(content.getString("uri"), "UTF-8");
-                    } catch (UnsupportedEncodingException e) {
-                        throw new RuntimeException(e);
-                    }
+                    String uri;
+                    uri = URLDecoder.decode(content.getString("uri"), StandardCharsets.UTF_8);
                     switch (mode) {
                         case "batch" -> {
                             ArrayList<Article> parsed = Parser.engines.batch(uri);
@@ -510,15 +507,6 @@ public class Command {
                                 if (content.getBoolean("insert") != null && content.getBoolean("insert")) {
                                     articles.createMany(parsed);
                                 }
-                                return new Result(this.command, "articles", parsed);
-                            }
-                            return new Result(404, this.command, "NO ARTICLES");
-                        }
-                        case "group" -> {
-                            boolean insert = (content.getBoolean("insert") != null ? content.getBoolean("insert") : false);
-                            new Parser(session);
-                            ArrayList<Article> parsed = Parser.engines.group(uri, insert);
-                            if (parsed != null) {
                                 return new Result(this.command, "articles", parsed);
                             }
                             return new Result(404, this.command, "NO ARTICLES");
@@ -547,10 +535,6 @@ public class Command {
                                 return new Result(200, this.command, "CRAWLING");
                             }
                             return new Result(428, this.command, "URI REQUIRED");
-                        }
-                        case "text" -> {
-                            String text = content.getString("text");
-                            Encoder.tokenize(text, false);
                         }
                     }
                 }
@@ -679,7 +663,7 @@ public class Command {
          */
         else if(selector.equals("ping")){
             if(content != null){
-
+                return new Result(200, this.command, "RECEIVED");
             }
             return new Result(428, this.command, "JSON BODY EXPECTED");
         }

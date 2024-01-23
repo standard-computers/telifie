@@ -18,6 +18,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -120,7 +121,7 @@ public class Parser {
                     ArrayList<String> links = wp.links;
                     int fd = depth;
                     links.forEach(link -> {
-                        String href = fixLink(host, link.split("\\?")[0]);
+                        String href = Network.fixLink(host, link.split("\\?")[0]);
                         if(Asset.isWebpage(href) && !Andromeda.tools.contains(new String[]{"facebook.com", "instagram.com", "spotify.com", "linkedin.com", "youtube.com", "pinterest.com", "twitter.com", "tumblr.com", "reddit.com"}, href)){
                             if((allowExternalCrawl && !href.contains(host)) || (!allowExternalCrawl && href.contains(host))){
                                 try {
@@ -162,7 +163,7 @@ public class Parser {
         public static ArrayList<Article> batch(String uri){
             if(uri.endsWith("csv")) {
                 try {
-                    URL url = new URL(uri);
+                    URL url = Network.url(uri);
                     InputStream inputStream = url.openStream();
                     Files.copy(inputStream, Paths.get(Telifie.configDirectory() + "temp/" + url.getPath().split("/")[url.getPath().split("/").length - 1]), StandardCopyOption.REPLACE_EXISTING);
                     ArrayList<String[]> lines = new ArrayList<>();
@@ -196,15 +197,15 @@ public class Parser {
                         article.addAttribute(new Attribute("*batch", batchId));
                         for (int g = 0; g < articleData.length; g++) {
                             String value = articleData[g];
-                            if (g == titleIndex && titleIndex > -1) {
+                            if (g == titleIndex) {
                                 article.setTitle(Andromeda.tools.escape(value));
-                            } else if (g == descriptionIndex && descriptionIndex > -1) {
+                            } else if (g == descriptionIndex) {
                                 article.setDescription(value);
-                            } else if (g == linkIndex && linkIndex > -1) {
+                            } else if (g == linkIndex) {
                                 article.setLink(value);
-                            } else if (g == contentIndex && contentIndex > -1) {
+                            } else if (g == contentIndex) {
                                 article.setContent(Andromeda.tools.escape(value));
-                            } else if(g == iconIndex && iconIndex > -1){
+                            } else if(g == iconIndex){
                                 article.setIcon(value);
                             } else if(g == tagsIndex){
                                 String[] tags = value.split(",");
@@ -216,62 +217,28 @@ public class Parser {
                                     article.addAttribute(new Attribute(headers[g].trim(), value));
                                 }
                             }
+                            if(!article.getLink().isEmpty()){
+                                String l = URLDecoder.decode(article.getLink(), StandardCharsets.UTF_8);
+                                try {
+                                    Thread.sleep(4000);
+                                    Article pa = Parser.engines.website(l);
+                                    //TODO more attributes, icon,
+
+                                    article.setContent(pa.getContent());
+                                    String[] tags = articleData[2].split(",");
+                                    for (String tag : tags) {
+                                        article.addTag(tag.trim().toLowerCase());
+                                    }
+                                } catch (InterruptedException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }
                         }
                         articles.add(article);
                     }
                     return articles;
                 } catch (IOException e) {
                     Log.error("FAILED BATCH UPLOAD", "PARx124");
-                }
-            }
-            return null;
-        }
-
-
-        public static ArrayList<Article> group(String uri, boolean insert){
-            if(uri.endsWith("csv")) {
-                try {
-                    URL url = new URL(uri);
-                    InputStream inputStream = url.openStream();
-                    Files.copy(inputStream, Paths.get(Telifie.configDirectory() + "temp/" + url.getPath().split("/")[url.getPath().split("/").length - 1]), StandardCopyOption.REPLACE_EXISTING);
-                    ArrayList<String[]> lines = new ArrayList<>();
-                    try (CSVReader reader = new CSVReader(new FileReader(Telifie.configDirectory() + "temp/" + url.getPath().split("/")[url.getPath().split("/").length - 1]))) {
-                        String[] fields;
-                        while ((fields = reader.readNext()) != null) {
-                            lines.add(fields);
-                        }
-                        Log.message("PARSING CSV GROUP UPLOAD", "PARx105");
-                    } catch (IOException | CsvException e) {
-                        Log.error("FAILED CSV FILE READ : PARSER / GROUP", "PARx115");
-                    }
-                    ArrayList<Article> parsed = new ArrayList<>();
-                    for (int i = 1; i < lines.size(); i++) {
-                        String[] articleData = lines.get(i);
-                        String l = articleData[0];
-                        try {
-                            l = URLDecoder.decode(l, "UTF-8");
-                        } catch (UnsupportedEncodingException e) {
-                            throw new RuntimeException(e);
-                        }
-                        try {
-                            Thread.sleep(4000);
-                            Article article = Parser.engines.website(l);
-                            article.setDescription(articleData[1]);
-                            String[] tags = articleData[2].split(",");
-                            for(int t = 0; t<tags.length; t++){
-                                article.addTag(tags[t].trim().toLowerCase());
-                            }
-                            parsed.add(article);
-                            if(insert){
-                                articles.create(article);
-                            }
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                    return parsed;
-                } catch (IOException e) {
-                    Log.error("FAILED GROUP UPLOAD", "PARx125");
                 }
             }
             return null;
@@ -292,12 +259,6 @@ public class Parser {
         }
 
         public static Article document(String uri){
-            Article a = new Article();
-            a.setDescription("Document");
-            return null;
-        }
-
-        public static Article pdf(){
             Article a = new Article();
             a.setDescription("Document");
             return null;
@@ -341,13 +302,8 @@ public class Parser {
 
         public Article extract(String url, Document document){
             Article article = new Article();
-            try {
-                URL rootUri = new URL(url);
-                root = rootUri.getProtocol() + "://" + rootUri.getHost() + "/";
-            } catch (MalformedURLException e) {
-                Console.log("FILED URL!!!");
-                throw new RuntimeException(e);
-            }
+            URL rootUri = Network.url(url);
+            root = rootUri.getProtocol() + "://" + rootUri.getHost() + "/";
             article.setTitle(Andromeda.tools.htmlEscape(document.title()));
             article.setLink(url);
             document.getElementsByTag("meta").forEach(tag -> {
@@ -382,14 +338,14 @@ public class Parser {
                 String href = linkTag.attr("href");
                 if(rel.contains("icon") && !url.contains("/wiki")){
                     try {
-                        article.setIcon(fixLink("https://" + new URL(url).getHost(), href));
+                        article.setIcon(Network.fixLink("https://" + new URL(url).getHost(), href));
                     } catch (MalformedURLException e) {
                         Log.error("FAILED URI TO URL : " + url, "PARx111");
                     }
                 }
             });
             document.getElementsByTag("img").forEach(image -> {
-                String src = fixLink(url, image.attr("src"));
+                String src = Network.fixLink(url, image.attr("src"));
                 if(!src.isEmpty() && !src.startsWith("data:") && articles.withLink(src) == null){
                     CompletableFuture.runAsync(() -> {
                         Asset ass = new Asset(src);
@@ -447,7 +403,7 @@ public class Parser {
                         if (label != null && data != null) {
                             String key = Andromeda.tools.sentenceCase(label.text().trim());
                             String value = Andromeda.tools.htmlEscape(Andromeda.tools.sentenceCase(data.text().replaceAll("\\[.*?]", "").trim()));
-                            if(!key.toLowerCase().equals("references")){
+                            if(!key.equalsIgnoreCase("references")){
                                 article.addAttribute(new Attribute(key, value));
                             }
                         }
@@ -477,7 +433,7 @@ public class Parser {
                 article.addAttribute(new Attribute("Email", em.group().trim()));
             }
             Pattern addressPattern = Pattern.compile(
-                    "\\b\\d+\\s+([A-Za-z0-9\\.\\-\\'\\s]+)\\s+" + // Street number and name
+                    "\\b\\d+\\s+([A-Za-z0-9.\\-'\\s]+)\\s+" + // Street number and name
                             "(St\\.?|Street|Rd\\.?|Road|Ave\\.?|Avenue|Blvd\\.?|Boulevard|Ln\\.?|Lane|Dr\\.?|Drive|Ct\\.?|Court)\\s+" + // Street type
                             "(\\w+),\\s+" + // City
                             "(Ohio|OH|Ala|AL|Alaska|AK|Ariz|AZ|Ark|AR|Calif|CA|Colo|CO|Conn|CT|Del|DE|Fla|FL|Ga|GA|Hawaii|HI|Idaho|ID|Ill|IL|Ind|IN|Iowa|IA|Kans|KS|Ky|KY|La|LA|Maine|ME|Md|MD|Mass|MA|Mich|MI|Minn|MN|Miss|MS|Mo|MO|Mont|MT|Nebr|NE|Nev|NV|N\\.H\\.|NH|N\\.J\\.|NJ|N\\.M\\.|NM|N\\.Y\\.|NY|N\\.C\\.|NC|N\\.D\\.|ND|Okla|OK|Ore|OR|Pa|PA|R\\.I\\.|RI|S\\.C\\.|SC|S\\.D\\.|SD|Tenn|TN|Tex|TX|Utah|UT|Vt|VT|Va|VA|Wash|WA|W\\.Va|WV|Wis|WI|Wyo|WY)\\s+" + // State
@@ -516,7 +472,7 @@ public class Parser {
             String prtxt = markdown.toString().replaceAll("\\[.*?]", "").trim();
             Pattern dates = Pattern.compile("\\b(\\d{1,2})\\s(January|February|March|April|May|June|July|August|September|October|November|December)\\s(\\d{4})\\b");
             Matcher dm = dates.matcher(prtxt);
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             while (dm.find()) {
                 String replacement = dm.group(2) + " " + dm.group(1) + ", " + dm.group(3);
                 dm.appendReplacement(sb, replacement);
@@ -532,7 +488,7 @@ public class Parser {
         private final List<String> disallowed = new ArrayList<>();
         public RobotPermission(String host) {
             try {
-                URL url = new URL(host + "/robots.txt");
+                URL url = Network.url(host + "/robots.txt");
                 try (Scanner scanner = new Scanner(url.openStream())) {
                     boolean userAgent = false;
                     while (scanner.hasNextLine()) {
@@ -561,7 +517,7 @@ public class Parser {
     public static ArrayList<String> extractLinks(Elements elements, String root){
         ArrayList<String> links = new ArrayList<>();
         elements.forEach(el -> {
-            String fxd = fixLink(root, el.attr("href"));
+            String fxd = Network.fixLink(root, el.attr("href"));
             if(Asset.isValidLink(fxd)){
                 links.add(fxd);
             }
@@ -569,19 +525,5 @@ public class Parser {
         return links;
     }
 
-    public static String fixLink(String url, String src){
-        if(src.startsWith("//")){ //SRC needs protocol
-            return "https:" + src.trim();
-        }else if(src.startsWith("/")){ //SRC is subdirectory of parent URL
-            if(url.endsWith("/")) {
-                return url.substring(0, url.length() - 1) + src;
-            }
-            return url + src;
-        }else if(src.startsWith("www")){ //SRC needs protocol
-            return "https://" + src;
-        }else if(src.startsWith("./")){
-            return (url + "/" + src).replaceFirst("\\./", "");
-        }
-        return src;
-    }
+
 }
