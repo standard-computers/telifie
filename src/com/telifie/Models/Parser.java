@@ -10,6 +10,7 @@ import com.telifie.Models.Utilities.Console;
 import com.telifie.Models.Articles.*;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Utilities.*;
+import com.telifie.Models.Utilities.Servers.Network;
 import org.json.JSONObject;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -18,7 +19,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import java.io.*;
 import java.net.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -99,10 +99,9 @@ public class Parser {
                 return null;
             }
             try {
-                URL urlObj = new URL(url);
-                String host = urlObj.getProtocol() + "://" + urlObj.getHost();
+                String host = Network.url(url).getProtocol() + "://" + Network.url(url).getHost();
                 RobotPermission robotPermission = new RobotPermission(host);
-                if(!robotPermission.isAllowed(urlObj.getPath())){
+                if(!robotPermission.isAllowed(Network.url(url).getPath())){
                     Log.flag("ROBOTS DISALLOWED : " + url, "PARx101");
                     return null;
                 }
@@ -190,11 +189,11 @@ public class Parser {
                             case "tags" -> tagsIndex = i;
                         }
                     }
-                    String batchId = String.valueOf(Telifie.epochTime());
+                    String bid = String.valueOf(Telifie.epochTime());
                     for (int i = 1; i < lines.size(); i++) {
                         String[] articleData = lines.get(i);
                         Article article = new Article();
-                        article.addAttribute(new Attribute("*batch", batchId));
+                        article.addAttribute(new Attribute("*batch", bid));
                         for (int g = 0; g < articleData.length; g++) {
                             String value = articleData[g];
                             if (g == titleIndex) {
@@ -218,12 +217,11 @@ public class Parser {
                                 }
                             }
                             if(!article.getLink().isEmpty()){
-                                String l = URLDecoder.decode(article.getLink(), StandardCharsets.UTF_8);
+                                String l = Network.decode(article.getLink());
                                 try {
                                     Thread.sleep(4000);
                                     Article pa = Parser.engines.website(l);
                                     //TODO more attributes, icon,
-
                                     article.setContent(pa.getContent());
                                     String[] tags = articleData[2].split(",");
                                     for (String tag : tags) {
@@ -337,11 +335,7 @@ public class Parser {
                 String rel = linkTag.attr("rel");
                 String href = linkTag.attr("href");
                 if(rel.contains("icon") && !url.contains("/wiki")){
-                    try {
-                        article.setIcon(Network.fixLink("https://" + new URL(url).getHost(), href));
-                    } catch (MalformedURLException e) {
-                        Log.error("FAILED URI TO URL : " + url, "PARx111");
-                    }
+                    article.setIcon(Network.fixLink("https://" + Network.url(url).getHost(), href));
                 }
             });
             document.getElementsByTag("img").forEach(image -> {
@@ -389,7 +383,7 @@ public class Parser {
                 }
             });
             Element body = document.getElementsByTag("body").get(0);
-            Element infobox = body.selectFirst(".infobox"); // Assuming the infobox has a class named "infobox"
+            Element infobox = body.selectFirst(".infobox");
             body.select("table, script, header, style, img, svg, button, label, form, input, aside, code, footer, nav").remove();
             if(url.contains("/wiki")){
                 article.setSource(new Source("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/mirror/uploads/sources/wikipedia.png", "Wikipedia", article.getLink().trim()));
@@ -421,23 +415,23 @@ public class Parser {
             if (matcher.find()) {
                 article.addAttribute(new Attribute("Price", matcher.group()));
             }
-            Pattern phones = Pattern.compile("\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b"); //Extract phone number
+            Pattern phones = Pattern.compile("\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b");
             Matcher m = phones.matcher(whole_text);
             if(m.find() && !url.contains("/wiki")){
                 String phoneNumber = m.group().trim().replaceAll("[^0-9]", "").replaceFirst("(\\d{3})(\\d{3})(\\d+)", "($1) $2 - $3");
                 article.addAttribute(new Attribute("Phone", phoneNumber));
             }
-            Pattern emails = Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\\\.[A-Za-z]{2,6}", Pattern.CASE_INSENSITIVE); // Extract email address
+            Pattern emails = Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\\\.[A-Za-z]{2,6}", Pattern.CASE_INSENSITIVE);
             Matcher em = emails.matcher(whole_text);
             if (em.find()) {
                 article.addAttribute(new Attribute("Email", em.group().trim()));
             }
             Pattern addressPattern = Pattern.compile(
-                    "\\b\\d+\\s+([A-Za-z0-9.\\-'\\s]+)\\s+" + // Street number and name
-                            "(St\\.?|Street|Rd\\.?|Road|Ave\\.?|Avenue|Blvd\\.?|Boulevard|Ln\\.?|Lane|Dr\\.?|Drive|Ct\\.?|Court)\\s+" + // Street type
-                            "(\\w+),\\s+" + // City
-                            "(Ohio|OH|Ala|AL|Alaska|AK|Ariz|AZ|Ark|AR|Calif|CA|Colo|CO|Conn|CT|Del|DE|Fla|FL|Ga|GA|Hawaii|HI|Idaho|ID|Ill|IL|Ind|IN|Iowa|IA|Kans|KS|Ky|KY|La|LA|Maine|ME|Md|MD|Mass|MA|Mich|MI|Minn|MN|Miss|MS|Mo|MO|Mont|MT|Nebr|NE|Nev|NV|N\\.H\\.|NH|N\\.J\\.|NJ|N\\.M\\.|NM|N\\.Y\\.|NY|N\\.C\\.|NC|N\\.D\\.|ND|Okla|OK|Ore|OR|Pa|PA|R\\.I\\.|RI|S\\.C\\.|SC|S\\.D\\.|SD|Tenn|TN|Tex|TX|Utah|UT|Vt|VT|Va|VA|Wash|WA|W\\.Va|WV|Wis|WI|Wyo|WY)\\s+" + // State
-                            "(\\d{5}(?:[-\\s]\\d{4})?)", // ZIP code
+                    "\\b\\d+\\s+([A-Za-z0-9.\\-'\\s]+)\\s+" +
+                            "(St\\.?|Street|Rd\\.?|Road|Ave\\.?|Avenue|Blvd\\.?|Boulevard|Ln\\.?|Lane|Dr\\.?|Drive|Ct\\.?|Court)\\s+" +
+                            "(\\w+),\\s+" +
+                            "(Ohio|OH|Ala|AL|Alaska|AK|Ariz|AZ|Ark|AR|Calif|CA|Colo|CO|Conn|CT|Del|DE|Fla|FL|Ga|GA|Hawaii|HI|Idaho|ID|Ill|IL|Ind|IN|Iowa|IA|Kans|KS|Ky|KY|La|LA|Maine|ME|Md|MD|Mass|MA|Mich|MI|Minn|MN|Miss|MS|Mo|MO|Mont|MT|Nebr|NE|Nev|NV|N\\.H\\.|NH|N\\.J\\.|NJ|N\\.M\\.|NM|N\\.Y\\.|NY|N\\.C\\.|NC|N\\.D\\.|ND|Okla|OK|Ore|OR|Pa|PA|R\\.I\\.|RI|S\\.C\\.|SC|S\\.D\\.|SD|Tenn|TN|Tex|TX|Utah|UT|Vt|VT|Va|VA|Wash|WA|W\\.Va|WV|Wis|WI|Wyo|WY)\\s+" +
+                            "(\\d{5}(?:[-\\s]\\d{4})?)",
                     Pattern.CASE_INSENSITIVE);
             Matcher am = addressPattern.matcher(whole_text);
             while (am.find()) {
@@ -524,6 +518,4 @@ public class Parser {
         });
         return links;
     }
-
-
 }

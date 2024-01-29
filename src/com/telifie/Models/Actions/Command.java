@@ -6,11 +6,10 @@ import com.telifie.Models.Parser;
 import com.telifie.Models.Clients.*;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Package;
+import com.telifie.Models.Utilities.Servers.Network;
 import org.bson.Document;
 import org.json.JSONException;
 import org.json.JSONObject;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,8 +29,7 @@ public class Command {
     }
 
     private boolean hasDomainPermission(User user, Session session, boolean allowPublicDomainAction){
-        if((user.getPermissions() >= 12 && session.getDomain().equals("telifie") && !allowPublicDomainAction)
-                || (session.getDomain().equals("telifie") && allowPublicDomainAction)){
+        if((user.getPermissions() >= 12 && session.getDomain().equals("telifie") && !allowPublicDomainAction) || (session.getDomain().equals("telifie") && allowPublicDomainAction)){
             //TODO, share changes with data team for approval and change status on Article
             return true;
         }else if(session.getDomain().equals("telifie") && !allowPublicDomainAction){
@@ -49,8 +47,6 @@ public class Command {
         String objSelector = (this.selectors.length > 1 ? this.get(1) : "");
         String secSelector = (this.selectors.length > 2 ? this.get(2) : null);
         String terSelector = (this.selectors.length > 3 ? this.get(3) : null);
-        String actingUser = session.getUser();
-
         if(selector.equals("search")){
             if(content != null){
                 String query = (content.getString("query") == null ? "" : content.getString("query"));
@@ -67,20 +63,16 @@ public class Command {
                         return new Result(410, this.command, "NOT FOUND");
                     }
                 }
-                try {
-                    //TODO common undo for search debugging
                     Parameters params = new Parameters(content);
                     return new Search().execute(session, query, params);
-                }catch(NullPointerException n){
-                    return new Result(505, this.command, "SEARCH ERROR");
-                }
+//                try {
+                    //TODO common undo for search debugging
+//                }catch(NullPointerException n){
+//                    return new Result(505, this.command, "SEARCH ERROR");
+//                }
             }
             return new Result(428, this.command, "JSON BODY EXPECTED");
-        }
-        /*
-         * Domains: owner, member (add/remove), create, update
-         */
-        else if(selector.equals("domains")){
+        }else if(selector.equals("domains")){
 
             if(this.selectors.length >= 2){ //telifie.com/domains/{owner|member|create|update}
                 DomainsClient domains = new DomainsClient(session);
@@ -91,14 +83,14 @@ public class Command {
                     return new Result(this.command, "domains", foundDomains);
                 }else if(objSelector.equals("member")){ //Domains they're a member of
                     //TODO ensure it works
-                    User user = new UsersClient().getUserWithId(session.getUser());
+                    User user = new UsersClient().getUserWithId(session.user);
                     foundDomains = domains.forMember(user.getEmail());
                     return new Result(this.command, "domains", foundDomains);
                 }else if(objSelector.equals("create")){ //Creating a new domain
                     if(content != null){
                         String domainName, domainIcon;
                         if((domainName = content.getString("name")) != null && (domainIcon = content.getString("icon")) != null && content.getInteger("permissions") != null){
-                            Domain newDomain = new Domain(actingUser, domainName, domainIcon, content.getInteger("permissions"));
+                            Domain newDomain = new Domain(session.user, domainName, domainIcon, content.getInteger("permissions"));
                             if(domains.create(newDomain)){
                                 return new Result(this.command, "domain", newDomain);
                             }
@@ -112,7 +104,7 @@ public class Command {
                         Domain d = domains.withId(secSelector);
                         switch (objSelector) {
                             case "delete" -> {
-                                if (d.getOwner().equals(actingUser)) {
+                                if (d.getOwner().equals(session.user)) {
                                     if (domains.delete(d)) {
                                         return new Result(200, this.command, "DOMAIN DELETED");
                                     }
@@ -121,13 +113,13 @@ public class Command {
                                 return new Result(401, this.command, "DOMAIN ACCESS DENIED");
                             }
                             case "id" -> {
-                                if(d.hasPermission(session.getUser())){
+                                if(d.hasPermission(session.user)){
                                     return new Result(this.command, "domain", d);
                                 }
                                 return new Result(403, "DOMAIN ACCESS DENIED");
                             }
                             case "check" -> {
-                                int p = d.getPermissions(session.getUser());
+                                int p = d.getPermissions(session.user);
                                 if(p == 0){
                                     return new Result(200, "OWNER");
                                 }else if(p == 1){
@@ -185,13 +177,9 @@ public class Command {
                 }
             }
             return new Result(200, this.command, "BAD DOMAINS OPTION");
-        }
-        /*
-         * Accessing Articles
-         */
-        else if(selector.equals("articles")){
+        }else if(selector.equals("articles")){
 
-            User user = new UsersClient().getUserWithId(session.getUser());
+            User user = new UsersClient().getUserWithId(session.user);
             if(content != null){
                 if(content.getString("domain") != null){
                     String targetDomain = content.getString("domain");
@@ -349,12 +337,7 @@ public class Command {
                 return new Result(404, this.command, "BAD DRAFTS OPTION");
             }
             return new Result(this.command,"stats", articles.stats());
-        }
-        /*
-         * Accessing Collections
-         * Save, unsave, create, delete, update,
-         */
-        else if(selector.equals("collections")){
+        }else if(selector.equals("collections")){
 
             CollectionsClient collections = new CollectionsClient(session);
             if(this.selectors.length >= 4){ //Saving/Unsaving articles in collection
@@ -393,7 +376,7 @@ public class Command {
                                     if (content.getString("name") == null) {
                                         return new Result(428, this.command, "COLLECTION NAME EXPECTED");
                                     }
-                                    if(c.getUser().equals(session.getUser())){
+                                    if(c.getUser().equals(session.user)){
                                         if (collections.update(c, content)) {
                                             return new Result(200, this.command, "COLLECTION UPDATED");
                                         }
@@ -410,7 +393,7 @@ public class Command {
                                 return new Result(505, this.command, "FAILED COLLECTION DELETION");
                             }
                             case "id" -> {
-                                if(c.getUser().equals(session.getUser())) {
+                                if(c.getUser().equals(session.user)) {
                                     return new Result(this.command, "collection", collections.withArticles(secSelector));
                                 }
                                 return new Result(401, this.command, "NO COLLECTION PERMISSIONS");
@@ -433,36 +416,23 @@ public class Command {
                 }
                 return new Result(428, "COLLECTION ID REQUIRED");
             }
-            ArrayList<Collection> usersCollections = collections.forUser(actingUser);
+            ArrayList<Collection> usersCollections = collections.forUser(session.user);
             return new Result(this.command, "collections", usersCollections);
-        }
-        /*
-         * Accessing Users
-         */
-        else if(selector.equals("users")){
+        }else if(selector.equals("users")){
 
             UsersClient users = new UsersClient();
             if(this.selectors.length >= 3){
                 if(objSelector.equals("update") && content != null){
-                    User changedUser = users.getUserWithId(session.getUser());
+                    User changedUser = users.getUserWithId(session.user);
                     if(secSelector.equals("settings")){
-                        if(users.updateTheme(changedUser, content.getString("settings"))){
+                        if(users.updateSettings(changedUser, content.getString("settings"))){
                             return new Result(this.command, "user", changedUser);
                         }
                         return new Result(400, "Bad Request");
-                    }else if(secSelector.equals("photo")){
-                        if(content.getString("photo") != null) {
-                            String photoUri = content.getString("photo");
-                            if (users.updatePhoto(changedUser, photoUri)) {
-                                return new Result(200, this.command, "USER PHOTO UPDATED");
-                            }
-                            return new Result(505, this.command, "FAILED USER PHOTO UPDATE");
-                        }
-                        return new Result(428, this.command, "JSON 'photo' EXPECTED");
                     }
-                    return new Result(404, this.command, "BAD USERS OPTION");
+                    return new Result(404, this.command, "BAD USER OPTION");
                 }
-                return new Result(404, this.command, "BAD USERS OPTION");
+                return new Result(404, this.command, "BAD USER OPTION");
 
             }else if(objSelector.equals("create")){
                 if(content != null){
@@ -489,17 +459,13 @@ public class Command {
                 return new Result(404, this.command, "USER NOT FOUND");
             }
             return new Result(404, this.command, "INVALID EMAIL");
-        }
-        /*
-         * Accessing Parser
-         */
-        else if(selector.equals("parser")){
+        }else if(selector.equals("parser")){
             ArticlesClient articles = new ArticlesClient(session);
             if(content != null){
                 String mode = content.getString("mode");
                 if(mode != null){
                     String uri;
-                    uri = URLDecoder.decode(content.getString("uri"), StandardCharsets.UTF_8);
+                    uri = Network.decode(content.getString("uri"));
                     switch (mode) {
                         case "batch" -> {
                             ArrayList<Article> parsed = Parser.engines.batch(uri);
@@ -541,11 +507,7 @@ public class Command {
                 return new Result(428, this.command, "PARSER MODE REQUIRED");
             }
             return new Result(428, this.command, "JSON BODY EXPECTED");
-        }
-        /*
-         * Connect: Creating or logging in user
-         */
-        else if(selector.equals("connect")){
+        }else if(selector.equals("connect")){
             if(content != null){
                 String email = content.getString("email");
                 UsersClient u = new UsersClient();
@@ -566,11 +528,7 @@ public class Command {
                 return new Result(404, "USER NOT FOUND");
             }
             return new Result(428, "JSON BODY EXPECTED");
-        }
-        /*
-         * Verify: Unlocking account using one-time 2fa token
-         */
-        else if(selector.startsWith("verify")){
+        }else if(selector.startsWith("verify")){
             if(content != null){
                 String email = content.getString("email");
                 String code = Telifie.md5(content.getString("code"));
@@ -618,7 +576,7 @@ public class Command {
             ConnectorsClient connectors = new ConnectorsClient(session);
             if(content != null){
                 Connector connector = new Connector(content);
-                connector.setUser(actingUser);
+                connector.setUser(session.user);
                 boolean connectorUsed = connectors.exists(connector);
                 if(connector.getId().equals("com.telifie.connectors.spotify")){
                     return new Result(501, this.command, "FAILED PARSING SPOTIFY");
@@ -640,11 +598,7 @@ public class Command {
                 return new Result(404, this.command, "CONNECTOR NOT FOUND");
             }
             return new Result(428, this.command, "CONNECTOR NAME REQUIRED");
-        }
-        /*
-         * For receiving messages through Twilio
-         */
-        else if(selector.equals("messaging")){
+        }else if(selector.equals("messaging")){
             String from  = content.getString("From");
             String message = content.getString("Body");
             Console.log("Income message -> " + message);
@@ -656,30 +610,19 @@ public class Command {
             }
             Twilio.send(user.getPhone(), "+15138029566", "Hello " + user.getName() + "!");
             return new Result(200, "MESSAGE RECEIVED");
-        }
-        /*
-         * For mySQL services
-         * View tracking and messages
-         */
-        else if(selector.equals("ping")){
+        }else if(selector.equals("ping")){
             if(content != null){
                 return new Result(200, this.command, "RECEIVED");
             }
             return new Result(428, this.command, "JSON BODY EXPECTED");
-        }
-        else if(selector.equals("queue")){
+        }else if(selector.equals("queue")){
             if(content != null){
                 String url = content.getString("url");
-                new Sql().queue(actingUser, url);
+                new Sql().queue(session.user, url);
                 return new Result(428, this.command, "QUEUED");
             }
             return new Result(428, this.command, "JSON BODY EXPECTED");
-        }
-        /*
-         * Managing packages in the system.
-         * Primarily for connectors and APIs
-         */
-        else if(selector.equals("packages")){
+        }else if(selector.equals("packages")){
 
             PackagesClient packages = new PackagesClient(session);
             if(objSelector.equals("create")){

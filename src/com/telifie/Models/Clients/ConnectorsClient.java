@@ -6,13 +6,6 @@ import org.bson.Document;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-/**
- * This class is for handling User's individual connectors.
- * Connector authentication information for access
- * is remotely stored on the front end.
- *<p></p>
- * Connectors only process requests by the already authenticated by the front-end.
- */
 public class ConnectorsClient extends Client{
 
     public ConnectorsClient(Session session){
@@ -33,10 +26,10 @@ public class ConnectorsClient extends Client{
     }
 
     public Connector getConnector(String id){
-        return new Connector(super.findOne(new Document("$and", Arrays.asList(new Document("user", session.getUser()), new Document("id", id)))));
+        return new Connector(super.findOne(new Document("$and", Arrays.asList(new Document("user", session.user), new Document("id", id)))));
     }
 
     public ArrayList<Connector> mine(){
-        return super.find(new Document("user", session.getUser())).map(Connector::new).into(new ArrayList<>());
+        return super.find(new Document("user", session.user)).map(Connector::new).into(new ArrayList<>());
     }
 }

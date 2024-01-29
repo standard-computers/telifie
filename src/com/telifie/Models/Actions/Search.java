@@ -8,7 +8,6 @@ import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Connectors.Radar;
 import com.telifie.Models.Connectors.Rest;
 import com.telifie.Models.Result;
-import com.telifie.Models.Utilities.Console;
 import com.telifie.Models.Utilities.Packages;
 import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Utilities.Session;
@@ -17,6 +16,7 @@ import org.bson.conversions.Bson;
 import java.awt.*;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Search {
@@ -100,26 +100,31 @@ public class Search {
     private String generated(String q, Parameters params){
         if(params.getPage() == 1){
             Unit u = new Unit(q);
-            if(Andromeda.tools.contains(Andromeda.NUMERALS, q)){
-
-                result.setSource("com.telifie.connectors.wolfram");
-                return Rest.get(Packages.get("com.telifie.connectors.wolfram"), new HashMap<>() {{
-                    put("i", "q");
-                    put("appid", Packages.get("com.telifie.connectors.wolfram").getAccess());
-                }});
+            if(u.text().contains("*") || u.text().contains("+") || u.text().contains("-") || u.text().contains("/") || Andromeda.tools.contains(Andromeda.NUMERALS, q)){
+                String mathExpressionPattern = "[\\d\\s()+\\-*/=xX^]+";
+                Pattern pattern = Pattern.compile(mathExpressionPattern);
+                Matcher matcher = pattern.matcher(u.text());
+                while (matcher.find()) {
+                    String match = matcher.group().trim();
+                    result.setSource("com.telifie.connectors.wolfram");
+                    return Rest.get(Packages.get("com.telifie.connectors.wolfram"), new HashMap<>() {{
+                        put("i", match);
+                        put("appid", Packages.get("com.telifie.connectors.wolfram").getAccess());
+                    }});
+                }
             }else if(q.contains("uuid")){
 
                 return "Here's a UUID  \\n" + UUID.randomUUID();
             }else if(q.contains("weather")){
 
                 result.setSource("com.telifie.connectors.openweathermap");
-                return Rest.get(Packages.get("com.telifie.connectors.openweathermap"), new HashMap<>() {{
+                return Andromeda.tools.escape(Rest.get(Packages.get("com.telifie.connectors.openweathermap"), new HashMap<>() {{
                     put("units", "imperial");
                     put("excluded", "hourly,minutely,current");
                     put("lat", String.valueOf(params.getLatitude()));
                     put("lon", String.valueOf(params.getLongitude()));
                     put("appid", Packages.get("com.telifie.connectors.openweathermap").getAccess());
-                }});
+                }}));
             }else if(q.contains("flip a coin")){
 
                 int random = new Random().nextInt(2);

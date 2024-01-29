@@ -46,28 +46,12 @@ public class Package {
         return secret;
     }
 
-    public String getRefresh() {
-        return refresh;
-    }
-
     public int getVersion() {
         return version;
     }
 
     public void setVersion(int version) {
         this.version = version;
-    }
-
-    public int getOrigin() {
-        return origin;
-    }
-
-    public void addUrl(String name, String url){
-        urls.put(name, url);
-    }
-
-    public boolean hasUrl(String name){
-        return urls.containsKey(name);
     }
 
     public String getUrl(String name){

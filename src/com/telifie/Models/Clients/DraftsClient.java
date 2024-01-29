@@ -18,15 +18,9 @@ public class DraftsClient extends Client {
 
     public boolean create(Article article){
         if(article.getOwner() == null || article.getOwner().isEmpty()){
-            article.setOwner(session.getUser());
+            article.setOwner(session.user);
         }
         return super.insertOne(Document.parse(article.toString()));
-    }
-
-    public boolean createMany(ArrayList<Article> articles){
-        ArrayList<Document> documents = new ArrayList<>();
-        articles.forEach(a -> documents.add(Document.parse(a.toString())));
-        return super.insertMany(documents);
     }
 
     public Article withId(String articleId) {
@@ -38,6 +32,6 @@ public class DraftsClient extends Client {
     }
 
     public ArrayList<Article> forUser(){
-        return this.find(new Document("owner", session.getUser())).map(Article::new).into(new ArrayList<>());
+        return this.find(new Document("owner", session.user)).map(Article::new).into(new ArrayList<>());
     }
 }

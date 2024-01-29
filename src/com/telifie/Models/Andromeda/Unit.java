@@ -57,11 +57,6 @@ public class Unit {
         return false;
     }
 
-    /**
-     * Returns true if Unit text contains any words part of the identified taxon.
-     * @param t Taxon of words to search for
-     * @return
-     */
     public boolean contains(Taxon t){
         for(String s : t.items()){
             if(text.contains(s)){

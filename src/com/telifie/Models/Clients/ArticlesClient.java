@@ -30,7 +30,7 @@ public class ArticlesClient extends Client {
 
     public boolean create(Article article){
         if(article.getOwner() == null || article.getOwner().isEmpty()){
-            article.setOwner(session.getUser());
+            article.setOwner(session.user);
         }
         super.insertOne(Document.parse(article.toString()));
         if(article.hasAttribute("Longitude") && article.hasAttribute("Latitude")){
@@ -41,8 +41,7 @@ public class ArticlesClient extends Client {
                 double latitudeValue = Double.parseDouble(latitude);
                 Position position = new Position(longitudeValue, latitudeValue);
                 Point point = new Point(position);
-                super.updateOne(new Document("id", article.getId()),
-                        new Document("$set", new Document("location", point)));
+                super.updateOne(new Document("id", article.getId()), new Document("$set", new Document("location", point)));
             }
         }
         return true;
@@ -219,7 +218,7 @@ public class ArticlesClient extends Client {
 
         private double relevance(Article a) {
             double s = 0;
-            s += (a.getTitle().trim().toLowerCase().equals(q) ? words.size() : 0); //Title Match
+            s += (a.getTitle().trim().toLowerCase().equals(q) ? a.getPriority() + words.size() : 0); //Title Match
             s += (a.getLink() != null && a.getLink().contains(q) ? words.size() : 0); //Link Match
             s += compareMatches(a.getTitle(), words); //Title Score
             s += (a.getLink() == null ? 0 : compareMatches(a.getLink(), words)); //Link Score

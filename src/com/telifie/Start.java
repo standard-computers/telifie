@@ -1,11 +1,12 @@
 package com.telifie;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Parser;
+import com.telifie.Models.User;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Servers.Http;
+import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 
@@ -17,6 +18,7 @@ public class Start {
     public static void main(String[] args){
         Console.welcome();
         Log.message("TELIFIE STARTED", "STRx001");
+        checkConfig();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             Log.flag("TELIFIE EXITED", "STRx022");
             Telifie.purgeTemp();
@@ -28,7 +30,7 @@ public class Start {
                         install();
                 case "--purge" -> {
                     Log.message("PURGE MODE ENTERED", "STRx031");
-                    if (Console.in("Confirm purge, fresh install (y/n) -> ").equals("y")) {
+                    if (Console.in("Confirm ('yes') -> ").equals("yes")) {
                         if(configFile.delete()){
                             Log.out(Event.Type.DELETE, "CONFIG FILE DELETED", "STRx034");
                         }
@@ -36,7 +38,6 @@ public class Start {
                     System.exit(1);
                 }
                 case "--http" -> {
-                    checkConfig();
                     try {
                         Console.log("Starting HTTP server [CONSIDER HTTPS FOR SECURITY]...");
                         new Http();
@@ -46,7 +47,6 @@ public class Start {
                     }
                 }
                 case "--https" -> {
-                    checkConfig();
                     try {
                         Console.log("Starting HTTPS server...");
                         new Http();
@@ -56,16 +56,22 @@ public class Start {
                     }
                 }
                 case "--reparse" -> {
-                    checkConfig();
                     new Parser(new Session("com.telifie." + Configuration.getServer_name(), "telifie")).reparse(true);
                 }
                 case "--worker" -> {
-                    checkConfig();
                     new Parser(new Session("com.telifie." + Configuration.getServer_name(), "telifie")).reparse(false);
+                }
+                case "--authenticate" -> {
+                    //TODO Create user or API/Org
+                    Authentication auth = new Authentication(new User("", Configuration.getServer_name(), ""));
+                    Console.log("Authorizing as database admin...");
+                    if(auth.authenticate()){
+                        Log.flag("NEW USER ADMIN AUTHENTICATED : " + Configuration.getServer_name(), "CLIx003");
+                        Console.log(new JSONObject(auth.toString()).toString(4));
+                    }
                 }
             }
         }else{
-            checkConfig();
             Console.command();
         }
     }
@@ -116,15 +122,12 @@ public class Start {
             }
         }else{
             Console.message("No config file found. Use option '--install'");
-            install();
         }
     }
 
     private static void exportConfiguration(){
-        ObjectMapper objectMapper = new ObjectMapper();
-        ObjectWriter objectWriter = objectMapper.writer().withDefaultPrettyPrinter();
         try {
-            objectWriter.writeValue(configFile, config);
+            new ObjectMapper().writer().withDefaultPrettyPrinter().writeValue(configFile, config);
             Log.put("CONFIG FILE CREATED", "STRx120");
         } catch (IOException e) {
             Log.error("FAILED CONFIG.JSON EXPORT", "STRx121");
@@ -132,9 +135,8 @@ public class Start {
     }
 
     private static void importConfiguration(){
-        ObjectMapper objectMapper = new ObjectMapper();
         try {
-            config = objectMapper.readValue(configFile, Configuration.class);
+            config = new ObjectMapper().readValue(configFile, Configuration.class);
         } catch (IOException e) {
             Log.error("FAILED CONFIG.JSON IMPORT", "STRx131");
         }

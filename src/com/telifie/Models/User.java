@@ -15,13 +15,6 @@ public class User implements Serializable {
     private int permissions;
     private String settings;
 
-    /**
-     * Constructor for creating user.
-     * Other data is autofill such as origin, permissions, and customerId
-     * @param email User's email
-     * @param name User's name
-     * @param phone User's phone that receives texts
-     */
     public User(String email, String name, String phone) {
         this.id = UUID.randomUUID().toString();
         this.email = email;
@@ -83,7 +76,7 @@ public class User implements Serializable {
                 ", \"phone\" : \"" + phone + '\"' +
                 ", \"origin\" : " + origin +
                 ", \"permissions\" : " + permissions +
-                ", \"settings\" : " + settings +
+                ", \"settings\" : " + settings.replace("\\", "") +
                 '}';
     }
 }

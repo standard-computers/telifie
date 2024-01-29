@@ -1,7 +1,9 @@
-package com.telifie.Models.Utilities;
+package com.telifie.Models.Utilities.Servers;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 public class Network {
 
@@ -11,6 +13,10 @@ public class Network {
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static String decode(String uri){
+        return URLDecoder.decode(uri, StandardCharsets.UTF_8);
     }
 
     public static String fixLink(String url, String src){

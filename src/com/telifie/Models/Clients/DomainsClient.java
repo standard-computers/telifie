@@ -14,24 +14,14 @@ public class DomainsClient extends Client {
         this.collection = "domains";
     }
 
-    /**
-     * Returns only the domains the user id owns provided by Configuration
-     * @return ArrayList<Domain>
-     */
     public ArrayList<Domain> mine(){
-        return super.find(new Document("owner", session.getUser())).map(Domain::new).into(new ArrayList<>());
+        return super.find(new Document("owner", session.user)).map(Domain::new).into(new ArrayList<>());
     }
 
     public boolean delete(Domain domain){
-        return super.deleteOne(new Document("$and", Arrays.asList(new Document("owner", session.getUser()), new Document("id", domain.getId()))));
+        return super.deleteOne(new Document("$and", Arrays.asList(new Document("owner", session.user), new Document("id", domain.getId()))));
     }
 
-    /**
-     * Gets domains for user id, either the ones they own,
-     * or the one's they're a part of.
-     * @param userId ID of user
-     * @return ArrayList<Domain>
-     */
     public ArrayList<Domain> forMember(String userId){
         return super.find(new Document("$or", Arrays.asList(new Document("owner", userId), new Document("users.email", userId)))).map(Domain::new).into(new ArrayList<>());
     }

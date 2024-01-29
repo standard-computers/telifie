@@ -42,7 +42,7 @@ public class CollectionsClient extends Client {
     }
 
     public Collection create(String name){
-        if(this.exists(new Document("$and", Arrays.asList(new Document("user", session.getUser()), new Document("name", name))))){
+        if(this.exists(new Document("$and", Arrays.asList(new Document("user", session.user), new Document("name", name))))){
             return null;
         }
         Collection collection = new Collection(name);
@@ -53,15 +53,15 @@ public class CollectionsClient extends Client {
     }
 
     public boolean save(Collection collection, Article article){
-        return this.updateOne(new Document("$and", Arrays.asList(new Document("user", session.getUser()), new Document("id", collection.getId()))), new Document("$push", new Document("articles", article.getId())));
+        return this.updateOne(new Document("$and", Arrays.asList(new Document("user", session.user), new Document("id", collection.getId()))), new Document("$push", new Document("articles", article.getId())));
     }
 
     public boolean unsave(Collection collection, Article article){
-        return this.updateOne(new Document("$and", Arrays.asList(new Document("user", session.getUser()), new Document("id", collection.getId()))), new Document("$pull", new Document("articles", article.getId())));
+        return this.updateOne(new Document("$and", Arrays.asList(new Document("user", session.user), new Document("id", collection.getId()))), new Document("$pull", new Document("articles", article.getId())));
     }
 
     public boolean delete(Collection collection){
-        return this.deleteOne(new Document("$and", Arrays.asList(new Document("user", session.getUser()), new Document("id", collection.getId()))));
+        return this.deleteOne(new Document("$and", Arrays.asList(new Document("user", session.user), new Document("id", collection.getId()))));
     }
 
     public boolean update(Collection collection, Document update){

@@ -1,6 +1,8 @@
 package com.telifie.Models.Utilities;
 
 import com.telifie.Models.Andromeda.Andromeda;
+import com.telifie.Models.Utilities.Servers.Network;
+
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -40,7 +42,7 @@ public class Asset {
     }
 
     private void analyseFile() throws IOException {
-        URL url = new URL(this.uri);
+        URL url = Network.url(this.uri);
         URLConnection connection = url.openConnection();
         connection.connect();
         length = connection.getContentLength();
@@ -68,7 +70,7 @@ public class Asset {
 
     public void download(){
         try {
-            URL url = new URL(uri);
+            URL url = Network.url(uri);
             localUri = Telifie.configDirectory() + "temp/" + url.getPath().split("/")[url.getPath().split("/").length - 1];
             InputStream inputStream = url.openStream();
             Files.copy(inputStream, Paths.get(localUri), StandardCopyOption.REPLACE_EXISTING);

@@ -1,6 +1,5 @@
 package com.telifie.Models.Utilities;
 
-import com.telifie.Models.Actions.Search;
 import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Andromeda.Taxon;
 import com.telifie.Models.Article;
@@ -63,13 +62,6 @@ public class Console {
             String cmd = Console.in("telifie -> ");
             switch (cmd) {
                 case "exit", "logout", "close" -> System.exit(0);
-                case "http" -> {
-                    try {
-                        new Http();
-                    } catch (Exception e) {
-                        Log.error("Failed to start HTTP server", "CLIx002");
-                    }
-                }
                 case "routine" -> {
                     ArticlesClient articles = new ArticlesClient(new Session("telifie." + Configuration.getServer_name(), "telifie"));
                     ArrayList<Article> as = articles.get(new Document("$and", Arrays.asList(
@@ -109,18 +101,7 @@ public class Console {
                             Andromeda.index();
                         }else if(c.equals("exit")){
                             loop = false;
-                        }else{ //TODO Accept input to 'Search' and allow input/output of JSON
-                            new Search().execute(new Session("com.telifie.app", "telifie"), c, new Parameters(new Document()));
                         }
-                    }
-                }
-                case "auth" -> {
-                    //TODO Create user or API/Org
-                    Authentication auth = new Authentication(new User("", Configuration.getServer_name(), ""));
-                    Console.log("Authorizing as database admin...");
-                    if(auth.authenticate()){
-                        Log.flag("NEW USER ADMIN AUTHENTICATED : " + Configuration.getServer_name(), "CLIx003");
-                        Console.log(new JSONObject(auth.toString()).toString(4));
                     }
                 }
             }

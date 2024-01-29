@@ -45,12 +45,8 @@ public class UsersClient extends Client {
         return this.lock(user, code);
     }
 
-    public boolean updateTheme(User user, String settings){
+    public boolean updateSettings(User user, String settings){
         return super.updateOne(new Document("id", user.getId()), new Document("$set", new Document("settings", settings)));
-    }
-
-    public boolean updatePhoto(User user, String photoUri){
-        return super.updateOne(new Document("id", user.getId()), new Document("$set", new Document("photo", photoUri)));
     }
 
     public boolean create(User user){
