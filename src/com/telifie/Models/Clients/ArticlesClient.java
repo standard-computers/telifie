@@ -112,10 +112,12 @@ public class ArticlesClient extends Client {
             found = this.find(filter);
         }
         ArrayList<Article> results = found.map(Article::new).into(new ArrayList<>());
-        if(query.contains(Andromeda.taxon("proximity")) || params.getIndex().equals("locations")) {
-            results.sort(new DistanceSorter(params.getLatitude(), params.getLongitude()));
-        }else{
-            results.sort(new CosmoScore(query.cleaned()));
+        if(!query.text().startsWith("@")){
+            if(query.contains(Andromeda.taxon("proximity")) || params.getIndex().equals("locations")) {
+                results.sort(new DistanceSorter(params.getLatitude(), params.getLongitude()));
+            }else{
+                results.sort(new CosmoScore(query.cleaned()));
+            }
         }
         return results;
     }
@@ -138,7 +140,6 @@ public class ArticlesClient extends Client {
     public Document stats() {
         Document groupFields = new Document("_id", "$description");
         groupFields.put("count", new Document("$sum", 1));
-        groupFields.put("priority", new Document("$avg", "$priority"));
         Document groupStage = new Document("$group", groupFields);
         List<Document> iterable = super.aggregate(groupStage);
         Document stats = new Document();
@@ -148,7 +149,6 @@ public class ArticlesClient extends Client {
         for (Document document : iterable) {
             String description = document.getString("_id");
             int count = document.getInteger("count");
-            Double averagePriority = document.getDouble("priority");
             if (description == null) {
                 description = "Unclassified";
             }
@@ -156,7 +156,6 @@ public class ArticlesClient extends Client {
             Document descriptionStats = new Document();
             descriptionStats.append("count", count);
             descriptionStats.append("percent", percent);
-            descriptionStats.append("priority", averagePriority);
             sortedDescriptions.put(description, descriptionStats);
         }
         Document descriptions = new Document();
@@ -216,32 +215,25 @@ public class ArticlesClient extends Client {
             return Double.compare(relevanceB, relevanceA);
         }
 
-        private double relevance(Article a) {
-            double s = 0;
-            s += (a.getTitle().trim().toLowerCase().equals(q) ? a.getPriority() + words.size() : 0); //Title Match
-            s += (a.getLink() != null && a.getLink().contains(q) ? words.size() : 0); //Link Match
-            s += compareMatches(a.getTitle(), words); //Title Score
-            s += (a.getLink() == null ? 0 : compareMatches(a.getLink(), words)); //Link Score
-            s += compareMatches(a.getDescription(), words); //Description Score
-            for(String tag : a.getTags()){ //Tag Score
-                if(words.contains(tag)){
-                    s += 2;
-                }
+        private int relevance(Article a) {
+            if(a.getTitle().trim().toLowerCase().equals(q)){
+                return Integer.MAX_VALUE;
+            }
+            int s = (matches(a.getTitle(), words) + matches(a.getDescription(), words) + matches(a.getTitle(), words));
+            for(String ts : a.getTags()){
+                s += matches(ts, words);
             }
             return (a.isVerified() ? (s + 1) : s);
         }
 
-        private double compareMatches(String text, ArrayList<String> words) {
-            int m = 1;
+        private int matches(String text, ArrayList<String> words) {
+            int m = 0;
             for(int i = 0; i < words.size(); i++){
                 if(text.contains(words.get(i))) {
-                    if(i == 0){
-                        m = m * 3;
-                    }
                     m++;
                 }
             }
-            return (double) m / words.size();
+            return m;
         }
     }
 

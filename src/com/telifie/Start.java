@@ -56,17 +56,17 @@ public class Start {
                     }
                 }
                 case "--reparse" -> {
-                    new Parser(new Session("com.telifie." + Configuration.getServer_name(), "telifie")).reparse(true);
+                    new Parser(new Session("com.telifie." + Configuration.SERVER_NAME, "telifie")).reparse(true);
                 }
                 case "--worker" -> {
-                    new Parser(new Session("com.telifie." + Configuration.getServer_name(), "telifie")).reparse(false);
+                    new Parser(new Session("com.telifie." + Configuration.SERVER_NAME, "telifie")).reparse(false);
                 }
                 case "--authenticate" -> {
                     //TODO Create user or API/Org
-                    Authentication auth = new Authentication(new User("", Configuration.getServer_name(), ""));
+                    Authentication auth = new Authentication(new User("", Configuration.SERVER_NAME, ""));
                     Console.log("Authorizing as database admin...");
                     if(auth.authenticate()){
-                        Log.flag("NEW USER ADMIN AUTHENTICATED : " + Configuration.getServer_name(), "CLIx003");
+                        Log.flag("NEW USER ADMIN AUTHENTICATED : " + Configuration.SERVER_NAME, "CLIx003");
                         Console.log(new JSONObject(auth.toString()).toString(4));
                     }
                 }

@@ -4,10 +4,7 @@ import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Andromeda.Taxon;
 import com.telifie.Models.Article;
 import com.telifie.Models.Clients.ArticlesClient;
-import com.telifie.Models.User;
-import com.telifie.Models.Utilities.Servers.Http;
 import org.bson.Document;
-import org.json.JSONObject;
 import java.util.*;
 
 public class Console {
@@ -63,7 +60,7 @@ public class Console {
             switch (cmd) {
                 case "exit", "logout", "close" -> System.exit(0);
                 case "routine" -> {
-                    ArticlesClient articles = new ArticlesClient(new Session("telifie." + Configuration.getServer_name(), "telifie"));
+                    ArticlesClient articles = new ArticlesClient(new Session("telifie." + Configuration.SERVER_NAME, "telifie"));
                     ArrayList<Article> as = articles.get(new Document("$and", Arrays.asList(
                             new Document("description", "Color"),
                             new Document("attributes.value", "v8j7l5")
@@ -96,6 +93,16 @@ public class Console {
                             }else{
                                 Console.log(t.items().size() + " Items");
                                 Console.log(t.items().toString());
+                            }
+                        }else if(c.equals("count")){
+                            Console.log("Total Items -> " + Andromeda.taxon().size());
+                        }else if(c.startsWith("count")){
+                            String tname = c.split(" ")[1];
+                            Taxon t = Andromeda.taxon(tname);
+                            if(t == null){
+                                Console.log("Does not exist!");
+                            }else{
+                                Console.log("Total Items -> " + t.items().size());
                             }
                         }else if(c.equals("index")){
                             Andromeda.index();

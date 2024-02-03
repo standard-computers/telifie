@@ -1,5 +1,6 @@
 package com.telifie.Models.Utilities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
@@ -8,30 +9,22 @@ import java.util.ArrayList;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Configuration {
 
-    private static String server_name = "";
-    private String installation = "REMOTE", email;
-    private String mongodb; //JSON of database configuration
-    private ArrayList<String> ip_list; //List of IP to externally connect
-    private ArrayList<String> ip_access; //List of IP to allowed to access server
-    private ArrayList<String> ip_block; //List of IP to allowed to access server
-    public static Connection file_storage, mysql;
+    public static String SERVER_NAME = "";
+    public static String VERSION = "v1.0.0b";
+    private String email;
+    private String mongodb;
+    private ArrayList<String> iplist;
+    public static Connection mysql;
+    @JsonIgnore
     public static MongoClient mongoClient;
     private String license;
 
-    public String getInstallation() {
-        return installation;
-    }
-
-    public void setInstallation(String installation) {
-        this.installation = installation;
-    }
-
-    public static String getServer_name() {
-        return server_name;
+    public static String getServerName() {
+        return SERVER_NAME;
     }
 
     public void setServer_name(String server_name) {
-        this.server_name = server_name;
+        this.SERVER_NAME = server_name;
     }
 
     public String getEmail() {
@@ -40,10 +33,6 @@ public class Configuration {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public String getURI() {
-        return mongodb;
     }
 
     public void setMongodb(String mongodb) {
@@ -58,18 +47,6 @@ public class Configuration {
         mongoClient = MongoClients.create(getMongodb());
     }
 
-    public MongoClient getClient(){
-        return mongoClient;
-    }
-
-    public Connection getFile_storage() {
-        return file_storage;
-    }
-
-    public void setFile_storage(Connection file_storage) {
-        this.file_storage = file_storage;
-    }
-
     public Connection getMysql() {
         return mysql;
     }
@@ -78,28 +55,12 @@ public class Configuration {
         this.mysql = mysql;
     }
 
-    public ArrayList<String> getIp_list() {
-        return ip_list;
+    public ArrayList<String> getIplist() {
+        return iplist;
     }
 
-    public void setIp_list(ArrayList<String> ip_list) {
-        this.ip_list = ip_list;
-    }
-
-    public ArrayList<String> getIp_access() {
-        return ip_access;
-    }
-
-    public void setIp_access(ArrayList<String> ip_access) {
-        this.ip_access = ip_access;
-    }
-
-    public ArrayList<String> getIp_block() {
-        return ip_block;
-    }
-
-    public void setIp_block(ArrayList<String> ip_block) {
-        this.ip_block = ip_block;
+    public void setIplist(ArrayList<String> ip_list) {
+        this.iplist = ip_list;
     }
 
     public String getLicense() {
@@ -108,22 +69,6 @@ public class Configuration {
 
     public void setLicense(String license) {
         this.license = license;
-    }
-
-    @Override
-    public String toString() {
-        return "Configuration{" +
-                "installation='" + installation + '\'' +
-                "server_name='" + server_name + '\'' +
-                ", email='" + email + '\'' +
-                ", mongodb='" + mongodb + '\'' +
-                ", file_storage=" + file_storage +
-                ", mysql=" + mysql +
-                ", ip_list=" + ip_list +
-                ", ip_access=" + ip_access +
-                ", ip_block=" + ip_block +
-                ", license='" + license + '\'' +
-                '}';
     }
 
     public static class Connection {

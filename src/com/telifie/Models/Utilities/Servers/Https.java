@@ -65,7 +65,7 @@ public class Https {
                 String authHeader = request.headers().get(HttpHeaderNames.AUTHORIZATION);
                 String query = new QueryStringDecoder(request.uri()).path().substring(1);
                 Log.out(Event.Type.valueOf(request.method().toString()), "INBOUND HTTP REQUEST : " + ctx.channel().remoteAddress().toString() + "/" + query, "HTTx057");
-                Result result = new Result(406, "NO AUTH PROVIDED");
+                Result result = new Result(406, query, "NO AUTH PROVIDED");
                 if(authHeader != null){
                     Authentication auth = new Authentication(authHeader);
                     if(auth.isAuthenticated()){
@@ -76,7 +76,7 @@ public class Https {
                                 String requestBody = content.content().toString(CharsetUtil.UTF_8);
                                 result = new Command(query).parseCommand(session, Document.parse(requestBody));
                             }catch(BsonInvalidOperationException e){
-                                result = new Result(505, "MALFORMED JSON");
+                                result = new Result(505, query, "MALFORMED JSON");
                             }
                         }else if(request.method().name().equals("GET")){
                             result = new Command(query).parseCommand(session, null);
@@ -84,7 +84,7 @@ public class Https {
                             result = new Result(404, query, "INVALID METHOD");
                         }
                     }else{
-                        result = new Result(403, "INVALID CREDENTIALS");
+                        result = new Result(403, query, "INVALID CREDENTIALS");
                     }
                 }
                 FullHttpResponse response = new DefaultFullHttpResponse(

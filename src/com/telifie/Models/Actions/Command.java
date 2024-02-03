@@ -116,18 +116,18 @@ public class Command {
                                 if(d.hasPermission(session.user)){
                                     return new Result(this.command, "domain", d);
                                 }
-                                return new Result(403, "DOMAIN ACCESS DENIED");
+                                return new Result(403, this.command, "DOMAIN ACCESS DENIED");
                             }
                             case "check" -> {
                                 int p = d.getPermissions(session.user);
                                 if(p == 0){
-                                    return new Result(200, "OWNER");
+                                    return new Result(200, this.command, "OWNER");
                                 }else if(p == 1){
-                                    return new Result(206, "VIEWER");
+                                    return new Result(206, this.command, "VIEWER");
                                 }else if(p == 2){
-                                    return new Result(207, "EDITOR");
+                                    return new Result(207, this.command, "EDITOR");
                                 }
-                                return new Result(403, "DOMAIN ACCESS DENIED");
+                                return new Result(403, this.command, "DOMAIN ACCESS DENIED");
                             }
                             case "update" -> {
                                 if (content != null) {
@@ -217,11 +217,11 @@ public class Command {
                                     if (articles.update(a, ua)) {
                                         return new Result(200, this.command, ua.toString());
                                     }
-                                    return new Result(204, "NO NEW ARTICLE");
+                                    return new Result(204, this.command, "NO NEW ARTICLE");
                                 }
                                 return new Result(401, this.command, "INSUFFICIENT PERMISSIONS");
                             }
-                            return new Result(428, "JSON BODY EXPECTED");
+                            return new Result(428, this.command, "JSON BODY EXPECTED");
                         }
                         case "delete" -> {
                             if(hasDomainPermission(user, session, false)){
@@ -308,7 +308,7 @@ public class Command {
                         return new Result(505, this.command, "BAD ARTICLE JSON");
                     }
                 }
-                return new Result(428, "ARTICLE JSON DATA EXPECTED");
+                return new Result(428, this.command, "ARTICLE JSON DATA EXPECTED");
             }else if(objSelector.equals("drafts")){
                 DraftsClient drafts = new DraftsClient(session);
                 if(secSelector != null){
@@ -330,7 +330,7 @@ public class Command {
                                 return new Result(505, this.command, "BAD DRAFT JSON");
                             }
                         }
-                        return new Result(428, "DRAFT JSON DATA EXPECTED");
+                        return new Result(428, this.command, "DRAFT JSON DATA EXPECTED");
                     }
                     return new Result(this.command, "articles", drafts.forUser());
                 }
@@ -412,9 +412,9 @@ public class Command {
                         }
                         return new Result(505, this.command, "FAILED COLLECTION CREATION");
                     }
-                    return new Result(428, "JSON BODY EXPECTED");
+                    return new Result(428, this.command, "JSON BODY EXPECTED");
                 }
-                return new Result(428, "COLLECTION ID REQUIRED");
+                return new Result(428, this.command, "COLLECTION ID REQUIRED");
             }
             ArrayList<Collection> usersCollections = collections.forUser(session.user);
             return new Result(this.command, "collections", usersCollections);
@@ -428,7 +428,7 @@ public class Command {
                         if(users.updateSettings(changedUser, content.getString("settings"))){
                             return new Result(this.command, "user", changedUser);
                         }
-                        return new Result(400, "Bad Request");
+                        return new Result(400, this.command, "Bad Request");
                     }
                     return new Result(404, this.command, "BAD USER OPTION");
                 }
@@ -515,19 +515,19 @@ public class Command {
                     User user = u.getUserWithEmail(email);
                     if(user.getPermissions() == 0){
                         if(u.emailCode(user)){
-                            return new Result(200, "EMAIL CODE SENT");
+                            return new Result(200, this.command, "EMAIL CODE SENT");
                         }
-                        return new Result(501, "FAILED EMAIL CODE");
+                        return new Result(501, this.command, "FAILED EMAIL CODE");
                     }else if(user.getPermissions() >= 1){
                         if(u.textCode(user)){
-                            return new Result(200, "TEXT CODE SENT");
+                            return new Result(200, this.command, "TEXT CODE SENT");
                         }
-                        return new Result(501, "FAILED TEXT CODE");
+                        return new Result(501, this.command, "FAILED TEXT CODE");
                     }
                 }
-                return new Result(404, "USER NOT FOUND");
+                return new Result(404, this.command, "USER NOT FOUND");
             }
-            return new Result(428, "JSON BODY EXPECTED");
+            return new Result(428, this.command, "JSON BODY EXPECTED");
         }else if(selector.startsWith("verify")){
             if(content != null){
                 String email = content.getString("email");
@@ -546,16 +546,12 @@ public class Command {
                         json.put("authentication", new JSONObject(auth.toString()));
                         return new Result(this.command, "user", json);
                     }
-                    return new Result(403, "INVALID CODE");
+                    return new Result(403, this.command, "INVALID CODE");
                 }
-                return new Result(404, "USER NOT FOUND");
+                return new Result(404, this.command, "USER NOT FOUND");
             }
             return new Result(404, this.command, "JSON BODY EXPECTED");
-        }
-        /*
-         * Timelines: Accessing the timelines (history) of objects
-         */
-        else if(selector.equals("timelines")){
+        }else if(selector.equals("timelines")){
 
             if(this.selectors.length >= 2){
                 TimelinesClient timelines = new TimelinesClient(session);
@@ -566,12 +562,7 @@ public class Command {
                 return new Result(404, this.command, "TIMELINE NOT FOUND");
             }
             return new Result(428, this.command, "OBJECT ID REQUIRED");
-
-        }
-        /*
-         * Connectors: Adding, managing, checking
-         */
-        else if(selector.equals("connectors")){
+        }else if(selector.equals("connectors")){
 
             ConnectorsClient connectors = new ConnectorsClient(session);
             if(content != null){
@@ -609,7 +600,7 @@ public class Command {
                 return new Result(404, this.command, "PHONE NUMBER NOT REGISTERED");
             }
             Twilio.send(user.getPhone(), "+15138029566", "Hello " + user.getName() + "!");
-            return new Result(200, "MESSAGE RECEIVED");
+            return new Result(200, this.command, "MESSAGE RECEIVED");
         }else if(selector.equals("ping")){
             if(content != null){
                 return new Result(200, this.command, "RECEIVED");

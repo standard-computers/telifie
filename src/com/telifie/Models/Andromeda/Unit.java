@@ -4,14 +4,12 @@ import java.util.*;
 
 public class Unit {
 
-    private final String[] tokens, cleanedTokens;
-    private final String text, cleaned;
+    private final String[] tokens;
+    private final String text, cleaned = "";
 
     public Unit(String text) {
         this.text = text.trim();
-        this.cleaned = clean(text);
         this.tokens = Arrays.stream(text.split("\\s+")).filter(token -> !token.isEmpty()).toArray(String[]::new);
-        this.cleanedTokens = Arrays.stream(cleaned.split("\\s+")).filter(token -> !token.isEmpty()).toArray(String[]::new);
     }
 
     public String[] keywords(int numKeywords) {
@@ -30,22 +28,22 @@ public class Unit {
         return this.text;
     }
 
+    public boolean containsAddress(){
+        return text.matches("\\b\\d+\\s+([A-Za-z0-9.\\-'\\s]+)\\s+" + // Street number and name
+                "(St\\.?|Street|Rd\\.?|Road|Ave\\.?|Avenue|Blvd\\.?|Boulevard|Ln\\.?|Lane|Dr\\.?|Drive|Ct\\.?|Court)\\s+" + // Street type
+                "(\\w+),\\s+" + // City
+                "(Ohio|OH|Ala|AL|Alaska|AK|Ariz|AZ|Ark|AR|Calif|CA|Colo|CO|Conn|CT|Del|DE|Fla|FL|Ga|GA|Hawaii|HI|Idaho|ID|Ill|IL|Ind|IN|Iowa|IA|Kans|KS|Ky|KY|La|LA|Maine|ME|Md|MD|Mass|MA|Mich|MI|Minn|MN|Miss|MS|Mo|MO|Mont|MT|Nebr|NE|Nev|NV|N\\.H\\.|NH|N\\.J\\.|NJ|N\\.M\\.|NM|N\\.Y\\.|NY|N\\.C\\.|NC|N\\.D\\.|ND|Okla|OK|Ore|OR|Pa|PA|R\\.I\\.|RI|S\\.C\\.|SC|S\\.D\\.|SD|Tenn|TN|Tex|TX|Utah|UT|Vt|VT|Va|VA|Wash|WA|W\\.Va|WV|Wis|WI|Wyo|WY)\\s+" + // State
+                "(\\d{5}(?:[-\\s]\\d{4})?)");
+    }
+
     public String cleaned() {
-        return this.cleaned;
+        String ct = remove(Andromeda.taxon("stop_words"));
+        ct = ct.replaceAll("[^a-zA-Z0-9 ]", "");
+        return ct;
     }
 
     public String[] tokens() {
         return this.tokens;
-    }
-
-    public String[] cleanedTokens() {
-        return this.cleanedTokens;
-    }
-
-    public String clean(String text){
-        String ct = remove(Andromeda.taxon("stop_words"));
-        ct = ct.replaceAll("[^a-zA-Z0-9 ]", "");
-        return ct;
     }
 
     public boolean startsWith(Taxon t){

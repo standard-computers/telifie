@@ -4,25 +4,25 @@ import org.bson.Document;
 
 public class Parameters {
 
-    private final int resultsPerPage, pages, page;
+    private final int rpp, pages, page;
     private String index;
-    private final String postalCode; //Index such as images, maps, developers, articles, etc.
+    private final String zip;
     private double latitude, longitude;
     private final boolean quickResults;
 
     public Parameters(Document document) throws NullPointerException {
-        this.resultsPerPage = (document.getInteger("results_per_page") == null ? 50 : document.getInteger("results_per_page"));
+        this.rpp = (document.getInteger("results_per_page") == null ? 50 : document.getInteger("results_per_page"));
         this.pages = (document.getInteger("pages") == null ? 1 : document.getInteger("pages"));
         this.page = (document.getInteger("page") == null ? 1 : document.getInteger("page"));
         this.index = (document.getString("index") == null ? "articles" : document.getString("index"));
-        this.postalCode = (document.getString("postal_code") == null ? "" : document.getString("postal_code"));
+        this.zip = (document.getString("zip") == null ? "" : document.getString("zip"));
         this.latitude = (document.getDouble("latitude") == null ? 39.103699 : document.getDouble("latitude"));
         this.longitude = (document.getDouble("longitude") == null ? -84.513611 : document.getDouble("longitude"));
         this.quickResults = (document.getBoolean("quick_results") == null ? false : document.getBoolean("quick_results"));
     }
 
-    public int getResultsPerPage() {
-        return resultsPerPage;
+    public int getRpp() {
+        return rpp;
     }
 
     public int getPage() {
@@ -59,10 +59,10 @@ public class Parameters {
 
     @Override
     public String toString() {
-        return new StringBuilder().append("{ \"results_per_page\" : ").append(resultsPerPage)
+        return new StringBuilder().append("{ \"results_per_page\" : ").append(rpp)
                 .append(", \"pages\" : ").append(pages)
                 .append(", \"page\" : ").append(page)
-                .append(", \"postal_code\" : \"").append(postalCode).append("\"")
+                .append(", \"zip\" : \"").append(zip).append("\"")
                 .append(", \"latitude\" : ").append(latitude)
                 .append(", \"longitude\" : ").append(longitude)
                 .append(", \"quick_results\" : ").append(quickResults)

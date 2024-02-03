@@ -25,7 +25,7 @@ public class Client {
     protected FindIterable<Document> find(Document filter){
         try {
             MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
-            return c.find(filter).limit(300000);
+            return c.find(filter);
         }catch(MongoException e){
             return null;
         }
@@ -34,7 +34,7 @@ public class Client {
     protected FindIterable<Document> findWithProjection(Document filter, Document projection){
         try {
             MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
-            return c.find(filter).projection(projection).limit(42000);
+            return c.find(filter).projection(projection);
         }catch(MongoException e){
             return null;
         }

@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 public class Article {
 
     private String owner, id, title, link, icon, description = "Webpage";
-    private double priority = 2.0;
     private boolean verified = false;
     private String content;
     private ArrayList<String> tags = new ArrayList<>();
@@ -34,32 +33,20 @@ public class Article {
         this.link = document.getString("link");
         this.icon = document.getString("icon");
         this.description = document.getString("description");
-        double priority = 32.0;
-        Object priorityObj = document.get("priority");
-        if (priorityObj != null) {
-            if (priorityObj instanceof Double) {
-                priority = (Double) priorityObj;
-            }
-            else if (priorityObj instanceof Integer) {
-                priority = ((Integer) priorityObj).doubleValue();
-            }
-        }
-        this.priority = priority;
         this.content = (document.getString("content") != null ?  Andromeda.tools.escape(document.getString("content")) : "");
         this.origin = (document.getInteger("origin") == null ? 0 : document.getInteger("origin"));
         this.tags = document.get("tags", ArrayList.class);
-
         ArrayList<Document> it2 = (ArrayList<Document>) document.getList("attributes", Document.class);
         if (it2 != null) {
             it2.forEach(doc -> this.addAttribute(new Attribute(doc.getString("key"), doc.getString("value"))));
         }
         ArrayList<Document> it3 = (ArrayList<Document>) document.getList("associations", Document.class);
         if (it3 != null) {
-            it3.forEach(doc -> this.addAssociation(new Association(doc)));
+            it3.forEach(doc -> this.associations.add(new Association(doc)));
         }
         ArrayList<Document> it4 = (ArrayList<Document>) document.getList("data_sets", Document.class);
         if(it4 != null){
-            it4.forEach(doc -> this.addDataSet(new DataSet(doc)));
+            it4.forEach(doc -> this.dataSets.add(new DataSet(doc)));
         }
         Document sourceDocument = document.get("source", Document.class);
         if (sourceDocument != null) {
@@ -81,10 +68,6 @@ public class Article {
 
     public String getId() {
         return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 
     public String getTitle() {
@@ -117,14 +100,6 @@ public class Article {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public double getPriority() {
-        return priority;
-    }
-
-    public void setPriority(Double priority) {
-        this.priority = priority;
     }
 
     public void addTag(String tag) {
@@ -186,14 +161,6 @@ public class Article {
         return null;
     }
 
-    public void addAssociation(Association ass){
-        this.associations.add(ass);
-    }
-
-    public void addDataSet(DataSet dataSet){
-        this.dataSets.add(dataSet);
-    }
-
     public Source getSource() {
         return source;
     }
@@ -211,7 +178,6 @@ public class Article {
                 (link == null ? "" : ", \"link\" : \"" + link + '\"') +
                 (icon == null ? "" : ", \"icon\" : \"" + icon + '\"') +
                 (description == null || description.isEmpty() ? "" : ", \"description\" : \"" + description + '\"') +
-                (priority == 0 ? "" : ", \"priority\" : " + priority) +
                 (content == null ? "" : ", \"content\" : \"" + content + "\"") +
                 (tags == null ? "" : ", \"tags\" : " + tags.stream().map(tag -> "\"" + tag + "\"").collect(Collectors.joining(", ", "[", "]"))) +
                 (attributes == null ? "" : ", \"attributes\" : " + attributes) +

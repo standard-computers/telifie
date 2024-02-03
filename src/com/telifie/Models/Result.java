@@ -25,22 +25,9 @@ public class Result {
         this.count = results.size();
     }
 
-    public Result(String query, Parameters params, String object, ArrayList results) {
-        this.query = query;
-        this.params = params;
-        this.object = object;
-        this.results = results;
-        this.count = results.size();
-    }
-
     public Result(String query, String object, Object results) {
         this.query = query;
         this.object = object;
-        this.results = results;
-    }
-
-    public Result(int statusCode, String results) {
-        this.statusCode = statusCode;
         this.results = results;
     }
 
@@ -92,4 +79,12 @@ public class Result {
         return sb.toString();
     }
 
+    public void setParams(Parameters params) {
+        this.params = params;
+    }
+
+    public void setResults(String object, Object results) {
+        this.object = object;
+        this.results = results;
+    }
 }

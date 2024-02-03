@@ -39,7 +39,7 @@ public class Parser {
     public void reparse(boolean purgeQueue){
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        ArticlesClient articles =  new ArticlesClient(new Session("telifie." + Configuration.getServer_name(), "telifie"));
+        ArticlesClient articles =  new ArticlesClient(new Session("telifie." + Configuration.SERVER_NAME, "telifie"));
         if(purgeQueue){
             Log.message("STARTING REPARSE", "PARx011");
             new Sql().purgeQueue();
@@ -48,7 +48,7 @@ public class Parser {
                     new org.bson.Document("link", 1)
             );
             Console.log("RE-PARSE TOTAL : " + parsing.size());
-            parsing.forEach(a -> new Sql().queue("com.telifie." + Configuration.getServer_name(), a.getLink()));
+            parsing.forEach(a -> new Sql().queue("com.telifie." + Configuration.SERVER_NAME, a.getLink()));
             Log.message(parsing.size() + " RE-QUEUED", "PARx012");
         }
         Console.log("Grabbing from queue.");
@@ -108,7 +108,7 @@ public class Parser {
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
                 if(response.statusCode() == 200){
                     Log.message("PARSING : " + url, "PARx102");
-                    new Sql().parsed("com.telifie." + Configuration.getServer_name(), url);
+                    new Sql().parsed("com.telifie." + Configuration.SERVER_NAME, url);
                     webpage wp = new webpage();
                     Article article = wp.extract(url, response.parse());
                     if(articles.lookup(article.getLink())){
@@ -250,18 +250,6 @@ public class Parser {
             return a;
         }
 
-        public static Article video(String uri){
-            Article a = new Article();
-            a.setDescription("Video");
-            return null;
-        }
-
-        public static Article document(String uri){
-            Article a = new Article();
-            a.setDescription("Document");
-            return null;
-        }
-
         public static Article markdown(Asset asset){
             Article a = new Article();
             Unit u = new Unit(asset.getContents());
@@ -362,7 +350,6 @@ public class Parser {
                             ia.setIcon(src);
                             ia.setTags(article.getTags());
                             ia.setDescription("Image");
-                            ia.setPriority(32.0);
                             ia.addAttribute(new Attribute("Width", d[0] + "px"));
                             ia.addAttribute(new Attribute("Height", d[1] + "px"));
                             ia.addAttribute(new Attribute("Size", ass.fileSize()));

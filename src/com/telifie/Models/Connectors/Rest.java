@@ -1,29 +1,27 @@
 package com.telifie.Models.Connectors;
 
+import com.telifie.Models.Utilities.Log;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import com.telifie.Models.Utilities.Package;
 
 public class Rest {
 
     public static String get(Package p, Map<String, String> params){
-        String req = p.getUrl("endpoint")+ "?";
-        try {
-            for (Map.Entry<String, String> entry : params.entrySet()) {
-                req += entry.getKey() + "=" + URLEncoder.encode(entry.getValue(), "UTF-8") + "&";
-            }
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
+        StringBuilder req = new StringBuilder(p.getUrl("endpoint") + "?");
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            req.append(entry.getKey()).append("=").append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8)).append("&");
         }
         try {
-            Document doc = Jsoup.connect(req).ignoreContentType(true).get();
+            Log.flag("Executing REST request -> " + p.getName(), "NETx001");
+            Document doc = Jsoup.connect(req.toString()).ignoreContentType(true).get();
             return doc.text();
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.error("Failed REST request -> " + p.getName(), "NETx101");
         }
         return "";
     }
