@@ -159,85 +159,87 @@ public class Parser {
             }
         }
 
-        public static ArrayList<Article> batch(String uri){
-            if(uri.endsWith("csv")) {
-                try {
-                    URL url = Network.url(uri);
-                    InputStream inputStream = url.openStream();
-                    Files.copy(inputStream, Paths.get(Telifie.configDirectory() + "temp/" + url.getPath().split("/")[url.getPath().split("/").length - 1]), StandardCopyOption.REPLACE_EXISTING);
-                    ArrayList<String[]> lines = new ArrayList<>();
-                    try (CSVReader reader = new CSVReader(new FileReader(Telifie.configDirectory() + "temp/" + url.getPath().split("/")[url.getPath().split("/").length - 1]))) {
-                        String[] fields;
-                        while ((fields = reader.readNext()) != null) {
-                            lines.add(fields);
-                        }
-                        Log.message("PARSING CSV BATCH UPLOAD", "PARx104");
-                    } catch (IOException | CsvException e) {
-                        Log.error("FAILED CSV FILE READ : PARSER / BATCH", "PARx114");
+        public static ArrayList<Article> batch(String uri, boolean insert){
+            try {
+                URL url = Network.url(uri);
+                InputStream inputStream = url.openStream();
+                Files.copy(inputStream, Paths.get(Telifie.configDirectory() + "temp/" + url.getPath().split("/")[url.getPath().split("/").length - 1]), StandardCopyOption.REPLACE_EXISTING);
+                ArrayList<String[]> lines = new ArrayList<>();
+                try (CSVReader reader = new CSVReader(new FileReader(Telifie.configDirectory() + "temp/" + url.getPath().split("/")[url.getPath().split("/").length - 1]))) {
+                    String[] fields;
+                    while ((fields = reader.readNext()) != null) {
+                        lines.add(fields);
                     }
-                    ArrayList<Article> articles = new ArrayList<>();
-                    String[] headers = lines.get(0);
-                    int titleIndex = -1, descriptionIndex = -1, iconIndex = -1, linkIndex = -1, contentIndex = -1, tagsIndex = -1;
-                    for (int i = 0; i < headers.length; i++) {
-                        String hV = headers[i].trim().toLowerCase();
-                        switch (hV) {
-                            case "title" -> titleIndex = i;
-                            case "description" -> descriptionIndex = i;
-                            case "link" -> linkIndex = i;
-                            case "content" -> contentIndex = i;
-                            case "icon" -> iconIndex = i;
-                            case "tags" -> tagsIndex = i;
-                        }
-                    }
-                    String bid = String.valueOf(Telifie.epochTime());
-                    for (int i = 1; i < lines.size(); i++) {
-                        String[] articleData = lines.get(i);
-                        Article article = new Article();
-                        article.addAttribute(new Attribute("*batch", bid));
-                        for (int g = 0; g < articleData.length; g++) {
-                            String value = articleData[g];
-                            if (g == titleIndex) {
-                                article.setTitle(Andromeda.tools.escape(value));
-                            } else if (g == descriptionIndex) {
-                                article.setDescription(value);
-                            } else if (g == linkIndex) {
-                                article.setLink(value);
-                            } else if (g == contentIndex) {
-                                article.setContent(Andromeda.tools.escape(value));
-                            } else if(g == iconIndex){
-                                article.setIcon(value);
-                            } else if(g == tagsIndex){
-                                String[] tags = value.split(",");
-                                for(String tag : tags){
-                                    article.addTag(tag.toLowerCase().trim());
-                                }
-                            } else {
-                                if(!value.trim().isEmpty()){
-                                    article.addAttribute(new Attribute(headers[g].trim(), value));
-                                }
-                            }
-                            if(!article.getLink().isEmpty()){
-                                String l = Network.decode(article.getLink());
-                                try {
-                                    Thread.sleep(4000);
-                                    Article pa = Parser.engines.website(l);
-                                    //TODO more attributes, icon,
-                                    article.setContent(pa.getContent());
-                                    String[] tags = articleData[2].split(",");
-                                    for (String tag : tags) {
-                                        article.addTag(tag.trim().toLowerCase());
-                                    }
-                                } catch (InterruptedException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            }
-                        }
-                        articles.add(article);
-                    }
-                    return articles;
-                } catch (IOException e) {
-                    Log.error("FAILED BATCH UPLOAD", "PARx124");
+                    Log.message("PARSING CSV BATCH UPLOAD", "PARx104");
+                } catch (IOException | CsvException e) {
+                    Log.error("FAILED CSV FILE READ : PARSER / BATCH", "PARx114");
                 }
+                ArrayList<Article> parsed = new ArrayList<>();
+                String[] headers = lines.get(0);
+                int titleIndex = -1, descriptionIndex = -1, iconIndex = -1, linkIndex = -1, contentIndex = -1, tagsIndex = -1;
+                for (int i = 0; i < headers.length; i++) {
+                    String hV = headers[i].trim().toLowerCase();
+                    switch (hV) {
+                        case "title" -> titleIndex = i;
+                        case "description" -> descriptionIndex = i;
+                        case "link" -> linkIndex = i;
+                        case "content" -> contentIndex = i;
+                        case "icon" -> iconIndex = i;
+                        case "tags" -> tagsIndex = i;
+                    }
+                }
+                String bid = String.valueOf(Telifie.epochTime());
+                for (int i = 1; i < lines.size(); i++) {
+                    String[] articleData = lines.get(i);
+                    Article article = new Article();
+                    article.addAttribute(new Attribute("*batch", bid));
+                    for (int g = 0; g < articleData.length; g++) {
+                        String value = articleData[g];
+                        if (g == titleIndex) {
+                            article.setTitle(Andromeda.tools.escape(value));
+                        } else if (g == descriptionIndex) {
+                            article.setDescription(value);
+                        } else if (g == linkIndex) {
+                            article.setLink(value);
+                        } else if (g == contentIndex) {
+                            article.setContent(Andromeda.tools.escape(value));
+                        } else if(g == iconIndex){
+                            article.setIcon(value);
+                        } else if(g == tagsIndex){
+                            String[] tags = value.split(",");
+                            for(String tag : tags){
+                                article.addTag(tag.toLowerCase().trim());
+                            }
+                        } else {
+                            if(!value.trim().isEmpty()){
+                                article.addAttribute(new Attribute(headers[g].trim(), value));
+                            }
+                        }
+                        if(!article.getLink().isEmpty()){
+                            String l = Network.decode(article.getLink());
+                            try {
+                                Thread.sleep(4000);
+                                Article pa = Parser.engines.website(l);
+                                //TODO more attributes, icon,
+                                article.setContent(pa.getContent());
+                                String[] tags = articleData[2].split(",");
+                                for (String tag : tags) {
+                                    article.addTag(tag.trim().toLowerCase());
+                                }
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    }
+                    parsed.add(article);
+                    if(insert){
+                        Console.log("Article created with batch parsers");
+                        articles.create(article);
+                    }
+                }
+                return parsed;
+            } catch (IOException e) {
+                Log.error("FAILED BATCH UPLOAD", "PARx124");
             }
             return null;
         }
@@ -302,7 +304,7 @@ public class Parser {
                     }
                 }
             });
-            links = Parser.extractLinks(document.getElementsByTag("a"), root);
+            links = Network.extractLinks(document.getElementsByTag("a"), root);
             if(!links.isEmpty()){
                 links.forEach(link -> {
                     if(Andromeda.tools.contains(new String[]{"dribbble.com", "facebook.com", "instagram.com", "spotify.com", "linkedin.com", "youtube.com", "pinterest.com", "github.com", "twitter.com", "tumblr.com", "reddit.com"}, link)){
@@ -493,16 +495,5 @@ public class Parser {
         public boolean isAllowed(String path) {
             return disallowed.stream().noneMatch(path::startsWith);
         }
-    }
-
-    public static ArrayList<String> extractLinks(Elements elements, String root){
-        ArrayList<String> links = new ArrayList<>();
-        elements.forEach(el -> {
-            String fxd = Network.fixLink(root, el.attr("href"));
-            if(Asset.isValidLink(fxd)){
-                links.add(fxd);
-            }
-        });
-        return links;
     }
 }

@@ -468,11 +468,9 @@ public class Command {
                     uri = Network.decode(content.getString("uri"));
                     switch (mode) {
                         case "batch" -> {
-                            ArrayList<Article> parsed = Parser.engines.batch(uri);
+                            new Parser(session);
+                            ArrayList<Article> parsed = Parser.engines.batch(uri, (content.getBoolean("insert") != null && content.getBoolean("insert") ? true : false));
                             if (parsed != null) {
-                                if (content.getBoolean("insert") != null && content.getBoolean("insert")) {
-                                    articles.createMany(parsed);
-                                }
                                 return new Result(this.command, "articles", parsed);
                             }
                             return new Result(404, this.command, "NO ARTICLES");

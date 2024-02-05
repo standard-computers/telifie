@@ -1,9 +1,13 @@
 package com.telifie.Models.Utilities.Servers;
 
+import com.telifie.Models.Utilities.Asset;
+import org.jsoup.select.Elements;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 
 public class Network {
 
@@ -33,5 +37,16 @@ public class Network {
             return (url + "/" + src).replaceFirst("\\./", "");
         }
         return src;
+    }
+
+    public static ArrayList<String> extractLinks(Elements elements, String root){
+        ArrayList<String> links = new ArrayList<>();
+        elements.forEach(el -> {
+            String fxd = Network.fixLink(root, el.attr("href"));
+            if(Asset.isValidLink(fxd)){
+                links.add(fxd);
+            }
+        });
+        return links;
     }
 }

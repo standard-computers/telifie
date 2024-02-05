@@ -27,18 +27,17 @@ public class Search {
         Result result = new Result(200, query.text(), "");
         boolean doquery = true;
         if(params.getPage() == 1){
-            if(query.text().contains("*") || query.text().contains("+") || query.text().contains("-") || query.text().contains("/") || Andromeda.tools.contains(Andromeda.NUMERALS, query.text())){
-                String mathExpressionPattern = "[\\d\\s()+\\-*/=xX^sincosTanSECcscCot]+";
+            if((query.text().contains("*") || query.text().contains("+") || query.text().contains("-") || query.text().contains("/")) && Andromeda.tools.contains(Andromeda.NUMERALS, query.text())){
+                String mathExpressionPattern = "[\\d\\s()+\\-*/=xX^sincoaet]+";
                 Pattern pattern = Pattern.compile(mathExpressionPattern);
                 Matcher matcher = pattern.matcher(query.text());
-                while (matcher.find()) {
-                    String match = matcher.group().trim();
+                if(matcher.find()) {
                     if(Packages.get("com.telifie.connectors.wolfram") != null){
                         doquery = false;
                         result.setSource("com.telifie.connectors.wolfram");
                         result.setGenerated(Rest.get(Packages.get("com.telifie.connectors.wolfram"), new HashMap<>() {{
                             put("appid", Packages.get("com.telifie.connectors.wolfram").getAccess());
-                            put("i", match);
+                            put("i", query.text());
                         }}));
                     }
                 }
