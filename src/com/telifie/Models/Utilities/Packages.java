@@ -8,6 +8,7 @@ public class Packages {
     private static ArrayList<Package> packages;
 
     public Packages(Session session){
+        Log.message("LOADING PACKAGES...", "STRx100");
         packages = new PackagesClient(session).get();
         Log.message(packages.size() + " PACKAGES LOADED", "PACx013");
     }

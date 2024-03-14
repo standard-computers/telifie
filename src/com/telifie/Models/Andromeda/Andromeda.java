@@ -30,16 +30,7 @@ public class Andromeda {
 
     public static void index(){
         ArticlesClient articles = new ArticlesClient(new Session("com.telifie.master_data_team", "telifie"));
-        ArrayList<Article> al = articles.withProjection(new Document("$and", Arrays.asList(
-                new Document("link", new Document("$ne", null)),
-                new Document("description", new Document("$ne", "Image")),
-                new Document("description", new Document("$ne", "Definition")),
-                new Document("description", new Document("$ne", "Webpage"))
-        )), new Document("icon", 1)
-                .append("title", 1)
-                .append("description", 1)
-                .append("link", 1)
-                .append("_id", 0));
+        ArrayList<Article> al = articles.withProjection(new Document("$and", Arrays.asList(new Document("link", new Document("$ne", null)), new Document("description", new Document("$ne", "Image")), new Document("description", new Document("$ne", "Definition")), new Document("description", new Document("$ne", "Webpage")))), new Document("title", 1).append("description", 1).append("link", 1).append("_id", 0));
         int it = al.size();
         Console.log("ESTIMATED INDEX : " + it);
         final int[] i = {0};
@@ -118,15 +109,6 @@ public class Andromeda {
                 }
             }
             return false;
-        }
-
-        public static int has(String[] things, String string){
-            for(int i = 0; i < things.length; i++){
-                if(string.contains(things[i])){
-                    return i;
-                }
-            }
-            return -1;
         }
 
         public static boolean equals(char sample, char[] chars){

@@ -1,11 +1,13 @@
 package com.telifie.Models.Utilities;
 
 import org.bson.Document;
+import org.json.JSONObject;
+
 import java.util.HashMap;
 
 public class Package {
 
-    private final String id, name, icon, description, access, secret, refresh;
+    private final String id, name, type, icon, description, access, secret, refresh;
     private int version;
     private final int origin;
     private HashMap<String, String> urls = new HashMap<>();
@@ -13,6 +15,7 @@ public class Package {
     public Package(Document document){
         this.id = document.getString("id");
         this.name = document.getString("name");
+        this.type = document.getString("type");
         this.icon = document.getString("icon");
         this.description = document.getString("description");
         this.access = document.getString("access");
@@ -56,6 +59,20 @@ public class Package {
 
     public String getUrl(String name){
         return urls.get(name);
+    }
+
+    public String activate(){
+        JSONObject urlsJson = new JSONObject(urls);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("id", id);
+        jsonObject.put("urls", urlsJson);
+        jsonObject.put("type", type);
+        jsonObject.put("access", access);
+        jsonObject.put("secret", secret);
+        jsonObject.put("name", name);
+        jsonObject.put("icon", icon);
+        jsonObject.put("description", description);
+        return jsonObject.toString();
     }
 
     @Override

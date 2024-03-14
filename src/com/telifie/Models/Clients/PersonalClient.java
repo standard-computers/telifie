@@ -3,13 +3,14 @@ package com.telifie.Models.Clients;
 import com.telifie.Models.Article;
 import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
+
 import java.util.ArrayList;
 
-public class DraftsClient extends Client {
+public class PersonalClient extends Client {
 
-    public DraftsClient(Session session){
+    public PersonalClient(Session session){
         super(session);
-        super.collection = "drafts";
+        super.collection = "personal";
     }
 
     public boolean update(Article article, Article newArticle){

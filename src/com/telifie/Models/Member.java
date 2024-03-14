@@ -4,16 +4,16 @@ import org.bson.Document;
 
 public class Member {
 
-    private final String email;
+    private final String id;
     private final int permissions;
 
     public Member(Document doc){
-        this.email = doc.getString("email");
+        this.id = doc.getString("id");
         this.permissions = (doc.getInteger("permissions") == null ? 0 : doc.getInteger("permissions"));
     }
 
-    public String getEmail() {
-        return email;
+    public String getId() {
+        return id;
     }
 
     public int permissions() {
@@ -22,6 +22,6 @@ public class Member {
 
     @Override
     public String toString(){
-        return new StringBuilder().append("{\"email\" : \"").append(email).append("\", \"permissions\" : \"").append(permissions).append("\"}").toString();
+        return new StringBuilder().append("{\"id\" : \"").append(id).append("\", \"permissions\" : \"").append(permissions).append("\"}").toString();
     }
 }

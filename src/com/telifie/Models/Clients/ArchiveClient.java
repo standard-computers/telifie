@@ -24,10 +24,6 @@ public class ArchiveClient extends Client {
         return super.deleteOne(new Document("id", article.getId()));
     }
 
-    public Article withId(String articleId){
-        return new Article(this.findOne(new Document("id", articleId)));
-    }
-
     public ArrayList<Article> get(){
         return this.find(new Document()).map(Article::new).into(new ArrayList<>());
     }

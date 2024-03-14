@@ -35,7 +35,7 @@ public class Start {
                             Log.out(Event.Type.DELETE, "CONFIG FILE DELETED", "STRx034");
                         }
                     }
-                    System.exit(1);
+                    System.exit(0);
                 }
                 case "--http" -> {
                     try {
@@ -113,7 +113,6 @@ public class Start {
             importConfiguration();
             if (config != null) {
                 config.startMongo();
-                Log.message("LOADING PACKAGES...", "STRx100");
                 new Packages(new Session("com.telifie.system", "telifie"));
                 new Andromeda();
             }else{

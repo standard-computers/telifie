@@ -42,7 +42,6 @@ public class Command {
     }
 
     public Result parseCommand(Session session, Document content){
-
         String selector = this.selectors[0];
         String objSelector = (this.selectors.length > 1 ? this.get(1) : "");
         String secSelector = (this.selectors.length > 2 ? this.get(2) : null);
@@ -73,12 +72,10 @@ public class Command {
             }
             return new Result(428, this.command, "JSON BODY EXPECTED");
         }else if(selector.equals("domains")){
-
             if(this.selectors.length >= 2){ //telifie.com/domains/{owner|member|create|update}
                 DomainsClient domains = new DomainsClient(session);
                 ArrayList<Domain> foundDomains;
                 if(objSelector.equals("owner")){ //Domains they own
-
                     foundDomains = domains.mine();
                     return new Result(this.command, "domains", foundDomains);
                 }else if(objSelector.equals("member")){ //Domains they're a member of
@@ -178,7 +175,6 @@ public class Command {
             }
             return new Result(200, this.command, "BAD DOMAINS OPTION");
         }else if(selector.equals("articles")){
-
             User user = new UsersClient().getUserWithId(session.user);
             if(content != null){
                 if(content.getString("domain") != null){
@@ -294,11 +290,6 @@ public class Command {
                         if(hasDomainPermission(user, session, false)){
                             Article na = new Article(content);
                             if(articles.create(na)){
-                                if(na.getLink()!= null){
-                                    new Sql().queue(user.getId(), na.getLink());
-                                }else if(na.getSource().url != null){
-                                    new Sql().queue(user.getId(), na.getSource().url);
-                                }
                                 return new Result(this.command, "article", na);
                             }
                             return new Result(505, this.command, "FAILED ARTICLE CREATION");
@@ -338,7 +329,6 @@ public class Command {
             }
             return new Result(this.command,"stats", articles.stats());
         }else if(selector.equals("collections")){
-
             CollectionsClient collections = new CollectionsClient(session);
             if(this.selectors.length >= 4){ //Saving/Unsaving articles in collection
                 try{
@@ -365,7 +355,6 @@ public class Command {
                 }catch (NullPointerException n){
                     return new Result(404, this.command, "COLLECTION NOT FOUND");
                 }
-
             }else if(this.selectors.length >= 2){ //Updating, deleting, getting collections
                 if(secSelector != null) {
                     try {
@@ -419,7 +408,6 @@ public class Command {
             ArrayList<Collection> usersCollections = collections.forUser(session.user);
             return new Result(this.command, "collections", usersCollections);
         }else if(selector.equals("users")){
-
             UsersClient users = new UsersClient();
             if(this.selectors.length >= 3){
                 if(objSelector.equals("update") && content != null){
@@ -550,7 +538,6 @@ public class Command {
             }
             return new Result(404, this.command, "JSON BODY EXPECTED");
         }else if(selector.equals("timelines")){
-
             if(this.selectors.length >= 2){
                 TimelinesClient timelines = new TimelinesClient(session);
                 Timeline timeline = timelines.getTimeline(objSelector);
@@ -561,7 +548,6 @@ public class Command {
             }
             return new Result(428, this.command, "OBJECT ID REQUIRED");
         }else if(selector.equals("connectors")){
-
             ConnectorsClient connectors = new ConnectorsClient(session);
             if(content != null){
                 Connector connector = new Connector(content);
@@ -579,6 +565,15 @@ public class Command {
             if(this.selectors.length >= 2){
                 if(objSelector.equals("connected")){
                     return new Result(this.command, "connectors", connectors.mine());
+                }else if(objSelector.equals("activate")){
+                    //TODO TESTS -> com.telifie.connectors.spotify
+                    if(!secSelector.isEmpty()){
+                        Package p =  Packages.get(secSelector);
+                        if(p != null){
+                            return new Result(this.command, "auth", new JSONObject(p.activate()));
+                        }
+                        return new Result(404, this.command, "CONNECTOR NOT FOUND");
+                    }
                 }
                 Connector connector = connectors.getConnector(objSelector);
                 if(connector != null){
@@ -612,10 +607,8 @@ public class Command {
             }
             return new Result(428, this.command, "JSON BODY EXPECTED");
         }else if(selector.equals("packages")){
-
             PackagesClient packages = new PackagesClient(session);
             if(objSelector.equals("create")){
-
                 if(content != null){
                     Package p = new Package(content);
                     p.setVersion(packages.versions(p.getId()) + 1);
@@ -625,7 +618,6 @@ public class Command {
                     return new Result(505, this.command, "FAILED PACKAGE CREATION");
                 }
                 return new Result(428, this.command, "JSON BODY EXPECTED");
-
             }else if(objSelector.equals("delete")){
                 try{
                     Package p = packages.get(secSelector);
@@ -635,7 +627,6 @@ public class Command {
                     return new Result(404, this.command, "PACKAGE NOT FOUND");
                 }
             }else if(this.selectors.length >= 2){
-
                 try{
                     return new Result(this.command, "package", packages.get(objSelector));
                 }catch (NullPointerException e){

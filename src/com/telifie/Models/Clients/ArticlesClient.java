@@ -47,15 +47,17 @@ public class ArticlesClient extends Client {
         return true;
     }
 
-    public boolean createMany(ArrayList<Article> articles){
-        ArrayList<Document> documents = new ArrayList<>();
-        articles.forEach(a -> documents.add(Document.parse(a.toString())));
-        return super.insertMany(documents);
-    }
-
     public Article withLink(String link){
         try{
             return new Article(this.findOne(new Document("link", link)));
+        }catch (NullPointerException e){
+            return null;
+        }
+    }
+
+    public Article withSource(String source){
+        try{
+            return new Article(this.findOne(new Document("source.url", source)));
         }catch (NullPointerException e){
             return null;
         }
@@ -87,27 +89,13 @@ public class ArticlesClient extends Client {
                         new Document("description", "City"),
                         new Document("location", new Document("$near",
                                 new Document("$geometry", new Document("type", "Point")
-                                        .append("coordinates", Arrays.asList(
-                                                params.getLongitude(),
-                                                params.getLatitude()
-                                        ))
-                                ).append("$maxDistance", Integer.MAX_VALUE)
-                        )
-                        )
-                ))).get(0);
+                                        .append("coordinates", Arrays.asList(params.getLongitude(), params.getLatitude()))).append("$maxDistance", Integer.MAX_VALUE)))))).get(0);
     }
 
     public ArrayList<Article> search(Unit query, Parameters params, Document filter){
         FindIterable<Document> found;
         if(params.isQuickResults()){
-            found = this.findWithProjection(filter, new Document("id", 1)
-                    .append("icon", 1)
-                    .append("title", 1)
-                    .append("description", 1)
-                    .append("link", 1)
-                    .append("tags", 1)
-                    .append("priority", 1)
-                    .append("attributes", 1));
+            found = this.findWithProjection(filter, new Document("id", 1).append("icon", 1).append("title", 1).append("description", 1).append("link", 1).append("tags", 1).append("priority", 1).append("attributes", 1));
         }else{
             found = this.find(filter);
         }
@@ -169,13 +157,13 @@ public class ArticlesClient extends Client {
         return archive.archive(article);
     }
 
-    public boolean lookup(String uri){
-        ArrayList<Article> matches = get(new Document("link", Search.pattern(uri)));
+    public boolean lookup(Article article){
+        ArrayList<Article> matches = get(new Document("link", Search.pattern(article.getLink())));
         for (Article a : matches) {
             String link = a.getLink();
             try {
                 URI storedURI = new URI(link);
-                URI providedURI = new URI(uri);
+                URI providedURI = new URI(article.getLink());
                 if (areSimilarURLs(storedURI, providedURI)) {
                     return true;
                 }

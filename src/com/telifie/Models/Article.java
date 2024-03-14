@@ -1,7 +1,6 @@
 package com.telifie.Models;
 
 import com.telifie.Models.Andromeda.Andromeda;
-import com.telifie.Models.Articles.*;
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import java.util.ArrayList;
@@ -186,5 +185,54 @@ public class Article {
                 (source == null ? ", \"source\" : null" : ", \"source\" : " + source) +
                 ", \"origin\" : " + origin +
                 '}';
+    }
+
+    public class DataSet {
+
+        private final String title;
+        private final ArrayList<String[]> rows;
+
+        public DataSet(Document document){
+            this.title = document.getString("title");
+            this.rows = (ArrayList<String[]>) document.get("rows", ArrayList.class);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder jsonBuilder = new StringBuilder();
+            jsonBuilder.append("{ \"title\": \"").append(title).append("\", \"rows\": [");
+            for (String[] row : rows) {
+                jsonBuilder.append("[\"").append(String.join("\", \"", row)).append("\"],");
+            }
+            if (!rows.isEmpty()) {
+                jsonBuilder.deleteCharAt(jsonBuilder.length() - 1); // Remove the trailing comma
+            }
+            jsonBuilder.append("] }");
+            return jsonBuilder.toString();
+        }
+    }
+
+    public static class Source {
+
+        public final String icon;
+        public final String name;
+        public final String url;
+
+        public Source(String icon, String name, String url) {
+            this.icon = icon;
+            this.name = name;
+            this.url = url;
+        }
+
+        public Source(Document document) throws NullPointerException {
+            this.icon = document.getString("icon");
+            this.name = document.getString("name");
+            this.url = document.getString("url");
+        }
+
+        @Override
+        public String toString() {
+            return new StringBuilder().append("{\"icon\" : \"").append(icon).append('\"').append(", \"name\" : \"").append(name).append('\"').append(", \"url\" : \"").append(url).append("\"}").toString();
+        }
     }
 }

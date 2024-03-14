@@ -26,7 +26,7 @@ public class Search {
         Unit query = new Unit(q);
         Result result = new Result(200, query.text(), "");
         boolean doquery = true;
-        if(params.getPage() == 1){
+        if(params.getPage() == 1){ //Quick Results
             if((query.text().contains("*") || query.text().contains("+") || query.text().contains("-") || query.text().contains("/")) && Andromeda.tools.contains(Andromeda.NUMERALS, query.text())){
                 String mathExpressionPattern = "[\\d\\s()+\\-*/=xX^sincoaet]+";
                 Pattern pattern = Pattern.compile(mathExpressionPattern);
@@ -82,7 +82,7 @@ public class Search {
             }else if(params.getIndex().equals("locations")){
                 sf = Filters.exists("location");
             }
-            filter = new Document("$and", Arrays.asList(sf, Filters.or(filter)));
+            filter = new Document("$and", Arrays.asList(sf, filter));
             ArrayList<Article> results = articles.search(query, params, filter);
             ArrayList<Article> paged = paginate(results, params.getPage(), params.getRpp());
             result.setParams(params);
@@ -119,11 +119,14 @@ public class Search {
             }
         }
         List<Document> or = new ArrayList<>();
-        for (String word : q.tokens()) {
-            or.add(new Document("title", pattern(word)));
+        if(q.tokens().length > 1){
+            for (String word : q.tokens()) {
+                or.add(new Document("title", pattern(word)));
+            }
+            //or.add(new Document("tags", new Document("$in", Collections.singletonList(q.text()))));
+            return new Document("$or", or);
         }
-        or.add(new Document("tags", new Document("$in", Collections.singletonList(q.text()))));
-        return new Document("$or", or);
+        return new Document("title", pattern(q.text()));
     }
 
     private ArrayList<Article> paginate(ArrayList<Article> results, int page, int pageSize) {

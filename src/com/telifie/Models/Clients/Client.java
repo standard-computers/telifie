@@ -24,8 +24,7 @@ public class Client {
 
     protected FindIterable<Document> find(Document filter){
         try {
-            MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
-            return c.find(filter);
+            return mc.getDatabase("telifie").getCollection(this.collection).find(filter);
         }catch(MongoException e){
             return null;
         }
@@ -33,8 +32,7 @@ public class Client {
 
     protected FindIterable<Document> findWithProjection(Document filter, Document projection){
         try {
-            MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
-            return c.find(filter).projection(projection);
+            return mc.getDatabase("telifie").getCollection(this.collection).find(filter).projection(projection);
         }catch(MongoException e){
             return null;
         }
@@ -50,8 +48,7 @@ public class Client {
 
     protected int count(Document filter){
         try {
-            MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
-            return (int) c.countDocuments(filter);
+            return (int) mc.getDatabase("telifie").getCollection(this.collection).countDocuments(filter);
         }catch(MongoException e){
             return -1;
         }
@@ -59,8 +56,7 @@ public class Client {
 
     protected boolean updateOne(Document filter, Document update){
         try {
-            MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
-            UpdateResult result = c.updateOne(filter, update);
+            UpdateResult result = mc.getDatabase("telifie").getCollection(this.collection).updateOne(filter, update);
             return result.getModifiedCount() > 0;
         }catch(MongoException e){
             return false;
@@ -69,8 +65,7 @@ public class Client {
 
     protected boolean updateOne(Document filter, Document update, UpdateOptions options){
         try {
-            MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
-            UpdateResult result = c.updateOne(filter, update, options);
+            UpdateResult result = mc.getDatabase("telifie").getCollection(this.collection).updateOne(filter, update, options);
             return result.getModifiedCount() > 0;
         }catch(MongoException e){
             return false;
@@ -79,18 +74,7 @@ public class Client {
 
     protected boolean insertOne(Document document){
         try {
-            MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
-            c.insertOne(document);
-            return true;
-        }catch(MongoException e){
-            return false;
-        }
-    }
-
-    protected boolean insertMany(ArrayList<Document> documents){
-        try {
-            MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
-            c.insertMany(documents);
+            mc.getDatabase("telifie").getCollection(this.collection).insertOne(document);
             return true;
         }catch(MongoException e){
             return false;
@@ -99,8 +83,7 @@ public class Client {
 
     protected List<Document> aggregate(Document filter){
         try {
-            MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
-            return c.aggregate(Arrays.asList(filter)).into(new ArrayList<>());
+            return mc.getDatabase("telifie").getCollection(this.collection).aggregate(Arrays.asList(filter)).into(new ArrayList<>());
         }catch(MongoException e){
             return null;
         }
@@ -108,8 +91,7 @@ public class Client {
 
     protected int count(){
         try {
-            MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
-            return (int) c.countDocuments();
+            return (int) mc.getDatabase("telifie").getCollection(this.collection).countDocuments();
         }catch(MongoException e){
             return -1;
         }
@@ -122,8 +104,7 @@ public class Client {
 
     protected boolean deleteOne(Document filter){
         try {
-            MongoCollection<Document> c = mc.getDatabase("telifie").getCollection(this.collection);
-            c.deleteOne(filter);
+            mc.getDatabase("telifie").getCollection(this.collection).deleteOne(filter);
             return true;
         }catch(MongoException e){
             return false;

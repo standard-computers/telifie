@@ -1,4 +1,4 @@
-package com.telifie.Models.Articles;
+package com.telifie.Models;
 
 import com.telifie.Models.Andromeda.Andromeda;
 

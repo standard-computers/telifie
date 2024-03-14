@@ -69,7 +69,7 @@ public class Domain implements Serializable {
         }else{
             for(Member u : users){
                 //TODO expects email, userId given
-                if(u.getEmail().equals(userId)){
+                if(u.getId().equals(userId)){
                     int up = u.permissions();
                     return (up < 1 || up > 2 ? 1 : u.permissions());
                 }
