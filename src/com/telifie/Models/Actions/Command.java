@@ -4,6 +4,7 @@ import com.telifie.Models.*;
 import com.telifie.Models.Connectors.Twilio;
 import com.telifie.Models.Parser;
 import com.telifie.Models.Clients.*;
+import com.telifie.Models.Clients.Packages;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Package;
 import com.telifie.Models.Utilities.Servers.Network;
@@ -11,6 +12,7 @@ import org.bson.Document;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -143,8 +145,8 @@ public class Command {
                     try{
                         Domain d = domains.withId(objSelector);
                         if(content != null){
-                            ArrayList<Member> members = new ArrayList<>();
-                            content.getList("users", Document.class).forEach(doc -> members.add(new Member(doc)));
+                            ArrayList<Domain.Member> members = new ArrayList<>();
+                            content.getList("users", Document.class).forEach(doc -> members.add(new Domain.Member(doc)));
                             switch (terSelector) {
                                 case "add" -> {
                                     if (domains.addUsers(d, members)) {
@@ -195,6 +197,7 @@ public class Command {
                         case "id" -> {
                             try {
                                 if(hasDomainPermission(user, session, true)){
+                                    CompletableFuture.runAsync(() -> Sql.ping(session.user, a.getId()));
                                     return new Result(this.command, "article", articles.withId(secSelector));
                                 }
                                 return new Result(401, this.command, "INSUFFICIENT PERMISSIONS");
@@ -566,7 +569,6 @@ public class Command {
                 if(objSelector.equals("connected")){
                     return new Result(this.command, "connectors", connectors.mine());
                 }else if(objSelector.equals("activate")){
-                    //TODO TESTS -> com.telifie.connectors.spotify
                     if(!secSelector.isEmpty()){
                         Package p =  Packages.get(secSelector);
                         if(p != null){
@@ -599,41 +601,15 @@ public class Command {
                 return new Result(200, this.command, "RECEIVED");
             }
             return new Result(428, this.command, "JSON BODY EXPECTED");
-        }else if(selector.equals("queue")){
-            if(content != null){
-                String url = content.getString("url");
-                new Sql().queue(session.user, url);
-                return new Result(428, this.command, "QUEUED");
-            }
-            return new Result(428, this.command, "JSON BODY EXPECTED");
         }else if(selector.equals("packages")){
-            PackagesClient packages = new PackagesClient(session);
-            if(objSelector.equals("create")){
-                if(content != null){
-                    Package p = new Package(content);
-                    p.setVersion(packages.versions(p.getId()) + 1);
-                    if(packages.create(p)){
-                        return new Result(200, this.command, "PACKAGED CREATED");
-                    }
-                    return new Result(505, this.command, "FAILED PACKAGE CREATION");
-                }
-                return new Result(428, this.command, "JSON BODY EXPECTED");
-            }else if(objSelector.equals("delete")){
+            if(this.selectors.length >= 2){
                 try{
-                    Package p = packages.get(secSelector);
-                    packages.delete(p.getId(), p.getVersion());
-                    return new Result(200, this.command, "PACKAGE DELETED");
-                }catch (NullPointerException e){
-                    return new Result(404, this.command, "PACKAGE NOT FOUND");
-                }
-            }else if(this.selectors.length >= 2){
-                try{
-                    return new Result(this.command, "package", packages.get(objSelector));
+                    return new Result(this.command, "package", Packages.get(objSelector));
                 }catch (NullPointerException e){
                     return new Result(404, this.command, "PACKAGE NOT FOUND");
                 }
             }
-            return new Result(this.command, "packages", packages.get(true));
+            return new Result(this.command, "packages", Packages.getPublic());
         }
         return new Result(200, this.command, "NO COMMAND RECEIVED");
     }

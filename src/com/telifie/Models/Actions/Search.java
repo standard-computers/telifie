@@ -8,7 +8,7 @@ import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Connectors.Radar;
 import com.telifie.Models.Connectors.Rest;
 import com.telifie.Models.Result;
-import com.telifie.Models.Utilities.Packages;
+import com.telifie.Models.Clients.Packages;
 import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Utilities.Session;
 import org.bson.Document;

@@ -7,11 +7,7 @@ import java.util.UUID;
 
 public class Collection {
 
-    private final String id;
-    private String user;
-    private String icon;
-    private String name;
-    private String connector = "";
+    private String id, user, icon, name, connector = "";
     private final int origin;
     private int permissions = 0;
     private ArrayList articles;

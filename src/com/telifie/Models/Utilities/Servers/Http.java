@@ -54,7 +54,7 @@ public class Http {
                 String authHeader = request.headers().get(HttpHeaderNames.AUTHORIZATION);
                 String query = new QueryStringDecoder(request.uri()).path().substring(1);
                 String userIp = ctx.channel().remoteAddress().toString();
-                Log.out(Event.Type.valueOf(request.method().toString()), "INBOUND HTTP REQUEST : " + userIp + "/" + query, "HTTx057");
+                Log.out(Event.Type.valueOf(request.method().toString()), "INBOUND HTTP REQUEST : " + userIp + "/" + query, "HTTx001");
                 Result result = new Result(406, ctx.channel().remoteAddress().toString(), "NO AUTH PROVIDED");
                 if(authHeader != null){
                     Authentication auth = new Authentication(authHeader);

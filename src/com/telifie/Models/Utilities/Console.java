@@ -8,6 +8,7 @@ import com.telifie.Models.Clients.DraftsClient;
 import com.telifie.Models.Clients.PersonalClient;
 import com.telifie.Models.Parser;
 import org.bson.Document;
+import org.checkerframework.checker.units.qual.A;
 import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -100,44 +101,26 @@ public class Console {
                     }
                     System.exit(0);
                 }
-                case "personal" -> {
-                    String file = Console.in("File Path ->");
-                    PersonalClient pc = new PersonalClient(new Session("", "telifie"));
-                    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-                        int i = 0;
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            i++;
-                            if(!line.contains("List_of")){
-                                Console.log(String.valueOf(i));
-                                pc.insert(new Document("link", line));
-                            }
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
                 case "import" -> {
-                    String file = Console.in("File Path ->");
                     PersonalClient pc = new PersonalClient(new Session("", "telifie"));
                     ArticlesClient articles = new ArticlesClient(new Session("", "telifie"));
                     Parser p = new Parser(new Session("", "telifie"));
-                    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            if(!line.contains("List_of")){
-                                if(articles.withSource(line) == null){
-                                    Thread.sleep(3000);
-                                    Article a = p.parse(line);
-                                    if(a != null){
-                                        articles.create(a);
-                                        Console.log("ARTICLE CREATED -> https://telifie.com/articles/" + a.getId());
-                                    }
+                    while(pc.hasNext()){
+                        try {
+                            String link = pc.next().getString("link");
+                            Console.log("WORKING -> " + link);
+                            Article a = p.parse(link);
+                            if(a != null){
+                                if(articles.create(a)){
+                                    Console.log("ARTICLE CREATED -> https://telifie.com/articles/" + a.getId());
                                 }
+                            }else{
+                                Console.log("-----FAILED ARTICLE-----");
                             }
+                            Thread.sleep(2000);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
                 }
                 case "andromeda" -> {

@@ -1,6 +1,6 @@
 package com.telifie.Models.Connectors;
 
-import com.telifie.Models.Utilities.Packages;
+import com.telifie.Models.Clients.Packages;
 import com.twilio.rest.api.v2010.account.Message;
 
 public class Twilio {

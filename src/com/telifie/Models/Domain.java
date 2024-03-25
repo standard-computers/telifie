@@ -8,14 +8,15 @@ import java.util.UUID;
 
 public class Domain implements Serializable {
 
-    private String id, icon, owner, name;
-    private int origin, permissions;
+    private final String id, icon, owner, name, alt;
+    private final int origin, permissions;
     private final ArrayList<Member> users = new ArrayList<>();
 
     public Domain(String owner, String name, String icon, int permissions){
         this.owner = owner;
         this.id = UUID.randomUUID().toString();
         this.name = name;
+        this.alt = name.toLowerCase().replaceAll(" ", "-");
         this.icon = icon;
         this.origin = Telifie.epochTime();
         this.permissions = (permissions <= 2 && permissions >= 0 ? permissions : 0); //Private is default mode if none
@@ -26,7 +27,9 @@ public class Domain implements Serializable {
         this.icon = document.getString("icon");
         this.owner = document.getString("owner");
         this.name = document.getString("name");
+        this.alt = document.getString("alt");
         this.permissions = (document.getInteger("permissions") == null ? 0 : document.getInteger("permissions"));
+        this.origin = (document.getInteger("origin") == null ? 0 : document.getInteger("origin"));
         ArrayList<Document> m = (ArrayList<Document>) document.getList("users", Document.class);
         if (m != null) {
             m.forEach(d -> this.addUser(new Member(d)));
@@ -37,21 +40,8 @@ public class Domain implements Serializable {
         return id;
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
     public String getOwner() {
         return owner;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public Domain setName(String name) {
-        this.name = name;
-        return this;
     }
 
     public void addUser(Member member){
@@ -69,9 +59,9 @@ public class Domain implements Serializable {
         }else{
             for(Member u : users){
                 //TODO expects email, userId given
-                if(u.getId().equals(userId)){
-                    int up = u.permissions();
-                    return (up < 1 || up > 2 ? 1 : u.permissions());
+                if(u.id.equals(userId)){
+                    int up = u.permissions;
+                    return (up < 1 || up > 2 ? 1 : u.permissions);
                 }
             }
         }
@@ -85,9 +75,26 @@ public class Domain implements Serializable {
                 ", \"icon\" : \"" + icon + '\"' +
                 ", \"owner\" : \"" + owner + '\"' +
                 ", \"name\" : \"" + name + '\"' +
+                ", \"alt\" : \"" + alt + '\"' +
                 ", \"origin\" :" + origin +
                 ", \"permissions\" :" + permissions +
                 ", \"users\" :" + users +
                 '}';
+    }
+
+    public static class Member {
+
+        public final String id;
+        public final int permissions;
+
+        public Member(Document doc){
+            this.id = doc.getString("id");
+            this.permissions = (doc.getInteger("permissions") == null ? 0 : doc.getInteger("permissions"));
+        }
+
+        @Override
+        public String toString(){
+            return new StringBuilder().append("{\"id\" : \"").append(id).append("\", \"permissions\" : \"").append(permissions).append("\"}").toString();
+        }
     }
 }

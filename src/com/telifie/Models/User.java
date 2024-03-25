@@ -6,14 +6,9 @@ import java.util.UUID;
 
 public class User implements Serializable {
 
-    private String id;
-    private final String email;
-    private String name;
-    private String phone;
-    private String token;
+    private String id, email, name, phone, token, settings;
     private final int origin;
     private int permissions;
-    private String settings;
 
     public User(String email, String name, String phone) {
         this.id = UUID.randomUUID().toString();

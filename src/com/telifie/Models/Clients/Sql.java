@@ -2,7 +2,6 @@ package com.telifie.Models.Clients;
 
 import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Console;
-import com.telifie.Models.Utilities.Log;
 import com.telifie.Models.Utilities.Telifie;
 import java.sql.*;
 
@@ -11,13 +10,13 @@ public class Sql {
     private static Connection sql;
 
     public Sql(){
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            this.sql = DriverManager.getConnection(Configuration.mysql.getUri(), Configuration.mysql.getUser(), Configuration.mysql.getPsswd());
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+        String url = "jdbc:mysql://" + Configuration.mysql.getUri() + ":3306/telifie";
+        try (Connection connection = DriverManager.getConnection(url, Configuration.mysql.getUser(), Configuration.mysql.getPsswd())) {
+            System.out.println("Connected to the MySQL database!");
+            sql = connection;
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            System.out.println("Connection failed!");
+            e.printStackTrace();
         }
     }
 
@@ -28,7 +27,6 @@ public class Sql {
             command.setString(2, url);
             command.setString(3, String.valueOf(Telifie.epochTime()));
             command.execute();
-            this.sql.close();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -41,30 +39,9 @@ public class Sql {
             ResultSet resultSet = command.executeQuery();
             if (resultSet.next()) {
                 int count = resultSet.getInt("count");
-                this.sql.close();
                 return count > 0;
             }
             return false;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void deleteParsed(String uri) {
-        try (PreparedStatement command = this.sql.prepareStatement("DELETE FROM parsed WHERE uri = ?")) {
-            command.setString(1, uri);
-            command.execute();
-            this.sql.close();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void purgeQueue() {
-        try {
-            this.sql.prepareStatement("TRUNCATE queue").execute();
-            this.sql.close();
-            Log.message("QUEUE PURGED", "SQLx067");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -78,51 +55,30 @@ public class Sql {
             command.setString(2, url);
             command.setString(3, String.valueOf(Telifie.epochTime()));
             command.execute();
-            this.sql.close();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public boolean isQueued(String url) {
-        try {
-            PreparedStatement command = this.sql.prepareStatement("SELECT COUNT(*) AS count FROM queue WHERE uri = ?");
-            command.setString(1, url);
-            ResultSet resultSet = command.executeQuery();
-            if (resultSet.next()) {
-                int count = resultSet.getInt("count");
-                command.close();
-                return count > 0;
+    public static void ping(String user, String articleId) {
+        String url = "jdbc:mysql://" + Configuration.mysql.getUri() + ":3306/telifie";
+        try (Connection connection = DriverManager.getConnection(url, Configuration.mysql.getUser(), Configuration.mysql.getPsswd())) {
+            PreparedStatement checkStatement = connection.prepareStatement("SELECT COUNT(*) FROM pings WHERE user = ? AND object = ?");
+            checkStatement.setString(1, user);
+            checkStatement.setString(2, articleId);
+            ResultSet resultSet = checkStatement.executeQuery();
+            resultSet.next();
+            int count = resultSet.getInt(1);
+            if (count > 0) {
+                return;
             }
-            return false;
+            PreparedStatement insertStatement = connection.prepareStatement("INSERT INTO pings (user, object, origin) VALUES (?, ?, ?)");
+            insertStatement.setString(1, user);
+            insertStatement.setString(2, articleId);
+            insertStatement.setString(3, String.valueOf(Telifie.epochTime()));
+            insertStatement.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
-    }
-
-    public void deleteQueued(String uri) {
-        try (PreparedStatement command = this.sql.prepareStatement("DELETE FROM queue WHERE uri = ?")) {
-            command.setString(1, uri);
-            command.execute();
-            this.sql.close();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public String nextQueued() {
-        String uri = null;
-        try (PreparedStatement selectCommand = this.sql.prepareStatement("SELECT uri FROM queue ORDER BY origin DESC LIMIT 1")) {
-            try (ResultSet resultSet = selectCommand.executeQuery()) {
-                if (resultSet.next()) {
-                    uri = resultSet.getString("uri");
-                    deleteQueued(uri);
-                    this.sql.close();
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        return uri;
     }
 }

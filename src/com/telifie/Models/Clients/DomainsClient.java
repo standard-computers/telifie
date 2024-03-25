@@ -1,7 +1,6 @@
 package com.telifie.Models.Clients;
 
 import com.telifie.Models.Domain;
-import com.telifie.Models.Member;
 import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
 import java.util.ArrayList;
@@ -30,17 +29,17 @@ public class DomainsClient extends Client {
         return this.insertOne(Document.parse(domain.toString()));
     }
 
-    public boolean addUsers(Domain domain, ArrayList<Member> members){
+    public boolean addUsers(Domain domain, ArrayList<Domain.Member> members){
         members.forEach(member -> super.updateOne(new Document("id", domain.getId()), new Document("$push", new Document("users", Document.parse(member.toString())))));
         return true;
     }
 
-    public boolean removeUsers(Domain domain, ArrayList<Member> members){
+    public boolean removeUsers(Domain domain, ArrayList<Domain.Member> members){
         members.forEach(member -> super.updateOne(new Document("id", domain.getId()), new Document("$pull", new Document("users", Document.parse(member.toString())))));
         return true;
     }
 
-    public boolean updateUsers(Domain domain, ArrayList<Member> members){
+    public boolean updateUsers(Domain domain, ArrayList<Domain.Member> members){
         members.forEach(member -> super.updateOne(new Document("id", domain.getId()), new Document("$set", new Document("users", Document.parse(member.toString())))));
         return true;
     }

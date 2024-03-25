@@ -1,36 +1,44 @@
 package com.telifie.Models.Utilities;
 
-import org.bson.Document;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.json.JSONArray;
 import org.json.JSONObject;
+import java.util.ArrayList;
 
-import java.util.HashMap;
-
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Package {
 
-    private final String id, name, type, icon, description, access, secret, refresh;
-    private int version;
-    private final int origin;
-    private HashMap<String, String> urls = new HashMap<>();
+    private String id, name, type, description, access, secret, refresh;
+    private int version, origin;
+    private boolean isPublic;
+    private ArrayList<Endpoint> endpoints;
 
-    public Package(Document document){
-        this.id = document.getString("id");
-        this.name = document.getString("name");
-        this.type = document.getString("type");
-        this.icon = document.getString("icon");
-        this.description = document.getString("description");
-        this.access = document.getString("access");
-        this.secret = document.getString("secret");
-        this.refresh = document.getString("refresh");
-        this.version = (document.getInteger("version") == null ? 1 : document.getInteger("version"));
-        this.origin = (document.getInteger("origin") == null ? Telifie.epochTime() : document.getInteger("origin"));
-        Document us = document.get("urls", org.bson.Document.class);
-        if (us != null) {
-            for (String key : us.keySet()) {
-                if (us.get(key) instanceof String) {
-                    this.urls.put(key, us.getString(key));
-                }
-            }
-        }
+    @JsonCreator
+    public Package(@JsonProperty("id") String id,
+                   @JsonProperty("name") String name,
+                   @JsonProperty("type") String type,
+                   @JsonProperty("description") String description,
+                   @JsonProperty("access") String access,
+                   @JsonProperty("secret") String secret,
+                   @JsonProperty("refresh") String refresh,
+                   @JsonProperty("version") int version,
+                   @JsonProperty("origin") int origin,
+                   @JsonProperty("isPublic") boolean isPublic,
+                   @JsonProperty("endpoints") ArrayList<Endpoint> endpoints) {
+        this.id = id;
+        this.name = name;
+        this.type = type;
+        this.description = description;
+        this.access = access;
+        this.secret = secret;
+        this.refresh = refresh;
+        this.version = version;
+        this.origin = origin;
+        this.isPublic = isPublic;
+        this.endpoints = endpoints;
     }
 
     public String getId() {
@@ -49,39 +57,67 @@ public class Package {
         return secret;
     }
 
-    public int getVersion() {
-        return version;
+    public boolean getPublic() {
+        return isPublic;
     }
 
-    public void setVersion(int version) {
-        this.version = version;
-    }
-
+    @JsonIgnore
     public String getUrl(String name){
-        return urls.get(name);
+        for (Endpoint e : this.endpoints) {
+            if (e.name.equals(name)) {
+                return e.value;
+            }
+        }
+        return null;
+    }
+
+    @JsonIgnore
+    public Endpoint getEndpoint(String name){
+        for (Endpoint e : this.endpoints) {
+            if (e.name.equals(name)) {
+                return e;
+            }
+        }
+        return null;
     }
 
     public String activate(){
-        JSONObject urlsJson = new JSONObject(urls);
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("id", id);
-        jsonObject.put("urls", urlsJson);
-        jsonObject.put("type", type);
         jsonObject.put("access", access);
         jsonObject.put("secret", secret);
         jsonObject.put("name", name);
-        jsonObject.put("icon", icon);
+        jsonObject.put("type", type);
         jsonObject.put("description", description);
+        jsonObject.put("endpoints", new JSONArray(endpoints.toString()));
         return jsonObject.toString();
     }
 
     @Override
     public String toString() {
-        return "{" +
-                "\"id\" : \"" + id + '\"' +
+        return "{\"id\" : \"" + id + '\"' +
                 ", \"name\" : \"" + name + '\"' +
-                ", \"icon\" : \"" + icon + '\"' +
-                ", \"description\" : \"" + description + '\"' +
-                '}';
+                ", \"type\" : \"" + type + '\"' +
+                ", \"isPublic\" : " + isPublic +
+                ", \"description\" : \"" + description + "\"}";
+    }
+
+    public static class Endpoint {
+
+        protected String name, value, purpose = "";
+
+        @JsonCreator
+        public Endpoint(@JsonProperty("name") String name, @JsonProperty("value") String value, @JsonProperty("purpose") String purpose) {
+            this.name = name;
+            this.value = value;
+            this.purpose = purpose;
+        }
+
+        @Override
+        public String toString() {
+            return "{\"name\" : \"" + name + '\"' +
+                    ", \"value\" : \"" + value + "\"" +
+                    ", \"purpose\" : \"" + purpose + "\"}";
+        }
     }
 }

@@ -2,6 +2,7 @@ package com.telifie;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.telifie.Models.Andromeda.Andromeda;
+import com.telifie.Models.Clients.Packages;
 import com.telifie.Models.Parser;
 import com.telifie.Models.User;
 import com.telifie.Models.Utilities.*;
@@ -17,10 +18,10 @@ public class Start {
 
     public static void main(String[] args){
         Console.welcome();
-        Log.message("TELIFIE STARTED", "STRx001");
+        Log.message("TELIFIE STARTED", "CLIx001");
         checkConfig();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            Log.flag("TELIFIE EXITED", "STRx022");
+            Log.flag("TELIFIE EXITED", "CLIx101");
             Telifie.purgeTemp();
         }));
         if (args.length > 0) {
@@ -29,10 +30,10 @@ public class Start {
                 case "--install" ->
                         install();
                 case "--purge" -> {
-                    Log.message("PURGE MODE ENTERED", "STRx031");
+                    Log.message("PURGE MODE ENTERED", "CLIx002");
                     if (Console.in("Confirm ('yes') -> ").equals("yes")) {
                         if(configFile.delete()){
-                            Log.out(Event.Type.DELETE, "CONFIG FILE DELETED", "STRx034");
+                            Log.out(Event.Type.DELETE, "CONFIG FILE DELETED", "CLIx200");
                         }
                     }
                     System.exit(0);
@@ -42,7 +43,7 @@ public class Start {
                         Console.log("Starting HTTP server [CONSIDER HTTPS FOR SECURITY]...");
                         new Http();
                     } catch (Exception e) {
-                        Log.error("HTTP SERVER FAILED", "STRx045");
+                        Log.error("HTTP SERVER FAILED", "CLIx102");
                         throw new RuntimeException(e);
                     }
                 }
@@ -51,15 +52,12 @@ public class Start {
                         Console.log("Starting HTTPS server...");
                         new Http();
                     } catch (Exception e) {
-                        Log.error("HTTPS SERVER FAILED", "STRx054");
+                        Log.error("HTTPS SERVER FAILED", "CLIx103");
                         throw new RuntimeException(e);
                     }
                 }
-                case "--reparse" -> {
-                    new Parser(new Session("com.telifie." + Configuration.SERVER_NAME, "telifie")).reparse(true);
-                }
-                case "--worker" -> {
-                    new Parser(new Session("com.telifie." + Configuration.SERVER_NAME, "telifie")).reparse(false);
+                case "--node" -> {
+                    new Parser(new Session("com.telifie." + Configuration.SERVER_NAME, "telifie")).reparse();
                 }
                 case "--authenticate" -> {
                     //TODO Create user or API/Org
@@ -88,9 +86,9 @@ public class Start {
         }else{
             for(File folder : folders){
                 if(folder.mkdirs()){
-                    Log.put("CREATED DIRECTORY : " + folder.getPath(), "STRx002");
+                    Log.put("CREATED DIRECTORY : " + folder.getPath(), "CLIx004");
                 }else{
-                    Log.error("FAILED CREATING DIRECTORY : " + folder.getPath(), "STRx072");
+                    Log.error("FAILED CREATING DIRECTORY : " + folder.getPath(), "CLIx104");
                 }
             }
         }
@@ -103,7 +101,7 @@ public class Start {
         config.setMysql(new Configuration.Connection(sql_uri, sql_user, sql_psswd));
         config.setEmail(Console.in("Email -> "));
         exportConfiguration();
-        Log.put("CONFIGURATION SAVED", "STRx003");
+        Log.put("CONFIGURATION SAVED", "CLIx005");
         System.exit(0);
     }
 
@@ -116,7 +114,7 @@ public class Start {
                 new Packages(new Session("com.telifie.system", "telifie"));
                 new Andromeda();
             }else{
-                Log.error("FAILED CONFIG FILE LOAD", "STRx110");
+                Log.error("FAILED CONFIG FILE LOAD", "CLIx110");
                 System.exit(-1);
             }
         }else{
@@ -127,9 +125,9 @@ public class Start {
     private static void exportConfiguration(){
         try {
             new ObjectMapper().writer().withDefaultPrettyPrinter().writeValue(configFile, config);
-            Log.put("CONFIG FILE CREATED", "STRx120");
+            Log.put("CONFIG FILE CREATED", "CLIx006");
         } catch (IOException e) {
-            Log.error("FAILED CONFIG.JSON EXPORT", "STRx121");
+            Log.error("FAILED CONFIG.JSON EXPORT", "CLIx105");
         }
     }
 
@@ -137,7 +135,7 @@ public class Start {
         try {
             config = new ObjectMapper().readValue(configFile, Configuration.class);
         } catch (IOException e) {
-            Log.error("FAILED CONFIG.JSON IMPORT", "STRx131");
+            Log.error("FAILED CONFIG.JSON IMPORT", "CLIx106");
         }
     }
 }

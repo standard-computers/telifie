@@ -12,7 +12,7 @@ import com.telifie.Models.Utilities.Package;
 public class Rest {
 
     public static String get(Package p, Map<String, String> params){
-        StringBuilder req = new StringBuilder(p.getUrl("endpoint") + "?");
+        StringBuilder req = new StringBuilder(p.getEndpoint("endpoint") + "?");
         for (Map.Entry<String, String> entry : params.entrySet()) {
             req.append(entry.getKey()).append("=").append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8)).append("&");
         }

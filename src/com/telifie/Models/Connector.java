@@ -6,8 +6,7 @@ import java.util.UUID;
 
 public class Connector {
 
-    private String id, clientId, access, secret, refresh;
-    private String user, userId; //User ID of the user in the connector, not Telifie's User ID
+    private String id, clientId, access, secret, refresh, user, userId; //User ID of the user in the connector, not Telifie's User ID
     private int origin;
 
     public Connector(Document document) {
@@ -23,14 +22,6 @@ public class Connector {
         }
     }
 
-    public String getClientId() {
-        return clientId;
-    }
-
-    public String getAccess() {
-        return access;
-    }
-
     public String getUser() {
         return user;
     }
@@ -39,24 +30,8 @@ public class Connector {
         this.user = user;
     }
 
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
     public String getId() {
         return id;
-    }
-
-    public String getSecret() {
-        return secret;
-    }
-
-    public Connector getConnector(){
-        return this;
     }
 
     @Override

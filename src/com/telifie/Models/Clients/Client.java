@@ -8,7 +8,7 @@ import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class Client {
@@ -30,6 +30,14 @@ public class Client {
         }
     }
 
+    protected FindIterable<Document> find(Document filter, Document sort){
+        try {
+            return mc.getDatabase("telifie").getCollection(this.collection).find(filter).sort(sort);
+        }catch(MongoException e){
+            return null;
+        }
+    }
+
     protected FindIterable<Document> findWithProjection(Document filter, Document projection){
         try {
             return mc.getDatabase("telifie").getCollection(this.collection).find(filter).projection(projection);
@@ -44,6 +52,19 @@ public class Client {
         }catch(MongoException e){
             return null;
         }
+    }
+
+    protected Document next(int skip) {
+        MongoCursor<Document> cursor = mc.getDatabase("telifie").getCollection(this.collection).find().skip(skip).limit(1).iterator();
+        if (cursor.hasNext()) {
+            return cursor.next();
+        } else {
+            return null;
+        }
+    }
+
+    protected boolean hasNext() {
+        return mc.getDatabase("telifie").getCollection(this.collection).find().limit(1).iterator().hasNext();
     }
 
     protected int count(Document filter){
@@ -83,7 +104,7 @@ public class Client {
 
     protected List<Document> aggregate(Document filter){
         try {
-            return mc.getDatabase("telifie").getCollection(this.collection).aggregate(Arrays.asList(filter)).into(new ArrayList<>());
+            return mc.getDatabase("telifie").getCollection(this.collection).aggregate(Collections.singletonList(filter)).into(new ArrayList<>());
         }catch(MongoException e){
             return null;
         }

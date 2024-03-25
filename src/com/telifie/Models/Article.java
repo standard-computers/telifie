@@ -9,9 +9,8 @@ import java.util.stream.Collectors;
 
 public class Article {
 
-    private String owner, id, title, link, icon, description = "Webpage";
+    private String owner, id, title, link, icon, description = "Webpage", content;
     private boolean verified = false;
-    private String content;
     private ArrayList<String> tags = new ArrayList<>();
     private ArrayList<Attribute> attributes = new ArrayList<>();
     private ArrayList<Association> associations = new ArrayList<>();

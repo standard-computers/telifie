@@ -55,14 +55,6 @@ public class ArticlesClient extends Client {
         }
     }
 
-    public Article withSource(String source){
-        try{
-            return new Article(this.findOne(new Document("source.url", source)));
-        }catch (NullPointerException e){
-            return null;
-        }
-    }
-
     public boolean verify(String articleId){
         return this.updateOne(new Document("id", articleId), new Document("$set", new Document("verified", true)));
     }

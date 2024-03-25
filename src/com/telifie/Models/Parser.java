@@ -35,36 +35,31 @@ public class Parser {
         articles = new ArticlesClient(session);
     }
 
-    public void reparse(boolean purgeQueue){
-
+    public void reparse(){
         ExecutorService executor = Executors.newSingleThreadExecutor();
         ArticlesClient articles =  new ArticlesClient(new Session("telifie." + Configuration.SERVER_NAME, "telifie"));
-        if(purgeQueue){
-            Log.message("STARTING REPARSE", "PARx011");
-            new Sql().purgeQueue();
-            ArrayList<Article> parsing = articles.withProjection(
-                    new org.bson.Document("$or", Arrays.asList(
-                        new org.bson.Document("link", Search.pattern("https://")),
-                        new org.bson.Document("link", Search.pattern("http://")),
-                        new org.bson.Document("source.url", Search.pattern("http://")),
-                        new org.bson.Document("source.url", Search.pattern("http://"))
-                    )),
-                    new org.bson.Document("link", 1).append("link", 1)
-            );
-            Console.log("RE-PARSE TOTAL : " + parsing.size());
-            parsing.forEach(a -> new Sql().queue("com.telifie." + Configuration.SERVER_NAME, a.getLink()));
-            Log.message(parsing.size() + " RE-QUEUED", "PARx012");
-        }
-        String nil = new Sql().nextQueued();
-        Future<Article> future = executor.submit(() -> engines.fetch(nil, 0, true));
-        try {
-            Article a = future.get();
-            reparse(false);
-        } catch (InterruptedException | ExecutionException e) {
-            Log.error("FAILED ASYNC QUEUE TASK", "PARx010");
-        } finally {
-            executor.shutdown();
-        }
+        Log.message("STARTING REPARSE", "PARx011");
+        ArrayList<Article> parsing = articles.withProjection(
+                new org.bson.Document("$or", Arrays.asList(
+                    new org.bson.Document("link", Search.pattern("https://")),
+                    new org.bson.Document("link", Search.pattern("http://")),
+                    new org.bson.Document("source.url", Search.pattern("http://")),
+                    new org.bson.Document("source.url", Search.pattern("http://"))
+                )),
+                new org.bson.Document("link", 1).append("link", 1)
+        );
+        Console.log("RE-PARSE TOTAL : " + parsing.size());
+        parsing.forEach(a -> {
+            Future<Article> future = executor.submit(() -> engines.fetch(a.getLink(), 0, true));
+            try {
+                Article ab = future.get();
+                reparse();
+            } catch (InterruptedException | ExecutionException e) {
+                Log.error("FAILED ASYNC QUEUE TASK", "PARx010");
+            } finally {
+                executor.shutdown();
+            }
+        });
     }
 
     public Article parse(String uri){
@@ -382,9 +377,13 @@ public class Parser {
                         Element data = row.selectFirst("td.infobox-data");
                         if (label != null && data != null) {
                             String key = Andromeda.tools.sentenceCase(label.text().trim());
-                            String value = Andromeda.tools.htmlEscape(Andromeda.tools.sentenceCase(data.text().replaceAll("\\[.*?]", "").trim()));
+                            String value = data.text().replaceAll("\\[.*?]", "").trim();
                             if(!key.equalsIgnoreCase("references")){
-                                article.addAttribute(new Attribute(key, value));
+                                if(value.contains("{") || value.contains("}")){
+                                    article.addAttribute(new Attribute(key, Andromeda.tools.escape(value)));
+                                }else{
+                                    article.addAttribute(new Attribute(key, Andromeda.tools.htmlEscape(Andromeda.tools.sentenceCase(value))));
+                                }
                             }
                         }
                     }
