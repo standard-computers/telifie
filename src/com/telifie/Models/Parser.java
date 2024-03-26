@@ -9,7 +9,7 @@ import com.telifie.Models.Connectors.Radar;
 import com.telifie.Models.Utilities.Console;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Utilities.*;
-import com.telifie.Models.Utilities.Servers.Network;
+import com.telifie.Models.Utilities.Network.Network;
 import org.json.JSONObject;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -37,7 +37,7 @@ public class Parser {
 
     public void reparse(){
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        ArticlesClient articles =  new ArticlesClient(new Session("telifie." + Configuration.SERVER_NAME, "telifie"));
+        ArticlesClient articles =  new ArticlesClient(new Session("telifie", "telifie"));
         Log.message("STARTING REPARSE", "PARx011");
         ArrayList<Article> parsing = articles.withProjection(
                 new org.bson.Document("$or", Arrays.asList(
@@ -101,7 +101,7 @@ public class Parser {
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
                 if(response.statusCode() == 200){
                     Log.message("PARSING : " + url, "PARx102");
-                    new Sql().parsed("com.telifie." + Configuration.SERVER_NAME, url);
+                    new Sql().parsed("telifie", url);
                     webpage wp = new webpage();
                     Article article = wp.extract(url, response.parse());
                     if(articles.lookup(article)){

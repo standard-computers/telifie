@@ -208,8 +208,8 @@ public class ArticlesClient extends Client {
 
         private int matches(String text, ArrayList<String> words) {
             int m = 0;
-            for(int i = 0; i < words.size(); i++){
-                if(text.contains(words.get(i))) {
+            for (String word : words) {
+                if (text.contains(word)) {
                     m++;
                 }
             }

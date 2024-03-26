@@ -1,7 +1,7 @@
 package com.telifie.Models.Utilities;
 
 import com.telifie.Models.Andromeda.Andromeda;
-import com.telifie.Models.Utilities.Servers.Network;
+import com.telifie.Models.Utilities.Network.Network;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;

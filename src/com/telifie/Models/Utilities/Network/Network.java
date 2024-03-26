@@ -1,8 +1,7 @@
-package com.telifie.Models.Utilities.Servers;
+package com.telifie.Models.Utilities.Network;
 
 import com.telifie.Models.Utilities.Asset;
 import org.jsoup.select.Elements;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;

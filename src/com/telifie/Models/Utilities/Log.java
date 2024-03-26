@@ -10,7 +10,7 @@ import java.time.ZoneId;
 public class Log {
 
     public static void out(Event.Type event, String message, String code){
-        System.out.println("[" + readableTimeDate() + "] " + event + " -> CODE _: " + code + " >> " + message);
+        System.out.println("[" + readableTimeDate() + "] " + event + " _: " + code + " >> " + message);
         appendToCSV(event, message, code);
     }
 

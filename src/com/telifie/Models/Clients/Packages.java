@@ -2,7 +2,6 @@ package com.telifie.Models.Clients;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.telifie.Models.Utilities.Console;
-import com.telifie.Models.Utilities.Log;
 import com.telifie.Models.Utilities.Package;
 import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
@@ -26,7 +25,7 @@ public class Packages extends Client {
             Console.log("CHECKING PACKAGE HEALTH...");
             check();
         };
-        scheduler.scheduleAtFixedRate(task, 0, 120, TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(task, 0, 300, TimeUnit.SECONDS);
     }
 
     private void check(){

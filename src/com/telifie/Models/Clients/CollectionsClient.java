@@ -31,7 +31,7 @@ public class CollectionsClient extends Client {
     }
 
     public ArrayList<Collection> forUser(String userId){
-        return this.find(new Document("user", userId)).map(Collection::new).into(new ArrayList<>());
+        return this.find(new Document("user", userId), new Document("name", 1)).map(Collection::new).into(new ArrayList<>());
     }
 
     public Collection create(Collection collection){

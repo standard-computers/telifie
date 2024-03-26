@@ -67,14 +67,6 @@ public class Client {
         return mc.getDatabase("telifie").getCollection(this.collection).find().limit(1).iterator().hasNext();
     }
 
-    protected int count(Document filter){
-        try {
-            return (int) mc.getDatabase("telifie").getCollection(this.collection).countDocuments(filter);
-        }catch(MongoException e){
-            return -1;
-        }
-    }
-
     protected boolean updateOne(Document filter, Document update){
         try {
             UpdateResult result = mc.getDatabase("telifie").getCollection(this.collection).updateOne(filter, update);

@@ -1,18 +1,16 @@
 package com.telifie.Models.Actions;
 
-import com.mongodb.client.model.Filters;
 import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Andromeda.Unit;
 import com.telifie.Models.Article;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Connectors.Radar;
-import com.telifie.Models.Connectors.Rest;
+import com.telifie.Models.Utilities.Network.Rest;
 import com.telifie.Models.Result;
 import com.telifie.Models.Clients.Packages;
 import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
-import org.bson.conversions.Bson;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -25,15 +23,15 @@ public class Search {
         ArticlesClient articles = new ArticlesClient(session);
         Unit query = new Unit(q);
         Result result = new Result(200, query.text(), "");
-        boolean doquery = true;
-        if(params.getPage() == 1){ //Quick Results
+        boolean doQuery = true;
+        if(params.getPage() == 1){
             if((query.text().contains("*") || query.text().contains("+") || query.text().contains("-") || query.text().contains("/")) && Andromeda.tools.contains(Andromeda.NUMERALS, query.text())){
                 String mathExpressionPattern = "[\\d\\s()+\\-*/=xX^sincoaet]+";
                 Pattern pattern = Pattern.compile(mathExpressionPattern);
                 Matcher matcher = pattern.matcher(query.text());
                 if(matcher.find()) {
                     if(Packages.get("com.telifie.connectors.wolfram") != null){
-                        doquery = false;
+                        doQuery = false;
                         result.setSource("com.telifie.connectors.wolfram");
                         result.setGenerated(Rest.get(Packages.get("com.telifie.connectors.wolfram"), new HashMap<>() {{
                             put("appid", Packages.get("com.telifie.connectors.wolfram").getAccess());
@@ -74,16 +72,8 @@ public class Search {
             }
 //else if(query.startsWith(Andromeda.taxon("interrogative"))){}else if(query.startsWith(Andromeda.taxon("verb"))){
         }
-        if(doquery){
-            Document filter = filter(query, params);
-            Bson sf = Filters.ne("description", "Image");
-            if(params.getIndex().equals("images")){
-                sf = Filters.eq("description", "Image");
-            }else if(params.getIndex().equals("locations")){
-                sf = Filters.exists("location");
-            }
-            filter = new Document("$and", Arrays.asList(sf, filter));
-            ArrayList<Article> results = articles.search(query, params, filter);
+        if(doQuery){
+            ArrayList<Article> results = articles.search(query, params, filter(query, params));
             ArrayList<Article> paged = paginate(results, params.getPage(), params.getRpp());
             result.setParams(params);
             result.setResults("articles", paged);
@@ -119,11 +109,11 @@ public class Search {
             }
         }
         List<Document> or = new ArrayList<>();
-        if(q.tokens().length > 1){
+        if(q.tokens().length > 2){
             for (String word : q.tokens()) {
                 or.add(new Document("title", pattern(word)));
             }
-            //or.add(new Document("tags", new Document("$in", Collections.singletonList(q.text()))));
+            or.add(new Document("tags", new Document("$in", Collections.singletonList(q.text()))));
             return new Document("$or", or);
         }
         return new Document("title", pattern(q.text()));

@@ -7,7 +7,7 @@ import com.telifie.Models.Clients.*;
 import com.telifie.Models.Clients.Packages;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Package;
-import com.telifie.Models.Utilities.Servers.Network;
+import com.telifie.Models.Utilities.Network.Network;
 import org.bson.Document;
 import org.json.JSONException;
 import org.json.JSONObject;

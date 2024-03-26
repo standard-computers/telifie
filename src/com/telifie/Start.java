@@ -6,10 +6,11 @@ import com.telifie.Models.Clients.Packages;
 import com.telifie.Models.Parser;
 import com.telifie.Models.User;
 import com.telifie.Models.Utilities.*;
-import com.telifie.Models.Utilities.Servers.Http;
+import com.telifie.Models.Utilities.Network.Http;
 import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class Start {
 
@@ -56,15 +57,13 @@ public class Start {
                         throw new RuntimeException(e);
                     }
                 }
-                case "--node" -> {
-                    new Parser(new Session("com.telifie." + Configuration.SERVER_NAME, "telifie")).reparse();
-                }
+                case "--node" -> new Parser(new Session("telifie", "telifie")).reparse();
                 case "--authenticate" -> {
                     //TODO Create user or API/Org
-                    Authentication auth = new Authentication(new User("", Configuration.SERVER_NAME, ""));
+                    Authentication auth = new Authentication(new User("", "telifie", ""));
                     Console.log("Authorizing as database admin...");
                     if(auth.authenticate()){
-                        Log.flag("NEW USER ADMIN AUTHENTICATED : " + Configuration.SERVER_NAME, "CLIx003");
+                        Log.flag("NEW ACCESS CREDENTIALS AUTHENTICATED", "CLIx003");
                         Console.log(new JSONObject(auth.toString()).toString(4));
                     }
                 }
@@ -92,14 +91,10 @@ public class Start {
                 }
             }
         }
-        config = new Configuration();
-        config.setServer_name(Console.in("Server Name (i.e 'telifie-sv1')-> "));
-        config.setMongodb(Console.in("MongoDB URI -> "));
-        String sql_uri = Console.in("SQL URL -> ");
-        String sql_user = Console.in("SQL Username -> ");
-        String sql_psswd = Console.in("SQL Password -> ");
-        config.setMysql(new Configuration.Connection(sql_uri, sql_user, sql_psswd));
-        config.setEmail(Console.in("Email -> "));
+        String email = Console.in("Email -> ");
+        String mongoUri = Console.in("MongoDB URI -> ");
+        String sqlUri = Console.in("SQL URI -> ");
+        config = new Configuration("v1.0.0b", email, mongoUri, sqlUri, new ArrayList<>());
         exportConfiguration();
         Log.put("CONFIGURATION SAVED", "CLIx005");
         System.exit(0);

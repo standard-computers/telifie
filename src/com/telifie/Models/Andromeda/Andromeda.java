@@ -21,7 +21,7 @@ public class Andromeda {
         if(new File(Telifie.configDirectory() + "andromeda/taxon.telifie").exists()){
             try (FileInputStream fileIn = new FileInputStream(Telifie.configDirectory() + "andromeda/taxon.telifie");
                  ObjectInputStream in = new ObjectInputStream(fileIn)) {
-                this.taxon = (ArrayList<Taxon>) in.readObject();
+                taxon = (ArrayList<Taxon>) in.readObject();
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             }

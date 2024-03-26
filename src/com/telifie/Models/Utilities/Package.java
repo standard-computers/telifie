@@ -17,17 +17,7 @@ public class Package {
     private ArrayList<Endpoint> endpoints;
 
     @JsonCreator
-    public Package(@JsonProperty("id") String id,
-                   @JsonProperty("name") String name,
-                   @JsonProperty("type") String type,
-                   @JsonProperty("description") String description,
-                   @JsonProperty("access") String access,
-                   @JsonProperty("secret") String secret,
-                   @JsonProperty("refresh") String refresh,
-                   @JsonProperty("version") int version,
-                   @JsonProperty("origin") int origin,
-                   @JsonProperty("isPublic") boolean isPublic,
-                   @JsonProperty("endpoints") ArrayList<Endpoint> endpoints) {
+    public Package(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("type") String type, @JsonProperty("description") String description, @JsonProperty("access") String access, @JsonProperty("secret") String secret, @JsonProperty("refresh") String refresh, @JsonProperty("version") int version, @JsonProperty("origin") int origin, @JsonProperty("isPublic") boolean isPublic, @JsonProperty("endpoints") ArrayList<Endpoint> endpoints) {
         this.id = id;
         this.name = name;
         this.type = type;

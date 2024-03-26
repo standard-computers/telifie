@@ -1,4 +1,4 @@
-package com.telifie.Models.Connectors;
+package com.telifie.Models.Utilities.Network;
 
 import com.telifie.Models.Utilities.Log;
 import org.jsoup.Jsoup;
