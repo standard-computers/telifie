@@ -4,11 +4,11 @@ import org.bson.Document;
 
 public class Parameters {
 
-    private final int rpp, pages, page;
+    public final int rpp, pages, page;
     private String index;
     private final String zip;
     private double latitude, longitude;
-    private final boolean quickResults;
+    public final boolean quickResults;
 
     public Parameters(Document document) throws NullPointerException {
         this.rpp = (document.getInteger("results_per_page") == null ? 50 : document.getInteger("results_per_page"));
@@ -19,14 +19,6 @@ public class Parameters {
         this.latitude = (document.getDouble("latitude") == null ? 39.103699 : document.getDouble("latitude"));
         this.longitude = (document.getDouble("longitude") == null ? -84.513611 : document.getDouble("longitude"));
         this.quickResults = (document.getBoolean("quick_results") == null ? false : document.getBoolean("quick_results"));
-    }
-
-    public int getRpp() {
-        return rpp;
-    }
-
-    public int getPage() {
-        return page;
     }
 
     public String getIndex() {
@@ -51,10 +43,6 @@ public class Parameters {
 
     public void setLongitude(double longitude) {
         this.longitude = longitude;
-    }
-
-    public boolean isQuickResults() {
-        return quickResults;
     }
 
     @Override

@@ -1,9 +1,12 @@
 package com.telifie.Models.Actions;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Andromeda.Unit;
 import com.telifie.Models.Article;
 import com.telifie.Models.Clients.ArticlesClient;
+import com.telifie.Models.Clients.Cache;
 import com.telifie.Models.Connectors.Radar;
 import com.telifie.Models.Utilities.Network.Rest;
 import com.telifie.Models.Result;
@@ -11,20 +14,26 @@ import com.telifie.Models.Clients.Packages;
 import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
+import org.json.JSONArray;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Search {
 
-    public Result execute(Session session, String q, Parameters params){
+    public Search() {
+    }
+
+    public Result execute(Session session, String q, Parameters params) throws JsonProcessingException {
         ArticlesClient articles = new ArticlesClient(session);
         Unit query = new Unit(q);
         Result result = new Result(200, query.text(), "");
+        result.setParams(params);
         boolean doQuery = true;
-        if(params.getPage() == 1){
+        if(params.page == 1){
             if((query.text().contains("*") || query.text().contains("+") || query.text().contains("-") || query.text().contains("/")) && Andromeda.tools.contains(Andromeda.NUMERALS, query.text())){
                 String mathExpressionPattern = "[\\d\\s()+\\-*/=xX^sincoaet]+";
                 Pattern pattern = Pattern.compile(mathExpressionPattern);
@@ -70,13 +79,19 @@ public class Search {
                 }
                 //TODO map/radar lookup
             }
-//else if(query.startsWith(Andromeda.taxon("interrogative"))){}else if(query.startsWith(Andromeda.taxon("verb"))){
         }
-        if(doQuery){
-            ArrayList<Article> results = articles.search(query, params, filter(query, params));
-            ArrayList<Article> paged = paginate(results, params.getPage(), params.getRpp());
-            result.setParams(params);
-            result.setResults("articles", paged);
+        if(doQuery && !params.quickResults){
+            ArrayList<Article> results;
+            String fromCache = Cache.fromCache(query.cleaned());
+            if(fromCache != null){
+                results = new ObjectMapper().readValue(fromCache, ArrayList.class);
+                result.setResults("articles", new JSONArray(results));
+            }else{
+                ArrayList<Article> all = articles.search(query, params, filter(query, params));
+                results = paginate(all, params.page, params.rpp);
+                CompletableFuture.runAsync(() -> Cache.cache(session.user, query.cleaned(), results.toString(), params));
+                result.setResults("articles", results);
+            }
             result.setTotal(results.size());
         }
         return result;

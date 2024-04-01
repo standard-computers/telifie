@@ -21,10 +21,7 @@ public class Packages extends Client {
         Console.log("LOADING PACKAGES...");
         check();
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-        Runnable task = () -> {
-            Console.log("CHECKING PACKAGE HEALTH...");
-            check();
-        };
+        Runnable task = () -> check();
         scheduler.scheduleAtFixedRate(task, 0, 300, TimeUnit.SECONDS);
     }
 

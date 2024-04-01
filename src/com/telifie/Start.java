@@ -106,6 +106,7 @@ public class Start {
             importConfiguration();
             if (config != null) {
                 config.startMongo();
+                config.startSql();
                 new Packages(new Session("com.telifie.system", "telifie"));
                 new Andromeda();
             }else{

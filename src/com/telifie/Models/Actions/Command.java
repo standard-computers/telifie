@@ -1,5 +1,6 @@
 package com.telifie.Models.Actions;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.telifie.Models.*;
 import com.telifie.Models.Connectors.Twilio;
 import com.telifie.Models.Parser;
@@ -64,13 +65,15 @@ public class Command {
                         return new Result(410, this.command, "NOT FOUND");
                     }
                 }
+                try {
                     Parameters params = new Parameters(content);
                     return new Search().execute(session, query, params);
-//                try {
-                    //TODO common undo for search debugging
-//                }catch(NullPointerException n){
+                }catch(NullPointerException n){
 //                    return new Result(505, this.command, "SEARCH ERROR");
-//                }
+                    throw new RuntimeException(n);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
             }
             return new Result(428, this.command, "JSON BODY EXPECTED");
         }else if(selector.equals("domains")){
@@ -197,7 +200,7 @@ public class Command {
                         case "id" -> {
                             try {
                                 if(hasDomainPermission(user, session, true)){
-                                    CompletableFuture.runAsync(() -> Sql.ping(session.user, a.getId()));
+                                    CompletableFuture.runAsync(() -> Cache.ping(session.user, a.getId()));
                                     return new Result(this.command, "article", articles.withId(secSelector));
                                 }
                                 return new Result(401, this.command, "INSUFFICIENT PERMISSIONS");

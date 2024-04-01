@@ -16,6 +16,7 @@ public class Article {
     private ArrayList<Association> associations = new ArrayList<>();
     private ArrayList<DataSet> dataSets = new ArrayList<>();
     private Source source;
+    private int priority;
     private final int origin;
 
     public Article(){
@@ -33,6 +34,7 @@ public class Article {
         this.description = document.getString("description");
         this.content = (document.getString("content") != null ?  Andromeda.tools.escape(document.getString("content")) : "");
         this.origin = (document.getInteger("origin") == null ? 0 : document.getInteger("origin"));
+        this.priority = (document.getInteger("priority") == null ? 0 : document.getInteger("priority"));
         this.tags = document.get("tags", ArrayList.class);
         ArrayList<Document> it2 = (ArrayList<Document>) document.getList("attributes", Document.class);
         if (it2 != null) {
@@ -183,6 +185,7 @@ public class Article {
                 (dataSets.isEmpty() ? "" : ", \"data_sets\" : " + dataSets) +
                 (source == null ? ", \"source\" : null" : ", \"source\" : " + source) +
                 ", \"origin\" : " + origin +
+                ", \"priority\" : " + priority +
                 '}';
     }
 

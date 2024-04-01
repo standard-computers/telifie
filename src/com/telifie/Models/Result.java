@@ -9,7 +9,8 @@ import java.util.UUID;
 public class Result {
 
     private final String id = UUID.randomUUID().toString();
-    private String query = "", source = "";
+    public final String query;
+    private String source = "";
     private Parameters params;
     private String object = "results";
     private String generated = "";
@@ -51,6 +52,10 @@ public class Result {
 
     public void setGenerated(String generated) {
         this.generated = generated;
+    }
+
+    public Object getResults() {
+        return results;
     }
 
     @Override

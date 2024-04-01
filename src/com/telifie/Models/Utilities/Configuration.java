@@ -36,8 +36,9 @@ public class Configuration {
     }
 
     @JsonIgnore
-    public void startMySql(){
-        try (Connection connection = DriverManager.getConnection(mysql)) {
+    public void startSql(){
+        try {
+            Connection connection = DriverManager.getConnection(mysql);
             System.out.println("Connected to the MySQL database!");
             mysqlClient = connection;
         } catch (SQLException e) {

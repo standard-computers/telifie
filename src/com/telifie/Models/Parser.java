@@ -4,7 +4,7 @@ import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Andromeda.Unit;
-import com.telifie.Models.Clients.Sql;
+import com.telifie.Models.Clients.Cache;
 import com.telifie.Models.Connectors.Radar;
 import com.telifie.Models.Utilities.Console;
 import com.telifie.Models.Clients.ArticlesClient;
@@ -92,7 +92,7 @@ public class Parser {
 
         private static Article fetch(String url, int depth, boolean allowExternalCrawl){
             depth++;
-            if(new Sql().isParsed(url)){
+            if(new Cache().isParsed(url)){
                 Console.log("ALREADY PARSED : " + url);
                 return null;
             }
@@ -101,7 +101,7 @@ public class Parser {
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
                 if(response.statusCode() == 200){
                     Log.message("PARSING : " + url, "PARx102");
-                    new Sql().parsed("telifie", url);
+                    new Cache().parsed("telifie", url);
                     webpage wp = new webpage();
                     Article article = wp.extract(url, response.parse());
                     if(articles.lookup(article)){
@@ -332,33 +332,33 @@ public class Parser {
                                     article.setIcon(src);
                                 }
                             }
-                            String caption = Andromeda.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
-                            Article ia = new Article();
-                            if (!caption.isEmpty() && caption.length() < 100) {
-                                ia.setTitle(caption);
-                            } else {
-                                ia.setTitle(article.getTitle());
-                                ia.setContent(caption);
-                            }
-                            ia.setLink(src);
-                            ia.setIcon(src);
-                            ia.setTags(article.getTags());
-                            ia.setDescription("Image");
-                            ia.addAttribute(new Attribute("Width", d[0] + "px"));
-                            ia.addAttribute(new Attribute("Height", d[1] + "px"));
-                            ia.addAttribute(new Attribute("Size", ass.fileSize()));
-                            ia.addAttribute(new Attribute("File Type", ass.getExt()));
-                            Article source = articles.withLink(root);
-                            if (source != null) {
-                                ia.setSource(new Article.Source(source.getIcon(), source.getTitle(), url));
-                            } else {
-                                ia.setSource(new Article.Source(article.getIcon(), article.getTitle(), url));
-                            }
-                            if(articles.create(ia)){
-                                Console.log("IMAGE CREATED : https://telifie.com/articles/" + ia.getId());
-                            }else{
-                                Console.log("NOT HAPPENING, MAY EXIST");
-                            }
+//                            String caption = Andromeda.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
+//                            Article ia = new Article();
+//                            if (!caption.isEmpty() && caption.length() < 100) {
+//                                ia.setTitle(caption);
+//                            } else {
+//                                ia.setTitle(article.getTitle());
+//                                ia.setContent(caption);
+//                            }
+//                            ia.setLink(src);
+//                            ia.setIcon(src);
+//                            ia.setTags(article.getTags());
+//                            ia.setDescription("Image");
+//                            ia.addAttribute(new Attribute("Width", d[0] + "px"));
+//                            ia.addAttribute(new Attribute("Height", d[1] + "px"));
+//                            ia.addAttribute(new Attribute("Size", ass.fileSize()));
+//                            ia.addAttribute(new Attribute("File Type", ass.getExt()));
+//                            Article source = articles.withLink(root);
+//                            if (source != null) {
+//                                ia.setSource(new Article.Source(source.getIcon(), source.getTitle(), url));
+//                            } else {
+//                                ia.setSource(new Article.Source(article.getIcon(), article.getTitle(), url));
+//                            }
+//                            if(articles.create(ia)){
+//                                Console.log("IMAGE CREATED : https://telifie.com/articles/" + ia.getId());
+//                            }else{
+//                                Console.log("NOT HAPPENING, MAY EXIST");
+//                            }
                         }
                     });
                 }

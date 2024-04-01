@@ -87,7 +87,7 @@ public class ArticlesClient extends Client {
     public ArrayList<Article> search(Unit query, Parameters params, Document filter){
         FindIterable<Document> found;
         if(params.isQuickResults()){
-            found = this.findWithProjection(filter, new Document("id", 1).append("icon", 1).append("title", 1).append("description", 1).append("link", 1).append("tags", 1).append("priority", 1).append("attributes", 1));
+            found = this.findWithProjection(filter, new Document("id", 1).append("icon", 1).append("title", 1).append("description", 1).append("link", 1).append("priority", 1));
         }else{
             found = this.find(filter);
         }
@@ -96,7 +96,7 @@ public class ArticlesClient extends Client {
             if(query.contains(Andromeda.taxon("proximity")) || params.getIndex().equals("locations")) {
                 results.sort(new DistanceSorter(params.getLatitude(), params.getLongitude()));
             }else{
-                results.sort(new CosmoScore(query.cleaned()));
+                results.sort(new CosmoScore(query.cleaned(), params));
             }
         }
         return results;
@@ -181,11 +181,13 @@ public class ArticlesClient extends Client {
 
         private final String q;
         private final ArrayList<String> words;
+        private final Parameters params;
 
-        public CosmoScore(String q){
+        public CosmoScore(String q, Parameters params){
             this.q = q;
             this.words = new ArrayList<>(Arrays.asList(q.split("\\s+")));
             this.words.add(0, q);
+            this.params = params;
         }
 
         @Override
@@ -196,14 +198,18 @@ public class ArticlesClient extends Client {
         }
 
         private int relevance(Article a) {
-            if(a.getTitle().trim().toLowerCase().equals(q)){
-                return Integer.MAX_VALUE;
+            if(!params.isQuickResults()){
+                if(a.getTitle().trim().toLowerCase().equals(q)){
+                    return Integer.MAX_VALUE;
+                }
+                int s = (matches(a.getTitle(), words) + matches(a.getDescription(), words) + matches(a.getTitle(), words));
+                for(String ts : a.getTags()){
+                    s += matches(ts, words);
+                }
+                return (a.isVerified() ? (s + 1) : s);
+            }else{
+                return Andromeda.tools.levenshtein(q, a.getTitle());
             }
-            int s = (matches(a.getTitle(), words) + matches(a.getDescription(), words) + matches(a.getTitle(), words));
-            for(String ts : a.getTags()){
-                s += matches(ts, words);
-            }
-            return (a.isVerified() ? (s + 1) : s);
         }
 
         private int matches(String text, ArrayList<String> words) {
