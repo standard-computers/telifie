@@ -82,14 +82,14 @@ public class Search {
         }
         if(doQuery && !params.quickResults){
             ArrayList<Article> results;
-            String fromCache = Cache.fromCache(query.cleaned());
+            String fromCache = Cache.get(query.cleaned());
             if(fromCache != null){
                 results = new ObjectMapper().readValue(fromCache, ArrayList.class);
                 result.setResults("articles", new JSONArray(results));
             }else{
                 ArrayList<Article> all = articles.search(query, params, filter(query, params));
                 results = paginate(all, params.page, params.rpp);
-                CompletableFuture.runAsync(() -> Cache.cache(session.user, query.cleaned(), results.toString(), params));
+                CompletableFuture.runAsync(() -> Cache.cache(session.user, q, results.toString(), params));
                 result.setResults("articles", results);
             }
             result.setTotal(results.size());
@@ -97,7 +97,7 @@ public class Search {
         return result;
     }
 
-    private Document filter(Unit q, Parameters params){
+    public static Document filter(Unit q, Parameters params){
 
         if(q.text().startsWith("@")){
 

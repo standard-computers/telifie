@@ -189,6 +189,10 @@ public class Article {
                 '}';
     }
 
+    public int getPriority() {
+        return this.priority;
+    }
+
     public class DataSet {
 
         private final String title;

@@ -7,7 +7,7 @@ import com.telifie.Models.Actions.Search;
 import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Andromeda.Unit;
 import com.telifie.Models.Domain;
-import com.telifie.Models.Utilities.Console;
+import com.telifie.Models.Utilities.Log;
 import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Article;
 import com.telifie.Models.Utilities.Session;
@@ -15,6 +15,7 @@ import org.bson.Document;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
 public class ArticlesClient extends Client {
@@ -25,6 +26,7 @@ public class ArticlesClient extends Client {
     }
 
     public boolean update(Article article, Article newArticle){
+        CompletableFuture.runAsync(() -> Cache.invalidate(article.getId()));
         return super.updateOne(new Document("id", article.getId()), new Document("$set", Document.parse(newArticle.toString())));
     }
 
@@ -67,6 +69,10 @@ public class ArticlesClient extends Client {
         return this.find(filter).map(Article::new).into(new ArrayList<>());
     }
 
+    public ArrayList<Article> get(Document filter, Document sort){
+        return this.find(filter, sort).map(Article::new).into(new ArrayList<>());
+    }
+
     public ArrayList<Article> withProjection(Document filter, Document projection){
         ArrayList<Article> articles = new ArrayList<>();
         this.findWithProjection(filter, projection).map(Article::new).into(new ArrayList<>());
@@ -85,12 +91,7 @@ public class ArticlesClient extends Client {
     }
 
     public ArrayList<Article> search(Unit query, Parameters params, Document filter){
-        FindIterable<Document> found;
-        if(params.isQuickResults()){
-            found = this.findWithProjection(filter, new Document("id", 1).append("icon", 1).append("title", 1).append("description", 1).append("link", 1).append("priority", 1));
-        }else{
-            found = this.find(filter);
-        }
+        FindIterable<Document> found = this.find(filter);
         ArrayList<Article> results = found.map(Article::new).into(new ArrayList<>());
         if(!query.text().startsWith("@")){
             if(query.contains(Andromeda.taxon("proximity")) || params.getIndex().equals("locations")) {
@@ -120,6 +121,7 @@ public class ArticlesClient extends Client {
     public Document stats() {
         Document groupFields = new Document("_id", "$description");
         groupFields.put("count", new Document("$sum", 1));
+        groupFields.put("priority", new Document("$avg", "$priority"));
         Document groupStage = new Document("$group", groupFields);
         List<Document> iterable = super.aggregate(groupStage);
         Document stats = new Document();
@@ -160,7 +162,7 @@ public class ArticlesClient extends Client {
                     return true;
                 }
             } catch (URISyntaxException e) {
-                Console.log("Failed converting URL in lookup");
+                Log.console("Failed converting URL in lookup");
             }
         }
         return false;
@@ -198,18 +200,15 @@ public class ArticlesClient extends Client {
         }
 
         private int relevance(Article a) {
-            if(!params.isQuickResults()){
-                if(a.getTitle().trim().toLowerCase().equals(q)){
-                    return Integer.MAX_VALUE;
-                }
-                int s = (matches(a.getTitle(), words) + matches(a.getDescription(), words) + matches(a.getTitle(), words));
-                for(String ts : a.getTags()){
-                    s += matches(ts, words);
-                }
-                return (a.isVerified() ? (s + 1) : s);
-            }else{
-                return Andromeda.tools.levenshtein(q, a.getTitle());
+            int s = a.getPriority();
+            if(a.getTitle().trim().toLowerCase().equals(q)){
+                return Integer.MAX_VALUE;
             }
+            s += (matches(a.getTitle(), words) + matches(a.getDescription(), words) + matches(a.getTitle(), words));
+            for(String ts : a.getTags()){
+                s += matches(ts, words);
+            }
+            return (a.isVerified() ? (s + 1) : s);
         }
 
         private int matches(String text, ArrayList<String> words) {

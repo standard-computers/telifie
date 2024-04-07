@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public class User implements Serializable {
 
-    private String id, email, name, phone, token, settings;
+    private String id, email, name, phone, token, settings = "{\\\"secondary\\\":\\\"#0583c5\\\",\\\"corner_radius\\\":8,\\\"\\\":\\\"#1977F1\\\",\\\"color\\\":\\\"#0c92c2\\\",\\\"dark_mode\\\":\\\"0,1,2\\\",\\\"background\\\":\\\"#FFFFFF\\\",\\\"font_size\\\":16,\\\"name\\\":\\\"Facebook Blue\\\",\\\"foreground\\\":\\\"#000000\\\",\\\"border_color\\\":\\\"#BEBEBE\\\"}";
     private final int origin;
     private int permissions;
 

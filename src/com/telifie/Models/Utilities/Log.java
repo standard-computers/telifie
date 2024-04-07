@@ -30,6 +30,10 @@ public class Log {
         out(Event.Type.MESSAGE, message, code);
     }
 
+    public static void console(String message){
+        System.out.println("[" + readableTimeDate() + "] " + message);
+    }
+
     private static void appendToCSV(Event.Type event, String message, String code) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(Telifie.configDirectory() + "/telifie_log.csv", true))) {
             writer.write(event.toString() + "," + message + "," + Telifie.epochTime() + "," + readableTimeDate() + ", " + code);

@@ -6,7 +6,6 @@ import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Andromeda.Unit;
 import com.telifie.Models.Clients.Cache;
 import com.telifie.Models.Connectors.Radar;
-import com.telifie.Models.Utilities.Console;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Network.Network;
@@ -48,7 +47,7 @@ public class Parser {
                 )),
                 new org.bson.Document("link", 1).append("link", 1)
         );
-        Console.log("RE-PARSE TOTAL : " + parsing.size());
+        Log.console("RE-PARSE TOTAL : " + parsing.size());
         parsing.forEach(a -> {
             Future<Article> future = executor.submit(() -> engines.fetch(a.getLink(), 0, true));
             try {
@@ -93,7 +92,7 @@ public class Parser {
         private static Article fetch(String url, int depth, boolean allowExternalCrawl){
             depth++;
             if(new Cache().isParsed(url)){
-                Console.log("ALREADY PARSED : " + url);
+                Log.console("ALREADY PARSED : " + url);
                 return null;
             }
             try {
@@ -108,7 +107,7 @@ public class Parser {
                         //TODO update article
                     }else{
                         articles.create(article);
-                        Console.log("ARTICLE CREATED : " + url);
+                        Log.console("ARTICLE CREATED : " + url);
                     }
                     ArrayList<String> links = wp.links;
                     int fd = depth;
@@ -122,7 +121,7 @@ public class Parser {
                                         fetch(href, fd, allowExternalCrawl);
                                     }
                                 } catch (InterruptedException e) {
-                                    Console.log("Failed to sleep thread?");
+                                    Log.console("Failed to sleep thread?");
                                 }
                             }
                         }
@@ -225,7 +224,7 @@ public class Parser {
                     }
                     parsed.add(article);
                     if(insert){
-                        Console.log("Article created with batch parser");
+                        Log.console("Article created with batch parser");
                         articles.create(article);
                     }
                 }
@@ -355,9 +354,9 @@ public class Parser {
 //                                ia.setSource(new Article.Source(article.getIcon(), article.getTitle(), url));
 //                            }
 //                            if(articles.create(ia)){
-//                                Console.log("IMAGE CREATED : https://telifie.com/articles/" + ia.getId());
+//                                Log.console("IMAGE CREATED : https://telifie.com/articles/" + ia.getId());
 //                            }else{
-//                                Console.log("NOT HAPPENING, MAY EXIST");
+//                                Log.console("NOT HAPPENING, MAY EXIST");
 //                            }
                         }
                     });

@@ -4,7 +4,6 @@ import com.google.common.html.HtmlEscapers;
 import com.telifie.Models.Article;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Utilities.*;
-import com.telifie.Models.Utilities.Console;
 import org.apache.commons.text.StringEscapeUtils;
 import org.bson.Document;
 import java.io.*;
@@ -32,11 +31,11 @@ public class Andromeda {
         ArticlesClient articles = new ArticlesClient(new Session("com.telifie.master_data_team", "telifie"));
         ArrayList<Article> al = articles.withProjection(new Document("$and", Arrays.asList(new Document("link", new Document("$ne", null)), new Document("description", new Document("$ne", "Image")), new Document("description", new Document("$ne", "Definition")), new Document("description", new Document("$ne", "Webpage")))), new Document("title", 1).append("description", 1).append("link", 1).append("_id", 0));
         int it = al.size();
-        Console.log("ESTIMATED INDEX : " + it);
+        Log.console("ESTIMATED INDEX : " + it);
         final int[] i = {0};
         al.forEach(a -> {
             i[0]++;
-            Console.log("INDEXING " + i[0] + "/" + it);
+            Log.console("INDEXING " + i[0] + "/" + it);
             String t = a.getDescription().toLowerCase().trim();
             String tn = a.getTitle().trim().toLowerCase();
             add(t, tn);

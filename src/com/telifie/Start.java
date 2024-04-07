@@ -2,15 +2,23 @@ package com.telifie;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.telifie.Models.Andromeda.Andromeda;
+import com.telifie.Models.Article;
+import com.telifie.Models.Clients.ArticlesClient;
+import com.telifie.Models.Clients.Cache;
 import com.telifie.Models.Clients.Packages;
 import com.telifie.Models.Parser;
 import com.telifie.Models.User;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Network.Http;
+import org.bson.Document;
 import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class Start {
 
@@ -25,13 +33,33 @@ public class Start {
             Log.flag("TELIFIE EXITED", "CLIx101");
             Telifie.purgeTemp();
         }));
+        ArticlesClient articles = new ArticlesClient(new Session("telifie", "telifie"));
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        Log.console("Preloading public domain stats in background...");
+        CompletableFuture.runAsync(() -> Telifie.stats = articles.stats());
+        Log.console("Scheduling worker tasks...");
+        Runnable task = () -> {
+            Telifie.stats = articles.stats();
+            //TODO refresh packages, working cache
+        };
+        scheduler.scheduleAtFixedRate(task, 0, 90, TimeUnit.SECONDS);
+        CompletableFuture.runAsync(() -> {
+            if(Cache.history.isEmpty()){
+                Log.console("Quick Response cache is empty. Warming up....");
+                Log.console("Finding cache qualifying articles. This may take some time!");
+                ArrayList<Article> av = articles.get(new Document("priority", new Document("$gt", 1)));
+                Log.console("Committing " + av.size() + " to cache history...");
+                av.forEach(a -> Cache.history.commit("telifie", a.getId(), a.getTitle(), a.getIcon(), a.getDescription()));
+            }
+        });
+
         if (args.length > 0) {
             String mode = args[0].trim().toLowerCase();
             switch (mode) {
                 case "--install" ->
                         install();
                 case "--purge" -> {
-                    Log.message("PURGE MODE ENTERED", "CLIx002");
+                    Log.flag("PURGE MODE ENTERED", "CLIx002");
                     if (Console.in("Confirm ('yes') -> ").equals("yes")) {
                         if(configFile.delete()){
                             Log.out(Event.Type.DELETE, "CONFIG FILE DELETED", "CLIx200");
@@ -41,7 +69,7 @@ public class Start {
                 }
                 case "--http" -> {
                     try {
-                        Console.log("Starting HTTP server [CONSIDER HTTPS FOR SECURITY]...");
+                        Log.console("Starting HTTP server [CONSIDER HTTPS FOR SECURITY]...");
                         new Http();
                     } catch (Exception e) {
                         Log.error("HTTP SERVER FAILED", "CLIx102");
@@ -50,21 +78,21 @@ public class Start {
                 }
                 case "--https" -> {
                     try {
-                        Console.log("Starting HTTPS server...");
+                        Log.console("Starting HTTPS server...");
                         new Http();
                     } catch (Exception e) {
                         Log.error("HTTPS SERVER FAILED", "CLIx103");
                         throw new RuntimeException(e);
                     }
                 }
-                case "--node" -> new Parser(new Session("telifie", "telifie")).reparse();
+                case "--master" -> new Parser(new Session("telifie", "telifie")).reparse();
                 case "--authenticate" -> {
                     //TODO Create user or API/Org
                     Authentication auth = new Authentication(new User("", "telifie", ""));
-                    Console.log("Authorizing as database admin...");
+                    Log.console("Authorizing as database admin...");
                     if(auth.authenticate()){
                         Log.flag("NEW ACCESS CREDENTIALS AUTHENTICATED", "CLIx003");
-                        Console.log(new JSONObject(auth.toString()).toString(4));
+                        Log.console(new JSONObject(auth.toString()).toString(4));
                     }
                 }
             }
@@ -74,13 +102,9 @@ public class Start {
     }
 
     private static void install(){
-        File[] folders = new File[]{
-                new File(Telifie.configDirectory()),
-                new File(Telifie.configDirectory() + "temp"),
-                new File(Telifie.configDirectory() + "andromeda"),
-        };
+        File[] folders = new File[]{new File(Telifie.configDirectory()), new File(Telifie.configDirectory() + "temp"), new File(Telifie.configDirectory() + "andromeda")};
         if(configFile.exists()){
-            Console.log("config.json file already set");
+            Log.console("config.json file already set");
             Console.command();
         }else{
             for(File folder : folders){

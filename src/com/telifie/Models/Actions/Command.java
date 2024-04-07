@@ -2,6 +2,7 @@ package com.telifie.Models.Actions;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.telifie.Models.*;
+import com.telifie.Models.Andromeda.Unit;
 import com.telifie.Models.Connectors.Twilio;
 import com.telifie.Models.Parser;
 import com.telifie.Models.Clients.*;
@@ -10,6 +11,8 @@ import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Package;
 import com.telifie.Models.Utilities.Network.Network;
 import org.bson.Document;
+import org.checkerframework.checker.units.qual.A;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
@@ -200,7 +203,7 @@ public class Command {
                         case "id" -> {
                             try {
                                 if(hasDomainPermission(user, session, true)){
-                                    CompletableFuture.runAsync(() -> Cache.ping(session.user, a.getId()));
+                                    CompletableFuture.runAsync(() -> Cache.history.log(session.user, a.getId()));
                                     return new Result(this.command, "article", articles.withId(secSelector));
                                 }
                                 return new Result(401, this.command, "INSUFFICIENT PERMISSIONS");
@@ -306,6 +309,14 @@ public class Command {
                     }
                 }
                 return new Result(428, this.command, "ARTICLE JSON DATA EXPECTED");
+            }else if(objSelector.equals("audit")){
+                String query = (content.getString("query") == null ? "" : content.getString("query"));
+                ArrayList<Article> auditable = articles.get(Search.filter(new Unit(query), new Parameters(content)), new Document("_id", -1));
+                ArrayList<String> ids = new ArrayList<>();
+                for(Article a : auditable){
+                    ids.add(a.getId());
+                }
+                return new Result(this.command, "articles", new JSONArray(ids));
             }else if(objSelector.equals("drafts")){
                 DraftsClient drafts = new DraftsClient(session);
                 if(secSelector != null){
@@ -333,7 +344,7 @@ public class Command {
                 }
                 return new Result(404, this.command, "BAD DRAFTS OPTION");
             }
-            return new Result(this.command,"stats", articles.stats());
+            return new Result(this.command,"stats", Telifie.stats);
         }else if(selector.equals("collections")){
             CollectionsClient collections = new CollectionsClient(session);
             if(this.selectors.length >= 4){ //Saving/Unsaving articles in collection
@@ -590,7 +601,7 @@ public class Command {
         }else if(selector.equals("messaging")){
             String from  = content.getString("From");
             String message = content.getString("Body");
-            Console.log("Income message -> " + message);
+            Log.console("Income message -> " + message);
             UsersClient users = new UsersClient();
             User user = users.getUserWithPhone(from);
             if(user == null){

@@ -19,37 +19,29 @@ import java.util.regex.Pattern;
 public class Console {
 
     public static void welcome() {
-        Console.log("\n");
-        Console.log("||===========================================================||");
-        Console.log("||                                                           ||");
-        Console.log("||  ,--------. ,------. ,--.    ,--. ,------. ,--. ,------.  ||");
-        Console.log("||  '--.  .--' |  .---' |  |    |  | |  .---' |  | |  .---'  ||");
-        Console.log("||     |  |    |  `--,  |  |    |  | |  `--,  |  | |  `--,   ||");
-        Console.log("||     |  |    |  `---. |  '--. |  | |  |`    |  | |  `---.  ||");
-        Console.log("||     `--'    `------' `-----' `--' `--'     `--' `------'  ||");
-        Console.log("||                                                           ||");
-        Console.log("||===========================================================||");
-        Console.log("       COPYRIGHT (C) TELIFIE LLC 2024, CINCINNATI, OHIO        ");
-        Console.message("More Info -> https://telifie.com/documentation");
-        Console.log("Operating System    : " + System.getProperty("os.name"));
-        Console.log("System OS Version   : " + System.getProperty("os.version"));
-        Console.log("System Architecture : " + System.getProperty("os.arch"));
-        Console.log("Working Directory : " + Telifie.configDirectory());
-        Console.line();
-    }
-
-    public static void line(){
+        System.out.println("\n");
+        System.out.println("||===========================================================||");
+        System.out.println("||                                                           ||");
+        System.out.println("||  ,--------. ,------. ,--.    ,--. ,------. ,--. ,------.  ||");
+        System.out.println("||  '--.  .--' |  .---' |  |    |  | |  .---' |  | |  .---'  ||");
+        System.out.println("||     |  |    |  `--,  |  |    |  | |  `--,  |  | |  `--,   ||");
+        System.out.println("||     |  |    |  `---. |  '--. |  | |  |`    |  | |  `---.  ||");
+        System.out.println("||     `--'    `------' `-----' `--' `--'     `--' `------'  ||");
+        System.out.println("||                                                           ||");
+        System.out.println("||===========================================================||");
+        System.out.println("       COPYRIGHT (C) TELIFIE LLC 2024, CINCINNATI, OHIO        ");
+        message("More Info -> https://telifie.com/documentation");
+        System.out.println("Operating System    : " + System.getProperty("os.name"));
+        System.out.println("System OS Version   : " + System.getProperty("os.version"));
+        System.out.println("System Architecture : " + System.getProperty("os.arch"));
+        System.out.println("Working Directory : " + Telifie.configDirectory());
         System.out.println("---------------------------------------------------------------");
     }
 
     public static void message(String message){
-        line();
+        System.out.println("---------------------------------------------------------------");
         System.out.println(message);
-        line();
-    }
-
-    public static void log(String message){
-        System.out.println(message);
+        System.out.println("---------------------------------------------------------------");
     }
 
     public static void string(String message){
@@ -74,7 +66,7 @@ public class Console {
                     DraftsClient drafts = new DraftsClient(new Session("", "telifie"));
                     for(int i = 0; i < 15; i++){
                         String paddedNumber = String.format("%05d", (s + i));
-                        Console.log("Cooking " + (s + i) + "... [D:\\Common Crawl\\cdx\\cdx-" + paddedNumber + "]");
+                        Log.console("Cooking " + (s + i) + "... [D:\\Common Crawl\\cdx\\cdx-" + paddedNumber + "]");
                         try (BufferedReader reader = new BufferedReader(new FileReader("D:\\Common Crawl\\cdx\\cdx-" + paddedNumber))) {
                             String line;
                             int inserted = 0;
@@ -88,7 +80,7 @@ public class Console {
                                     if(Asset.isValidLink(url) && !url.contains("?") && !url.contains("porn")){
                                         inserted++;
                                         if(inserted % 100000  == 0){
-                                            Console.log(inserted + " -> " + url);
+                                            Log.console(inserted + " -> " + url);
                                         }
                                         drafts.insert(new Document("link", url));
                                     }
@@ -107,14 +99,14 @@ public class Console {
                     while(pc.hasNext()){
                         try {
                             String link = pc.next().getString("link");
-                            Console.log("WORKING -> " + link);
+                            Log.console("WORKING -> " + link);
                             Article a = p.parse(link);
                             if(a != null){
                                 if(articles.create(a)){
-                                    Console.log("ARTICLE CREATED -> https://telifie.com/articles/" + a.getId());
+                                    Log.console("ARTICLE CREATED -> https://telifie.com/articles/" + a.getId());
                                 }
                             }else{
-                                Console.log("-----FAILED ARTICLE-----");
+                                Log.console("-----FAILED ARTICLE-----");
                             }
                             Thread.sleep(2000);
                         } catch (InterruptedException e) {
@@ -134,25 +126,25 @@ public class Console {
                             }
                             Andromeda.save();
                         }else if(c.equals("print")){
-                            Andromeda.taxon().forEach(t -> Console.log(t.getName()));
+                            Andromeda.taxon().forEach(t -> Log.console(t.getName()));
                         }else if(c.startsWith("print")){
                             String tname = c.split(" ")[1];
                             Taxon t = Andromeda.taxon(tname);
                             if(t == null){
-                                Console.log("Does not exist!");
+                                Log.console("Does not exist!");
                             }else{
-                                Console.log(t.items().size() + " Items");
-                                Console.log(t.items().toString());
+                                Log.console(t.items().size() + " Items");
+                                Log.console(t.items().toString());
                             }
                         }else if(c.equals("count")){
-                            Console.log("Total Items -> " + Andromeda.taxon().size());
+                            Log.console("Total Items -> " + Andromeda.taxon().size());
                         }else if(c.startsWith("count")){
                             String tname = c.split(" ")[1];
                             Taxon t = Andromeda.taxon(tname);
                             if(t == null){
-                                Console.log("Does not exist!");
+                                Log.console("Does not exist!");
                             }else{
-                                Console.log("Total Items -> " + t.items().size());
+                                Log.console("Total Items -> " + t.items().size());
                             }
                         }else if(c.equals("index")){
                             Andromeda.index();

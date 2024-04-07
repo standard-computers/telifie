@@ -20,7 +20,7 @@ public class Collection {
     }
 
     public Collection(Document document) throws NullPointerException {
-        this.id = (document.getString("id") == null ? Telifie.md5(Telifie.randomReferenceCode()) : document.getString("id") );
+        this.id = (document.getString("id") == null ? UUID.randomUUID().toString() : document.getString("id") );
         this.user = document.getString("user");
         this.icon = document.getString("icon");
         this.name = document.getString("name");

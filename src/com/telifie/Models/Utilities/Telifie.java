@@ -1,5 +1,6 @@
 package com.telifie.Models.Utilities;
 
+import org.bson.Document;
 import java.io.File;
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -12,15 +13,16 @@ public class Telifie {
     public static final String WINDOWS_SYSTEM_DIR = System.getenv("APPDATA") + "/Telifie/";
     public static final String MAC_SYSTEM_DIR = System.getProperty("user.home") + "/Library/Application Support/telifie";
     public static final String UNIX_SYSTEM_DIR = "/usr/bin/telifie/";
+    public static Document stats;
 
     public static String configDirectory(){
         String operatingSystem = System.getProperty("os.name");
         if(operatingSystem.equals("Mac OS X")){
-            return Telifie.MAC_SYSTEM_DIR + "/";
+            return Telifie.MAC_SYSTEM_DIR;
         }else if(operatingSystem.startsWith("Windows")){
-            return Telifie.WINDOWS_SYSTEM_DIR + "/";
+            return Telifie.WINDOWS_SYSTEM_DIR;
         }else{
-            return Telifie.UNIX_SYSTEM_DIR + "/";
+            return Telifie.UNIX_SYSTEM_DIR;
         }
     }
 
@@ -32,12 +34,12 @@ public class Telifie {
                 for (File file : files) {
                     if (file.isFile()) {
                         if (!file.delete()) {
-                            Console.log("FAILED TO DELETE FILE : " + file.getName());
+                            Log.console("FAILED TO DELETE FILE : " + file.getName());
                         }
                     }
                 }
             } else {
-                Console.log("TEMP DIR EMPTY");
+                Log.console("TEMP DIR EMPTY");
             }
         }
     }
