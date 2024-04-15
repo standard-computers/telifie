@@ -16,7 +16,7 @@ public class Article {
     private ArrayList<Association> associations = new ArrayList<>();
     private ArrayList<DataSet> dataSets = new ArrayList<>();
     private Source source;
-    private int priority;
+    private int priority = 1;
     private final int origin;
 
     public Article(){

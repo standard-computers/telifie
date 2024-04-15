@@ -37,7 +37,7 @@ public class CreateUser {
             add(emailLabel);
             add(email);
             add(confirmButton);
-            setSize(275,230);
+            setSize(300,160);
             setLocationRelativeTo(null);
             setVisible(true);
             confirmButton.addActionListener(new AbstractAction() {

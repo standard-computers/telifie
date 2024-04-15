@@ -104,6 +104,7 @@ public class ArticlesClient extends Client {
     }
 
     public boolean delete(Article article) {
+        CompletableFuture.runAsync(() -> Cache.invalidate(article.getId()));
         return super.deleteOne(new Document("id", article.getId()));
     }
 
@@ -135,9 +136,11 @@ public class ArticlesClient extends Client {
                 description = "Unclassified";
             }
             double percent = (double) count / total * 100;
+            double averagePriority = document.getDouble("priority");
             Document descriptionStats = new Document();
             descriptionStats.append("count", count);
             descriptionStats.append("percent", percent);
+            descriptionStats.append("priority", averagePriority);
             sortedDescriptions.put(description, descriptionStats);
         }
         Document descriptions = new Document();

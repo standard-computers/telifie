@@ -11,11 +11,11 @@ import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Package;
 import com.telifie.Models.Utilities.Network.Network;
 import org.bson.Document;
-import org.checkerframework.checker.units.qual.A;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -311,7 +311,10 @@ public class Command {
                 return new Result(428, this.command, "ARTICLE JSON DATA EXPECTED");
             }else if(objSelector.equals("audit")){
                 String query = (content.getString("query") == null ? "" : content.getString("query"));
-                ArrayList<Article> auditable = articles.get(Search.filter(new Unit(query), new Parameters(content)), new Document("_id", -1));
+                ArrayList<Article> auditable = articles.get(new Document("$and", Arrays.asList(
+                        Search.filter(new Unit(query), new Parameters(content)),
+                        new Document("verified", false)
+                )), new Document("_id", -1));
                 ArrayList<String> ids = new ArrayList<>();
                 for(Article a : auditable){
                     ids.add(a.getId());

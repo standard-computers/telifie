@@ -123,15 +123,15 @@ public class Search {
                 ));
             }
         }
-        List<Document> or = new ArrayList<>();
         if(q.tokens().length > 2){
+            List<Document> or = new ArrayList<>();
             for (String word : q.tokens()) {
                 or.add(new Document("title", pattern(word)));
             }
             or.add(new Document("tags", new Document("$in", Collections.singletonList(q.text()))));
             return new Document("$or", or);
         }
-        return new Document("title", pattern(q.text()));
+        return new Document("title", Pattern.compile("^" + Pattern.quote(q.text()), Pattern.CASE_INSENSITIVE));
     }
 
     private ArrayList<Article> paginate(ArrayList<Article> results, int page, int pageSize) {
