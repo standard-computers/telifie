@@ -9,13 +9,12 @@ import java.util.stream.Collectors;
 
 public class Article {
 
-    private String owner, id, title, link, icon, description = "Webpage", content;
+    private String owner, id, title, link, icon, description = "Webpage", content, source;
     private boolean verified = false;
     private ArrayList<String> tags = new ArrayList<>();
     private ArrayList<Attribute> attributes = new ArrayList<>();
     private ArrayList<Association> associations = new ArrayList<>();
     private ArrayList<DataSet> dataSets = new ArrayList<>();
-    private Source source;
     private int priority = 1;
     private final int origin;
 
@@ -32,6 +31,7 @@ public class Article {
         this.link = document.getString("link");
         this.icon = document.getString("icon");
         this.description = document.getString("description");
+        this.source = document.getString("source");
         this.content = (document.getString("content") != null ?  Andromeda.tools.escape(document.getString("content")) : "");
         this.origin = (document.getInteger("origin") == null ? 0 : document.getInteger("origin"));
         this.priority = (document.getInteger("priority") == null ? 0 : document.getInteger("priority"));
@@ -47,10 +47,6 @@ public class Article {
         ArrayList<Document> it4 = (ArrayList<Document>) document.getList("data_sets", Document.class);
         if(it4 != null){
             it4.forEach(doc -> this.dataSets.add(new DataSet(doc)));
-        }
-        Document sourceDocument = document.get("source", Document.class);
-        if (sourceDocument != null) {
-            this.source = new Source(sourceDocument);
         }
     }
 
@@ -161,11 +157,7 @@ public class Article {
         return null;
     }
 
-    public Source getSource() {
-        return source;
-    }
-
-    public void setSource(Source source) {
+    public void setSource(String source) {
         this.source = source;
     }
 
@@ -183,7 +175,7 @@ public class Article {
                 (attributes == null ? "" : ", \"attributes\" : " + attributes) +
                 ", \"associations\" : " + (associations ==  null || associations.isEmpty() ? "[]" : associations) +
                 (dataSets.isEmpty() ? "" : ", \"data_sets\" : " + dataSets) +
-                (source == null ? ", \"source\" : null" : ", \"source\" : " + source) +
+                (source == null ? "" : ", \"source\" : \"" + source + '\"') +
                 ", \"origin\" : " + origin +
                 ", \"priority\" : " + priority +
                 '}';

@@ -85,11 +85,11 @@ public class Search {
             String fromCache = Cache.get(query.cleaned());
             if(fromCache != null){
                 results = new ObjectMapper().readValue(fromCache, ArrayList.class);
-                result.setResults("articles", new JSONArray(results));
+                result.setResults("articles", new JSONArray(paginate(results, params.page, params.rpp)));
             }else{
                 ArrayList<Article> all = articles.search(query, params, filter(query, params));
+                CompletableFuture.runAsync(() -> Cache.cache(session.user, q, all.toString()));
                 results = paginate(all, params.page, params.rpp);
-                CompletableFuture.runAsync(() -> Cache.cache(session.user, q, results.toString(), params));
                 result.setResults("articles", results);
             }
             result.setTotal(results.size());

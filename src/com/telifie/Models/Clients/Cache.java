@@ -54,17 +54,14 @@ public class Cache {
         return cachedResponse;
     }
 
-    public static void cache(String user, String query, String result, Parameters params){
+    public static void cache(String user, String query, String result){
         try {
-            PreparedStatement ping = Configuration.mysqlClient.prepareStatement("INSERT INTO cache (user, session, query, page, rpp, pages, response, origin) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            PreparedStatement ping = Configuration.mysqlClient.prepareStatement("INSERT INTO cache (user, session, query, response, origin) VALUES (?, ?, ?, ?, ?)");
             ping.setString(1, user);
             ping.setString(2, UUID.randomUUID().toString());
             ping.setString(3, query);
-            ping.setInt(4, params.page);
-            ping.setInt(5, params.rpp);
-            ping.setInt(6, params.pages);
-            ping.setString(7, result);
-            ping.setString(8, String.valueOf(Telifie.epochTime()));
+            ping.setString(4, result);
+            ping.setString(5, String.valueOf(Telifie.epochTime()));
             ping.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();

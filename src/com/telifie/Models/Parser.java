@@ -366,7 +366,7 @@ public class Parser {
             Element infobox = body.selectFirst(".infobox");
             body.select("table, script, header, style, img, svg, button, label, form, input, aside, code, footer, nav").remove();
             if(url.contains("/wiki")){
-                article.setSource(new Article.Source("https://telifie-static.nyc3.cdn.digitaloceanspaces.com/mirror/uploads/sources/wikipedia.png", "Wikipedia", article.getLink().trim()));
+                article.setSource(article.getLink().trim());
                 article.setLink(null);
                 article.setTitle(article.getTitle().replaceAll(" - Wikipedia", ""));
                 if (infobox != null) {
