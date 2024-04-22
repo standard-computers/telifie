@@ -39,7 +39,7 @@ public class Configuration {
     public void startSql(){
         try {
             Connection connection = DriverManager.getConnection(mysql);
-            System.out.println("SQL Database Connected");
+            System.out.println("SQL CONNECTED");
             mysqlClient = connection;
         } catch (SQLException e) {
             Log.error("SQL DATABASE FAILED", "CLIx015");

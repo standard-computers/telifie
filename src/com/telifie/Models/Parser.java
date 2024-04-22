@@ -319,18 +319,18 @@ public class Parser {
                     article.setIcon(Network.fixLink("https://" + Network.url(url).getHost(), href));
                 }
             });
-            document.getElementsByTag("img").forEach(image -> {
-                String src = Network.fixLink(url, image.attr("src"));
-                if(!src.isEmpty() && !src.startsWith("data:") && articles.withLink(src) == null){
-                    CompletableFuture.runAsync(() -> {
-                        Asset ass = new Asset(src);
-                        int[] d = ass.getDimensions();
-                        if (d[0] > 42 && d[1] > 42) {
-                            if (url.contains("/wiki")) {
-                                if (article.getIcon() == null || article.getIcon().isEmpty()) {
-                                    article.setIcon(src);
-                                }
-                            }
+//            document.getElementsByTag("img").forEach(image -> {
+//                String src = Network.fixLink(url, image.attr("src"));
+//                if(!src.isEmpty() && !src.startsWith("data:") && articles.withLink(src) == null){
+//                    CompletableFuture.runAsync(() -> {
+//                        Asset ass = new Asset(src);
+//                        int[] d = ass.getDimensions();
+//                        if (d[0] > 42 && d[1] > 42) {
+//                            if (url.contains("/wiki")) {
+//                                if (article.getIcon() == null || article.getIcon().isEmpty()) {
+//                                    article.setIcon(src);
+//                                }
+//                            }
 //                            String caption = Andromeda.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
 //                            Article ia = new Article();
 //                            if (!caption.isEmpty() && caption.length() < 100) {
@@ -358,10 +358,10 @@ public class Parser {
 //                            }else{
 //                                Log.console("NOT HAPPENING, MAY EXIST");
 //                            }
-                        }
-                    });
-                }
-            });
+//                        }
+//                    });
+//                }
+//            });
             Element body = document.getElementsByTag("body").get(0);
             Element infobox = body.selectFirst(".infobox");
             body.select("table, script, header, style, img, svg, button, label, form, input, aside, code, footer, nav").remove();

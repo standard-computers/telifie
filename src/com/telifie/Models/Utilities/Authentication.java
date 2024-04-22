@@ -1,9 +1,9 @@
 package com.telifie.Models.Utilities;
 
-import com.telifie.Models.Clients.Client;
 import com.telifie.Models.User;
-import org.bson.Document;
-import java.util.Arrays;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class Authentication {
 
@@ -17,69 +17,54 @@ public class Authentication {
         this.refresh = b[2];
     }
 
-    public Authentication(Document document) throws NullPointerException {
-        this.user = document.getString("user");
-        this.token = document.getString("token");
-        this.refresh = document.getString("refresh");
-        this.origin = document.getInteger("origin");
-        this.expiration = document.getInteger("expiration");
-    }
-
     public Authentication(User user){
         this.user = user.getId();
         this.token = Telifie.md5(Telifie.randomReferenceCode());
         this.refresh = Telifie.md5(Telifie.randomReferenceCode());
         this.origin = Telifie.epochTime();
-        this.expiration = this.origin + 2419000;
+        this.expiration = this.origin + 604800;
     }
 
     public String getUser() {
         return user;
     }
 
-    public boolean hasToken(String token){
-        return token.equals(this.token);
-    }
-
-    public boolean hasRefreshToken(String token){
-        return token.equals(this.refresh);
-    }
-
     public boolean authenticate(){
-        return new AuthenticationClient().authenticate(this);
+        try {
+            PreparedStatement command = Configuration.mysqlClient.prepareStatement("INSERT INTO authentications (user, token, refresh, origin, expiration) VALUES (?, ?, ?, ?, ?)");
+            command.setString(1, user);
+            command.setString(2, token);
+            command.setString(3, refresh);
+            command.setString(4, String.valueOf(origin));
+            command.setString(5, String.valueOf(expiration));
+            command.execute();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
-    public boolean isAuthenticated(){
-        return new AuthenticationClient().isAuthenticated(this);
+    public boolean isAuthenticated() {
+        try {
+            PreparedStatement command = Configuration.mysqlClient.prepareStatement("SELECT * FROM authentications WHERE user = ? AND token = ? AND refresh = ? AND expiration > ? LIMIT 1");
+            Log.console(user);
+            Log.console(token);
+            Log.console(refresh);
+            command.setString(1, user);
+            command.setString(2, token);
+            command.setString(3, refresh);
+            command.setInt(4, Telifie.epochTime());
+            ResultSet resultSet = command.executeQuery();
+            return resultSet.next();
+        } catch (SQLException e) {
+            Log.error("Failed authentication", "AUTHx102");
+            return false;
+        }
     }
 
     @Override
     public String toString() {
         return new StringBuilder().append("{").append("\"user\" : \"").append(user).append('\"').append(", \"token\" : \"").append(token).append('\"').append(", \"refresh\" : \"").append(refresh).append('\"').append(", \"origin\" : ").append(origin).append(", \"expiration\" : ").append(expiration).append("}").toString();
-    }
-
-    private class AuthenticationClient extends Client {
-
-        public AuthenticationClient() {
-            super(null);
-            super.collection = "authentications";
-        }
-
-        public boolean authenticate(Authentication auth){
-            return super.insertOne(Document.parse(auth.toString()));
-        }
-
-        public boolean isAuthenticated(Authentication auth){
-            Document findAuthentication = this.findOne(new Document("$and", Arrays.asList(new Document("user", auth.user), new Document("token", auth.token))));
-            if(findAuthentication == null){
-                return false;
-            }
-            Authentication found = new Authentication(findAuthentication);
-            int epoch = (int) (System.currentTimeMillis() / 1000);
-            if(epoch > found.expiration){
-                return false;
-            }
-            return found.hasToken(auth.token) && found.hasRefreshToken(auth.refresh);
-        }
     }
 }

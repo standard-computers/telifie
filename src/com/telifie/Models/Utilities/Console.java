@@ -7,6 +7,7 @@ import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Clients.DraftsClient;
 import com.telifie.Models.Clients.PersonalClient;
 import com.telifie.Models.Parser;
+import com.telifie.Models.User;
 import org.bson.Document;
 import org.json.JSONObject;
 import java.io.BufferedReader;
@@ -108,10 +109,27 @@ public class Console {
                             }else{
                                 Log.console("-----FAILED ARTICLE-----");
                             }
-                            Thread.sleep(2000);
+                            Thread.sleep(1500);
                         } catch (InterruptedException e) {
                             throw new RuntimeException(e);
                         }
+                    }
+                }
+                case "authenticate" -> {
+                    Authentication auth = new Authentication(new User("", "telifie", ""));
+                    Log.console("Authorizing as database admin...");
+                    if(auth.authenticate()){
+                        Log.flag("NEW ACCESS CREDENTIALS AUTHENTICATED", "CLIx003");
+                        Log.console(new JSONObject(auth.toString()).toString(4));
+                    }
+                }
+                case "iplist" -> {
+                    String in = Console.in("(add/remove [IP_ADDRESS]->");
+                    String[] args = in.split(" ");
+                    if(args[0].equals("add")){
+
+                    }else{
+
                     }
                 }
                 case "andromeda" -> {

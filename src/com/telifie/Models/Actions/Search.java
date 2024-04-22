@@ -1,12 +1,10 @@
 package com.telifie.Models.Actions;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Andromeda.Unit;
 import com.telifie.Models.Article;
 import com.telifie.Models.Clients.ArticlesClient;
-import com.telifie.Models.Clients.Cache;
 import com.telifie.Models.Connectors.Radar;
 import com.telifie.Models.Utilities.Network.Rest;
 import com.telifie.Models.Result;
@@ -14,11 +12,9 @@ import com.telifie.Models.Clients.Packages;
 import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
-import org.json.JSONArray;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -82,16 +78,9 @@ public class Search {
         }
         if(doQuery && !params.quickResults){
             ArrayList<Article> results;
-            String fromCache = Cache.get(query.cleaned());
-            if(fromCache != null){
-                results = new ObjectMapper().readValue(fromCache, ArrayList.class);
-                result.setResults("articles", new JSONArray(paginate(results, params.page, params.rpp)));
-            }else{
-                ArrayList<Article> all = articles.search(query, params, filter(query, params));
-                CompletableFuture.runAsync(() -> Cache.cache(session.user, q, all.toString()));
-                results = paginate(all, params.page, params.rpp);
-                result.setResults("articles", results);
-            }
+            ArrayList<Article> all = articles.search(query, params, filter(query, params));
+            results = paginate(all, params.page, params.rpp);
+            result.setResults("articles", results);
             result.setTotal(results.size());
         }
         return result;
