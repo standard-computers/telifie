@@ -1,22 +1,14 @@
 package com.telifie.Models.Clients;
 
 import com.telifie.Models.Utilities.Configuration;
+import com.telifie.Models.Utilities.Network.SQL;
 import com.telifie.Models.Utilities.Telifie;
 import java.sql.*;
-import java.util.UUID;
 
 public class Cache {
 
     public void parsed(String user, String url) {
-        try {
-            PreparedStatement command = Configuration.mysqlClient.prepareStatement("INSERT INTO parsed (user, uri, origin) VALUES (?, ?, ?)");
-            command.setString(1, user);
-            command.setString(2, url);
-            command.setString(3, String.valueOf(Telifie.epochTime()));
-            command.execute();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        SQL.update("INSERT INTO parsed (user, uri, origin) VALUES (?, ?, ?)", user, url, String.valueOf(Telifie.epochTime()));
     }
 
     public boolean isParsed(String url) {
@@ -35,35 +27,11 @@ public class Cache {
         return false;
     }
 
-
     public static String get(String query) {
-        String cachedResponse = null;
         try {
-            PreparedStatement command = Configuration.mysqlClient.prepareStatement("SELECT response FROM cache WHERE query = ? ORDER BY origin DESC");
-            command.setString(1, query);
-            ResultSet resultSet = command.executeQuery();
-            if (resultSet.next()) {
-                cachedResponse = resultSet.getString("response");
-            }
-            resultSet.close();
-            command.close();
+            return SQL.get("SELECT response FROM cache WHERE query = ? ORDER BY origin DESC", query).getString("response");
         } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return cachedResponse;
-    }
-
-    public static void cache(String user, String query, String result){
-        try {
-            PreparedStatement ping = Configuration.mysqlClient.prepareStatement("INSERT INTO cache (user, session, query, response, origin) VALUES (?, ?, ?, ?, ?)");
-            ping.setString(1, user);
-            ping.setString(2, UUID.randomUUID().toString());
-            ping.setString(3, query);
-            ping.setString(4, result);
-            ping.setString(5, String.valueOf(Telifie.epochTime()));
-            ping.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 
@@ -94,40 +62,25 @@ public class Cache {
             return empty;
         }
 
-        public static void log(String user, String articleId) {
+        public static void log(String user, String obj) {
             try {
                 PreparedStatement check = Configuration.mysqlClient.prepareStatement("SELECT COUNT(*) FROM pings WHERE user = ? AND object = ?");
                 check.setString(1, user);
-                check.setString(2, articleId);
+                check.setString(2, obj);
                 ResultSet resultSet = check.executeQuery();
                 resultSet.next();
                 int count = resultSet.getInt(1);
                 if (count > 0) {
                     return;
                 }
-                PreparedStatement ping = Configuration.mysqlClient.prepareStatement("INSERT INTO pings (user, object, origin) VALUES (?, ?, ?)");
-                ping.setString(1, user);
-                ping.setString(2, articleId);
-                ping.setString(3, String.valueOf(Telifie.epochTime()));
-                ping.executeUpdate();
+                SQL.update("INSERT INTO pings (user, object, origin) VALUES (?, ?, ?)", user, obj, String.valueOf(Telifie.epochTime()));
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
 
         public static void commit(String user, String session, String query, String icon, String description){
-            try {
-                PreparedStatement ping = Configuration.mysqlClient.prepareStatement("INSERT INTO quickresponse (user, session, query, icon, description, origin) VALUES (?, ?, ?, ?, ?, ?)");
-                ping.setString(1, user);
-                ping.setString(2, session);
-                ping.setString(3, query);
-                ping.setString(4, icon);
-                ping.setString(5, description);
-                ping.setString(6, String.valueOf(Telifie.epochTime()));
-                ping.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            SQL.update("INSERT INTO quickresponse (user, session, query, icon, description, origin) VALUES (?, ?, ?, ?, ?, ?)", user, session, query, icon, description, String.valueOf(Telifie.epochTime()));
         }
     }
 }

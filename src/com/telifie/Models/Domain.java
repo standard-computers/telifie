@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public class Domain implements Serializable {
 
-    private final String id, icon, owner, name, alt;
+    private final String id, owner, name, alt;
     private final int origin, permissions;
     private final ArrayList<Member> users = new ArrayList<>();
 
@@ -17,14 +17,12 @@ public class Domain implements Serializable {
         this.id = UUID.randomUUID().toString();
         this.name = name;
         this.alt = name.toLowerCase().replaceAll(" ", "-");
-        this.icon = icon;
         this.origin = Telifie.epochTime();
         this.permissions = (permissions <= 2 && permissions >= 0 ? permissions : 0); //Private is default mode if none
     }
 
     public Domain(Document document) throws NullPointerException {
         this.id = (document.getString("id") == null ? UUID.randomUUID().toString() : document.getString("id"));
-        this.icon = document.getString("icon");
         this.owner = document.getString("owner");
         this.name = document.getString("name");
         this.alt = document.getString("alt");
@@ -72,7 +70,6 @@ public class Domain implements Serializable {
     public String toString() {
         return "{" +
                 "\"id\" : \"" + id + '\"' +
-                ", \"icon\" : \"" + icon + '\"' +
                 ", \"owner\" : \"" + owner + '\"' +
                 ", \"name\" : \"" + name + '\"' +
                 ", \"alt\" : \"" + alt + '\"' +

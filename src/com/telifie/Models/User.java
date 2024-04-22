@@ -1,10 +1,10 @@
 package com.telifie.Models;
 
-import org.bson.Document;
-import java.io.Serializable;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.UUID;
 
-public class User implements Serializable {
+public class User {
 
     private String id, email, name, phone, token, settings = "{\\\"secondary\\\":\\\"#0583c5\\\",\\\"corner_radius\\\":8,\\\"\\\":\\\"#1977F1\\\",\\\"color\\\":\\\"#0c92c2\\\",\\\"dark_mode\\\":\\\"0,1,2\\\",\\\"background\\\":\\\"#FFFFFF\\\",\\\"font_size\\\":16,\\\"name\\\":\\\"Facebook Blue\\\",\\\"foreground\\\":\\\"#000000\\\",\\\"border_color\\\":\\\"#BEBEBE\\\"}";
     private final int origin;
@@ -19,15 +19,23 @@ public class User implements Serializable {
         this.permissions = 0;
     }
 
-    public User(Document document){
-        this.id = document.getString("id");
-        this.email = document.getString("email");
-        this.name = document.getString("name");
-        this.phone = document.getString("phone");
-        this.token = document.getString("token");
-        this.origin = document.getInteger("origin");
-        this.permissions = document.getInteger("permissions");
-        this.settings = document.getString("settings");
+    public User(ResultSet result){
+        try {
+            if (result.next()) {
+                this.id = result.getString("id");
+                this.email = result.getString("email");
+                this.name = result.getString("name");
+                this.phone = result.getString("phone");
+                this.token = result.getString("token");
+                this.origin = result.getInt("origin");
+                this.permissions = result.getInt("permissions");
+                this.settings = result.getString("settings");
+            } else {
+                throw new RuntimeException("ResultSet is empty"); // Handle empty ResultSet
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String getId() {

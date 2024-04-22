@@ -6,7 +6,6 @@ import com.telifie.Models.Article;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Clients.Cache;
 import com.telifie.Models.Clients.Packages;
-import com.telifie.Models.Parser;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Network.Http;
 import org.bson.Document;
@@ -39,16 +38,6 @@ public class Start {
             Runnable task = () -> Telifie.stats = articles.stats();
             scheduler.scheduleAtFixedRate(task, 0, 90, TimeUnit.SECONDS);
         }
-        CompletableFuture.runAsync(() -> {
-//            if(Cache.history.isEmpty()){
-//                Log.console("Quick Response cache is empty. Warming up....");
-//                Log.console("Finding cache qualifying articles. This may take some time!");
-//                ArrayList<Article> av = articles.get(new Document("priority", new Document("$gt", 1)));
-//                Log.console("Committing " + av.size() + " to cache history...");
-//                av.forEach(a -> Cache.history.commit("telifie", a.getId(), a.getTitle(), a.getIcon(), a.getDescription()));
-//            }
-        });
-
         if (args.length > 0) {
             String mode = args[0].trim().toLowerCase();
             switch (mode) {
@@ -81,7 +70,17 @@ public class Start {
                         throw new RuntimeException(e);
                     }
                 }
-                case "--master" -> new Parser(new Session("telifie", "telifie")).reparse();
+                case "--master" -> {
+                    CompletableFuture.runAsync(() -> {
+                        if(Cache.history.isEmpty()){
+                            Log.console("Quick Response cache is empty. Warming up....");
+                            Log.console("Finding cache qualifying articles. This may take some time!");
+                            ArrayList<Article> av = articles.get(new Document("priority", new Document("$gt", 1)));
+                            Log.console("Committing " + av.size() + " to cache history...");
+                            av.forEach(a -> Cache.history.commit("telifie", a.getId(), a.getTitle(), a.getIcon(), a.getDescription()));
+                        }
+                    });
+                }
             }
         }else{
             Console.command();

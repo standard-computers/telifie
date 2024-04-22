@@ -447,9 +447,10 @@ public class Command {
                     User newUser = new User(content.getString("email"), content.getString("name"), content.getString("phone"));
                     if(newUser.getPermissions() == 0 && !newUser.getName().isEmpty() && !newUser.getEmail().isEmpty() && newUser.getName() != null && newUser.getEmail() != null) {
                         if (!users.existsWithEmail(newUser.getEmail())) {
-                            if (users.create(newUser)) {
-                                return new Result(this.command, "user", newUser);
-                            }
+                            //TODO
+//                            if (users.create(newUser)) {
+//                                return new Result(this.command, "user", newUser);
+//                            }
                             return new Result(505, this.command, "FAILED USER CREATION");
                         }
                         return new Result(410, this.command, "EMAIL TAKEN");
@@ -543,7 +544,7 @@ public class Command {
                     User user = users.getUserWithEmail(email);
                     if(user.hasToken(code)){
                         if(user.getPermissions() == 0 || user.getPermissions() == 1){
-                            users.upgradePermissions(user);
+                            users.upgradePermissions(user, (user.getPermissions() + 1));
                             user.setPermissions(user.getPermissions() + 1);
                         }
                         Authentication auth = new Authentication(user);

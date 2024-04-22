@@ -3,34 +3,42 @@ package com.telifie.Models.Clients;
 import com.telifie.Models.Connectors.SendGrid;
 import com.telifie.Models.Connectors.Twilio;
 import com.telifie.Models.User;
+import com.telifie.Models.Utilities.Network.SQL;
 import com.telifie.Models.Utilities.Telifie;
-import org.bson.Document;
+import java.sql.SQLException;
 
-public class UsersClient extends Client {
-
-    public UsersClient() {
-        super(null);
-        super.collection = "users";
-    }
+public class UsersClient {
 
     public User getUserWithEmail(String email){
-        return new User(this.findOne(new Document("email", email)));
+        try {
+            return new User(SQL.get("SELECT * FROM users WHERE email = ?", email));
+        } catch (SQLException e) {
+            return null;
+        }
     }
 
     public User getUserWithId(String id){
-        return new User(this.findOne(new Document("id", id)));
+        try {
+            return new User(SQL.get("SELECT * FROM users WHERE id = ?", id));
+        } catch (SQLException e) {
+            return null;
+        }
     }
 
     public User getUserWithPhone(String phone){
-        return new User(this.findOne(new Document("phone", phone)));
+        try {
+            return new User(SQL.get("SELECT * FROM users WHERE phone = ?", phone));
+        } catch (SQLException e) {
+            return null;
+        }
     }
 
     public boolean existsWithEmail(String email){
-        return this.findOne(new Document("email", email)) != null;
+        return (this.getUserWithEmail(email) == null ? false : true);
     }
 
-    public boolean lock(User user, String code){
-        return this.updateOne(new Document("email", user.getEmail()), new Document("$set", new Document("token", Telifie.md5(code))));
+    public static boolean lock(User user, String code) {
+        return SQL.update("UPDATE users SET token = ? WHERE email = ?", Telifie.md5(code), user.getEmail());
     }
 
     public boolean emailCode(User user){
@@ -45,15 +53,15 @@ public class UsersClient extends Client {
         return this.lock(user, code);
     }
 
-    public boolean updateSettings(User user, String settings){
-        return super.updateOne(new Document("id", user.getId()), new Document("$set", new Document("settings", settings)));
+
+    public boolean updateSettings(User user, String settings) {
+        return SQL.update("UPDATE users SET settings = ? WHERE id = ?", settings, user.getId());
     }
 
-    public boolean create(User user){
-        return super.insertOne(Document.parse(user.toString()));
-    }
+//    public boolean create(User user){
+//    }
 
-    public void upgradePermissions(User user){
-        super.updateOne(new Document("email", user.getEmail()), new Document("$set", new Document("permissions", user.getPermissions() + 1)));
+    public boolean upgradePermissions(User user, int permissions) {
+        return SQL.update("UPDATE users SET permissions = ? WHERE id = ?", permissions, user.getId());
     }
 }
