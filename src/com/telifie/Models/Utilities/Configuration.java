@@ -15,7 +15,7 @@ import java.util.ArrayList;
 public class Configuration {
 
     private String VERSION = "v1.0.0b", email, mongodb, mysql;
-    private ArrayList<String> iplist;
+    private static ArrayList<String> iplist;
     @JsonIgnore
     public static MongoClient mongoClient;
     @JsonIgnore
@@ -45,5 +45,15 @@ public class Configuration {
             Log.error("SQL DATABASE FAILED", "CLIx015");
             System.exit(-1);
         }
+    }
+
+    @JsonIgnore
+    public static void addIP(String ipAddress) {
+        iplist.add(ipAddress);
+    }
+
+    @JsonIgnore
+    public static void removeIP(String ipAddress) {
+        iplist.remove(ipAddress);
     }
 }

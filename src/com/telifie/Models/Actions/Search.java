@@ -28,7 +28,7 @@ public class Search {
         result.setParams(params);
         boolean doQuery = true;
         if(params.page == 1){
-            if((q.contains("*") || q.contains("+") || q.contains("-") || q.contains("/")) && Telifie.tools.contains(Telifie.NUMERALS, q)){
+            if((q.contains("*") || q.contains("+") || q.contains("-") || q.contains("/")) || Telifie.tools.contains(Telifie.NUMERALS, q)){
                 String mathExpressionPattern = "[\\d\\s()+\\-*/=xX^sincoaet]+";
                 Pattern pattern = Pattern.compile(mathExpressionPattern);
                 Matcher matcher = pattern.matcher(q);
@@ -74,7 +74,7 @@ public class Search {
                 //TODO map/radar lookup
             }
         }
-        if(doQuery && !params.quickResults){
+        if(doQuery){ //Actually execute against collections/domains
             ArrayList<Article> results;
             ArrayList<Article> all = articles.search(q, params, filter(q, params));
             results = paginate(all, params.page, params.rpp);

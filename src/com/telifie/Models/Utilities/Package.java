@@ -62,10 +62,10 @@ public class Package {
     }
 
     @JsonIgnore
-    public Endpoint getEndpoint(String name){
+    public String getEndpoint(String name){
         for (Endpoint e : this.endpoints) {
             if (e.name.equals(name)) {
-                return e;
+                return e.value;
             }
         }
         return null;

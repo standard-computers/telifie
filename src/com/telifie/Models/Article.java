@@ -101,12 +101,6 @@ public class Article {
         this.tags.add(tag.toLowerCase().trim());
     }
 
-    public void addTags(String[] tags){
-        for(String tag : tags){
-            this.tags.add(tag.toLowerCase().trim());
-        }
-    }
-
     public String getContent() {
         return content;
     }
@@ -117,10 +111,6 @@ public class Article {
 
     public ArrayList<String> getTags() {
         return tags;
-    }
-
-    public void setTags(ArrayList<String> tags) {
-        this.tags = tags;
     }
 
     public void addAttribute(Attribute attr){
@@ -206,30 +196,6 @@ public class Article {
             }
             jsonBuilder.append("] }");
             return jsonBuilder.toString();
-        }
-    }
-
-    public static class Source {
-
-        public final String icon;
-        public final String name;
-        public final String url;
-
-        public Source(String icon, String name, String url) {
-            this.icon = icon;
-            this.name = name;
-            this.url = url;
-        }
-
-        public Source(Document document) throws NullPointerException {
-            this.icon = document.getString("icon");
-            this.name = document.getString("name");
-            this.url = document.getString("url");
-        }
-
-        @Override
-        public String toString() {
-            return new StringBuilder().append("{\"icon\" : \"").append(icon).append('\"').append(", \"name\" : \"").append(name).append('\"').append(", \"url\" : \"").append(url).append("\"}").toString();
         }
     }
 }

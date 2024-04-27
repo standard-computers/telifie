@@ -53,10 +53,6 @@ public class Result {
         this.generated = generated;
     }
 
-    public Object getResults() {
-        return results;
-    }
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -87,5 +83,9 @@ public class Result {
     public void setResults(String object, Object results) {
         this.object = object;
         this.results = results;
+    }
+
+    public String getGenerated() {
+        return this.generated;
     }
 }

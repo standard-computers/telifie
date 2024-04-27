@@ -8,7 +8,6 @@ public class Parameters {
     private String index;
     private final String zip;
     private double latitude, longitude;
-    public final boolean quickResults;
 
     public Parameters(Document document) throws NullPointerException {
         this.rpp = (document.getInteger("results_per_page") == null ? 50 : document.getInteger("results_per_page"));
@@ -18,7 +17,6 @@ public class Parameters {
         this.zip = (document.getString("zip") == null ? "" : document.getString("zip"));
         this.latitude = (document.getDouble("latitude") == null ? 39.103699 : document.getDouble("latitude"));
         this.longitude = (document.getDouble("longitude") == null ? -84.513611 : document.getDouble("longitude"));
-        this.quickResults = (document.getBoolean("quick_results") == null ? false : document.getBoolean("quick_results"));
     }
 
     public String getIndex() {
@@ -53,7 +51,6 @@ public class Parameters {
                 .append(", \"zip\" : \"").append(zip).append("\"")
                 .append(", \"latitude\" : ").append(latitude)
                 .append(", \"longitude\" : ").append(longitude)
-                .append(", \"quick_results\" : ").append(quickResults)
                 .append(", \"index\" : \"").append(index).append("\"}").toString();
     }
 }
