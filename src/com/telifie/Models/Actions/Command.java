@@ -2,7 +2,6 @@ package com.telifie.Models.Actions;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.telifie.Models.*;
-import com.telifie.Models.Andromeda.Unit;
 import com.telifie.Models.Connectors.Twilio;
 import com.telifie.Models.Parser;
 import com.telifie.Models.Clients.*;
@@ -93,9 +92,9 @@ public class Command {
                     return new Result(this.command, "domains", foundDomains);
                 }else if(objSelector.equals("create")){ //Creating a new domain
                     if(content != null){
-                        String domainName, domainIcon;
-                        if((domainName = content.getString("name")) != null && (domainIcon = content.getString("icon")) != null && content.getInteger("permissions") != null){
-                            Domain newDomain = new Domain(session.user, domainName, domainIcon, content.getInteger("permissions"));
+                        String domainName;
+                        if((domainName = content.getString("name")) != null && content.getInteger("permissions") != null){
+                            Domain newDomain = new Domain(session.user, domainName, content.getInteger("permissions"));
                             if(domains.create(newDomain)){
                                 return new Result(this.command, "domain", newDomain);
                             }
@@ -312,7 +311,7 @@ public class Command {
             }else if(objSelector.equals("audit")){
                 String query = (content.getString("query") == null ? "" : content.getString("query"));
                 ArrayList<Article> auditable = articles.get(new Document("$and", Arrays.asList(
-                        Search.filter(new Unit(query), new Parameters(content)),
+                        Search.filter(query, new Parameters(content)),
                         new Document("verified", false)
                 )), new Document("_id", -1));
                 ArrayList<String> ids = new ArrayList<>();
@@ -348,85 +347,84 @@ public class Command {
                 return new Result(404, this.command, "BAD DRAFTS OPTION");
             }
             return new Result(this.command,"stats", Telifie.stats);
-        }else if(selector.equals("collections")){
-            CollectionsClient collections = new CollectionsClient(session);
-            if(this.selectors.length >= 4){ //Saving/Unsaving articles in collection
+        }else if(selector.equals("shortcuts")){
+            ShortcutsClient scs = new ShortcutsClient(session);
+            if(this.selectors.length >= 4){ //Saving/Unsaving articles in shortcut
                 try{
-                    Collection c = collections.get(secSelector);
+                    Shortcut c = scs.get(secSelector);
                     try{
                         ArticlesClient articles = new ArticlesClient(session);
                         Article a = articles.withId(terSelector);
                         if(objSelector.equals("save")){
-                            if(collections.save(c, a)){
+                            if(scs.save(c, a)){
                                 return new Result(200, this.command, "ARTICLE SAVED");
                             }
                             return new Result(505, this.command, "FAILED ARTICLE SAVE");
                         } else if(objSelector.equals("unsave")){
-
-                            if(collections.unsave(c, a)){
+                            if(scs.unsave(c, a)){
                                 return new Result(200, this.command, "ARTICLE UNSAVED");
                             }
                             return new Result(505, this.command, "FAILED ARTICLE UNSAVE");
                         }
-                        return new Result(404, this.command, "BAD COLLECTION OPTION");
+                        return new Result(404, this.command, "BAD SHORTCUT OPTION");
                     }catch (NullPointerException n){
                         return new Result(404, this.command, "ARTICLE NOT FOUND");
                     }
                 }catch (NullPointerException n){
-                    return new Result(404, this.command, "COLLECTION NOT FOUND");
+                    return new Result(404, this.command, "SHORTCUT NOT FOUND");
                 }
-            }else if(this.selectors.length >= 2){ //Updating, deleting, getting collections
+            }else if(this.selectors.length >= 2){ //Updating, deleting, getting shortcuts
                 if(secSelector != null) {
                     try {
-                        Collection c = collections.get(secSelector);
+                        Shortcut c = scs.get(secSelector);
                         switch (objSelector) {
                             case "update" -> {
                                 if (content != null) {
                                     if (content.getString("name") == null) {
-                                        return new Result(428, this.command, "COLLECTION NAME EXPECTED");
+                                        return new Result(428, this.command, "SHORTCUT NAME EXPECTED");
                                     }
                                     if(c.getUser().equals(session.user)){
-                                        if (collections.update(c, content)) {
-                                            return new Result(200, this.command, "COLLECTION UPDATED");
+                                        if (scs.update(c, content)) {
+                                            return new Result(200, this.command, "SHORTCUT UPDATED");
                                         }
-                                        return new Result(505, this.command, "FAILED COLLECTION UPDATE");
+                                        return new Result(505, this.command, "FAILED SHORTCUT UPDATE");
                                     }
-                                    return new Result(401, this.command, "NO COLLECTION PERMISSIONS");
+                                    return new Result(401, this.command, "NO SHORTCUT PERMISSIONS");
                                 }
-                                return new Result(428, this.command, "COLLECTION JSON EXPECTED");
+                                return new Result(428, this.command, "SHORTCUT JSON EXPECTED");
                             }
                             case "delete" -> {
-                                if (collections.delete(c)) {
-                                    return new Result(200, this.command, "COLLECTION DELETED");
+                                if (scs.delete(c)) {
+                                    return new Result(200, this.command, "SHORTCUT DELETED");
                                 }
-                                return new Result(505, this.command, "FAILED COLLECTION DELETION");
+                                return new Result(505, this.command, "FAILED SHORTCUT DELETION");
                             }
                             case "id" -> {
                                 if(c.getUser().equals(session.user)) {
-                                    return new Result(this.command, "collection", collections.withArticles(secSelector));
+                                    return new Result(this.command, "shortcut", scs.withArticles(secSelector));
                                 }
-                                return new Result(401, this.command, "NO COLLECTION PERMISSIONS");
+                                return new Result(401, this.command, "NO SHORTCUT PERMISSIONS");
                             }
                         }
-                        return new Result(404, this.command, "BAD COLLECTIONS OPTION");
+                        return new Result(404, this.command, "BAD SHORTCUTS OPTION");
                     }catch (NullPointerException n){
-                        return new Result(404, this.command, "COLLECTION NOT FOUND");
+                        return new Result(404, this.command, "SHORTCUT NOT FOUND");
                     }
                 }else if(objSelector.equals("create")){
                     if(content != null){
-                        Collection newCollection = new Collection(content);
-                        Collection createdCollection = collections.create(newCollection);
-                        if(createdCollection != null){
-                            return new Result(this.command, "collection", createdCollection);
+                        Shortcut newShortcut = new Shortcut(content);
+                        Shortcut createdShortcut = scs.create(newShortcut);
+                        if(createdShortcut != null){
+                            return new Result(this.command, "shortcut", createdShortcut);
                         }
-                        return new Result(505, this.command, "FAILED COLLECTION CREATION");
+                        return new Result(505, this.command, "FAILED SHORTCUT CREATION");
                     }
                     return new Result(428, this.command, "JSON BODY EXPECTED");
                 }
-                return new Result(428, this.command, "COLLECTION ID REQUIRED");
+                return new Result(428, this.command, "SHORTCUT ID REQUIRED");
             }
-            ArrayList<Collection> usersCollections = collections.forUser(session.user);
-            return new Result(this.command, "collections", usersCollections);
+            ArrayList<Shortcut> usersShortcuts = scs.forUser(session.user);
+            return new Result(this.command, "shortcuts", usersShortcuts);
         }else if(selector.equals("users")){
             UsersClient users = new UsersClient();
             if(this.selectors.length >= 3){

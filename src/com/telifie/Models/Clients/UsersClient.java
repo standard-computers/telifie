@@ -5,13 +5,17 @@ import com.telifie.Models.Connectors.Twilio;
 import com.telifie.Models.User;
 import com.telifie.Models.Utilities.Network.SQL;
 import com.telifie.Models.Utilities.Telifie;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class UsersClient {
 
     public User getUserWithEmail(String email){
         try {
-            return new User(SQL.get("SELECT * FROM users WHERE email = ?", email));
+            ResultSet resultSet = SQL.get("SELECT * FROM users WHERE email = ?", email);
+            if (resultSet.next()) {
+                return new User(resultSet);
+            } else return null;
         } catch (SQLException e) {
             return null;
         }
@@ -19,7 +23,10 @@ public class UsersClient {
 
     public User getUserWithId(String id){
         try {
-            return new User(SQL.get("SELECT * FROM users WHERE id = ?", id));
+            ResultSet resultSet = SQL.get("SELECT * FROM users WHERE id = ?", id);
+            if (resultSet.next()) {
+                return new User(resultSet);
+            } else return null;
         } catch (SQLException e) {
             return null;
         }
@@ -27,17 +34,20 @@ public class UsersClient {
 
     public User getUserWithPhone(String phone){
         try {
-            return new User(SQL.get("SELECT * FROM users WHERE phone = ?", phone));
+            ResultSet resultSet = SQL.get("SELECT * FROM users WHERE phone = ?", phone);
+            if (resultSet.next()) {
+                return new User(resultSet);
+            } else return null;
         } catch (SQLException e) {
             return null;
         }
     }
 
     public boolean existsWithEmail(String email){
-        return (this.getUserWithEmail(email) == null ? false : true);
+        return (this.getUserWithEmail(email) != null);
     }
 
-    public static boolean lock(User user, String code) {
+    public boolean lock(User user, String code) {
         return SQL.update("UPDATE users SET token = ? WHERE email = ?", Telifie.md5(code), user.getEmail());
     }
 
@@ -57,9 +67,6 @@ public class UsersClient {
     public boolean updateSettings(User user, String settings) {
         return SQL.update("UPDATE users SET settings = ? WHERE id = ?", settings, user.getId());
     }
-
-//    public boolean create(User user){
-//    }
 
     public boolean upgradePermissions(User user, int permissions) {
         return SQL.update("UPDATE users SET permissions = ? WHERE id = ?", permissions, user.getId());

@@ -1,21 +1,17 @@
 package com.telifie.Models.Utilities;
 
-import com.telifie.Models.Andromeda.Andromeda;
-import com.telifie.Models.Andromeda.Taxon;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.telifie.Models.Actions.Search;
 import com.telifie.Models.Article;
 import com.telifie.Models.Clients.ArticlesClient;
-import com.telifie.Models.Clients.DraftsClient;
 import com.telifie.Models.Clients.PersonalClient;
 import com.telifie.Models.Parser;
 import com.telifie.Models.User;
 import org.bson.Document;
 import org.json.JSONObject;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Console {
 
@@ -61,39 +57,7 @@ public class Console {
             String cmd = Console.in("telifie -> ");
             switch (cmd) {
                 case "exit", "logout", "close" -> System.exit(0);
-                case "routine" -> {
-                    String cdxFilePath = Console.in("CDX File Path Integer (local disk) -> ");
-                    int s = Integer.valueOf(cdxFilePath);
-                    DraftsClient drafts = new DraftsClient(new Session("", "telifie"));
-                    for(int i = 0; i < 15; i++){
-                        String paddedNumber = String.format("%05d", (s + i));
-                        Log.console("Cooking " + (s + i) + "... [D:\\Common Crawl\\cdx\\cdx-" + paddedNumber + "]");
-                        try (BufferedReader reader = new BufferedReader(new FileReader("D:\\Common Crawl\\cdx\\cdx-" + paddedNumber))) {
-                            String line;
-                            int inserted = 0;
-                            while ((line = reader.readLine()) != null) {
-                                Pattern pattern = Pattern.compile("([^ ]+) +([^ ]+) +(\\{.*\\})");
-                                Matcher matcher = pattern.matcher(line);
-                                if (matcher.find()) {
-                                    String jsonString = matcher.group(3);
-                                    JSONObject json = new JSONObject(jsonString);
-                                    String url = json.getString("url");
-                                    if(Asset.isValidLink(url) && !url.contains("?") && !url.contains("porn")){
-                                        inserted++;
-                                        if(inserted % 100000  == 0){
-                                            Log.console(inserted + " -> " + url);
-                                        }
-                                        drafts.insert(new Document("link", url));
-                                    }
-                                }
-                            }
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    System.exit(0);
-                }
-                case "import" -> {
+                case "@import" -> {
                     PersonalClient pc = new PersonalClient(new Session("", "telifie"));
                     ArticlesClient articles = new ArticlesClient(new Session("", "telifie"));
                     Parser p = new Parser(new Session("", "telifie"));
@@ -115,7 +79,7 @@ public class Console {
                         }
                     }
                 }
-                case "authenticate" -> {
+                case "@authenticate" -> {
                     Authentication auth = new Authentication(new User("", "telifie", ""));
                     Log.console("Authorizing as database admin...");
                     if(auth.authenticate()){
@@ -123,7 +87,7 @@ public class Console {
                         Log.console(new JSONObject(auth.toString()).toString(4));
                     }
                 }
-                case "iplist" -> {
+                case "@iplist" -> {
                     String in = Console.in("(add/remove [IP_ADDRESS]->");
                     String[] args = in.split(" ");
                     if(args[0].equals("add")){
@@ -132,43 +96,17 @@ public class Console {
 
                     }
                 }
-                case "andromeda" -> {
-                    boolean loop = true;
-                    while(loop){
-                        String c = Console.in("telifie -> andromeda -> ");
-                        if(c.equals("add")){
-                            String tn = Console.in("Taxon Name -> ");
-                            String[] ti = Console.in("Taxon Items -> ").split(",");
-                            for(String i : ti){
-                                Andromeda.add(tn, i.trim().toLowerCase().replaceAll("'", ""));
-                            }
-                            Andromeda.save();
-                        }else if(c.equals("print")){
-                            Andromeda.taxon().forEach(t -> Log.console(t.getName()));
-                        }else if(c.startsWith("print")){
-                            String tname = c.split(" ")[1];
-                            Taxon t = Andromeda.taxon(tname);
-                            if(t == null){
-                                Log.console("Does not exist!");
-                            }else{
-                                Log.console(t.items().size() + " Items");
-                                Log.console(t.items().toString());
-                            }
-                        }else if(c.equals("count")){
-                            Log.console("Total Items -> " + Andromeda.taxon().size());
-                        }else if(c.startsWith("count")){
-                            String tname = c.split(" ")[1];
-                            Taxon t = Andromeda.taxon(tname);
-                            if(t == null){
-                                Log.console("Does not exist!");
-                            }else{
-                                Log.console("Total Items -> " + t.items().size());
-                            }
-                        }else if(c.equals("index")){
-                            Andromeda.index();
-                        }else if(c.equals("exit")){
-                            loop = false;
-                        }
+                default -> {
+                    Log.console("Querying...");
+                    try {
+                        ObjectMapper mapper = new ObjectMapper();
+                        mapper.enable(SerializationFeature.INDENT_OUTPUT);
+                        Console.message(mapper.writeValueAsString(new Search().execute(
+                                new Session("", "telifie"),
+                                cmd, new Parameters(new Document("results_per_page", 1).append("pages", 1).append("page", 1))
+                        )));
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
                     }
                 }
             }

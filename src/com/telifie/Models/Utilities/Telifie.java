@@ -1,18 +1,21 @@
 package com.telifie.Models.Utilities;
 
+import com.google.common.html.HtmlEscapers;
+import org.apache.commons.text.StringEscapeUtils;
 import org.bson.Document;
 import java.io.File;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import static com.telifie.Models.Andromeda.Andromeda.ALPHAS;
-import static com.telifie.Models.Andromeda.Andromeda.NUMERALS;
+import java.util.Set;
 
 public class Telifie {
 
     public static final String WINDOWS_SYSTEM_DIR = System.getenv("APPDATA") + "/Telifie/";
     public static final String MAC_SYSTEM_DIR = System.getProperty("user.home") + "/Library/Application Support/telifie";
     public static final String UNIX_SYSTEM_DIR = "/usr/bin/telifie/";
+    public static final String[] ALPHAS = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"};
+    public static final String[] NUMERALS = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
     public static Document stats;
 
     public static String configDirectory(){
@@ -72,6 +75,102 @@ public class Telifie {
             return hashtext;
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public static class tools {
+
+        public static String escapeMarkdownForJson(String markdownText) {
+            String escapedText = markdownText.replace("\\", "\\\\");
+            escapedText = escapedText.replace("\"", "\\\"");
+            escapedText = escapedText.replace("\n", "\\n");
+            escapedText = escapedText.replace("\r", "\\r");
+            escapedText = escapedText.replace("\t", "\\t");
+            escapedText = escapedText.replace("\b", "\\b");
+            escapedText = escapedText.replace("\f", "\\f");
+            return escapedText;
+        }
+
+        public static boolean contains(String[] things, String string){
+            for (String thing: things) {
+                if(string.contains(thing)){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static boolean equals(char sample, char[] chars){
+            for(char ch : chars){
+                if(sample == ch){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static String escape(String input){
+            return new StringEscapeUtils().escapeJson(input);
+        }
+
+        public static String htmlEscape(String string){
+            return  HtmlEscapers.htmlEscaper().escape(string);
+        }
+
+        public static String sentenceCase(String text) {
+            if (text == null || text.isEmpty()) {
+                return "";
+            }
+            Set<String> excludedWords = Set.of("of", "it", "to", "and");
+            StringBuilder result = new StringBuilder();
+            boolean capitalizeNext = true;
+            for (String word : text.split("\\s+")) {
+                String lowerCaseWord = word.toLowerCase();
+                boolean isAbbreviation = lowerCaseWord.endsWith(".");
+                if (capitalizeNext || !excludedWords.contains(lowerCaseWord) || isAbbreviation) {
+                    result.append(isAbbreviation ? word : capitalize(word)).append(" ");
+                    capitalizeNext = !isAbbreviation;
+                } else {
+                    result.append(word.toLowerCase());
+                }
+            }
+            return result.toString().trim();
+        }
+
+        public static boolean containsAddress(String text){
+            return text.matches("\\b\\d+\\s+([A-Za-z0-9.\\-'\\s]+)\\s+" +
+                    "(St\\.?|Street|Rd\\.?|Road|Ave\\.?|Avenue|Blvd\\.?|Boulevard|Ln\\.?|Lane|Dr\\.?|Drive|Ct\\.?|Court)\\s+" +
+                    "(\\w+),\\s+" +
+                    "(\\w{2,})\\s+" +
+                    "(\\d{5}(?:[-\\s]\\d{4})?)");
+        }
+
+        private static String capitalize(String word) {
+            return Character.toUpperCase(word.charAt(0)) + word.substring(1).toLowerCase();
+        }
+
+        public static int levenshtein(String x, String y) {
+            int[][] dp = new int[x.length() + 1][y.length() + 1];
+            for (int i = 0; i <= x.length(); i++) {
+                for (int j = 0; j <= y.length(); j++) {
+                    if (i == 0) {
+                        dp[i][j] = j;
+                    } else if (j == 0) {
+                        dp[i][j] = i;
+                    } else {
+                        dp[i][j] = min(dp[i - 1][j - 1] + costOfSubstitution(x.charAt(i - 1), y.charAt(j - 1)), dp[i - 1][j] + 1, dp[i][j - 1] + 1);
+                    }
+                }
+            }
+            return dp[x.length()][y.length()];
+        }
+
+        private static int costOfSubstitution(char a, char b) {
+            return a == b ? 0 : 1;
+        }
+
+        private static int min(int... numbers) {
+            return java.util.Arrays.stream(numbers).min().orElse(Integer.MAX_VALUE);
         }
     }
 }

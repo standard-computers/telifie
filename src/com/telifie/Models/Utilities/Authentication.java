@@ -48,9 +48,6 @@ public class Authentication {
     public boolean isAuthenticated() {
         try {
             PreparedStatement command = Configuration.mysqlClient.prepareStatement("SELECT * FROM authentications WHERE user = ? AND token = ? AND refresh = ? AND expiration > ? LIMIT 1");
-            Log.console(user);
-            Log.console(token);
-            Log.console(refresh);
             command.setString(1, user);
             command.setString(2, token);
             command.setString(3, refresh);

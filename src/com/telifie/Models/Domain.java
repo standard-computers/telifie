@@ -12,13 +12,13 @@ public class Domain implements Serializable {
     private final int origin, permissions;
     private final ArrayList<Member> users = new ArrayList<>();
 
-    public Domain(String owner, String name, String icon, int permissions){
+    public Domain(String owner, String name, int permissions){
         this.owner = owner;
         this.id = UUID.randomUUID().toString();
         this.name = name;
         this.alt = name.toLowerCase().replaceAll(" ", "-");
         this.origin = Telifie.epochTime();
-        this.permissions = (permissions <= 2 && permissions >= 0 ? permissions : 0); //Private is default mode if none
+        this.permissions = (permissions != 1 ? 0 : 1); //Private is default mode if none
     }
 
     public Domain(Document document) throws NullPointerException {

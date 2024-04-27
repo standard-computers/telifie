@@ -1,6 +1,5 @@
 package com.telifie.Models.Utilities;
 
-import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Utilities.Network.Network;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -131,7 +130,7 @@ public class Asset {
     public boolean isWebpage(){
         String lowercaseUri = uri.toLowerCase();
         if (lowercaseUri.startsWith("https://") || lowercaseUri.startsWith("http://") || lowercaseUri.startsWith("www")) {
-            return !Andromeda.tools.contains(new String[]{ ".jpg", ".jpeg", ".png", ".gif", ".md", ".txt" }, lowercaseUri);
+            return !Telifie.tools.contains(new String[]{ ".jpg", ".jpeg", ".png", ".gif", ".md", ".txt" }, lowercaseUri);
         }
         return false;
     }
@@ -158,13 +157,13 @@ public class Asset {
     public static boolean isWebpage(String uri){
         String lowercaseUri = uri.toLowerCase();
         if (lowercaseUri.startsWith("https://") || lowercaseUri.startsWith("http://") || lowercaseUri.startsWith("www")) {
-            return !Andromeda.tools.contains(new String[]{ ".jpg", ".jpeg", ".png", ".gif", ".md", ".txt" }, lowercaseUri);
+            return !Telifie.tools.contains(new String[]{ ".jpg", ".jpeg", ".png", ".gif", ".md", ".txt" }, lowercaseUri);
         }
         return false;
     }
 
     public static boolean isValidLink(String link) {
-        if(Andromeda.tools.contains(new String[]{"/error/", "#", "mailto:", ".xml", "tel:", "sms:", "skype:", "robots.txt"}, link) || containsIPAddress(link) || link.startsWith("http://")) {
+        if(Telifie.tools.contains(new String[]{"/error/", "#", "mailto:", ".xml", "tel:", "sms:", "skype:", "robots.txt"}, link) || containsIPAddress(link) || link.startsWith("http://")) {
             return false;
         }
         return true;

@@ -4,8 +4,6 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
 import com.telifie.Models.Actions.Search;
-import com.telifie.Models.Andromeda.Andromeda;
-import com.telifie.Models.Andromeda.Unit;
 import com.telifie.Models.Domain;
 import com.telifie.Models.Utilities.Log;
 import com.telifie.Models.Utilities.Parameters;
@@ -81,7 +79,8 @@ public class ArticlesClient extends Client {
 
     public Article findPlace(String place, Parameters params){
         params.setIndex("locations");
-        return this.search(new Unit(place), params,
+//        return this.search(new Unit(place), params,
+        return this.search(place, params,
                 new Document("$and", Arrays.asList(
                         new Document("title", Pattern.compile("\\b" + Pattern.quote(place) + "\\w*\\b", Pattern.CASE_INSENSITIVE)),
                         new Document("description", "City"),
@@ -90,15 +89,15 @@ public class ArticlesClient extends Client {
                                         .append("coordinates", Arrays.asList(params.getLongitude(), params.getLatitude()))).append("$maxDistance", Integer.MAX_VALUE)))))).get(0);
     }
 
-    public ArrayList<Article> search(Unit query, Parameters params, Document filter){
+    public ArrayList<Article> search(String query, Parameters params, Document filter){
         FindIterable<Document> found = this.find(filter);
         ArrayList<Article> results = found.map(Article::new).into(new ArrayList<>());
-        if(!query.text().startsWith("@")){
-            if(query.contains(Andromeda.taxon("proximity")) || params.getIndex().equals("locations")) {
-                results.sort(new DistanceSorter(params.getLatitude(), params.getLongitude()));
-            }else{
-                results.sort(new CosmoScore(query.cleaned(), params));
-            }
+        if(!query.startsWith("@")){
+//            if(query.contains(Andromeda.taxon("proximity")) || params.getIndex().equals("locations")) {
+//                results.sort(new DistanceSorter(params.getLatitude(), params.getLongitude()));
+//            }else{
+//            }
+            results.sort(new CosmoScore(query, params));
         }
         return results;
     }

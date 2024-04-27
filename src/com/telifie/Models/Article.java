@@ -1,6 +1,5 @@
 package com.telifie.Models;
 
-import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import java.util.ArrayList;
@@ -27,12 +26,12 @@ public class Article {
         this.owner = (document.getString("owner") == null ? null : document.getString("owner"));
         this.id = (document.getString("id") == null ? UUID.randomUUID().toString() : document.getString("id"));
         this.verified = (document.getBoolean("verified") != null && document.getBoolean("verified"));
-        this.title = Andromeda.tools.escape(document.getString("title"));
+        this.title = Telifie.tools.escape(document.getString("title"));
         this.link = document.getString("link");
         this.icon = document.getString("icon");
         this.description = document.getString("description");
         this.source = document.getString("source");
-        this.content = (document.getString("content") != null ?  Andromeda.tools.escape(document.getString("content")) : "");
+        this.content = (document.getString("content") != null ?  Telifie.tools.escape(document.getString("content")) : "");
         this.origin = (document.getInteger("origin") == null ? 0 : document.getInteger("origin"));
         this.priority = (document.getInteger("priority") == null ? 0 : document.getInteger("priority"));
         this.tags = document.get("tags", ArrayList.class);

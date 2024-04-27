@@ -1,7 +1,6 @@
 package com.telifie;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.telifie.Models.Andromeda.Andromeda;
 import com.telifie.Models.Article;
 import com.telifie.Models.Clients.ArticlesClient;
 import com.telifie.Models.Clients.Cache;
@@ -118,7 +117,7 @@ public class Start {
                 config.startMongo();
                 config.startSql();
                 new Packages(new Session("com.telifie.system", "telifie"));
-                new Andromeda();
+                //TODO Warm up AI system
             }else{
                 Log.error("FAILED CONFIG FILE LOAD", "CLIx110");
                 System.exit(-1);

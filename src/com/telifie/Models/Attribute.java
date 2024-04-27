@@ -1,12 +1,12 @@
 package com.telifie.Models;
 
-import com.telifie.Models.Andromeda.Andromeda;
+import com.telifie.Models.Utilities.Telifie;
 
 public record Attribute(String key, String value) {
 
     public Attribute(String key, String value) {
-        this.key = Andromeda.tools.htmlEscape(key);
-        this.value = Andromeda.tools.htmlEscape(value);
+        this.key = Telifie.tools.htmlEscape(key);
+        this.value = Telifie.tools.htmlEscape(value);
     }
 
     @Override

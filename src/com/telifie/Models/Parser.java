@@ -2,8 +2,6 @@ package com.telifie.Models;
 
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
-import com.telifie.Models.Andromeda.Andromeda;
-import com.telifie.Models.Andromeda.Unit;
 import com.telifie.Models.Clients.Cache;
 import com.telifie.Models.Connectors.Radar;
 import com.telifie.Models.Clients.ArticlesClient;
@@ -113,7 +111,7 @@ public class Parser {
                     int fd = depth;
                     links.forEach(link -> {
                         String href = Network.fixLink(host, link.split("\\?")[0]);
-                        if(Asset.isWebpage(href) && !Andromeda.tools.contains(new String[]{"facebook.com", "instagram.com", "spotify.com", "linkedin.com", "youtube.com", "pinterest.com", "twitter.com", "tumblr.com", "reddit.com"}, href)){
+                        if(Asset.isWebpage(href) && !Telifie.tools.contains(new String[]{"facebook.com", "instagram.com", "spotify.com", "linkedin.com", "youtube.com", "pinterest.com", "twitter.com", "tumblr.com", "reddit.com"}, href)){
                             if((allowExternalCrawl && !href.contains(host)) || (!allowExternalCrawl && href.contains(host))){
                                 try {
                                     Thread.sleep(2000);
@@ -187,13 +185,13 @@ public class Parser {
                     for (int g = 0; g < articleData.length; g++) {
                         String value = articleData[g];
                         if (g == titleIndex) {
-                            article.setTitle(Andromeda.tools.escape(value));
+                            article.setTitle(Telifie.tools.escape(value));
                         } else if (g == descriptionIndex) {
                             article.setDescription(value);
                         } else if (g == linkIndex) {
                             article.setLink(value);
                         } else if (g == contentIndex) {
-                            article.setContent(Andromeda.tools.escape(value));
+                            article.setContent(Telifie.tools.escape(value));
                         } else if(g == iconIndex){
                             article.setIcon(value);
                         } else if(g == tagsIndex){
@@ -245,12 +243,12 @@ public class Parser {
 
         public static Article markdown(Asset asset){
             Article a = new Article();
-            Unit u = new Unit(asset.getContents());
-            String[] keywords = u.keywords(6);
+//            Unit u = new Unit(asset.getContents());
+//            String[] keywords = u.keywords(6);
             a.setTitle(asset.getUri().split("/")[asset.getUri().split("/").length - 1].split("\\.")[0]);
             a.setDescription("Document");
-            a.addTags(keywords);
-            a.setContent(Andromeda.tools.escapeMarkdownForJson(Andromeda.tools.htmlEscape(asset.getContents())));
+//            a.addTags(keywords);
+            a.setContent(Telifie.tools.escapeMarkdownForJson(Telifie.tools.htmlEscape(asset.getContents())));
             a.addAttribute(new Attribute("File Type", "Markdown"));
             a.addAttribute(new Attribute("Size", asset.fileSize()));
             a.addAttribute(new Attribute("Lines", asset.lineCount()));
@@ -260,12 +258,12 @@ public class Parser {
 
         public static Article text(Asset asset){
             Article a = new Article();
-            Unit u = new Unit(asset.getContents());
-            String[] keywords = u.keywords(6);
+//            Unit u = new Unit(asset.getContents());
+//            String[] keywords = u.keywords(6);
             a.setTitle(asset.getUri().split("/")[asset.getUri().split("/").length - 1].split("\\.")[0]);
             a.setDescription("Document");
-            a.addTags(keywords);
-            a.setContent(Andromeda.tools.escapeMarkdownForJson(Andromeda.tools.htmlEscape(asset.getContents())));
+//            a.addTags(keywords);
+            a.setContent(Telifie.tools.escapeMarkdownForJson(Telifie.tools.htmlEscape(asset.getContents())));
             a.addAttribute(new Attribute("File Type", "Plain Text"));
             a.addAttribute(new Attribute("Size", asset.fileSize()));
             a.addAttribute(new Attribute("Lines", asset.lineCount()));
@@ -283,11 +281,11 @@ public class Parser {
             Article article = new Article();
             URL rootUri = Network.url(url);
             root = rootUri.getProtocol() + "://" + rootUri.getHost() + "/";
-            article.setTitle(Andromeda.tools.htmlEscape(document.title()));
+            article.setTitle(Telifie.tools.htmlEscape(document.title()));
             article.setLink(url);
             document.getElementsByTag("meta").forEach(tag -> {
                 String mtn = tag.attr("name");
-                String mtc = Andromeda.tools.htmlEscape(tag.attr("content"));
+                String mtc = Telifie.tools.htmlEscape(tag.attr("content"));
                 if (mtn.equals("keywords")) {
                     String[] words = mtc.split(",");
                     for (String word : words) {
@@ -298,7 +296,7 @@ public class Parser {
             links = Network.extractLinks(document.getElementsByTag("a"), root);
             if(!links.isEmpty()){
                 links.forEach(link -> {
-                    if(Andromeda.tools.contains(new String[]{"dribbble.com", "facebook.com", "instagram.com", "spotify.com", "linkedin.com", "youtube.com", "pinterest.com", "github.com", "twitter.com", "tumblr.com", "reddit.com"}, link)){
+                    if(Telifie.tools.contains(new String[]{"dribbble.com", "facebook.com", "instagram.com", "spotify.com", "linkedin.com", "youtube.com", "pinterest.com", "github.com", "twitter.com", "tumblr.com", "reddit.com"}, link)){
                         try {
                             String domain = new URI(link).getHost();
                             String k = (domain.split("\\.")[0].equals("www") ? domain.split("\\.")[1] : domain.split("\\.")[0]);
@@ -375,13 +373,13 @@ public class Parser {
                         Element label = row.selectFirst("th.infobox-label");
                         Element data = row.selectFirst("td.infobox-data");
                         if (label != null && data != null) {
-                            String key = Andromeda.tools.sentenceCase(label.text().trim());
+                            String key = Telifie.tools.sentenceCase(label.text().trim());
                             String value = data.text().replaceAll("\\[.*?]", "").trim();
                             if(!key.equalsIgnoreCase("references")){
                                 if(value.contains("{") || value.contains("}")){
-                                    article.addAttribute(new Attribute(key, Andromeda.tools.escape(value)));
+                                    article.addAttribute(new Attribute(key, Telifie.tools.escape(value)));
                                 }else{
-                                    article.addAttribute(new Attribute(key, Andromeda.tools.htmlEscape(Andromeda.tools.sentenceCase(value))));
+                                    article.addAttribute(new Attribute(key, Telifie.tools.htmlEscape(Telifie.tools.sentenceCase(value))));
                                 }
                             }
                         }
@@ -390,10 +388,10 @@ public class Parser {
                 body.select("div.mw-jump-link, div#toc, div.navbox, table.infobox, div.vector-body-before-content, div.navigation-not-searchable, div.mw-footer-container, div.reflist, div#See_also, h2#See_also, h2#References, h2#External_links").remove();
             }
             String whole_text = document.text().replaceAll("[\n\r]", " ");
-            String[] keywords = new Unit(whole_text).keywords(15);
-            for(String kw : keywords){
-                article.addTag(kw);
-            }
+//            String[] keywords = new Unit(whole_text).keywords(15);
+//            for(String kw : keywords){
+//                article.addTag(kw);
+//            }
             Pattern pattern = Pattern.compile("\\$\\d+(\\.\\d{2})?");
             Matcher matcher = pattern.matcher(whole_text);
             if (matcher.find()) {
@@ -437,12 +435,12 @@ public class Parser {
             Elements paragraphs = body.select("p, h3");
             for (Element element : paragraphs) {
                 if (element.tagName().equalsIgnoreCase("p")) {
-                    String text = Andromeda.tools.htmlEscape(element.text().replaceAll("\\s+", " ").trim());
+                    String text = Telifie.tools.htmlEscape(element.text().replaceAll("\\s+", " ").trim());
                     if(!text.isEmpty()){
                         markdown.append("  \n").append(text).append("  \n");
                     }
                 } else if (element.tagName().equalsIgnoreCase("h3")) {
-                    String headerText = Andromeda.tools.htmlEscape(element.text().trim());
+                    String headerText = Telifie.tools.htmlEscape(element.text().trim());
                     markdown.append("##### ").append(headerText).append("  \n");
                 }
             }
@@ -456,7 +454,7 @@ public class Parser {
             }
             dm.appendTail(sb);
             prtxt = sb.toString();
-            article.setContent(Andromeda.tools.escape(prtxt));
+            article.setContent(Telifie.tools.escape(prtxt));
             return article;
         }
     }

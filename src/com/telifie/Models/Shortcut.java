@@ -5,7 +5,7 @@ import org.bson.Document;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class Collection {
+public class Shortcut {
 
     private String id, user, icon, name, connector = "";
     private final int origin;
@@ -13,13 +13,13 @@ public class Collection {
     private ArrayList articles;
     private ArrayList<Article> detailedList;
 
-    public Collection(String name){
+    public Shortcut(String name){
         this.id = UUID.randomUUID().toString();
         this.name = name;
         this.origin = Telifie.epochTime();
     }
 
-    public Collection(Document document) throws NullPointerException {
+    public Shortcut(Document document) throws NullPointerException {
         this.id = (document.getString("id") == null ? UUID.randomUUID().toString() : document.getString("id") );
         this.user = document.getString("user");
         this.icon = document.getString("icon");
