@@ -31,7 +31,7 @@ public class Authentication {
 
     public boolean authenticate(){
         try {
-            PreparedStatement command = Configuration.mysqlClient.prepareStatement("INSERT INTO authentications (user, token, refresh, origin, expiration) VALUES (?, ?, ?, ?, ?)");
+            PreparedStatement command = Configuration.sqlClient.prepareStatement("INSERT INTO authentications (user, token, refresh, origin, expiration) VALUES (?, ?, ?, ?, ?)");
             command.setString(1, user);
             command.setString(2, token);
             command.setString(3, refresh);
@@ -47,7 +47,7 @@ public class Authentication {
 
     public boolean isAuthenticated() {
         try {
-            PreparedStatement command = Configuration.mysqlClient.prepareStatement("SELECT * FROM authentications WHERE user = ? AND token = ? AND refresh = ? AND expiration > ? LIMIT 1");
+            PreparedStatement command = Configuration.sqlClient.prepareStatement("SELECT * FROM authentications WHERE user = ? AND token = ? AND refresh = ? AND expiration > ? LIMIT 1");
             command.setString(1, user);
             command.setString(2, token);
             command.setString(3, refresh);

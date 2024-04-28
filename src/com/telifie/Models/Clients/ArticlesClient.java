@@ -78,7 +78,7 @@ public class ArticlesClient extends Client {
     }
 
     public Article findPlace(String place, Parameters params){
-        params.setIndex("locations");
+//        params.setIndex("locations");
 //        return this.search(new Unit(place), params,
         return this.search(place, params,
                 new Document("$and", Arrays.asList(
@@ -86,7 +86,7 @@ public class ArticlesClient extends Client {
                         new Document("description", "City"),
                         new Document("location", new Document("$near",
                                 new Document("$geometry", new Document("type", "Point")
-                                        .append("coordinates", Arrays.asList(params.getLongitude(), params.getLatitude()))).append("$maxDistance", Integer.MAX_VALUE)))))).get(0);
+                                        .append("coordinates", Arrays.asList(params.longitude, params.latitude))).append("$maxDistance", Integer.MAX_VALUE)))))).get(0);
     }
 
     public ArrayList<Article> search(String query, Parameters params, Document filter){
@@ -100,7 +100,7 @@ public class ArticlesClient extends Client {
             results.sort(new CosmoScore(query, params));
         }
         return results;
-    }
+    } 
 
     public boolean delete(Article article) {
         CompletableFuture.runAsync(() -> Cache.invalidate(article.getId()));
@@ -146,11 +146,6 @@ public class ArticlesClient extends Client {
         sortedDescriptions.forEach(descriptions::append);
         stats.append("descriptions", descriptions);
         return stats;
-    }
-
-    public boolean archive(Article article){
-        ArchiveClient archive = new ArchiveClient(session);
-        return archive.archive(article);
     }
 
     public boolean lookup(Article article){

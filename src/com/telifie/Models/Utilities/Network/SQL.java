@@ -8,7 +8,7 @@ import java.sql.SQLException;
 public class SQL {
     public static boolean update(String query, Object... params) {
         try {
-            PreparedStatement statement = Configuration.mysqlClient.prepareStatement(query);
+            PreparedStatement statement = Configuration.sqlClient.prepareStatement(query);
             for (int i = 0; i < params.length; i++) {
                 statement.setObject(i + 1, params[i]);
             }
@@ -21,7 +21,7 @@ public class SQL {
     }
 
     public static ResultSet get(String query, Object... params) throws SQLException {
-        PreparedStatement statement = Configuration.mysqlClient.prepareStatement(query);
+        PreparedStatement statement = Configuration.sqlClient.prepareStatement(query);
         for (int i = 0; i < params.length; i++) {
             statement.setObject(i + 1, params[i]);
         }

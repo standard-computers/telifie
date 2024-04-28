@@ -30,28 +30,25 @@ public class Console {
         System.out.println("Operating System    : " + System.getProperty("os.name"));
         System.out.println("System OS Version   : " + System.getProperty("os.version"));
         System.out.println("System Architecture : " + System.getProperty("os.arch"));
-        System.out.println("Working Directory : " + Telifie.configDirectory());
+        System.out.println("Working Directory   : " + Telifie.configDirectory());
+        System.out.println("Model Selection     : " + Configuration.getModel());
         System.out.println("-----------------------------------------------------------------");
     }
 
-    public static void message(String message){
+    public static void message(String m){
         System.out.println("-----------------------------------------------------------------");
-        System.out.println(message);
+        System.out.println(m);
         System.out.println("-----------------------------------------------------------------");
     }
 
-    public static void string(String message){
-        System.out.println(message);
-    }
-
-    public static String in(String prompt){
-        System.out.print(prompt);
+    public static String in(String p){
+        System.out.print(p);
         Scanner in = new Scanner(System.in);
         return in.nextLine();
     }
 
     public static void command(){
-        Log.flag("ENTERING CLI", "CLIx001");
+        Log.message("ENTERING CLI", "CLIx001");
         while(true){
             String cmd = Console.in("telifie -> ").trim();
             switch (cmd) {
@@ -86,17 +83,8 @@ public class Console {
                         Log.console(new JSONObject(auth.toString()).toString(4));
                     }
                 }
-                case "@iplist" -> {
-                    String in = Console.in("(add/remove [IP_ADDRESS]->");
-                    String[] args = in.split(" ");
-                    if(args[0].equals("add")){
-                        Configuration.addIP(args[1]);
-                    }else{
-                        Configuration.removeIP(args[1]);
-                    }
-                }
                 default -> {
-                    Log.console("Querying...");
+                    Log.console("Thinking...");
                     try {
                         Result results = new Search().execute(
                                 new Session("telifie@terminal", "telifie"),
@@ -104,8 +92,11 @@ public class Console {
                         );
                         if(!results.getGenerated().isEmpty()){
                             Console.message(results.getGenerated());
+                        }else if(results.getResults() != null){
+                            ArrayList<Article> as = (ArrayList<Article>) results.getResults();
+                            Log.wrap(as.get(0).getContent(), 65);
                         }else{
-                            Console.message(new JSONObject(results.toString()).toString(4));
+                            Log.wrap(new JSONObject(results.toString()).toString(4), 65);
                         }
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);

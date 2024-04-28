@@ -53,6 +53,10 @@ public class Result {
         this.generated = generated;
     }
 
+    public Object getResults() {
+        return results;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

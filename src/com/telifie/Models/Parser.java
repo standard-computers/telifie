@@ -15,6 +15,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -49,7 +50,7 @@ public class Parser {
         parsing.forEach(a -> {
             Future<Article> future = executor.submit(() -> engines.fetch(a.getLink(), 0, true));
             try {
-                Article ab = future.get();
+                future.get();
                 reparse();
             } catch (InterruptedException | ExecutionException e) {
                 Log.error("FAILED ASYNC QUEUE TASK", "PARx010");
@@ -70,9 +71,7 @@ public class Parser {
         }else{
             Asset asset = new Asset(uri);
             asset.download();
-            if(asset.getExt().equals("md")){
-                return Parser.engines.markdown(asset);
-            }else if(asset.getExt().equals("txt")){
+            if(asset.getExt().equals("md") || asset.getExt().equals("txt")){
                 return Parser.engines.text(asset);
             }else if(Asset.getType(uri).equals("image")){
                 return Parser.engines.image(uri);
@@ -205,18 +204,13 @@ public class Parser {
                             }
                         }
                         if(!article.getLink().isEmpty()){
-                            String l = Network.decode(article.getLink());
-                            try {
-                                Thread.sleep(2500);
-                                Article pa = Parser.engines.website(l);
-                                //TODO more attributes, icon,
-                                article.setContent(pa.getContent());
-                                String[] tags = articleData[2].split(",");
-                                for (String tag : tags) {
-                                    article.addTag(tag.trim().toLowerCase());
-                                }
-                            } catch (InterruptedException e) {
-                                throw new RuntimeException(e);
+                            String l = URLDecoder.decode(article.getLink(), StandardCharsets.UTF_8);
+                            Article pa = Parser.engines.website(l);
+                            //TODO more attributes, icon,
+                            article.setContent(pa.getContent());
+                            String[] tags = articleData[2].split(",");
+                            for (String tag : tags) {
+                                article.addTag(tag.trim().toLowerCase());
                             }
                         }
                     }
@@ -241,21 +235,6 @@ public class Parser {
             return a;
         }
 
-        public static Article markdown(Asset asset){
-            Article a = new Article();
-//            Unit u = new Unit(asset.getContents());
-//            String[] keywords = u.keywords(6);
-            a.setTitle(asset.getUri().split("/")[asset.getUri().split("/").length - 1].split("\\.")[0]);
-            a.setDescription("Document");
-//            a.addTags(keywords);
-            a.setContent(Telifie.tools.escapeMarkdownForJson(Telifie.tools.htmlEscape(asset.getContents())));
-            a.addAttribute(new Attribute("File Type", "Markdown"));
-            a.addAttribute(new Attribute("Size", asset.fileSize()));
-            a.addAttribute(new Attribute("Lines", asset.lineCount()));
-            a.addAttribute(new Attribute("Words", asset.wordCount()));
-            return a;
-        }
-
         public static Article text(Asset asset){
             Article a = new Article();
 //            Unit u = new Unit(asset.getContents());
@@ -274,7 +253,7 @@ public class Parser {
 
     public static class webpage {
 
-        public ArrayList<String> links;
+        public ArrayList<String> links = new ArrayList<>();
         private String root;
 
         public Article extract(String url, Document document){
@@ -293,7 +272,12 @@ public class Parser {
                     }
                 }
             });
-            links = Network.extractLinks(document.getElementsByTag("a"), root);
+            document.getElementsByTag("a").forEach(el -> {
+                String fxd = Network.fixLink(root, el.attr("href"));
+                if(Asset.isValidLink(fxd)){
+                    links.add(fxd);
+                }
+            });
             if(!links.isEmpty()){
                 links.forEach(link -> {
                     if(Telifie.tools.contains(new String[]{"dribbble.com", "facebook.com", "instagram.com", "spotify.com", "linkedin.com", "youtube.com", "pinterest.com", "github.com", "twitter.com", "tumblr.com", "reddit.com"}, link)){
@@ -317,49 +301,44 @@ public class Parser {
                     article.setIcon(Network.fixLink("https://" + Network.url(url).getHost(), href));
                 }
             });
-//            document.getElementsByTag("img").forEach(image -> {
-//                String src = Network.fixLink(url, image.attr("src"));
-//                if(!src.isEmpty() && !src.startsWith("data:") && articles.withLink(src) == null){
-//                    CompletableFuture.runAsync(() -> {
-//                        Asset ass = new Asset(src);
-//                        int[] d = ass.getDimensions();
-//                        if (d[0] > 42 && d[1] > 42) {
-//                            if (url.contains("/wiki")) {
-//                                if (article.getIcon() == null || article.getIcon().isEmpty()) {
-//                                    article.setIcon(src);
-//                                }
-//                            }
-//                            String caption = Andromeda.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
-//                            Article ia = new Article();
-//                            if (!caption.isEmpty() && caption.length() < 100) {
-//                                ia.setTitle(caption);
-//                            } else {
-//                                ia.setTitle(article.getTitle());
-//                                ia.setContent(caption);
-//                            }
-//                            ia.setLink(src);
-//                            ia.setIcon(src);
+            document.getElementsByTag("img").forEach(image -> {
+                String src = Network.fixLink(url, image.attr("src"));
+                if(!src.isEmpty() && !src.startsWith("data:") && articles.withLink(src) == null){
+                    CompletableFuture.runAsync(() -> {
+                        Asset ass = new Asset(src);
+                        int[] d = ass.getDimensions();
+                        if (d[0] > 42 && d[1] > 42) {
+                            if (url.contains("/wiki")) {
+                                if (article.getIcon() == null || article.getIcon().isEmpty()) {
+                                    article.setIcon(src);
+                                }
+                            }
+                            String caption = Telifie.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
+                            Article ia = new Article();
+                            if (!caption.isEmpty() && caption.length() < 100) {
+                                ia.setTitle(caption);
+                            } else {
+                                ia.setTitle(article.getTitle());
+                                ia.setContent(caption);
+                            }
+                            ia.setLink(src);
+                            ia.setIcon(src);
 //                            ia.setTags(article.getTags());
-//                            ia.setDescription("Image");
-//                            ia.addAttribute(new Attribute("Width", d[0] + "px"));
-//                            ia.addAttribute(new Attribute("Height", d[1] + "px"));
-//                            ia.addAttribute(new Attribute("Size", ass.fileSize()));
-//                            ia.addAttribute(new Attribute("File Type", ass.getExt()));
-//                            Article source = articles.withLink(root);
-//                            if (source != null) {
-//                                ia.setSource(new Article.Source(source.getIcon(), source.getTitle(), url));
-//                            } else {
-//                                ia.setSource(new Article.Source(article.getIcon(), article.getTitle(), url));
-//                            }
-//                            if(articles.create(ia)){
-//                                Log.console("IMAGE CREATED : https://telifie.com/articles/" + ia.getId());
-//                            }else{
-//                                Log.console("NOT HAPPENING, MAY EXIST");
-//                            }
-//                        }
-//                    });
-//                }
-//            });
+                            ia.setDescription("Image");
+                            ia.addAttribute(new Attribute("Width", d[0] + "px"));
+                            ia.addAttribute(new Attribute("Height", d[1] + "px"));
+                            ia.addAttribute(new Attribute("Size", ass.fileSize()));
+                            ia.addAttribute(new Attribute("File Type", ass.getExt()));
+                            ia.setSource(url);
+                            if(articles.create(ia)){
+                                Log.console("IMAGE CREATED : https://telifie.com/articles/" + ia.getId());
+                            }else{
+                                Log.console("NOT HAPPENING, MAY EXIST");
+                            }
+                        }
+                    });
+                }
+            });
             Element body = document.getElementsByTag("body").get(0);
             Element infobox = body.selectFirst(".infobox");
             body.select("table, script, header, style, img, svg, button, label, form, input, aside, code, footer, nav").remove();
@@ -388,10 +367,7 @@ public class Parser {
                 body.select("div.mw-jump-link, div#toc, div.navbox, table.infobox, div.vector-body-before-content, div.navigation-not-searchable, div.mw-footer-container, div.reflist, div#See_also, h2#See_also, h2#References, h2#External_links").remove();
             }
             String whole_text = document.text().replaceAll("[\n\r]", " ");
-//            String[] keywords = new Unit(whole_text).keywords(15);
-//            for(String kw : keywords){
-//                article.addTag(kw);
-//            }
+            //TODO keywords
             Pattern pattern = Pattern.compile("\\$\\d+(\\.\\d{2})?");
             Matcher matcher = pattern.matcher(whole_text);
             if (matcher.find()) {

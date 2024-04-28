@@ -3,15 +3,22 @@ package com.telifie.Models.Utilities;
 import com.google.common.html.HtmlEscapers;
 import org.apache.commons.text.StringEscapeUtils;
 import org.bson.Document;
+import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.CipherOutputStream;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.math.BigInteger;
+import java.security.Key;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Set;
 
 public class Telifie {
 
-    public static final String WINDOWS_SYSTEM_DIR = System.getenv("APPDATA") + "/Telifie/";
+    public static final String WINDOWS_SYSTEM_DIR = System.getenv("APPDATA") + "\\Telifie";
     public static final String MAC_SYSTEM_DIR = System.getProperty("user.home") + "/Library/Application Support/telifie";
     public static final String UNIX_SYSTEM_DIR = "/usr/bin/telifie/";
     public static final String[] ALPHAS = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"};
@@ -171,6 +178,39 @@ public class Telifie {
 
         private static int min(int... numbers) {
             return java.util.Arrays.stream(numbers).min().orElse(Integer.MAX_VALUE);
+        }
+    }
+
+    public class crypter {
+
+        public static void encrypt(String key, String fileIn, String fileOut) throws Exception {
+            Key secretKey = new SecretKeySpec(key.getBytes(), "AES");
+            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+            try (FileInputStream fis = new FileInputStream(fileIn);
+                 FileOutputStream fos = new FileOutputStream(fileOut);
+                 CipherOutputStream cos = new CipherOutputStream(fos, cipher)) {
+                byte[] block = new byte[8];
+                int i;
+                while ((i = fis.read(block)) != -1) {
+                    cos.write(block, 0, i);
+                }
+            }
+        }
+
+        public static void decrypt(String key, String fileIn, String fileOut) throws Exception {
+            Key secretKey = new SecretKeySpec(key.getBytes(), "AES");
+            var cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+            cipher.init(Cipher.DECRYPT_MODE, secretKey);
+            try (FileInputStream fis = new FileInputStream(fileIn);
+                 CipherInputStream cis = new CipherInputStream(fis, cipher);
+                 FileOutputStream fos = new FileOutputStream(fileOut)) {
+                byte[] block = new byte[8];
+                int i;
+                while ((i = cis.read(block)) != -1) {
+                    fos.write(block, 0, i);
+                }
+            }
         }
     }
 }

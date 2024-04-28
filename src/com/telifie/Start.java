@@ -22,9 +22,9 @@ public class Start {
     private static final File configFile = new File(Telifie.configDirectory() + "/config.json");
 
     public static void main(String[] args){
-        Console.welcome();
         Log.message("TELIFIE STARTED", "CLIx001");
         checkConfig();
+        Console.welcome();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             Log.flag("TELIFIE EXITED", "CLIx101");
             Telifie.purgeTemp();
@@ -40,24 +40,12 @@ public class Start {
         if (args.length > 0) {
             String mode = args[0].trim().toLowerCase();
             switch (mode) {
-                case "--install" ->
-                        install();
-                case "--purge" -> {
-                    Log.flag("PURGE MODE ENTERED", "CLIx002");
-                    if (Console.in("Confirm ('yes') -> ").equals("yes")) {
-                        if(configFile.delete()){
-                            Log.out(Event.Type.DELETE, "CONFIG FILE DELETED", "CLIx200");
-                        }
-                    }
-                    System.exit(0);
-                }
                 case "--http" -> {
                     try {
                         Log.console("Starting HTTP server [CONSIDER HTTPS FOR SECURITY]...");
                         new Http();
                     } catch (Exception e) {
                         Log.error("HTTP SERVER FAILED", "CLIx102");
-                        throw new RuntimeException(e);
                     }
                 }
                 case "--https" -> {
@@ -66,20 +54,17 @@ public class Start {
                         new Http();
                     } catch (Exception e) {
                         Log.error("HTTPS SERVER FAILED", "CLIx103");
-                        throw new RuntimeException(e);
                     }
                 }
-                case "--master" -> {
-                    CompletableFuture.runAsync(() -> {
-                        if(Cache.history.isEmpty()){
-                            Log.console("Quick Response cache is empty. Warming up....");
-                            Log.console("Finding cache qualifying articles. This may take some time!");
-                            ArrayList<Article> av = articles.get(new Document("priority", new Document("$gt", 1)));
-                            Log.console("Committing " + av.size() + " to cache history...");
-                            av.forEach(a -> Cache.history.commit("telifie", a.getId(), a.getTitle(), a.getIcon(), a.getDescription()));
-                        }
-                    });
-                }
+                case "--master" -> CompletableFuture.runAsync(() -> {
+                    if(Cache.history.isEmpty()){
+                        Log.console("Quick Response cache is empty. Warming up....");
+                        Log.console("Finding cache qualifying articles. This may take some time!");
+                        ArrayList<Article> av = articles.get(new Document("priority", new Document("$gt", 1)));
+                        Log.console("Committing " + av.size() + " to cache history...");
+                        av.forEach(a -> Cache.history.commit("telifie", a.getId(), a.getTitle(), a.getIcon(), a.getDescription()));
+                    }
+                });
             }
         }else{
             Console.command();
@@ -88,22 +73,16 @@ public class Start {
 
     private static void install(){
         File[] folders = new File[]{new File(Telifie.configDirectory()), new File(Telifie.configDirectory() + "temp"), new File(Telifie.configDirectory() + "andromeda")};
-        if(configFile.exists()){
-            Log.console("config.json file already set");
-            Console.command();
-        }else{
-            for(File folder : folders){
-                if(folder.mkdirs()){
-                    Log.put("CREATED DIRECTORY : " + folder.getPath(), "CLIx004");
-                }else{
-                    Log.error("FAILED CREATING DIRECTORY : " + folder.getPath(), "CLIx104");
-                }
+        for(File folder : folders){
+            if(folder.mkdirs()){
+                Log.put("CREATED DIRECTORY : " + folder.getPath(), "CLIx004");
+            }else{
+                Log.error("FAILED CREATING DIRECTORY : " + folder.getPath(), "CLIx104");
             }
         }
-        String email = Console.in("Email -> ");
         String mongoUri = Console.in("MongoDB URI -> ");
         String sqlUri = Console.in("SQL URI -> ");
-        config = new Configuration("v1.0.0b", email, mongoUri, sqlUri, new ArrayList<>());
+        config = new Configuration("v1.0.0b", mongoUri, sqlUri, "");
         exportConfiguration();
         Log.put("CONFIGURATION SAVED", "CLIx005");
         System.exit(0);
@@ -118,12 +97,14 @@ public class Start {
                 config.startSql();
                 new Packages(new Session("com.telifie.system", "telifie"));
                 //TODO Warm up AI system
+//                new Voyager(true);
             }else{
                 Log.error("FAILED CONFIG FILE LOAD", "CLIx110");
                 System.exit(-1);
             }
         }else{
-            Console.message("No config file found. Use option '--install'");
+            Console.message("No config file found. Starting install...");
+            install();
         }
     }
 

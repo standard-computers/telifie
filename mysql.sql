@@ -33,3 +33,4 @@ CREATE TABLE handles (user VARCHAR(36), connector VARCHAR(150), query TEXT, endp
 -- quickresponse
 CREATE TABLE quickresponse (user VARCHAR(36), session VARCHAR(36), query TEXT, response TEXT, origin INT);
 CREATE TABLE collections (domain VARCHAR(36, name VARCHAR(150), altFOREIGN KEY (domain) REFERENCES domains(id)))
+CREATE TABLE timelines (object VARCHAR(36), action VARCHAR(10), notes TEXT, origin INT)

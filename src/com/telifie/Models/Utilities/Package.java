@@ -52,16 +52,6 @@ public class Package {
     }
 
     @JsonIgnore
-    public String getUrl(String name){
-        for (Endpoint e : this.endpoints) {
-            if (e.name.equals(name)) {
-                return e.value;
-            }
-        }
-        return null;
-    }
-
-    @JsonIgnore
     public String getEndpoint(String name){
         for (Endpoint e : this.endpoints) {
             if (e.name.equals(name)) {

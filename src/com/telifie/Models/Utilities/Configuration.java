@@ -9,25 +9,27 @@ import com.mongodb.client.MongoClients;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.ArrayList;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Configuration {
 
-    private String VERSION = "v1.0.0b", email, mongodb, mysql;
-    private static ArrayList<String> iplist;
+    private static String VERSION = "v1.0.0b", mongodb, mysql, model;
     @JsonIgnore
     public static MongoClient mongoClient;
     @JsonIgnore
-    public static Connection mysqlClient;
+    public static Connection sqlClient;
 
     @JsonCreator
-    public Configuration(@JsonProperty("version") String VERSION, @JsonProperty("email") String email, @JsonProperty("mongodb") String mongodb, @JsonProperty("mysql") String mysql, @JsonProperty("iplist") ArrayList<String> iplist) {
+    public Configuration(@JsonProperty("version") String VERSION, @JsonProperty("mongodb") String mongodb, @JsonProperty("mysql") String mysql, @JsonProperty("model") String model) {
         this.VERSION = VERSION;
-        this.email = email;
         this.mongodb = mongodb;
         this.mysql = mysql;
-        this.iplist = iplist;
+        this.model = model;
+    }
+
+    @JsonIgnore
+    public static String getModel() {
+        return model;
     }
 
     @JsonIgnore
@@ -40,20 +42,10 @@ public class Configuration {
         try {
             Connection connection = DriverManager.getConnection(mysql);
             System.out.println("SQL CONNECTED");
-            mysqlClient = connection;
+            sqlClient = connection;
         } catch (SQLException e) {
             Log.error("SQL DATABASE FAILED", "CLIx015");
             System.exit(-1);
         }
-    }
-
-    @JsonIgnore
-    public static void addIP(String ipAddress) {
-        iplist.add(ipAddress);
-    }
-
-    @JsonIgnore
-    public static void removeIP(String ipAddress) {
-        iplist.remove(ipAddress);
     }
 }

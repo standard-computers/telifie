@@ -5,9 +5,8 @@ import org.bson.Document;
 public class Parameters {
 
     public final int rpp, pages, page;
-    private String index;
-    private final String zip;
-    private double latitude, longitude;
+    public final String index, zip;
+    public final double latitude, longitude;
 
     public Parameters(Document document) throws NullPointerException {
         this.rpp = (document.getInteger("results_per_page") == null ? 50 : document.getInteger("results_per_page"));
@@ -17,30 +16,6 @@ public class Parameters {
         this.zip = (document.getString("zip") == null ? "" : document.getString("zip"));
         this.latitude = (document.getDouble("latitude") == null ? 39.103699 : document.getDouble("latitude"));
         this.longitude = (document.getDouble("longitude") == null ? -84.513611 : document.getDouble("longitude"));
-    }
-
-    public String getIndex() {
-        return index;
-    }
-
-    public void setIndex(String index) {
-        this.index = index;
-    }
-
-    public double getLatitude() {
-        return latitude;
-    }
-
-    public void setLatitude(double latitude) {
-        this.latitude = latitude;
-    }
-
-    public double getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(double longitude) {
-        this.longitude = longitude;
     }
 
     @Override

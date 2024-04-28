@@ -3,17 +3,12 @@ package com.telifie.Models.Actions;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.telifie.Models.Article;
 import com.telifie.Models.Clients.ArticlesClient;
-import com.telifie.Models.Connectors.Radar;
+import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Network.Rest;
 import com.telifie.Models.Result;
 import com.telifie.Models.Clients.Packages;
-import com.telifie.Models.Utilities.Parameters;
-import com.telifie.Models.Utilities.Session;
-import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
-import java.io.IOException;
 import java.util.*;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,6 +23,7 @@ public class Search {
         result.setParams(params);
         boolean doQuery = true;
         if(params.page == 1){
+            Voyager.Unit unit = new Voyager.Unit(q);
             if((q.contains("*") || q.contains("+") || q.contains("-") || q.contains("/")) || Telifie.tools.contains(Telifie.NUMERALS, q)){
                 String mathExpressionPattern = "[\\d\\s()+\\-*/=xX^sincoaet]+";
                 Pattern pattern = Pattern.compile(mathExpressionPattern);
@@ -52,8 +48,8 @@ public class Search {
                     result.setGenerated(Telifie.tools.escape(Rest.get(Packages.get("com.telifie.connectors.openweathermap"), new HashMap<>() {{
                         put("units", "imperial");
                         put("excluded", "hourly,minutely,current");
-                        put("lat", String.valueOf(params.getLatitude()));
-                        put("lon", String.valueOf(params.getLongitude()));
+                        put("lat", String.valueOf(params.latitude));
+                        put("lon", String.valueOf(params.longitude));
                         put("appid", Packages.get("com.telifie.connectors.openweathermap").getAccess());
                     }})));
                 }
@@ -65,13 +61,9 @@ public class Search {
                 int random = new Random().nextInt(6) + 1;
                 result.setGenerated("Your dice roll is " + random);
             }else if(Telifie.tools.containsAddress(q)){
-
-                try {
-                    Radar.get(q);
-                } catch (IOException | InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
                 //TODO map/radar lookup
+            }else if(unit.isInterrogative()){
+                Log.console(unit.getSubject());
             }
         }
         if(doQuery){ //Actually execute against collections/domains

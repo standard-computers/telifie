@@ -8,11 +8,12 @@ import com.telifie.Models.Clients.*;
 import com.telifie.Models.Clients.Packages;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Package;
-import com.telifie.Models.Utilities.Network.Network;
 import org.bson.Document;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
@@ -249,22 +250,6 @@ public class Command {
                                 }
                             }
                         }
-                        case "archive" -> {
-                            if(hasDomainPermission(user, session, false)){
-                                if (articles.archive(a)) {
-                                    return new Result(200, this.command, "ARTICLE UNARCHIVED");
-                                }
-                                return new Result(505, this.command, "FAILED ARTICLE ARCHIVE");
-                            }
-                            return new Result(401, this.command, "INSUFFICIENT PERMISSIONS");
-                        }
-                        case "unarchive" -> {
-                            ArchiveClient archive = new ArchiveClient(session);
-                            if (archive.unarchive(a)) {
-                                return new Result(200, this.command, "");
-                            }
-                            return new Result(505, this.command, "FAILED ARTICLE UNARCHIVE");
-                        }
                         case "move" -> {
                             if (this.selectors.length > 3) {
                                 DomainsClient domains = new DomainsClient(session);
@@ -319,32 +304,6 @@ public class Command {
                     ids.add(a.getId());
                 }
                 return new Result(this.command, "articles", new JSONArray(ids));
-            }else if(objSelector.equals("drafts")){
-                DraftsClient drafts = new DraftsClient(session);
-                if(secSelector != null){
-                    if(secSelector.equals("id")){
-                        try {
-                            return new Result(this.command, "article", drafts.withId(secSelector));
-                        } catch (NullPointerException n) {
-                            return new Result(404, this.command, "DRAFT NOT FOUND");
-                        }
-                    }else if(secSelector.equals("create")){
-                        if(content != null){
-                            try {
-                                Article na = new Article(content);
-                                if(drafts.create(na)){
-                                    return new Result(this.command, "article", na);
-                                }
-                                return new Result(505, this.command, "FAILED DRAFT ARTICLE");
-                            }catch(JSONException e){
-                                return new Result(505, this.command, "BAD DRAFT JSON");
-                            }
-                        }
-                        return new Result(428, this.command, "DRAFT JSON DATA EXPECTED");
-                    }
-                    return new Result(this.command, "articles", drafts.forUser());
-                }
-                return new Result(404, this.command, "BAD DRAFTS OPTION");
             }
             return new Result(this.command,"stats", Telifie.stats);
         }else if(selector.equals("shortcuts")){
@@ -472,11 +431,11 @@ public class Command {
                 String mode = content.getString("mode");
                 if(mode != null){
                     String uri;
-                    uri = Network.decode(content.getString("uri"));
+                    uri = URLDecoder.decode(content.getString("uri"), StandardCharsets.UTF_8);
                     switch (mode) {
                         case "batch" -> {
                             new Parser(session);
-                            ArrayList<Article> parsed = Parser.engines.batch(uri, (content.getBoolean("insert") != null && content.getBoolean("insert") ? true : false));
+                            ArrayList<Article> parsed = Parser.engines.batch(uri, (content.getBoolean("insert") != null && content.getBoolean("insert")));
                             if (parsed != null) {
                                 return new Result(this.command, "articles", parsed);
                             }
@@ -559,7 +518,7 @@ public class Command {
         }else if(selector.equals("timelines")){
             if(this.selectors.length >= 2){
                 TimelinesClient timelines = new TimelinesClient(session);
-                Timeline timeline = timelines.getTimeline(objSelector);
+                TimelinesClient.Timeline timeline = timelines.getTimeline(objSelector);
                 if(timeline != null){
                     return new Result(this.command, "timeline", timeline);
                 }

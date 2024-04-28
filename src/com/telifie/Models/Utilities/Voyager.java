@@ -12,6 +12,7 @@ import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.NDArrayIndex;
+import org.nd4j.linalg.ops.transforms.Transforms;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -23,18 +24,28 @@ public class Voyager {
     private List<List<Integer>> tokenizedSequences = new ArrayList<>();
     private Vocabulary vocabulary = new Vocabulary();
     private int maxLength = 1000; // Set the maximum sequence length
+    private static Word2Vec model;
 
-    public Voyager(){
-        begin();
+    public Voyager(boolean load){
+        if(load){
+            try {
+                new Modeling().loadModel();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }else{
+            begin();
+        }
     }
 
     private void begin(){
         tokenize();
         buildVocabulary();
         performSequencePadding();
-        Word2VecTraining word2VecTraining = new Word2VecTraining();
+        Modeling word2VecTraining = new Modeling();
         try {
-            word2VecTraining.trainWord2VecModel(tokenizedSequences);
+            word2VecTraining.loadModel();
+//            word2VecTraining.trainWord2VecModel(tokenizedSequences);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -55,10 +66,23 @@ public class Voyager {
         }
         for (String token : tokens) {
             List<Integer> sequence = new ArrayList<>();
-            // Convert token to integer index using vocabulary
             sequence.add(vocabulary.getIndex(token));
             tokenizedSequences.add(sequence);
         }
+    }
+
+    private List<String> tokenize(String text){
+        List<String> t2 = new ArrayList<>();
+        TokenizerFactory tokenizerFactory = new DefaultTokenizerFactory();
+        Tokenizer tokenizer = tokenizerFactory.create(text);
+        while (tokenizer.hasMoreTokens()) {
+            String token = tokenizer.nextToken();
+            t2.add(token);
+            List<Integer> sequence = new ArrayList<>();
+            sequence.add(vocabulary.getIndex(token));
+            tokenizedSequences.add(sequence);
+        }
+        return t2;
     }
 
     private void buildVocabulary() {
@@ -68,7 +92,6 @@ public class Voyager {
     }
 
     private void performSequencePadding() {
-        // Convert tokenized sequences to INDArray
         INDArray sequenceArray = Nd4j.create(tokenizedSequences.size(), maxLength);
         for (int i = 0; i < tokenizedSequences.size(); i++) {
             List<Integer> sequence = tokenizedSequences.get(i);
@@ -78,15 +101,12 @@ public class Voyager {
             }
         }
 
-        // Perform sequence padding directly on the INDArray
         for (int i = 0; i < sequenceArray.size(0); i++) {
             int currentLength = (int) sequenceArray.size(1);
             if (currentLength < maxLength) {
-                // Pad the sequence with zeros to the maximum length
                 INDArray paddedSequence = padSequence(sequenceArray.getRow(i));
                 sequenceArray.putRow(i, paddedSequence);
             } else if (currentLength > maxLength) {
-                // Truncate the sequence to the maximum length
                 INDArray truncatedSequence = sequenceArray.getRow(i).get(NDArrayIndex.interval(0, maxLength));
                 sequenceArray.putRow(i, truncatedSequence);
             }
@@ -130,24 +150,28 @@ public class Voyager {
         }
     }
 
-    public class Word2VecTraining {
+    public class Modeling {
 
-        public void trainWord2VecModel(List<List<Integer>> tokenizedSequences) throws IOException {
-            TokenizerFactory tokenizerFactory = new DefaultTokenizerFactory();
-            Word2Vec vec = new Word2Vec.Builder()
-                    .minWordFrequency(1)
-                    .iterations(5)
-                    .layerSize(100)
-                    .windowSize(5)
-                    .iterate((org.deeplearning4j.text.documentiterator.DocumentIterator) new DocumentIterator(tokenizedSequences, tokenizerFactory))
-                    .build();
-            vec.fit();
-            File modelFile = new File("path/to/word2vec_model.txt");
-            WordVectorSerializer.writeWord2VecModel(vec, modelFile);
+//        public void trainModel(List<List<Integer>> tokenizedSequences) throws IOException {
+//            TokenizerFactory tokenizerFactory = new DefaultTokenizerFactory();
+//            model = new Word2Vec.Builder()
+//                    .minWordFrequency(1)
+//                    .iterations(5)
+//                    .layerSize(100)
+//                    .windowSize(5)
+//                    .iterate(new Voyager.DocumentIterator(tokenizedSequences, tokenizerFactory))
+//                    .build();
+//            model.fit();
+//            File modelFile = new File("path/to/word2vec_model.txt");
+//            WordVectorSerializer.writeWord2VecModel(model, modelFile);
+//        }
+
+        public void loadModel() throws IOException {
+            File modelFile = new File(Configuration.getModel());
+            model = WordVectorSerializer.readWord2VecModel(modelFile);
         }
     }
 
-    // DocumentIterator implementation to iterate over tokenized sequences
     public class DocumentIterator implements Iterable<String> {
         private List<List<Integer>> tokenizedSequences;
         private TokenizerFactory tokenizerFactory;
@@ -170,10 +194,57 @@ public class Voyager {
                 @Override
                 public String next() {
                     List<Integer> sequence = tokenizedSequences.get(index++);
-                    // Convert the list of integer indices to a space-separated string
                     return sequence.stream().map(Object::toString).collect(Collectors.joining(" "));
                 }
             };
+        }
+    }
+
+    public static class Unit {
+
+        private String text;
+
+        public Unit(String text){
+            this.text = text;
+        }
+
+        public boolean isInterrogative(){
+            String[] interrogativeWords = {"who", "what", "when", "where", "why", "how", "which", "whom", "whose", "whos"};
+            for(String word : interrogativeWords){
+                if(text.startsWith(word)){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public String getSubject(){
+
+            return "";
+        }
+
+        private double computeSimilarity(String word1, String word2) {
+            INDArray wordVector1 = model.getWordVectorMatrix(word1);
+            INDArray wordVector2 = model.getWordVectorMatrix(word2);
+            return Transforms.cosineSim(wordVector1, wordVector2);
+        }
+
+        public String findPotentialSubject(List<String> tokens) {
+            for (int i = 0; i < tokens.size(); i++) {
+                if (tokens.get(i).matches("\\b(is|are|was|were|be|have|do)\\b")) {  // Simplified verb matching
+                    if (i > 0) return tokens.get(i - 1);
+                }
+            }
+            return "Subject not found";
+        }
+
+        public String findMainVerb(List<String> tokens) {
+            for (String token : tokens) {
+                if (token.matches("\\b(is|are|was|were|be|have|do)\\b")) {
+                    return token;
+                }
+            }
+            return "Verb not found";
         }
     }
 }

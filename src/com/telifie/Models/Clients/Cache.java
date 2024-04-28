@@ -13,7 +13,7 @@ public class Cache {
 
     public boolean isParsed(String url) {
         try {
-            PreparedStatement command = Configuration.mysqlClient.prepareStatement("SELECT COUNT(*) AS count FROM parsed WHERE uri = ?");
+            PreparedStatement command = Configuration.sqlClient.prepareStatement("SELECT COUNT(*) AS count FROM parsed WHERE uri = ?");
             command.setString(1, url);
             ResultSet resultSet = command.executeQuery();
             if (resultSet.next()) {
@@ -37,7 +37,7 @@ public class Cache {
 
     public static void invalidate(String query){
         try {
-            PreparedStatement ping = Configuration.mysqlClient.prepareStatement("DELETE FROM cache WHERE response LIKE '%" + query + "%'");
+            PreparedStatement ping = Configuration.sqlClient.prepareStatement("DELETE FROM cache WHERE response LIKE '%" + query + "%'");
             ping.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -48,7 +48,7 @@ public class Cache {
         public static boolean isEmpty() {
             boolean empty = true;
             try {
-                ResultSet resultSet = Configuration.mysqlClient.prepareStatement("SELECT COUNT(*) AS count FROM quickresponse").executeQuery();
+                ResultSet resultSet = Configuration.sqlClient.prepareStatement("SELECT COUNT(*) AS count FROM quickresponse").executeQuery();
                 if (resultSet.next()) {
                     int count = resultSet.getInt("count");
                     if (count > 0) {
@@ -64,7 +64,7 @@ public class Cache {
 
         public static void log(String user, String obj) {
             try {
-                PreparedStatement check = Configuration.mysqlClient.prepareStatement("SELECT COUNT(*) FROM pings WHERE user = ? AND object = ?");
+                PreparedStatement check = Configuration.sqlClient.prepareStatement("SELECT COUNT(*) FROM pings WHERE user = ? AND object = ?");
                 check.setString(1, user);
                 check.setString(2, obj);
                 ResultSet resultSet = check.executeQuery();
