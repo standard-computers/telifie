@@ -384,6 +384,14 @@ public class Command {
             }
             ArrayList<Shortcut> usersShortcuts = scs.forUser(session.user);
             return new Result(this.command, "shortcuts", usersShortcuts);
+        }else if(selector.equals("collections")){
+
+
+
+
+
+
+
         }else if(selector.equals("users")){
             UsersClient users = new UsersClient();
             if(this.selectors.length >= 3){

@@ -25,12 +25,19 @@ CREATE TABLE domains (id VARCHAR(36) PRIMARY KEY, owner VARCHAR(36), name VARCHA
 -- Memberships to domains
 CREATE TABLE memberships (user VARCHAR(36), domain VARCHAR(36), origin INT, permissions INT, FOREIGN KEY (user) REFERENCES users(id), FOREIGN KEY (domain) REFERENCES domains(id))
 
-
-
 -- For when user requests actions like
-CREATE TABLE handles (user VARCHAR(36), connector VARCHAR(150), query TEXT, endpoint TEXT, origin INT, resolved INT)
+CREATE TABLE handles (user VARCHAR(36), connector VARCHAR(150), query TEXT, endpoint TEXT, origin INT, resolved INT, FOREIGN KEY (user) REFERENCES users(id))
+
+-- Collections are sets of articles in a domain //TODO implement
+CREATE TABLE collections (id VARCHAR(36), domain VARCHAR(36), name VARCHAR(150), alt VARCHAR(150), origin INT, FOREIGN KEY (domain) REFERENCES domains(id))
+
+
+
+
+
 
 -- quickresponse
-CREATE TABLE quickresponse (user VARCHAR(36), session VARCHAR(36), query TEXT, response TEXT, origin INT);
-CREATE TABLE collections (domain VARCHAR(36, name VARCHAR(150), altFOREIGN KEY (domain) REFERENCES domains(id)))
-CREATE TABLE timelines (object VARCHAR(36), action VARCHAR(10), notes TEXT, origin INT)
+CREATE TABLE quickresponse (user VARCHAR(36), session VARCHAR(36), query TEXT, response TEXT, origin INT, FOREIGN KEY (user) REFERENCES users(id));
+
+-- //TODO Implement
+CREATE TABLE timelines (object VARCHAR(36), action VARCHAR(10), notes TEXT, origin INT, FOREIGN KEY (user) REFERENCES users(id))

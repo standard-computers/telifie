@@ -7,8 +7,9 @@ import java.util.UUID;
 
 public class User {
 
-    private String id, email, name, phone, token, settings = "{\\\"secondary\\\":\\\"#0583c5\\\",\\\"corner_radius\\\":8,\\\"\\\":\\\"#1977F1\\\",\\\"color\\\":\\\"#0c92c2\\\",\\\"dark_mode\\\":\\\"0,1,2\\\",\\\"background\\\":\\\"#FFFFFF\\\",\\\"font_size\\\":16,\\\"name\\\":\\\"Facebook Blue\\\",\\\"foreground\\\":\\\"#000000\\\",\\\"border_color\\\":\\\"#BEBEBE\\\"}";
-    private int origin;
+    private final String id, email, name, phone, token;
+    private String settings = "{\\\"secondary\\\":\\\"#0583c5\\\",\\\"corner_radius\\\":8,\\\"\\\":\\\"#1977F1\\\",\\\"color\\\":\\\"#0c92c2\\\",\\\"dark_mode\\\":\\\"0,1,2\\\",\\\"background\\\":\\\"#FFFFFF\\\",\\\"font_size\\\":16,\\\"name\\\":\\\"Facebook Blue\\\",\\\"foreground\\\":\\\"#000000\\\",\\\"border_color\\\":\\\"#BEBEBE\\\"}";
+    private final int origin;
     private int permissions;
 
     public User(String email, String name, String phone) {
@@ -16,6 +17,7 @@ public class User {
         this.email = email;
         this.name = name;
         this.phone = phone;
+        this.token = Telifie.md5(Telifie.randomReferenceCode());
         this.origin = Telifie.epochTime();
         this.permissions = 0;
     }
@@ -41,10 +43,6 @@ public class User {
 
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getPhone() {
