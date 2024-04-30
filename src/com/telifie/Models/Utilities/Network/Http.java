@@ -68,7 +68,7 @@ public class Http {
                             }catch(BsonInvalidOperationException e){
                                 result = new Result(505, userIp + "/" + query, "MALFORMED JSON");
                             }
-                        }else if(request.method().name().equals("GET")){
+                        }else if(request.method().name().equals("GET") || request.method().name().equals("PUT") || request.method().name().equals("DELETE")){
                             result = new Command(query).parseCommand(session, null);
                         }else{
                             result = new Result(404, query, "INVALID METHOD");

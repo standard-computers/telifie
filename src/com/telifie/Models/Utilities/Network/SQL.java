@@ -27,4 +27,18 @@ public class SQL {
         }
         return statement.executeQuery();
     }
+
+    public static boolean delete(String query, Object... params) {
+        try {
+            PreparedStatement statement = Configuration.sqlClient.prepareStatement(query);
+            for (int i = 0; i < params.length; i++) {
+                statement.setObject(i + 1, params[i]);
+            }
+            int rowsAffected = statement.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

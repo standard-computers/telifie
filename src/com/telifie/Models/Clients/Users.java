@@ -8,7 +8,7 @@ import com.telifie.Models.Utilities.Telifie;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class UsersClient {
+public class Users {
 
     public User getUserWithEmail(String email){
         try {
@@ -62,7 +62,6 @@ public class UsersClient {
         Twilio.send(user.getPhone(), "+15138029566", "Hello \uD83D\uDC4B It's Telifie! Your login code is " + code);
         return this.lock(user, code);
     }
-
 
     public boolean updateSettings(User user, String settings) {
         return SQL.update("UPDATE users SET settings = ? WHERE id = ?", settings, user.getId());

@@ -10,7 +10,6 @@ public class Article {
 
     private String owner, id, title, link, icon, description = "Webpage", content, source;
     private boolean verified = false;
-    private ArrayList<String> tags = new ArrayList<>();
     private ArrayList<Attribute> attributes = new ArrayList<>();
     private ArrayList<Association> associations = new ArrayList<>();
     private ArrayList<DataSet> dataSets = new ArrayList<>();
@@ -34,7 +33,6 @@ public class Article {
         this.content = (document.getString("content") != null ?  Telifie.tools.escape(document.getString("content")) : "");
         this.origin = (document.getInteger("origin") == null ? 0 : document.getInteger("origin"));
         this.priority = (document.getInteger("priority") == null ? 0 : document.getInteger("priority"));
-        this.tags = document.get("tags", ArrayList.class);
         ArrayList<Document> it2 = (ArrayList<Document>) document.getList("attributes", Document.class);
         if (it2 != null) {
             it2.forEach(doc -> this.addAttribute(new Attribute(doc.getString("key"), doc.getString("value"))));
@@ -97,20 +95,12 @@ public class Article {
         this.description = description;
     }
 
-    public void addTag(String tag) {
-        this.tags.add(tag.toLowerCase().trim());
-    }
-
     public String getContent() {
         return content;
     }
 
     public void setContent(String content) {
         this.content = content;
-    }
-
-    public ArrayList<String> getTags() {
-        return tags;
     }
 
     public void addAttribute(Attribute attr){
@@ -160,7 +150,6 @@ public class Article {
                 (icon == null ? "" : ", \"icon\" : \"" + icon + '\"') +
                 (description == null || description.isEmpty() ? "" : ", \"description\" : \"" + description + '\"') +
                 (content == null ? "" : ", \"content\" : \"" + content + "\"") +
-                (tags == null ? "" : ", \"tags\" : " + tags.stream().map(tag -> "\"" + tag + "\"").collect(Collectors.joining(", ", "[", "]"))) +
                 (attributes == null ? "" : ", \"attributes\" : " + attributes) +
                 ", \"associations\" : " + (associations ==  null || associations.isEmpty() ? "[]" : associations) +
                 (dataSets.isEmpty() ? "" : ", \"data_sets\" : " + dataSets) +

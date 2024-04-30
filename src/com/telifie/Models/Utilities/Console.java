@@ -3,7 +3,7 @@ package com.telifie.Models.Utilities;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.telifie.Models.Actions.Search;
 import com.telifie.Models.Article;
-import com.telifie.Models.Clients.ArticlesClient;
+import com.telifie.Models.Clients.Articles;
 import com.telifie.Models.Clients.PersonalClient;
 import com.telifie.Models.Parser;
 import com.telifie.Models.Result;
@@ -55,7 +55,7 @@ public class Console {
                 case "exit", "logout", "close" -> System.exit(0);
                 case "@import" -> {
                     PersonalClient pc = new PersonalClient(new Session("", "telifie"));
-                    ArticlesClient articles = new ArticlesClient(new Session("", "telifie"));
+                    Articles articles = new Articles(new Session("", "telifie"));
                     Parser p = new Parser(new Session("", "telifie"));
                     while(pc.hasNext()){
                         try {

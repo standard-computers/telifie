@@ -2,7 +2,7 @@ package com.telifie.Models.Actions;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.telifie.Models.Article;
-import com.telifie.Models.Clients.ArticlesClient;
+import com.telifie.Models.Clients.Articles;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Network.Rest;
 import com.telifie.Models.Result;
@@ -18,7 +18,7 @@ public class Search {
     }
 
     public Result execute(Session session, String q, Parameters params) throws JsonProcessingException {
-        ArticlesClient articles = new ArticlesClient(session);
+        Articles articles = new Articles(session);
         Result result = new Result(200, q, "");
         result.setParams(params);
         boolean doQuery = true;

@@ -61,9 +61,9 @@ public class Command {
                 String targetDomain = (content.getString("domain") == null ? "telifie" : content.getString("domain"));
                 if(!targetDomain.equals("telifie")){
                     try{
-                        DomainsClient domains = new DomainsClient(session);
+                        Domains domains = new Domains(session);
                         Domain domain = domains.withId(targetDomain);
-                        session.setDomain(domain.getId());
+                        session.setDomain(domain.id);
                     }catch (NullPointerException n){
                         return new Result(410, this.command, "NOT FOUND");
                     }
@@ -81,16 +81,22 @@ public class Command {
             return new Result(428, this.command, "JSON BODY EXPECTED");
         }else if(selector.equals("domains")){
             if(this.selectors.length >= 2){ //telifie.com/domains/{owner|member|create|update}
-                DomainsClient domains = new DomainsClient(session);
+                Domains domains = new Domains(session);
                 ArrayList<Domain> foundDomains;
                 if(objSelector.equals("owner")){ //Domains they own
+
                     foundDomains = domains.mine();
                     return new Result(this.command, "domains", foundDomains);
                 }else if(objSelector.equals("member")){ //Domains they're a member of
                     //TODO ensure it works
-                    User user = new UsersClient().getUserWithId(session.user);
-                    foundDomains = domains.forMember(user.getEmail());
-                    return new Result(this.command, "domains", foundDomains);
+//                    User user = new UsersClient().getUserWithId(session.user);
+//                    foundDomains = domains.forMember(user.getEmail());
+//                    return new Result(this.command, "domains", foundDomains);
+                }else if(objSelector.equals("protected")){ //Domains they're a member of
+                    //TODO Get all available protected domains
+//                    User user = new UsersClient().getUserWithId(session.user);
+//                    foundDomains = domains.forMember(user.getEmail());
+//                    return new Result(this.command, "domains", foundDomains);
                 }else if(objSelector.equals("create")){ //Creating a new domain
                     if(content != null){
                         String domainName;
@@ -109,7 +115,7 @@ public class Command {
                         Domain d = domains.withId(secSelector);
                         switch (objSelector) {
                             case "delete" -> {
-                                if (d.getOwner().equals(session.user)) {
+                                if (d.owner.equals(session.user)) {
                                     if (domains.delete(d)) {
                                         return new Result(200, this.command, "DOMAIN DELETED");
                                     }
@@ -118,7 +124,7 @@ public class Command {
                                 return new Result(401, this.command, "DOMAIN ACCESS DENIED");
                             }
                             case "id" -> {
-                                if(d.hasPermission(session.user)){
+                                if(d.owner.equals(session.user)){
                                     return new Result(this.command, "domain", d);
                                 }
                                 return new Result(403, this.command, "DOMAIN ACCESS DENIED");
@@ -136,9 +142,9 @@ public class Command {
                             }
                             case "update" -> {
                                 if (content != null) {
-                                    if (domains.update(d, content)) { //TODO content check
-                                        return new Result(this.command, "domain", d);
-                                    }
+//                                    if (domains.update(d, content)) { //TODO content check
+//                                        return new Result(this.command, "domain", d);
+//                                    }
                                 }
                                 return new Result(428, this.command, "JSON BODY EXPECTED");
                             }
@@ -147,7 +153,7 @@ public class Command {
                     }catch (NullPointerException n){
                         return new Result(404, this.command, "DOMAIN NOT FOUND");
                     }
-                }else if(this.selectors.length == 4){ //telifie.com/domains/{id}/users/{add|remove}
+                }else if(this.selectors.length >= 4){ //telifie.com/domains/{id}/users/{add|remove}
                     try{
                         Domain d = domains.withId(objSelector);
                         if(content != null){
@@ -155,22 +161,22 @@ public class Command {
                             content.getList("users", Document.class).forEach(doc -> members.add(new Domain.Member(doc)));
                             switch (terSelector) {
                                 case "add" -> {
-                                    if (domains.addUsers(d, members)) {
+                                    if(domains.addUser(d, content.getString("user"), content.getInteger("permissions"))){
                                         return new Result(200, this.command, "ADDED USERS TO DOMAIN");
                                     }
-                                    return new Result(505, this.command, "FAILED ADDING USERS TO DOMAIN");
+                                    return new Result(505, this.command, "FAILED ADDING USER FROM DOMAIN");
                                 }
                                 case "remove" -> {
-                                    if (domains.removeUsers(d, members)) {
+                                    if (domains.removeUser(d, this.selectors[4])) {
                                         return new Result(200, this.command, "REMOVED USERS FROM DOMAIN");
                                     }
-                                    return new Result(505, this.command, "FAILED REMOVING USERS FROM DOMAIN");
+                                    return new Result(505, this.command, "FAILED REMOVING USER FROM DOMAIN");
                                 }
                                 case "update" -> {
-                                    if (domains.updateUsers(d, members)) {
+                                    if (domains.updateUser(d, this.selectors[4], 0)) {
                                         return new Result(200, this.command, "DOMAIN USERS UPDATED");
                                     }
-                                    return new Result(505, this.command, "FAILED DOMAIN USERS UPDATE");
+                                    return new Result(505, this.command, "FAILED DOMAIN USER UPDATE");
                                 }
                             }
                             return new Result(428, this.command, "BAD DOMAIN USER OPTION");
@@ -183,19 +189,19 @@ public class Command {
             }
             return new Result(200, this.command, "BAD DOMAINS OPTION");
         }else if(selector.equals("articles")){
-            User user = new UsersClient().getUserWithId(session.user);
+            User user = new Users().getUserWithId(session.user);
             if(content != null){
                 if(content.getString("domain") != null){
                     String targetDomain = content.getString("domain");
                     try{
-                        Domain domain = new DomainsClient(session).withId(targetDomain);
-                        session.setDomain(domain.getId());
+                        Domain domain = new Domains(session).withId(targetDomain);
+                        session.setDomain(domain.id);
                     }catch (NullPointerException n) {
                         return new Result(404, this.command, "DOMAIN NOT FOUND");
                     }
                 }
             }
-            ArticlesClient articles = new ArticlesClient(session);
+            Articles articles = new Articles(session);
             if(this.selectors.length >= 3){
                 try {
                     Article a = articles.withId(secSelector);
@@ -239,7 +245,7 @@ public class Command {
                         }
                         case "duplicate" -> {
                             if (this.selectors.length > 3) {
-                                DomainsClient domains = new DomainsClient(session);
+                                Domains domains = new Domains(session);
                                 try {
                                     if (articles.duplicate(a, domains.withId(terSelector))) {
                                         return new Result(200, this.command, "");
@@ -252,7 +258,7 @@ public class Command {
                         }
                         case "move" -> {
                             if (this.selectors.length > 3) {
-                                DomainsClient domains = new DomainsClient(session);
+                                Domains domains = new Domains(session);
                                 try {
                                     if (articles.move(a, domains.withId(terSelector))) {
                                         return new Result(200, this.command, "");
@@ -307,12 +313,12 @@ public class Command {
             }
             return new Result(this.command,"stats", Telifie.stats);
         }else if(selector.equals("shortcuts")){
-            ShortcutsClient scs = new ShortcutsClient(session);
+            Shortcuts scs = new Shortcuts(session);
             if(this.selectors.length >= 4){ //Saving/Unsaving articles in shortcut
                 try{
                     Shortcut c = scs.get(secSelector);
                     try{
-                        ArticlesClient articles = new ArticlesClient(session);
+                        Articles articles = new Articles(session);
                         Article a = articles.withId(terSelector);
                         if(objSelector.equals("save")){
                             if(scs.save(c, a)){
@@ -386,14 +392,14 @@ public class Command {
             return new Result(this.command, "shortcuts", usersShortcuts);
         }else if(selector.equals("collections")){
 
+            if(content != null){
 
-
-
-
+            }
+            //
 
 
         }else if(selector.equals("users")){
-            UsersClient users = new UsersClient();
+            Users users = new Users();
             if(this.selectors.length >= 3){
                 if(objSelector.equals("update") && content != null){
                     User changedUser = users.getUserWithId(session.user);
@@ -434,7 +440,7 @@ public class Command {
             }
             return new Result(404, this.command, "INVALID EMAIL");
         }else if(selector.equals("parser")){
-            ArticlesClient articles = new ArticlesClient(session);
+            Articles articles = new Articles(session);
             if(content != null){
                 String mode = content.getString("mode");
                 if(mode != null){
@@ -482,7 +488,7 @@ public class Command {
         }else if(selector.equals("connect")){
             if(content != null){
                 String email = content.getString("email");
-                UsersClient u = new UsersClient();
+                Users u = new Users();
                 if(u.existsWithEmail(email)){
                     User user = u.getUserWithEmail(email);
                     if(user.getPermissions() == 0){
@@ -504,7 +510,7 @@ public class Command {
             if(content != null){
                 String email = content.getString("email");
                 String code = Telifie.md5(content.getString("code"));
-                UsersClient users = new UsersClient();
+                Users users = new Users();
                 if(users.existsWithEmail(email)){
                     User user = users.getUserWithEmail(email);
                     if(user.hasToken(code)){
@@ -525,8 +531,8 @@ public class Command {
             return new Result(404, this.command, "JSON BODY EXPECTED");
         }else if(selector.equals("timelines")){
             if(this.selectors.length >= 2){
-                TimelinesClient timelines = new TimelinesClient(session);
-                TimelinesClient.Timeline timeline = timelines.getTimeline(objSelector);
+                Timelines timelines = new Timelines(session);
+                Timelines.Timeline timeline = timelines.getTimeline(objSelector);
                 if(timeline != null){
                     return new Result(this.command, "timeline", timeline);
                 }
@@ -534,7 +540,7 @@ public class Command {
             }
             return new Result(428, this.command, "OBJECT ID REQUIRED");
         }else if(selector.equals("connectors")){
-            ConnectorsClient connectors = new ConnectorsClient(session);
+            Connectors connectors = new Connectors(session);
             if(content != null){
                 Connector connector = new Connector(content);
                 connector.setUser(session.user);
@@ -571,7 +577,7 @@ public class Command {
             String from  = content.getString("From");
             String message = content.getString("Body");
             Log.console("Income message -> " + message);
-            UsersClient users = new UsersClient();
+            Users users = new Users();
             User user = users.getUserWithPhone(from);
             if(user == null){
                 Twilio.send(from, "+15138029566", "The number you are texting from is not registered to a Telifie account.");

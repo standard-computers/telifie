@@ -2,7 +2,7 @@ package com.telifie;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.telifie.Models.Article;
-import com.telifie.Models.Clients.ArticlesClient;
+import com.telifie.Models.Clients.Articles;
 import com.telifie.Models.Clients.Cache;
 import com.telifie.Models.Clients.Packages;
 import com.telifie.Models.Utilities.*;
@@ -29,7 +29,7 @@ public class Start {
             Log.flag("TELIFIE EXITED", "CLIx101");
             Telifie.purgeTemp();
         }));
-        ArticlesClient articles = new ArticlesClient(new Session("telifie", "telifie"));
+        Articles articles = new Articles(new Session("telifie", "telifie"));
         try (ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1)) {
             Log.console("Preloading public domain stats in background...");
             CompletableFuture.runAsync(() -> Telifie.stats = articles.stats());

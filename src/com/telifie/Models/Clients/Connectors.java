@@ -6,9 +6,9 @@ import org.bson.Document;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class ConnectorsClient extends Client{
+public class Connectors extends Client{
 
-    public ConnectorsClient(Session session){
+    public Connectors(Session session){
         super(session);
         super.collection = "connectors";
     }

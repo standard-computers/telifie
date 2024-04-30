@@ -7,9 +7,9 @@ import org.bson.Document;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class ShortcutsClient extends Client {
+public class Shortcuts extends Client {
 
-    public ShortcutsClient(Session session){
+    public Shortcuts(Session session){
         super(session);
         super.collection = "shortcuts";
     }
@@ -17,7 +17,7 @@ public class ShortcutsClient extends Client {
     public Shortcut withArticles(String id){
         Shortcut shortcut = new Shortcut(this.findOne(new Document("id", id)));
         ArrayList<Article> articles = new ArrayList<>();
-        ArticlesClient articlesClient = new ArticlesClient(session);
+        Articles articlesClient = new Articles(session);
         if(shortcut.getArticles() != null || !shortcut.getArticles().isEmpty()){
             //TODO check for '/' in article to see if in another domain
             shortcut.getArticles().forEach(articleId -> articles.add(articlesClient.withId(articleId)));

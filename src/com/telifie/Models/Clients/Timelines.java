@@ -5,9 +5,9 @@ import com.telifie.Models.Utilities.Session;
 import org.bson.Document;
 import java.util.ArrayList;
 
-public class TimelinesClient extends Client {
+public class Timelines extends Client {
 
-    public TimelinesClient(Session session){
+    public Timelines(Session session){
         super(session);
         super.collection = "timelines";
     }

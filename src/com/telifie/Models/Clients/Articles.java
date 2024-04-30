@@ -16,9 +16,9 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
-public class ArticlesClient extends Client {
+public class Articles extends Client {
 
-    public ArticlesClient(Session session){
+    public Articles(Session session){
         super(session);
         super.collection = "articles";
     }
@@ -109,12 +109,12 @@ public class ArticlesClient extends Client {
 
     public boolean move(Article article, Domain domain){
         this.delete(article);
-        session.setDomain(domain.getId());
+        session.setDomain(domain.id);
         return this.create(article);
     }
 
     public boolean duplicate(Article article, Domain domain){
-        session.setDomain(domain.getId());
+        session.setDomain(domain.id);
         return this.create(article);
     }
 
@@ -202,9 +202,6 @@ public class ArticlesClient extends Client {
                 return Integer.MAX_VALUE;
             }
             s += (matches(a.getTitle(), words) + matches(a.getDescription(), words) + matches(a.getTitle(), words));
-            for(String ts : a.getTags()){
-                s += matches(ts, words);
-            }
             return (a.isVerified() ? (s + 1) : s);
         }
 

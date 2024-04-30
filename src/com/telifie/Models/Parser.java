@@ -4,7 +4,7 @@ import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 import com.telifie.Models.Clients.Cache;
 import com.telifie.Models.Connectors.Radar;
-import com.telifie.Models.Clients.ArticlesClient;
+import com.telifie.Models.Clients.Articles;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Network.Network;
 import org.json.JSONObject;
@@ -27,15 +27,15 @@ import com.telifie.Models.Actions.Search;
 
 public class Parser {
 
-    private static ArticlesClient articles;
+    private static Articles articles;
 
     public Parser(Session session){
-        articles = new ArticlesClient(session);
+        articles = new Articles(session);
     }
 
     public void reparse(){
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        ArticlesClient articles =  new ArticlesClient(new Session("telifie", "telifie"));
+        Articles articles =  new Articles(new Session("telifie", "telifie"));
         Log.message("STARTING REPARSE", "PARx011");
         ArrayList<Article> parsing = articles.withProjection(
                 new org.bson.Document("$or", Arrays.asList(
@@ -193,11 +193,6 @@ public class Parser {
                             article.setContent(Telifie.tools.escape(value));
                         } else if(g == iconIndex){
                             article.setIcon(value);
-                        } else if(g == tagsIndex){
-                            String[] tags = value.split(",");
-                            for(String tag : tags){
-                                article.addTag(tag.toLowerCase().trim());
-                            }
                         } else {
                             if(!value.trim().isEmpty()){
                                 article.addAttribute(new Attribute(headers[g].trim(), value));
@@ -208,10 +203,6 @@ public class Parser {
                             Article pa = Parser.engines.website(l);
                             //TODO more attributes, icon,
                             article.setContent(pa.getContent());
-                            String[] tags = articleData[2].split(",");
-                            for (String tag : tags) {
-                                article.addTag(tag.trim().toLowerCase());
-                            }
                         }
                     }
                     parsed.add(article);
@@ -262,16 +253,6 @@ public class Parser {
             root = rootUri.getProtocol() + "://" + rootUri.getHost() + "/";
             article.setTitle(Telifie.tools.htmlEscape(document.title()));
             article.setLink(url);
-            document.getElementsByTag("meta").forEach(tag -> {
-                String mtn = tag.attr("name");
-                String mtc = Telifie.tools.htmlEscape(tag.attr("content"));
-                if (mtn.equals("keywords")) {
-                    String[] words = mtc.split(",");
-                    for (String word : words) {
-                        article.addTag(word.trim().toLowerCase());
-                    }
-                }
-            });
             document.getElementsByTag("a").forEach(el -> {
                 String fxd = Network.fixLink(root, el.attr("href"));
                 if(Asset.isValidLink(fxd)){

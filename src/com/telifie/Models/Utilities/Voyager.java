@@ -1,7 +1,7 @@
 package com.telifie.Models.Utilities;
 
 import com.telifie.Models.Article;
-import com.telifie.Models.Clients.ArticlesClient;
+import com.telifie.Models.Clients.Articles;
 import org.bson.Document;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.word2vec.Word2Vec;
@@ -56,7 +56,7 @@ public class Voyager {
      */
     private void tokenize(){
         TokenizerFactory tokenizerFactory = new DefaultTokenizerFactory();
-        ArticlesClient client = new ArticlesClient(new Session("", "telifie")); //TODO modify query
+        Articles client = new Articles(new Session("", "telifie")); //TODO modify query
         for (Article article : client.get(new Document("", ""))) {
             String content = article.getContent();
             Tokenizer tokenizer = tokenizerFactory.create(content);
