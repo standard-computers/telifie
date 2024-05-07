@@ -14,11 +14,7 @@ import java.nio.charset.StandardCharsets;
 public class Radar {
     public static JSONObject get(String address) throws IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.radar.io/v1/geocode/forward?query=" + URLEncoder.encode(address, StandardCharsets.UTF_8.toString())))
-                .header("Authorization", Packages.get("com.telifie.connectors.radar").getAccess())
-                .build();
-
+        HttpRequest request = HttpRequest.newBuilder().uri(URI.create("https://api.radar.io/v1/geocode/forward?query=" + URLEncoder.encode(address, StandardCharsets.UTF_8.toString()))).header("Authorization", Packages.get("com.telifie.connectors.radar").getAccess()).build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         JSONArray addressed = new JSONObject(response.body()).getJSONArray("addresses");
         if(addressed.length() > 0){

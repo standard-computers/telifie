@@ -15,7 +15,6 @@ import java.util.*;
 public class Console {
 
     public static void welcome() {
-        System.out.println("\n");
         System.out.println("||=============================================================||");
         System.out.println("||                                                             ||");
         System.out.println("||   ,--------. ,------. ,--.    ,--. ,------. ,--. ,------.   ||");
@@ -26,7 +25,7 @@ public class Console {
         System.out.println("||                                                             ||");
         System.out.println("||=============================================================||");
         System.out.println("        COPYRIGHT (C) TELIFIE LLC 2024, CINCINNATI, OHIO         ");
-        message("More Info -> https://telifie.com/documentation");
+        System.out.println("-----------------------------------------------------------------");
         System.out.println("Operating System    : " + System.getProperty("os.name"));
         System.out.println("System OS Version   : " + System.getProperty("os.version"));
         System.out.println("System Architecture : " + System.getProperty("os.arch"));

@@ -1,7 +1,6 @@
 package com.telifie.Models.Clients;
 
 import com.telifie.Models.Domain;
-import com.telifie.Models.Utilities.Log;
 import com.telifie.Models.Utilities.Network.SQL;
 import com.telifie.Models.Utilities.Session;
 import com.telifie.Models.Utilities.Telifie;
@@ -20,14 +19,13 @@ public class Domains {
     public ArrayList<Domain> mine(){
         ArrayList<Domain> domainList = new ArrayList<>();
         try {
-            ResultSet m = SQL.get("SELECT d.*, m.user, m.origin, m.permissions FROM domains d JOIN memberships m ON d.id = m.domain WHERE d.owner = ?", session.user);
+            ResultSet m = SQL.get("SELECT * FROM domains WHERE owner = ?", session.user);
             while (m.next()) {
                 Domain domain = new Domain(m);
-                Log.console(domain.toString());
                 domainList.add(domain);
             }
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace(); //Print the stack trace for detailed error information
             return null;
         }
         return domainList;

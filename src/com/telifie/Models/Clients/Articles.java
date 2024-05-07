@@ -24,7 +24,6 @@ public class Articles extends Client {
     }
 
     public boolean update(Article article, Article newArticle){
-        CompletableFuture.runAsync(() -> Cache.invalidate(article.getId()));
         return super.updateOne(new Document("id", article.getId()), new Document("$set", Document.parse(newArticle.toString())));
     }
 
@@ -103,7 +102,6 @@ public class Articles extends Client {
     } 
 
     public boolean delete(Article article) {
-        CompletableFuture.runAsync(() -> Cache.invalidate(article.getId()));
         return super.deleteOne(new Document("id", article.getId()));
     }
 

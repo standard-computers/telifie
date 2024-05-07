@@ -66,7 +66,7 @@ public class Search {
                 Log.console(unit.getSubject());
             }
         }
-        if(doQuery){ //Actually execute against collections/domains
+        if(doQuery){
             ArrayList<Article> results;
             ArrayList<Article> all = articles.search(q, params, filter(q, params));
             results = paginate(all, params.page, params.rpp);
@@ -96,7 +96,6 @@ public class Search {
 //                params.setLongitude(Double.parseDouble(pl.getAttribute("Latitude")));
 //                return new Document("$and", Arrays.asList(
 //                    new Document("$or", Arrays.asList(
-//                            new Document("tags", pattern(subject)),
 //                            new Document("description", pattern(subject)),
 //                            new Document("title", pattern(subject))
 //                    )), new Document("location", new Document("$near", new Document("$geometry", new Document("type", "Point").append("coordinates", Arrays.asList(Double.parseDouble(pl.getAttribute("Longitude")), Double.parseDouble(pl.getAttribute("Latitude")))) ).append("$maxDistance", 16000)))
@@ -107,7 +106,6 @@ public class Search {
 //        for (String word : q.split(" ")) {
 //            or.add(new Document("title", pattern(word)));
 //        }
-//        or.add(new Document("tags", new Document("$in", Collections.singletonList(q))));
 //        return new Document("$or", or);
         return new Document("title", Pattern.compile("^" + Pattern.quote(q), Pattern.CASE_INSENSITIVE));
     }

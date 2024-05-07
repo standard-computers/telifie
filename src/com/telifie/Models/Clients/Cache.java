@@ -27,23 +27,6 @@ public class Cache {
         return false;
     }
 
-    public static String get(String query) {
-        try {
-            return SQL.get("SELECT response FROM cache WHERE query = ? ORDER BY origin DESC", query).getString("response");
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static void invalidate(String query){
-        try {
-            PreparedStatement ping = Configuration.sqlClient.prepareStatement("DELETE FROM cache WHERE response LIKE '%" + query + "%'");
-            ping.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
     public static class history {
         public static boolean isEmpty() {
             boolean empty = true;
@@ -79,8 +62,8 @@ public class Cache {
             }
         }
 
-        public static void commit(String user, String session, String query, String icon, String description){
-            SQL.update("INSERT INTO quickresponse (user, session, query, icon, description, origin) VALUES (?, ?, ?, ?, ?, ?)", user, session, query, icon, description, String.valueOf(Telifie.epochTime()));
+        public static void commit(){
+            //TODO Redis
         }
     }
 }

@@ -41,8 +41,8 @@ public class Parser {
                 new org.bson.Document("$or", Arrays.asList(
                     new org.bson.Document("link", Search.pattern("https://")),
                     new org.bson.Document("link", Search.pattern("http://")),
-                    new org.bson.Document("source.url", Search.pattern("http://")),
-                    new org.bson.Document("source.url", Search.pattern("http://"))
+                    new org.bson.Document("source", Search.pattern("http://")),
+                    new org.bson.Document("source", Search.pattern("http://"))
                 )),
                 new org.bson.Document("link", 1).append("link", 1)
         );
@@ -164,7 +164,7 @@ public class Parser {
                 }
                 ArrayList<Article> parsed = new ArrayList<>();
                 String[] headers = lines.get(0);
-                int titleIndex = -1, descriptionIndex = -1, iconIndex = -1, linkIndex = -1, contentIndex = -1, tagsIndex = -1;
+                int titleIndex = -1, descriptionIndex = -1, iconIndex = -1, linkIndex = -1, contentIndex = -1;
                 for (int i = 0; i < headers.length; i++) {
                     String hV = headers[i].trim().toLowerCase();
                     switch (hV) {
@@ -173,7 +173,6 @@ public class Parser {
                         case "link" -> linkIndex = i;
                         case "content" -> contentIndex = i;
                         case "icon" -> iconIndex = i;
-                        case "tags" -> tagsIndex = i;
                     }
                 }
                 String bid = String.valueOf(Telifie.epochTime());
@@ -228,11 +227,8 @@ public class Parser {
 
         public static Article text(Asset asset){
             Article a = new Article();
-//            Unit u = new Unit(asset.getContents());
-//            String[] keywords = u.keywords(6);
             a.setTitle(asset.getUri().split("/")[asset.getUri().split("/").length - 1].split("\\.")[0]);
             a.setDescription("Document");
-//            a.addTags(keywords);
             a.setContent(Telifie.tools.escapeMarkdownForJson(Telifie.tools.htmlEscape(asset.getContents())));
             a.addAttribute(new Attribute("File Type", "Plain Text"));
             a.addAttribute(new Attribute("Size", asset.fileSize()));
@@ -282,44 +278,43 @@ public class Parser {
                     article.setIcon(Network.fixLink("https://" + Network.url(url).getHost(), href));
                 }
             });
-            document.getElementsByTag("img").forEach(image -> {
-                String src = Network.fixLink(url, image.attr("src"));
-                if(!src.isEmpty() && !src.startsWith("data:") && articles.withLink(src) == null){
-                    CompletableFuture.runAsync(() -> {
-                        Asset ass = new Asset(src);
-                        int[] d = ass.getDimensions();
-                        if (d[0] > 42 && d[1] > 42) {
-                            if (url.contains("/wiki")) {
-                                if (article.getIcon() == null || article.getIcon().isEmpty()) {
-                                    article.setIcon(src);
-                                }
-                            }
-                            String caption = Telifie.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
-                            Article ia = new Article();
-                            if (!caption.isEmpty() && caption.length() < 100) {
-                                ia.setTitle(caption);
-                            } else {
-                                ia.setTitle(article.getTitle());
-                                ia.setContent(caption);
-                            }
-                            ia.setLink(src);
-                            ia.setIcon(src);
-//                            ia.setTags(article.getTags());
-                            ia.setDescription("Image");
-                            ia.addAttribute(new Attribute("Width", d[0] + "px"));
-                            ia.addAttribute(new Attribute("Height", d[1] + "px"));
-                            ia.addAttribute(new Attribute("Size", ass.fileSize()));
-                            ia.addAttribute(new Attribute("File Type", ass.getExt()));
-                            ia.setSource(url);
-                            if(articles.create(ia)){
-                                Log.console("IMAGE CREATED : https://telifie.com/articles/" + ia.getId());
-                            }else{
-                                Log.console("NOT HAPPENING, MAY EXIST");
-                            }
-                        }
-                    });
-                }
-            });
+//            document.getElementsByTag("img").forEach(image -> {
+//                String src = Network.fixLink(url, image.attr("src"));
+//                if(!src.isEmpty() && !src.startsWith("data:") && articles.withLink(src) == null){
+//                    CompletableFuture.runAsync(() -> {
+//                        Asset ass = new Asset(src);
+//                        int[] d = ass.getDimensions();
+//                        if (d[0] > 42 && d[1] > 42) {
+//                            if (url.contains("/wiki")) {
+//                                if (article.getIcon() == null || article.getIcon().isEmpty()) {
+//                                    article.setIcon(src);
+//                                }
+//                            }
+//                            String caption = Telifie.tools.htmlEscape(image.attr("alt").replaceAll("“", "").replaceAll("\"", "&quote;"));
+//                            Article ia = new Article();
+//                            if (!caption.isEmpty() && caption.length() < 100) {
+//                                ia.setTitle(caption);
+//                            } else {
+//                                ia.setTitle(article.getTitle());
+//                                ia.setContent(caption);
+//                            }
+//                            ia.setLink(src);
+//                            ia.setIcon(src);
+//                            ia.setDescription("Image");
+//                            ia.addAttribute(new Attribute("Width", d[0] + "px"));
+//                            ia.addAttribute(new Attribute("Height", d[1] + "px"));
+//                            ia.addAttribute(new Attribute("Size", ass.fileSize()));
+//                            ia.addAttribute(new Attribute("File Type", ass.getExt()));
+//                            ia.setSource(url);
+//                            if(articles.create(ia)){
+//                                Log.console("IMAGE CREATED : https://telifie.com/articles/" + ia.getId());
+//                            }else{
+//                                Log.console("NOT HAPPENING, MAY EXIST");
+//                            }
+//                        }
+//                    });
+//                }
+//            });
             Element body = document.getElementsByTag("body").get(0);
             Element infobox = body.selectFirst(".infobox");
             body.select("table, script, header, style, img, svg, button, label, form, input, aside, code, footer, nav").remove();

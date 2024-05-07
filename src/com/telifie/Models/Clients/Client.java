@@ -76,15 +76,6 @@ public class Client {
         }
     }
 
-    protected boolean updateOne(Document filter, Document update, UpdateOptions options){
-        try {
-            UpdateResult result = mc.getDatabase("telifie").getCollection(this.collection).updateOne(filter, update, options);
-            return result.getModifiedCount() > 0;
-        }catch(MongoException e){
-            return false;
-        }
-    }
-
     protected boolean insertOne(Document document){
         try {
             mc.getDatabase("telifie").getCollection(this.collection).insertOne(document);

@@ -13,13 +13,6 @@ public class Event {
         UPDATE, POST, GET, PUT, MESSAGE, EMAIL, TEXT, FLAG, DELETE, CRAWL, ERROR, HTTP, HEAD
     }
 
-    public Event(Type type, String user, String content) {
-        this.type = type;
-        this.origin = (int) (System.currentTimeMillis() / 1000);
-        this.user = user;
-        this.content = content;
-    }
-
     public Event(Document document){
         this.type = Type.valueOf(document.getString("type"));
         this.origin = document.getInteger("origin");

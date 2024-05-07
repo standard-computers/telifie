@@ -83,17 +83,14 @@ public class Command {
             if(this.selectors.length >= 2){ //telifie.com/domains/{owner|member|create|update}
                 Domains domains = new Domains(session);
                 ArrayList<Domain> foundDomains;
-                if(objSelector.equals("owner")){ //Domains they own
-
+                if(objSelector.equals("owner")){
                     foundDomains = domains.mine();
                     return new Result(this.command, "domains", foundDomains);
                 }else if(objSelector.equals("member")){ //Domains they're a member of
-                    //TODO ensure it works
 //                    User user = new UsersClient().getUserWithId(session.user);
 //                    foundDomains = domains.forMember(user.getEmail());
 //                    return new Result(this.command, "domains", foundDomains);
                 }else if(objSelector.equals("protected")){ //Domains they're a member of
-                    //TODO Get all available protected domains
 //                    User user = new UsersClient().getUserWithId(session.user);
 //                    foundDomains = domains.forMember(user.getEmail());
 //                    return new Result(this.command, "domains", foundDomains);
@@ -153,12 +150,10 @@ public class Command {
                     }catch (NullPointerException n){
                         return new Result(404, this.command, "DOMAIN NOT FOUND");
                     }
-                }else if(this.selectors.length >= 4){ //telifie.com/domains/{id}/users/{add|remove}
+                }else if(this.selectors.length >= 4){ //'/domains/{id}/users/{add|remove}'
                     try{
                         Domain d = domains.withId(objSelector);
                         if(content != null){
-                            ArrayList<Domain.Member> members = new ArrayList<>();
-                            content.getList("users", Document.class).forEach(doc -> members.add(new Domain.Member(doc)));
                             switch (terSelector) {
                                 case "add" -> {
                                     if(domains.addUser(d, content.getString("user"), content.getInteger("permissions"))){

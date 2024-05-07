@@ -4,7 +4,6 @@ import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import java.util.ArrayList;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class Article {
 

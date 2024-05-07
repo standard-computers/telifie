@@ -58,11 +58,10 @@ public class Start {
                 }
                 case "--master" -> CompletableFuture.runAsync(() -> {
                     if(Cache.history.isEmpty()){
-                        Log.console("Quick Response cache is empty. Warming up....");
-                        Log.console("Finding cache qualifying articles. This may take some time!");
+                        Log.console("Quick Response cache is empty. Warming up....\nFinding cache qualifying articles. This may take some time!");
                         ArrayList<Article> av = articles.get(new Document("priority", new Document("$gt", 1)));
-                        Log.console("Committing " + av.size() + " to cache history...");
-                        av.forEach(a -> Cache.history.commit("telifie", a.getId(), a.getTitle(), a.getIcon(), a.getDescription()));
+                        Log.console("Committing " + av.size() + " to quick response cache...");
+//                        av.forEach(a -> Cache.history.commit("telifie", a.getId(), a.getTitle(), a.getIcon(), a.getDescription()));
                     }
                 });
             }
@@ -71,7 +70,7 @@ public class Start {
         }
     }
 
-    private static void install(){
+    private static void checkConfig(){
         File[] folders = new File[]{new File(Telifie.configDirectory()), new File(Telifie.configDirectory() + "temp"), new File(Telifie.configDirectory() + "andromeda")};
         for(File folder : folders){
             if(folder.mkdirs()){
@@ -80,15 +79,6 @@ public class Start {
                 Log.error("FAILED CREATING DIRECTORY : " + folder.getPath(), "CLIx104");
             }
         }
-        String mongoUri = Console.in("MongoDB URI -> ");
-        String sqlUri = Console.in("SQL URI -> ");
-        config = new Configuration("v1.0.0b", mongoUri, sqlUri, "");
-        exportConfiguration();
-        Log.put("CONFIGURATION SAVED", "CLIx005");
-        System.exit(0);
-    }
-
-    private static void checkConfig(){
         if(configFile.exists()){
             Console.message("Config file found :)");
             importConfiguration();
@@ -96,24 +86,13 @@ public class Start {
                 config.startMongo();
                 config.startSql();
                 new Packages(new Session("com.telifie.system", "telifie"));
-                //TODO Warm up AI system
 //                new Voyager(true);
             }else{
                 Log.error("FAILED CONFIG FILE LOAD", "CLIx110");
                 System.exit(-1);
             }
         }else{
-            Console.message("No config file found. Starting install...");
-            install();
-        }
-    }
-
-    private static void exportConfiguration(){
-        try {
-            new ObjectMapper().writer().withDefaultPrettyPrinter().writeValue(configFile, config);
-            Log.put("CONFIG FILE CREATED", "CLIx006");
-        } catch (IOException e) {
-            Log.error("FAILED CONFIG.JSON EXPORT", "CLIx105");
+            Console.message("No config file found.");
         }
     }
 

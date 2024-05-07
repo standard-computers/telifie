@@ -20,12 +20,6 @@ public class Parameters {
 
     @Override
     public String toString() {
-        return new StringBuilder().append("{ \"results_per_page\" : ").append(rpp)
-                .append(", \"pages\" : ").append(pages)
-                .append(", \"page\" : ").append(page)
-                .append(", \"zip\" : \"").append(zip).append("\"")
-                .append(", \"latitude\" : ").append(latitude)
-                .append(", \"longitude\" : ").append(longitude)
-                .append(", \"index\" : \"").append(index).append("\"}").toString();
+        return new StringBuilder().append("{ \"results_per_page\" : ").append(rpp).append(", \"pages\" : ").append(pages).append(", \"page\" : ").append(page).append(", \"zip\" : \"").append(zip).append("\"").append(", \"latitude\" : ").append(latitude).append(", \"longitude\" : ").append(longitude).append(", \"index\" : \"").append(index).append("\"}").toString();
     }
 }

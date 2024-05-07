@@ -30,7 +30,6 @@ public class Domain implements Serializable {
         this.alt = resultSet.getString("alt");
         this.origin = resultSet.getInt("origin");
         this.permissions = resultSet.getInt("permissions");
-//        this.users = (ArrayList<Member>) resultSet.getArray("users");
     }
 
     public int getPermissions(String userId){
