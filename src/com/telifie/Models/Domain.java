@@ -1,18 +1,17 @@
 package com.telifie.Models;
 
 import com.telifie.Models.Utilities.Telifie;
-import org.bson.Document;
-import java.io.Serializable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class Domain implements Serializable {
+public class Domain {
 
     public final String id, owner, name, alt;
     public final int origin, permissions;
     private ArrayList<Member> users = new ArrayList<>();
+    private ArrayList<Collection> collections = new ArrayList<>();
 
     public Domain(String owner, String name, int permissions){
         this.id = UUID.randomUUID().toString();
@@ -30,6 +29,8 @@ public class Domain implements Serializable {
         this.alt = resultSet.getString("alt");
         this.origin = resultSet.getInt("origin");
         this.permissions = resultSet.getInt("permissions");
+        this.users = new ArrayList<>();
+        this.collections = new ArrayList<>();
     }
 
     public int getPermissions(String userId){
@@ -37,13 +38,21 @@ public class Domain implements Serializable {
             return 0;
         }else{
             for(Member u : users){
-                if(u.id.equals(userId)){
+                if(u.user.equals(userId)){
                     int up = u.permissions;
                     return (up < 1 || up > 2 ? 1 : u.permissions);
                 }
             }
         }
         return -1;
+    }
+
+    public ArrayList<Member> getUsers() {
+        return users;
+    }
+
+    public ArrayList<Collection> getCollections() {
+        return collections;
     }
 
     @Override
@@ -56,22 +65,23 @@ public class Domain implements Serializable {
                 ", \"origin\" :" + origin +
                 ", \"permissions\" :" + permissions +
                 ", \"users\" :" + users +
+                ", \"collections\" :" + collections +
                 '}';
     }
 
     public static class Member {
 
-        public final String id;
+        public final String user;
         public final int permissions;
 
-        public Member(Document doc){
-            this.id = doc.getString("id");
-            this.permissions = (doc.getInteger("permissions") == null ? 0 : doc.getInteger("permissions"));
+        public Member(ResultSet rs) throws SQLException {
+            this.user = rs.getString("user");
+            this.permissions = rs.getInt("permissions");
         }
 
         @Override
         public String toString(){
-            return new StringBuilder().append("{\"id\" : \"").append(id).append("\", \"permissions\" : \"").append(permissions).append("\"}").toString();
+            return new StringBuilder().append("{\"user\" : \"").append(user).append("\", \"permissions\" : \"").append(permissions).append("\"}").toString();
         }
     }
 }

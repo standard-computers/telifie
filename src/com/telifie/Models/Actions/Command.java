@@ -386,12 +386,23 @@ public class Command {
             ArrayList<Shortcut> usersShortcuts = scs.forUser(session.user);
             return new Result(this.command, "shortcuts", usersShortcuts);
         }else if(selector.equals("collections")){
-
+            //TODO check permissions
             if(content != null){
-
+                String domain = content.getString("domain"); //Get domain and check validity
+                Log.console(domain);
+                if(!domain.isEmpty()){
+                    if(this.selectors.length == 2){
+                        switch (objSelector) {
+                            case "create" -> {
+                                if(Collections.create(new Collection(content))){
+                                    return new Result(200, this.command, "COLLECTION CREATED");
+                                }
+                            }
+                        }
+                    }
+                }
+                return new Result(400, this.command, "DOMAIN REQUIRED AS ID");
             }
-            //
-
 
         }else if(selector.equals("users")){
             Users users = new Users();

@@ -10,7 +10,6 @@ public class Article {
     private String owner, id, title, link, icon, description = "Webpage", content, source;
     private boolean verified = false;
     private ArrayList<Attribute> attributes = new ArrayList<>();
-    private ArrayList<Association> associations = new ArrayList<>();
     private ArrayList<DataSet> dataSets = new ArrayList<>();
     private int priority = 1;
     private final int origin;
@@ -35,10 +34,6 @@ public class Article {
         ArrayList<Document> it2 = (ArrayList<Document>) document.getList("attributes", Document.class);
         if (it2 != null) {
             it2.forEach(doc -> this.addAttribute(new Attribute(doc.getString("key"), doc.getString("value"))));
-        }
-        ArrayList<Document> it3 = (ArrayList<Document>) document.getList("associations", Document.class);
-        if (it3 != null) {
-            it3.forEach(doc -> this.associations.add(new Association(doc)));
         }
         ArrayList<Document> it4 = (ArrayList<Document>) document.getList("data_sets", Document.class);
         if(it4 != null){
@@ -150,7 +145,6 @@ public class Article {
                 (description == null || description.isEmpty() ? "" : ", \"description\" : \"" + description + '\"') +
                 (content == null ? "" : ", \"content\" : \"" + content + "\"") +
                 (attributes == null ? "" : ", \"attributes\" : " + attributes) +
-                ", \"associations\" : " + (associations ==  null || associations.isEmpty() ? "[]" : associations) +
                 (dataSets.isEmpty() ? "" : ", \"data_sets\" : " + dataSets) +
                 (source == null ? "" : ", \"source\" : \"" + source + '\"') +
                 ", \"origin\" : " + origin +

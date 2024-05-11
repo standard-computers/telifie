@@ -73,11 +73,19 @@ CREATE TABLE memberships (
     FOREIGN KEY (domain) REFERENCES domains (id)
 )
 
+-- Collections are sets of articles in a domain //TODO implement
+CREATE TABLE collections (
+    id VARCHAR(36),
+    domain VARCHAR(36),
+    name VARCHAR(150),
+    alt VARCHAR(150),
+    origin INT,
+    FOREIGN KEY (domain) REFERENCES domains (id)
+)
+
 -- For when user requests actions like
 CREATE TABLE handles (user VARCHAR(36), connector VARCHAR(150), query TEXT, endpoint TEXT, origin INT, resolved INT, FOREIGN KEY (user) REFERENCES users(id))
 
--- Collections are sets of articles in a domain //TODO implement
-CREATE TABLE collections (id VARCHAR(36), domain VARCHAR(36), name VARCHAR(150), alt VARCHAR(150), origin INT, FOREIGN KEY (domain) REFERENCES domains(id))
 
 -- //TODO Implement
 CREATE TABLE timelines (object VARCHAR(36), action VARCHAR(10), notes TEXT, origin INT, FOREIGN KEY (user) REFERENCES users(id))
