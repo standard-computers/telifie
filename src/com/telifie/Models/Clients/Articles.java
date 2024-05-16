@@ -13,14 +13,13 @@ import org.bson.Document;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
 public class Articles extends Client {
 
-    public Articles(Session session){
+    public Articles(Session session, String collection){
         super(session);
-        super.collection = "articles";
+        super.collection = collection;
     }
 
     public boolean update(Article article, Article newArticle){

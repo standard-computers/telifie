@@ -17,7 +17,7 @@ public class Shortcuts extends Client {
     public Shortcut withArticles(String id){
         Shortcut shortcut = new Shortcut(this.findOne(new Document("id", id)));
         ArrayList<Article> articles = new ArrayList<>();
-        Articles articlesClient = new Articles(session);
+        Articles articlesClient = new Articles(session, "articles"); //TODO save from multiple domains and collections
         if(shortcut.getArticles() != null || !shortcut.getArticles().isEmpty()){
             //TODO check for '/' in article to see if in another domain
             shortcut.getArticles().forEach(articleId -> articles.add(articlesClient.withId(articleId)));

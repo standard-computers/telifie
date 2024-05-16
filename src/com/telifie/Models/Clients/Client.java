@@ -2,7 +2,6 @@ package com.telifie.Models.Clients;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.*;
-import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.UpdateResult;
 import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Session;
@@ -24,7 +23,7 @@ public class Client {
 
     protected FindIterable<Document> find(Document filter){
         try {
-            return mc.getDatabase("telifie").getCollection(this.collection).find(filter);
+            return mc.getDatabase(session.getDomain()).getCollection(this.collection).find(filter);
         }catch(MongoException e){
             return null;
         }
@@ -32,7 +31,7 @@ public class Client {
 
     protected FindIterable<Document> find(Document filter, Document sort){
         try {
-            return mc.getDatabase("telifie").getCollection(this.collection).find(filter).sort(sort);
+            return mc.getDatabase(session.getDomain()).getCollection(this.collection).find(filter).sort(sort);
         }catch(MongoException e){
             return null;
         }
@@ -40,7 +39,7 @@ public class Client {
 
     protected FindIterable<Document> findWithProjection(Document filter, Document projection){
         try {
-            return mc.getDatabase("telifie").getCollection(this.collection).find(filter).projection(projection);
+            return mc.getDatabase(session.getDomain()).getCollection(this.collection).find(filter).projection(projection);
         }catch(MongoException e){
             return null;
         }
@@ -48,14 +47,14 @@ public class Client {
 
     protected Document findOne(Document filter){
         try {
-            return mc.getDatabase("telifie").getCollection(this.collection).find(filter).first();
+            return mc.getDatabase(session.getDomain()).getCollection(this.collection).find(filter).first();
         }catch(MongoException e){
             return null;
         }
     }
 
     protected Document next(int skip) {
-        MongoCursor<Document> cursor = mc.getDatabase("telifie").getCollection(this.collection).find().skip(skip).limit(1).iterator();
+        MongoCursor<Document> cursor = mc.getDatabase(session.getDomain()).getCollection(this.collection).find().skip(skip).limit(1).iterator();
         if (cursor.hasNext()) {
             return cursor.next();
         } else {
@@ -64,12 +63,12 @@ public class Client {
     }
 
     protected boolean hasNext() {
-        return mc.getDatabase("telifie").getCollection(this.collection).find().limit(1).iterator().hasNext();
+        return mc.getDatabase(session.getDomain()).getCollection(this.collection).find().limit(1).iterator().hasNext();
     }
 
     protected boolean updateOne(Document filter, Document update){
         try {
-            UpdateResult result = mc.getDatabase("telifie").getCollection(this.collection).updateOne(filter, update);
+            UpdateResult result = mc.getDatabase(session.getDomain()).getCollection(this.collection).updateOne(filter, update);
             return result.getModifiedCount() > 0;
         }catch(MongoException e){
             return false;
@@ -78,7 +77,7 @@ public class Client {
 
     protected boolean insertOne(Document document){
         try {
-            mc.getDatabase("telifie").getCollection(this.collection).insertOne(document);
+            mc.getDatabase(session.getDomain()).getCollection(this.collection).insertOne(document);
             return true;
         }catch(MongoException e){
             return false;
@@ -87,7 +86,7 @@ public class Client {
 
     protected List<Document> aggregate(Document filter){
         try {
-            return mc.getDatabase("telifie").getCollection(this.collection).aggregate(Collections.singletonList(filter)).into(new ArrayList<>());
+            return mc.getDatabase(session.getDomain()).getCollection(this.collection).aggregate(Collections.singletonList(filter)).into(new ArrayList<>());
         }catch(MongoException e){
             return null;
         }
@@ -95,7 +94,7 @@ public class Client {
 
     protected int count(){
         try {
-            return (int) mc.getDatabase("telifie").getCollection(this.collection).countDocuments();
+            return (int) mc.getDatabase(session.getDomain()).getCollection(this.collection).countDocuments();
         }catch(MongoException e){
             return -1;
         }
@@ -108,7 +107,7 @@ public class Client {
 
     protected boolean deleteOne(Document filter){
         try {
-            mc.getDatabase("telifie").getCollection(this.collection).deleteOne(filter);
+            mc.getDatabase(session.getDomain()).getCollection(this.collection).deleteOne(filter);
             return true;
         }catch(MongoException e){
             return false;

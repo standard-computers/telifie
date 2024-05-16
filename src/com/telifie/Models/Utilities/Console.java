@@ -52,9 +52,9 @@ public class Console {
             String cmd = Console.in("telifie -> ").trim();
             switch (cmd) {
                 case "exit", "logout", "close" -> System.exit(0);
-                case "@import" -> {
+                case "@import" -> { //TODO REMOVE
                     PersonalClient pc = new PersonalClient(new Session("", "telifie"));
-                    Articles articles = new Articles(new Session("", "telifie"));
+                    Articles articles = new Articles(new Session("", "telifie"), "articles");
                     Parser p = new Parser(new Session("", "telifie"));
                     while(pc.hasNext()){
                         try {

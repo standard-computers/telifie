@@ -30,12 +30,12 @@ public class Parser {
     private static Articles articles;
 
     public Parser(Session session){
-        articles = new Articles(session);
+        articles = new Articles(session, "articles"); //TODO give option to select collection
     }
 
     public void reparse(){
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        Articles articles =  new Articles(new Session("telifie", "telifie"));
+        Articles articles =  new Articles(new Session("telifie", "telifie"), "articles"); //TODO Reparse give option to select collection
         Log.message("STARTING REPARSE", "PARx011");
         ArrayList<Article> parsing = articles.withProjection(
                 new org.bson.Document("$or", Arrays.asList(

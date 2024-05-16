@@ -57,7 +57,7 @@ CREATE TABLE domains (
     id VARCHAR(36) PRIMARY KEY,
     owner VARCHAR(36),
     name VARCHAR(150),
-    alt VARCHAR(150),
+    alias VARCHAR(150),
     permissions INT,
     origin INT,
     FOREIGN KEY (owner) REFERENCES users (id)
@@ -73,19 +73,30 @@ CREATE TABLE memberships (
     FOREIGN KEY (domain) REFERENCES domains (id)
 )
 
--- Collections are sets of articles in a domain //TODO implement
-CREATE TABLE collections (
+-- Indexes are sets of articles in a domain //TODO implement
+CREATE TABLE indexes (
     id VARCHAR(36),
     domain VARCHAR(36),
     name VARCHAR(150),
-    alt VARCHAR(150),
+    alias VARCHAR(150),
     origin INT,
     FOREIGN KEY (domain) REFERENCES domains (id)
 )
 
+
+
+-- //TODO The below needs implemented
 -- For when user requests actions like
 CREATE TABLE handles (user VARCHAR(36), connector VARCHAR(150), query TEXT, endpoint TEXT, origin INT, resolved INT, FOREIGN KEY (user) REFERENCES users(id))
 
-
--- //TODO Implement
 CREATE TABLE timelines (object VARCHAR(36), action VARCHAR(10), notes TEXT, origin INT, FOREIGN KEY (user) REFERENCES users(id))
+
+-- For social use
+CREATE TABLE relationship (
+    one VARCHAR(36),
+    two VARCHAR(36),
+    description TEXT,
+    origin INT,
+    FOREIGN KEY (one) REFERENCES users (id)
+    FOREIGN KEY (two) REFERENCES users (id)
+)

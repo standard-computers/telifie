@@ -57,13 +57,13 @@ public class Start {
             Log.flag("TELIFIE EXITED", "CLIx101");
             Telifie.purgeTemp();
         }));
-        Articles articles = new Articles(new Session("telifie", "telifie"));
+        Articles articles = new Articles(new Session("telifie", "telifie"), "articles");
         try (ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1)) {
             Log.console("Preloading public domain stats in background...");
             CompletableFuture.runAsync(() -> Telifie.stats = articles.stats());
             Log.console("Scheduling worker tasks...");
             Runnable task = () -> Telifie.stats = articles.stats();
-            scheduler.scheduleAtFixedRate(task, 0, 90, TimeUnit.SECONDS);
+            scheduler.scheduleAtFixedRate(task, 0, 120, TimeUnit.SECONDS);
         }
         if (args.length > 0) {
             String mode = args[0].trim().toLowerCase();

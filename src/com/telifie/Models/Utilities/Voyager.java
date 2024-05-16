@@ -56,7 +56,7 @@ public class Voyager {
      */
     private void tokenize(){
         TokenizerFactory tokenizerFactory = new DefaultTokenizerFactory();
-        Articles client = new Articles(new Session("", "telifie")); //TODO modify query
+        Articles client = new Articles(new Session("", "telifie"), "articles"); //TODO modify query
         for (Article article : client.get(new Document("", ""))) {
             String content = article.getContent();
             Tokenizer tokenizer = tokenizerFactory.create(content);

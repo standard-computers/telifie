@@ -34,19 +34,6 @@ public class Command {
         return this.selectors[index].replaceAll("/", "");
     }
 
-    private boolean hasDomainPermission(User user, Session session, boolean allowPublicDomainAction){
-        if((user.getPermissions() >= 12 && session.getDomain().equals("telifie") && !allowPublicDomainAction) || (session.getDomain().equals("telifie") && allowPublicDomainAction)){
-            //TODO, share changes with data team for approval and change status on Article
-            return true;
-        }else if(session.getDomain().equals("telifie") && !allowPublicDomainAction){
-            return false;
-        }else if(!session.getDomain().equals("telifie")){
-            //TODO check separate permissions
-            return false;
-        }
-        return false;
-    }
-
     public Result parseCommand(Session session, Document content){
         String selector = this.selectors[0];
         String objSelector = (this.selectors.length > 1 ? this.get(1) : "");
@@ -56,26 +43,30 @@ public class Command {
             if(content != null){
                 String query = (content.getString("query") == null ? "" : content.getString("query"));
                 if(query.isEmpty()){
-                    return new Result(428, this.command, "Query expected");
+                    return new Result(428, this.command, "QUERY EXPECTED");
                 }
-                String targetDomain = (content.getString("domain") == null ? "telifie" : content.getString("domain"));
+                String targetDomain = (content.getString("domain") == null ? "telifie" : content.getString("domain").trim().toLowerCase());
+                Domains domains = new Domains(session);
+                Domain domain = domains.withAlias("telifie");
                 if(!targetDomain.equals("telifie")){
                     try{
-                        Domains domains = new Domains(session);
-                        Domain domain = domains.withId(targetDomain);
-                        session.setDomain(domain.id);
+                        domain = domains.withAlias(targetDomain);
+                        session.setDomain(targetDomain);
                     }catch (NullPointerException n){
-                        return new Result(410, this.command, "NOT FOUND");
+                        return new Result(410, this.command, "DOMAIN NOT FOUND");
                     }
                 }
                 try {
-                    Parameters params = new Parameters(content);
-                    return new Search().execute(session, query, params);
+                    if(domain.hasViewPermissions(session.user)){
+                        Parameters params = new Parameters(content);
+                        return new Search().execute(session, query, params);
+                    }
+                    return new Result(401,this.command, "INSUFFICIENT PERMISSIONS");
                 }catch(NullPointerException n){
-//                    return new Result(505, this.command, "SEARCH ERROR");
-                    throw new RuntimeException(n);
+                    return new Result(505, this.command, "SEARCH ERROR");
+//                    throw new RuntimeException(n);
                 } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
+                    return new Result(428, this.command, "MALFORMED PARAMS");
                 }
             }
             return new Result(428, this.command, "JSON BODY EXPECTED");
@@ -157,19 +148,19 @@ public class Command {
                             switch (terSelector) {
                                 case "add" -> {
                                     if(domains.addUser(d, content.getString("user"), content.getInteger("permissions"))){
-                                        return new Result(200, this.command, "ADDED USERS TO DOMAIN");
+                                        return new Result(200, this.command, "ADDED USER TO DOMAIN");
                                     }
                                     return new Result(505, this.command, "FAILED ADDING USER FROM DOMAIN");
                                 }
                                 case "remove" -> {
                                     if (domains.removeUser(d, this.selectors[4])) {
-                                        return new Result(200, this.command, "REMOVED USERS FROM DOMAIN");
+                                        return new Result(200, this.command, "REMOVED USER FROM DOMAIN");
                                     }
                                     return new Result(505, this.command, "FAILED REMOVING USER FROM DOMAIN");
                                 }
                                 case "update" -> {
                                     if (domains.updateUser(d, this.selectors[4], 0)) {
-                                        return new Result(200, this.command, "DOMAIN USERS UPDATED");
+                                        return new Result(200, this.command, "DOMAIN USER UPDATED");
                                     }
                                     return new Result(505, this.command, "FAILED DOMAIN USER UPDATE");
                                 }
@@ -184,26 +175,27 @@ public class Command {
             }
             return new Result(200, this.command, "BAD DOMAINS OPTION");
         }else if(selector.equals("articles")){
-            User user = new Users().getUserWithId(session.user);
+            Domains domains = new Domains(session);
+            Domain domain = domains.withAlias("telifie");
             if(content != null){
                 if(content.getString("domain") != null){
-                    String targetDomain = content.getString("domain");
+                    String td = content.getString("domain");
                     try{
-                        Domain domain = new Domains(session).withId(targetDomain);
-                        session.setDomain(domain.id);
+                        domain = new Domains(session).withAlias(td);
+                        session.setDomain(td);
                     }catch (NullPointerException n) {
                         return new Result(404, this.command, "DOMAIN NOT FOUND");
                     }
                 }
             }
-            Articles articles = new Articles(session);
+            Articles articles = new Articles(session, "articles");
             if(this.selectors.length >= 3){
                 try {
                     Article a = articles.withId(secSelector);
                     switch (objSelector) {
                         case "id" -> {
                             try {
-                                if(hasDomainPermission(user, session, true)){
+                                if(domain.hasViewPermissions(session.user)){
                                     CompletableFuture.runAsync(() -> Cache.history.log(session.user, a.getId()));
                                     return new Result(this.command, "article", articles.withId(secSelector));
                                 }
@@ -218,8 +210,8 @@ public class Command {
                                     content.put("id", secSelector);
                                 }
                                 Article ua = new Article(content);
-                                //TODO compare
-                                if(hasDomainPermission(user, session, false)){
+                                //TODO compare for timeline
+                                if(domain.hasEditPermissions(session.user)){
                                     if (articles.update(a, ua)) {
                                         return new Result(200, this.command, ua.toString());
                                     }
@@ -230,7 +222,7 @@ public class Command {
                             return new Result(428, this.command, "JSON BODY EXPECTED");
                         }
                         case "delete" -> {
-                            if(hasDomainPermission(user, session, false)){
+                            if(domain.hasEditPermissions(session.user)){
                                 if (articles.delete(articles.withId(secSelector))) {
                                     return new Result(200, this.command, "");
                                 }
@@ -240,7 +232,6 @@ public class Command {
                         }
                         case "duplicate" -> {
                             if (this.selectors.length > 3) {
-                                Domains domains = new Domains(session);
                                 try {
                                     if (articles.duplicate(a, domains.withId(terSelector))) {
                                         return new Result(200, this.command, "");
@@ -253,7 +244,6 @@ public class Command {
                         }
                         case "move" -> {
                             if (this.selectors.length > 3) {
-                                Domains domains = new Domains(session);
                                 try {
                                     if (articles.move(a, domains.withId(terSelector))) {
                                         return new Result(200, this.command, "");
@@ -265,7 +255,7 @@ public class Command {
                             }
                         }
                         case "verify" -> {
-                            if(hasDomainPermission(user, session, false)){
+                            if(domain.hasEditPermissions(session.user)){
                                 if (articles.verify(secSelector)) {
                                     return new Result(200, this.command, "");
                                 }
@@ -281,7 +271,7 @@ public class Command {
             }else if(objSelector.equals("create")){
                 if(content != null){
                     try {
-                        if(hasDomainPermission(user, session, false)){
+                        if(domain.hasEditPermissions(session.user)){
                             Article na = new Article(content);
                             if(articles.create(na)){
                                 return new Result(this.command, "article", na);
@@ -313,7 +303,7 @@ public class Command {
                 try{
                     Shortcut c = scs.get(secSelector);
                     try{
-                        Articles articles = new Articles(session);
+                        Articles articles = new Articles(session, "shortcuts");
                         Article a = articles.withId(terSelector);
                         if(objSelector.equals("save")){
                             if(scs.save(c, a)){
@@ -385,7 +375,7 @@ public class Command {
             }
             ArrayList<Shortcut> usersShortcuts = scs.forUser(session.user);
             return new Result(this.command, "shortcuts", usersShortcuts);
-        }else if(selector.equals("collections")){
+        }else if(selector.equals("indexes")){
             //TODO check permissions
             if(content != null){
                 String domain = content.getString("domain"); //Get domain and check validity
@@ -394,8 +384,8 @@ public class Command {
                     if(this.selectors.length == 2){
                         switch (objSelector) {
                             case "create" -> {
-                                if(Collections.create(new Collection(content))){
-                                    return new Result(200, this.command, "COLLECTION CREATED");
+                                if(Indexes.create(new Index(content))){
+                                    return new Result(200, this.command, "INDEX CREATED");
                                 }
                             }
                         }
@@ -446,7 +436,7 @@ public class Command {
             }
             return new Result(404, this.command, "INVALID EMAIL");
         }else if(selector.equals("parser")){
-            Articles articles = new Articles(session);
+            Articles articles = new Articles(session, "articles");
             if(content != null){
                 String mode = content.getString("mode");
                 if(mode != null){

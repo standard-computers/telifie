@@ -18,7 +18,7 @@ public class Search {
     }
 
     public Result execute(Session session, String q, Parameters params) throws JsonProcessingException {
-        Articles articles = new Articles(session);
+        Articles articles = new Articles(session, params.index); //TODO Search more than params.index
         Result result = new Result(200, q, "");
         result.setParams(params);
         boolean doQuery = true;

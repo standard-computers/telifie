@@ -8,16 +8,16 @@ import java.util.UUID;
 
 public class Domain {
 
-    public final String id, owner, name, alt;
+    public final String id, owner, name, alias;
     public final int origin, permissions;
     private ArrayList<Member> users = new ArrayList<>();
-    private ArrayList<Collection> collections = new ArrayList<>();
+    private ArrayList<Index> indexes = new ArrayList<>();
 
     public Domain(String owner, String name, int permissions){
         this.id = UUID.randomUUID().toString();
         this.owner = owner;
         this.name = name;
-        this.alt = name.toLowerCase().replaceAll(" ", "-");
+        this.alias = name.toLowerCase().replaceAll(" ", "-");
         this.origin = Telifie.epochTime();
         this.permissions = (permissions != 1 ? 0 : 1); //Private is default mode if none
     }
@@ -26,11 +26,15 @@ public class Domain {
         this.id = resultSet.getString("id");
         this.owner = resultSet.getString("owner");
         this.name = resultSet.getString("name");
-        this.alt = resultSet.getString("alt");
+        this.alias = resultSet.getString("alias");
         this.origin = resultSet.getInt("origin");
         this.permissions = resultSet.getInt("permissions");
         this.users = new ArrayList<>();
-        this.collections = new ArrayList<>();
+        this.indexes = new ArrayList<>();
+    }
+
+    public String getId() {
+        return id;
     }
 
     public int getPermissions(String userId){
@@ -47,12 +51,38 @@ public class Domain {
         return -1;
     }
 
+    public boolean hasEditPermissions(String userId){
+        if(userId.equals(this.owner)){
+            return true;
+        }else{
+            for(Member u : users){
+                if(u.user.equals(userId)){
+                    return  u.permissions == 1;
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean hasViewPermissions(String userId){
+        if(permissions == 1){
+            return true;
+        }else{
+            for(Member u : users){
+                if(u.user.equals(userId)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public ArrayList<Member> getUsers() {
         return users;
     }
 
-    public ArrayList<Collection> getCollections() {
-        return collections;
+    public ArrayList<Index> getIndexes() {
+        return indexes;
     }
 
     @Override
@@ -61,11 +91,11 @@ public class Domain {
                 "\"id\" : \"" + id + '\"' +
                 ", \"owner\" : \"" + owner + '\"' +
                 ", \"name\" : \"" + name + '\"' +
-                ", \"alt\" : \"" + alt + '\"' +
+                ", \"alias\" : \"" + alias + '\"' +
                 ", \"origin\" :" + origin +
                 ", \"permissions\" :" + permissions +
                 ", \"users\" :" + users +
-                ", \"collections\" :" + collections +
+                ", \"indexes\" :" + indexes +
                 '}';
     }
 
