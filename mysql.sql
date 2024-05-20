@@ -83,13 +83,20 @@ CREATE TABLE indexes (
     FOREIGN KEY (domain) REFERENCES domains (id)
 )
 
+-- For timelines
+CREATE TABLE events (
+    user VARCHAR(36),
+    object VARCHAR(36),
+    action VARCHAR(50),
+    notes TEXT,
+    origin INT,
+    FOREIGN KEY (user) REFERENCES users (id)
+)
 
 
 -- //TODO The below needs implemented
 -- For when user requests actions like
 CREATE TABLE handles (user VARCHAR(36), connector VARCHAR(150), query TEXT, endpoint TEXT, origin INT, resolved INT, FOREIGN KEY (user) REFERENCES users(id))
-
-CREATE TABLE timelines (object VARCHAR(36), action VARCHAR(10), notes TEXT, origin INT, FOREIGN KEY (user) REFERENCES users(id))
 
 -- For social use
 CREATE TABLE relationship (
@@ -99,4 +106,11 @@ CREATE TABLE relationship (
     origin INT,
     FOREIGN KEY (one) REFERENCES users (id)
     FOREIGN KEY (two) REFERENCES users (id)
+)
+
+CREATE TABLE themes (
+    user VARCHAR(36),
+    origin INT,
+    json TEXT,
+    FOREIGN KEY (user) REFERENCES users(id)
 )

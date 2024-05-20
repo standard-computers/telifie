@@ -12,9 +12,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class Start {
 
@@ -57,14 +54,6 @@ public class Start {
             Log.flag("TELIFIE EXITED", "CLIx101");
             Telifie.purgeTemp();
         }));
-        Articles articles = new Articles(new Session("telifie", "telifie"), "articles");
-        try (ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1)) {
-            Log.console("Preloading public domain stats in background...");
-            CompletableFuture.runAsync(() -> Telifie.stats = articles.stats());
-            Log.console("Scheduling worker tasks...");
-            Runnable task = () -> Telifie.stats = articles.stats();
-            scheduler.scheduleAtFixedRate(task, 0, 120, TimeUnit.SECONDS);
-        }
         if (args.length > 0) {
             String mode = args[0].trim().toLowerCase();
             switch (mode) {
@@ -86,6 +75,7 @@ public class Start {
                 }
                 case "--master" -> CompletableFuture.runAsync(() -> {
                     if(Cache.history.isEmpty()){
+                        Articles articles = new Articles(new Session("telifie", "telifie"), "articles");
                         Log.console("Quick Response cache is empty. Warming up....\nFinding cache qualifying articles. This may take some time!");
                         ArrayList<Article> av = articles.get(new Document("priority", new Document("$gt", 1)));
                         Log.console("Committing " + av.size() + " to quick response cache...");

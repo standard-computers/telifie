@@ -71,7 +71,7 @@ public class Search {
             ArrayList<Article> all = articles.search(q, params, filter(q, params));
             results = paginate(all, params.page, params.rpp);
             result.setResults("articles", results);
-            result.setTotal(results.size());
+            result.setTotal(all.size());
         }
         return result;
     }
@@ -104,10 +104,10 @@ public class Search {
 //        }
 //        List<Document> or = new ArrayList<>();
 //        for (String word : q.split(" ")) {
-//            or.add(new Document("title", pattern(word)));
+//            or.add(new Document("title", Pattern.compile("\\b" + Pattern.quote(word) + "\\b", Pattern.CASE_INSENSITIVE)));
 //        }
 //        return new Document("$or", or);
-        return new Document("title", Pattern.compile("^" + Pattern.quote(q), Pattern.CASE_INSENSITIVE));
+        return new Document("title", Pattern.compile("\\b" + Pattern.quote(q) + "\\b", Pattern.CASE_INSENSITIVE));
     }
 
     private ArrayList<Article> paginate(ArrayList<Article> results, int page, int pageSize) {

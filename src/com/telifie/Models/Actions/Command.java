@@ -78,13 +78,12 @@ public class Command {
                     foundDomains = domains.mine();
                     return new Result(this.command, "domains", foundDomains);
                 }else if(objSelector.equals("member")){ //Domains they're a member of
-//                    User user = new UsersClient().getUserWithId(session.user);
-//                    foundDomains = domains.forMember(user.getEmail());
+//                    foundDomains = domains.viewable();
 //                    return new Result(this.command, "domains", foundDomains);
-                }else if(objSelector.equals("protected")){ //Domains they're a member of
-//                    User user = new UsersClient().getUserWithId(session.user);
-//                    foundDomains = domains.forMember(user.getEmail());
-//                    return new Result(this.command, "domains", foundDomains);
+                }else if(objSelector.equals("protected")){ //Domains they can view
+
+                    foundDomains = domains.viewable();
+                    return new Result(this.command, "domains", foundDomains);
                 }else if(objSelector.equals("create")){ //Creating a new domain
                     if(content != null){
                         String domainName;
@@ -120,11 +119,11 @@ public class Command {
                             case "check" -> {
                                 int p = d.getPermissions(session.user);
                                 if(p == 0){
-                                    return new Result(200, this.command, "OWNER");
+                                    return new Result(200, this.command, "domain", d);
                                 }else if(p == 1){
-                                    return new Result(206, this.command, "VIEWER");
+                                    return new Result(206, this.command, "domain", d);
                                 }else if(p == 2){
-                                    return new Result(207, this.command, "EDITOR");
+                                    return new Result(207, this.command, "domain", d);
                                 }
                                 return new Result(403, this.command, "DOMAIN ACCESS DENIED");
                             }
@@ -176,6 +175,8 @@ public class Command {
             return new Result(200, this.command, "BAD DOMAINS OPTION");
         }else if(selector.equals("articles")){
             Domains domains = new Domains(session);
+            String index = (content.getString("index") == null ? "articles" : content.getString("index").trim().toLowerCase());
+            //TODO check index validity
             Domain domain = domains.withAlias("telifie");
             if(content != null){
                 if(content.getString("domain") != null){
@@ -188,7 +189,7 @@ public class Command {
                     }
                 }
             }
-            Articles articles = new Articles(session, "articles");
+            Articles articles = new Articles(session, index);
             if(this.selectors.length >= 3){
                 try {
                     Article a = articles.withId(secSelector);
@@ -269,21 +270,18 @@ public class Command {
                     return new Result(404, this.command, "ARTICLE NOT FOUND");
                 }
             }else if(objSelector.equals("create")){
-                if(content != null){
-                    try {
-                        if(domain.hasEditPermissions(session.user)){
-                            Article na = new Article(content);
-                            if(articles.create(na)){
-                                return new Result(this.command, "article", na);
-                            }
-                            return new Result(505, this.command, "FAILED ARTICLE CREATION");
+                try {
+                    Article na = new Article(content);
+                    if(domain.hasEditPermissions(session.user)){
+                        if(articles.create(na)){
+                            return new Result(this.command, "article", na);
                         }
-                        return new Result(401, this.command, "INSUFFICIENT PERMISSIONS");
-                    }catch(JSONException e){
-                        return new Result(505, this.command, "BAD ARTICLE JSON");
+                        return new Result(505, this.command, "FAILED ARTICLE CREATION");
                     }
+                    return new Result(401, this.command, "INSUFFICIENT PERMISSIONS");
+                }catch(JSONException e){
+                    return new Result(505, this.command, "BAD ARTICLE JSON");
                 }
-                return new Result(428, this.command, "ARTICLE JSON DATA EXPECTED");
             }else if(objSelector.equals("audit")){
                 String query = (content.getString("query") == null ? "" : content.getString("query"));
                 ArrayList<Article> auditable = articles.get(new Document("$and", Arrays.asList(
@@ -296,7 +294,7 @@ public class Command {
                 }
                 return new Result(this.command, "articles", new JSONArray(ids));
             }
-            return new Result(this.command,"stats", Telifie.stats);
+            return new Result(this.command,"stats", articles.stats());
         }else if(selector.equals("shortcuts")){
             Shortcuts scs = new Shortcuts(session);
             if(this.selectors.length >= 4){ //Saving/Unsaving articles in shortcut
@@ -378,15 +376,31 @@ public class Command {
         }else if(selector.equals("indexes")){
             //TODO check permissions
             if(content != null){
-                String domain = content.getString("domain"); //Get domain and check validity
-                Log.console(domain);
-                if(!domain.isEmpty()){
-                    if(this.selectors.length == 2){
+                Indexes indexes = new Indexes(session);
+                String domainId = content.getString("domain"); //Get domain and check validity
+                Log.console(domainId);
+                Domains domains = new Domains(session);
+                Domain domain = domains.withId(domainId);
+                if(!domainId.isEmpty()){
+                    if(this.selectors.length >= 2){
                         switch (objSelector) {
                             case "create" -> {
-                                if(Indexes.create(new Index(content))){
-                                    return new Result(200, this.command, "INDEX CREATED");
+                                String domainName = content.getString("name").toLowerCase().replaceAll(" ", "-"); //Get domain and check validity
+                                Index i = indexes.withAlias(domainId, domainName);
+                                if(i == null){
+                                    if(indexes.create(domain, new Index(content))){
+                                        return new Result(200, this.command, "INDEX CREATED");
+                                    }
+                                    return new Result(500, this.command, "FAILED CREATING INDEX");
                                 }
+                                return new Result(409, this.command, "INDEX ALREADY EXISTS");
+                            }
+                            case "id" -> {
+                                Index i = indexes.get(secSelector);
+                                if(i != null){
+                                    return new Result(this.command, "index", i);
+                                }
+                                return new Result(404, this.command, "INDEX NOT FOUND");
                             }
                         }
                     }
@@ -525,16 +539,6 @@ public class Command {
                 return new Result(404, this.command, "USER NOT FOUND");
             }
             return new Result(404, this.command, "JSON BODY EXPECTED");
-        }else if(selector.equals("timelines")){
-            if(this.selectors.length >= 2){
-                Timelines timelines = new Timelines(session);
-                Timelines.Timeline timeline = timelines.getTimeline(objSelector);
-                if(timeline != null){
-                    return new Result(this.command, "timeline", timeline);
-                }
-                return new Result(404, this.command, "TIMELINE NOT FOUND");
-            }
-            return new Result(428, this.command, "OBJECT ID REQUIRED");
         }else if(selector.equals("connectors")){
             Connectors connectors = new Connectors(session);
             if(content != null){

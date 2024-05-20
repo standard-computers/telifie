@@ -37,6 +37,13 @@ public class Result {
         this.results = results;
     }
 
+    public Result(int statusCode, String query, String object, Object results) {
+        this.statusCode = statusCode;
+        this.query = query;
+        this.object = object;
+        this.results = results;
+    }
+
     public void setSource(String source) {
         this.source = source;
     }

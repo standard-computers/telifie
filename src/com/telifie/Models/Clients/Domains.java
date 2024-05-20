@@ -1,10 +1,13 @@
 package com.telifie.Models.Clients;
 
+import com.mongodb.MongoException;
 import com.telifie.Models.Index;
 import com.telifie.Models.Domain;
+import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Network.SQL;
 import com.telifie.Models.Utilities.Session;
 import com.telifie.Models.Utilities.Telifie;
+import org.bson.Document;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -55,13 +58,55 @@ public class Domains {
         return domainList;
     }
 
+    public ArrayList<Domain> viewable() {
+        ArrayList<Domain> domainList = new ArrayList<>();
+        HashMap<String, Domain> domainsMap = new HashMap<>();
+        try {
+            ResultSet drs = SQL.get("SELECT * FROM domains WHERE permissions = 1");
+            while (drs.next()) {
+                String domainId = drs.getString("id");
+                Domain domain = new Domain(drs); // Assumes Domain constructor handles domain data
+                domainsMap.put(domainId, domain);
+                domainList.add(domain);
+            }
+            ResultSet mrs = SQL.get("SELECT m.*, d.id FROM memberships m JOIN domains d ON m.domain = d.id WHERE d.owner = ?", session.user);
+            while (mrs.next()) {
+                String domainId = mrs.getString("domain");
+                Domain domain = domainsMap.get(domainId);
+                if (domain != null) {
+                    Domain.Member member = new Domain.Member(mrs);
+                    domain.getUsers().add(member);
+                }
+            }
+            ResultSet irs = SQL.get("SELECT c.*, d.id FROM indexes c JOIN domains d ON c.domain = d.id WHERE d.owner = ?", session.user);
+            while (irs.next()) {
+                String domainId = irs.getString("domain");
+                Domain domain = domainsMap.get(domainId);
+                if (domain != null) {
+                    Index index = new Index(irs);
+                    domain.getIndexes().add(index);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return domainList;
+    }
 
     public boolean delete(Domain d){
         return SQL.delete("DELETE FROM domains WHERE id = ? AND owner = ?", d.id, session.user);
     }
 
     public boolean create(Domain d){
-        return SQL.update("INSERT INTO domains (id, owner, name, alias, permissions, origin) VALUES (?, ?, ?, ?, ?, ?)", d.id, d.owner, d.name, d.alias, d.permissions, Telifie.epochTime());
+        if(SQL.update("INSERT INTO domains (id, owner, name, alias, permissions, origin) VALUES (?, ?, ?, ?, ?, ?)", d.id, d.owner, d.name, d.alias, d.permissions, Telifie.epochTime())){
+            Indexes indexes = new Indexes(session);
+            indexes.create(d, new Index(new Document("domain", d.id).append("name", "Articles")));
+            session.setDomain(d.alias);
+            return true;
+        }
+        return false;
     }
 
     public boolean addUser(Domain d, String userId, int permissions){
