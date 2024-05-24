@@ -1,10 +1,12 @@
 package com.telifie.Models.Clients;
 
 import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
 import com.telifie.Models.Actions.Search;
 import com.telifie.Models.Domain;
+import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Log;
 import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Article;
@@ -124,6 +126,12 @@ public class Articles extends Client {
         Document stats = new Document();
         int total = super.count();
         stats.append("total", total);
+
+        MongoDatabase database = Configuration.mongoClient.getDatabase(session.getDomain());
+        Document memoryUsage = database.runCommand(new Document("collStats", collection));
+        double sizeInBytes = memoryUsage.getLong("size");
+        stats.append("usage", sizeInBytes);
+
         TreeMap<String, Document> sortedDescriptions = new TreeMap<>();
         for (Document document : iterable) {
             String description = document.getString("_id");

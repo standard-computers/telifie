@@ -79,6 +79,7 @@ CREATE TABLE indexes (
     domain VARCHAR(36),
     name VARCHAR(150),
     alias VARCHAR(150),
+    description VARCHAR(150), --TODO
     origin INT,
     FOREIGN KEY (domain) REFERENCES domains (id)
 )
