@@ -2,11 +2,11 @@ package com.telifie.Models;
 
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
-import com.telifie.Models.Clients.Cache;
-import com.telifie.Models.Connectors.Radar;
+import com.telifie.Models.Utilities.Radar;
 import com.telifie.Models.Clients.Articles;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Network.Network;
+import com.telifie.Models.Utilities.Network.SQL;
 import org.json.JSONObject;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -23,7 +23,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import com.telifie.Models.Actions.Search;
+import com.telifie.Models.Clients.Search;
 
 public class Parser {
 
@@ -88,7 +88,7 @@ public class Parser {
 
         private static Article fetch(String url, int depth, boolean allowExternalCrawl){
             depth++;
-            if(new Cache().isParsed(url)){
+            if(new SQL().isParsed(url)){
                 Log.console("ALREADY PARSED : " + url);
                 return null;
             }
@@ -97,7 +97,7 @@ public class Parser {
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
                 if(response.statusCode() == 200){
                     Log.message("PARSING : " + url, "PARx102");
-                    new Cache().parsed("telifie", url);
+                    new SQL().parsed("telifie", url);
                     webpage wp = new webpage();
                     Article article = wp.extract(url, response.parse());
                     if(articles.lookup(article)){

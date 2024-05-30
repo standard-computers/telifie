@@ -4,7 +4,6 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
-import com.telifie.Models.Actions.Search;
 import com.telifie.Models.Domain;
 import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Log;
@@ -78,8 +77,6 @@ public class Articles extends Client {
     }
 
     public Article findPlace(String place, Parameters params){
-//        params.setIndex("locations");
-//        return this.search(new Unit(place), params,
         return this.search(place, params,
                 new Document("$and", Arrays.asList(
                         new Document("title", Pattern.compile("\\b" + Pattern.quote(place) + "\\w*\\b", Pattern.CASE_INSENSITIVE)),
@@ -93,10 +90,7 @@ public class Articles extends Client {
         FindIterable<Document> found = this.find(filter);
         ArrayList<Article> results = found.map(Article::new).into(new ArrayList<>());
         if(!query.startsWith("@")){
-//            if(query.contains(Andromeda.taxon("proximity")) || params.getIndex().equals("locations")) {
-//                results.sort(new DistanceSorter(params.getLatitude(), params.getLongitude()));
-//            }else{
-//            }
+//          results.sort(new DistanceSorter(params.getLatitude(), params.getLongitude()));
             results.sort(new CosmoScore(query, params));
         }
         return results;
@@ -126,12 +120,10 @@ public class Articles extends Client {
         Document stats = new Document();
         int total = super.count();
         stats.append("total", total);
-
         MongoDatabase database = Configuration.mongoClient.getDatabase(session.getDomain());
         Document memoryUsage = database.runCommand(new Document("collStats", collection));
         double sizeInBytes = memoryUsage.getLong("size");
         stats.append("usage", sizeInBytes);
-
         TreeMap<String, Document> sortedDescriptions = new TreeMap<>();
         for (Document document : iterable) {
             String description = document.getString("_id");
@@ -168,6 +160,14 @@ public class Articles extends Client {
             }
         }
         return false;
+    }
+
+    public Document next(){
+        return super.next(3);
+    }
+
+    public boolean hasNext(){
+        return super.hasNext();
     }
 
     private boolean areSimilarURLs(URI uri1, URI uri2) {

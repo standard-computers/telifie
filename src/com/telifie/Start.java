@@ -3,10 +3,10 @@ package com.telifie;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.telifie.Models.Article;
 import com.telifie.Models.Clients.Articles;
-import com.telifie.Models.Clients.Cache;
 import com.telifie.Models.Clients.Packages;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Network.Http;
+import com.telifie.Models.Utilities.Network.SQL;
 import org.bson.Document;
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +21,7 @@ public class Start {
     public static void main(String[] args){
         Console.welcome();
         Log.message("TELIFIE STARTED", "CLIx001");
-        File[] folders = new File[]{new File(Telifie.configDirectory()), new File(Telifie.configDirectory() + "\\temp"), new File(Telifie.configDirectory() + "\\andromeda")};
+        File[] folders = new File[]{new File(Telifie.configDirectory()), new File(Telifie.configDirectory() + "\\temp")};
         for(File folder : folders){
             if(!folder.exists()){
                 if(folder.mkdirs()){
@@ -74,7 +74,7 @@ public class Start {
                     }
                 }
                 case "--master" -> CompletableFuture.runAsync(() -> {
-                    if(Cache.history.isEmpty()){
+                    if(SQL.history.isEmpty()){
                         Articles articles = new Articles(new Session("telifie", "telifie"), "articles");
                         Log.console("Quick Response cache is empty. Warming up....\nFinding cache qualifying articles. This may take some time!");
                         ArrayList<Article> av = articles.get(new Document("priority", new Document("$gt", 1)));

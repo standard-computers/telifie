@@ -1,12 +1,10 @@
-package com.telifie.Models.Actions;
+package com.telifie.Models.Clients;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.telifie.Models.Article;
-import com.telifie.Models.Clients.Articles;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Network.Rest;
 import com.telifie.Models.Result;
-import com.telifie.Models.Clients.Packages;
 import org.bson.Document;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -79,20 +77,12 @@ public class Search {
     public static Document filter(String q, Parameters params){
 
         if(q.startsWith("@")){
-
             String p = q.split(" ")[0].replace("@","");
             String spl = q.replace("@" + p, "");
             return new Document(p, Pattern.compile("\\b" + Pattern.quote(spl.trim()) + "\\b", Pattern.CASE_INSENSITIVE));
         }
-//        else if(q.contains(Andromeda.taxon("proximity"))){
-//            String splr = q.get(Andromeda.taxon("proximity"));
-//            params.setIndex("locations");
-//            String[] spl = q.text().split(splr);
-//            if(spl.length >= 2){
-//                String subject = spl[0].trim();
-//                String place = spl[1].trim();
 //                Article pl = new ArticlesClient(new Session("", "telifie")).findPlace(place, params);
-//                params.setLatitude( Double.parseDouble(pl.getAttribute("Longitude")));
+//                params.setLatitude(Double.parseDouble(pl.getAttribute("Longitude")));
 //                params.setLongitude(Double.parseDouble(pl.getAttribute("Latitude")));
 //                return new Document("$and", Arrays.asList(
 //                    new Document("$or", Arrays.asList(
@@ -100,14 +90,11 @@ public class Search {
 //                            new Document("title", pattern(subject))
 //                    )), new Document("location", new Document("$near", new Document("$geometry", new Document("type", "Point").append("coordinates", Arrays.asList(Double.parseDouble(pl.getAttribute("Longitude")), Double.parseDouble(pl.getAttribute("Latitude")))) ).append("$maxDistance", 16000)))
 //                ));
-//            }
-//        }
-//        List<Document> or = new ArrayList<>();
-//        for (String word : q.split(" ")) {
-//            or.add(new Document("title", Pattern.compile("\\b" + Pattern.quote(word) + "\\b", Pattern.CASE_INSENSITIVE)));
-//        }
-//        return new Document("$or", or);
-        return new Document("title", Pattern.compile("\\b" + Pattern.quote(q) + "\\b", Pattern.CASE_INSENSITIVE));
+        List<Document> or = new ArrayList<>();
+        for (String word : q.split(" ")) {
+            or.add(new Document("title", Pattern.compile("\\b" + Pattern.quote(word) + "\\b", Pattern.CASE_INSENSITIVE)));
+        }
+        return new Document("$or", or);
     }
 
     private ArrayList<Article> paginate(ArrayList<Article> results, int page, int pageSize) {

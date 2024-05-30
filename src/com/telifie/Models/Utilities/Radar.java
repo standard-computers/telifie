@@ -1,4 +1,4 @@
-package com.telifie.Models.Connectors;
+package com.telifie.Models.Utilities;
 
 import com.telifie.Models.Clients.Packages;
 import org.json.JSONArray;

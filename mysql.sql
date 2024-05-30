@@ -17,6 +17,12 @@ CREATE TABLE pings (
     origin INT,
     type VARCHAR(6)
 );
+CREATE TABLE shortcuts (
+    user VARCHAR(36),
+    object VARCHAR(36),
+    origin INT,
+    FOREIGN KEY (user) REFERENCES users (id)
+)
 
 -- For system messages, through Twilio/SMS
 CREATE TABLE systemsms (

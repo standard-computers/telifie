@@ -1,6 +1,6 @@
 package com.telifie.Models.Utilities.Network;
 
-import com.telifie.Models.Actions.Command;
+import com.telifie.Models.Utilities.Command;
 import com.telifie.Models.Result;
 import com.telifie.Models.Utilities.Authentication;
 import com.telifie.Models.Utilities.Event;

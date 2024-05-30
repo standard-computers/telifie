@@ -1,13 +1,11 @@
-package com.telifie.Models.Actions;
+package com.telifie.Models.Utilities;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.telifie.Models.*;
-import com.telifie.Models.Connectors.Twilio;
 import com.telifie.Models.Parser;
 import com.telifie.Models.Clients.*;
 import com.telifie.Models.Clients.Packages;
-import com.telifie.Models.Utilities.*;
-import com.telifie.Models.Utilities.Package;
+import com.telifie.Models.Utilities.Network.SQL;
 import org.bson.Document;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -197,7 +195,7 @@ public class Command {
                         case "id" -> {
                             try {
                                 if(domain.hasViewPermissions(session.user)){
-                                    CompletableFuture.runAsync(() -> Cache.history.log(session.user, a.getId()));
+                                    CompletableFuture.runAsync(() -> SQL.history.log(session.user, a.getId()));
                                     return new Result(this.command, "article", articles.withId(secSelector));
                                 }
                                 return new Result(401, this.command, "INSUFFICIENT PERMISSIONS");

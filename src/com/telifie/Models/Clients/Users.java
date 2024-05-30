@@ -1,7 +1,6 @@
 package com.telifie.Models.Clients;
 
-import com.telifie.Models.Connectors.SendGrid;
-import com.telifie.Models.Connectors.Twilio;
+import com.telifie.Models.Utilities.Twilio;
 import com.telifie.Models.User;
 import com.telifie.Models.Utilities.Network.SQL;
 import com.telifie.Models.Utilities.Telifie;
@@ -53,7 +52,7 @@ public class Users {
 
     public boolean emailCode(User user){
         String code = Telifie.digitCode();
-        SendGrid.sendCode(user.getEmail(), code);
+        Twilio.sendCode(user.getEmail(), code);
         return this.lock(user, code);
     }
 

@@ -1,11 +1,8 @@
 package com.telifie.Models.Utilities;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.telifie.Models.Actions.Search;
+import com.telifie.Models.Clients.Search;
 import com.telifie.Models.Article;
-import com.telifie.Models.Clients.Articles;
-import com.telifie.Models.Clients.PersonalClient;
-import com.telifie.Models.Parser;
 import com.telifie.Models.Result;
 import com.telifie.Models.User;
 import org.bson.Document;
@@ -53,26 +50,7 @@ public class Console {
             switch (cmd) {
                 case "exit", "logout", "close" -> System.exit(0);
                 case "@import" -> { //TODO REMOVE
-                    PersonalClient pc = new PersonalClient(new Session("", "telifie"));
-                    Articles articles = new Articles(new Session("", "telifie"), "articles");
-                    Parser p = new Parser(new Session("", "telifie"));
-                    while(pc.hasNext()){
-                        try {
-                            String link = pc.next().getString("link");
-                            Log.console("WORKING -> " + link);
-                            Article a = p.parse(link);
-                            if(a != null){
-                                if(articles.create(a)){
-                                    Log.console("ARTICLE CREATED -> https://telifie.com/articles/" + a.getId());
-                                }
-                            }else{
-                                Log.console("-----FAILED ARTICLE-----");
-                            }
-                            Thread.sleep(1500);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
+
                 }
                 case "@authenticate" -> {
                     Authentication auth = new Authentication(new User("", "telifie", ""));
