@@ -22,19 +22,15 @@ public class Domain {
         this.permissions = (permissions != 1 ? 0 : 1); //Private is default mode if none
     }
 
-    public Domain(ResultSet resultSet) throws SQLException {
-        this.id = resultSet.getString("id");
-        this.owner = resultSet.getString("owner");
-        this.name = resultSet.getString("name");
-        this.alias = resultSet.getString("alias");
-        this.origin = resultSet.getInt("origin");
-        this.permissions = resultSet.getInt("permissions");
+    public Domain(ResultSet rs) throws SQLException {
+        this.id = rs.getString("id");
+        this.owner = rs.getString("owner");
+        this.name = rs.getString("name");
+        this.alias = rs.getString("alias");
+        this.origin = rs.getInt("origin");
+        this.permissions = rs.getInt("permissions");
         this.users = new ArrayList<>();
         this.indexes = new ArrayList<>();
-    }
-
-    public String getId() {
-        return id;
     }
 
     public int getPermissions(String userId){

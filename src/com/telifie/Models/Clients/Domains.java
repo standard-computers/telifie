@@ -1,9 +1,7 @@
 package com.telifie.Models.Clients;
 
-import com.mongodb.MongoException;
 import com.telifie.Models.Index;
 import com.telifie.Models.Domain;
-import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Network.SQL;
 import com.telifie.Models.Utilities.Session;
 import com.telifie.Models.Utilities.Telifie;
@@ -155,12 +153,12 @@ public class Domains {
                 domain = new Domain(drs);
             }
             if (domain != null) {
-                ResultSet mrs = SQL.get("SELECT * FROM memberships WHERE domain = ?", domain.getId());
+                ResultSet mrs = SQL.get("SELECT * FROM memberships WHERE domain = ?", domain.id);
                 while (mrs.next()) {
                     Domain.Member member = new Domain.Member(mrs);
                     domain.getUsers().add(member);
                 }
-                ResultSet crs = SQL.get("SELECT * FROM indexes WHERE domain = ?", domain.getId());
+                ResultSet crs = SQL.get("SELECT * FROM indexes WHERE domain = ?", domain.id);
                 while (crs.next()) {
                     Index index = new Index(crs);
                     domain.getIndexes().add(index);

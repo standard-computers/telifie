@@ -17,9 +17,12 @@ CREATE TABLE pings (
     origin INT,
     type VARCHAR(6)
 );
+
 CREATE TABLE shortcuts (
     user VARCHAR(36),
-    object VARCHAR(36),
+    object TEXT,
+    name TEXT,
+    icon TEXT,
     origin INT,
     FOREIGN KEY (user) REFERENCES users (id)
 )
@@ -48,15 +51,6 @@ CREATE TABLE authentications (
     origin INT,
     expiration INT
 )
-
--- Receipts for payments and invoices, not for backend software
-CREATE TABLE receipts (
-    user VARCHAR(36),
-    customer VARCHAR(36),
-    invoice  VARCHAR(36),
-    total INT,
-    origin INT
-);
 
 -- Domains are like organizations.
 CREATE TABLE domains (
@@ -100,11 +94,7 @@ CREATE TABLE events (
     FOREIGN KEY (user) REFERENCES users (id)
 )
 
-
--- //TODO The below needs implemented
--- For when user requests actions like
-CREATE TABLE handles (user VARCHAR(36), connector VARCHAR(150), query TEXT, endpoint TEXT, origin INT, resolved INT, FOREIGN KEY (user) REFERENCES users(id))
-
+--TODO
 -- For social use
 CREATE TABLE relationship (
     one VARCHAR(36),

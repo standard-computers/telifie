@@ -81,20 +81,23 @@ public class Search {
             String spl = q.replace("@" + p, "");
             return new Document(p, Pattern.compile("\\b" + Pattern.quote(spl.trim()) + "\\b", Pattern.CASE_INSENSITIVE));
         }
-//                Article pl = new ArticlesClient(new Session("", "telifie")).findPlace(place, params);
-//                params.setLatitude(Double.parseDouble(pl.getAttribute("Longitude")));
-//                params.setLongitude(Double.parseDouble(pl.getAttribute("Latitude")));
-//                return new Document("$and", Arrays.asList(
-//                    new Document("$or", Arrays.asList(
-//                            new Document("description", pattern(subject)),
-//                            new Document("title", pattern(subject))
-//                    )), new Document("location", new Document("$near", new Document("$geometry", new Document("type", "Point").append("coordinates", Arrays.asList(Double.parseDouble(pl.getAttribute("Longitude")), Double.parseDouble(pl.getAttribute("Latitude")))) ).append("$maxDistance", 16000)))
-//                ));
-        List<Document> or = new ArrayList<>();
-        for (String word : q.split(" ")) {
-            or.add(new Document("title", Pattern.compile("\\b" + Pattern.quote(word) + "\\b", Pattern.CASE_INSENSITIVE)));
+//      Article pl = new ArticlesClient(new Session("", "telifie")).findPlace(place, params);
+//      params.setLatitude(Double.parseDouble(pl.getAttribute("Longitude")));
+//      params.setLongitude(Double.parseDouble(pl.getAttribute("Latitude")));
+//      return new Document("$and", Arrays.asList(
+//          new Document("$or", Arrays.asList(
+//                  new Document("description", pattern(subject)),
+//                  new Document("title", pattern(subject))
+//          )), new Document("location", new Document("$near", new Document("$geometry", new Document("type", "Point").append("coordinates", Arrays.asList(Double.parseDouble(pl.getAttribute("Longitude")), Double.parseDouble(pl.getAttribute("Latitude")))) ).append("$maxDistance", 16000)))
+//      ));
+        if(q.split(" ").length > 1){
+            List<Document> or = new ArrayList<>();
+            for (String word : q.split(" ")) {
+                or.add(new Document("title", Pattern.compile("\\b" + Pattern.quote(word) + "\\b", Pattern.CASE_INSENSITIVE)));
+            }
+            return new Document("$or", or);
         }
-        return new Document("$or", or);
+        return new Document("title", Pattern.compile("\\b" + Pattern.quote(q) + "\\b", Pattern.CASE_INSENSITIVE));
     }
 
     private ArrayList<Article> paginate(ArrayList<Article> results, int page, int pageSize) {

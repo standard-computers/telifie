@@ -295,82 +295,30 @@ public class Command {
             return new Result(this.command,"stats", articles.stats());
         }else if(selector.equals("shortcuts")){
             Shortcuts scs = new Shortcuts(session);
-            if(this.selectors.length >= 4){ //Saving/Unsaving articles in shortcut
-                try{
-                    Shortcut c = scs.get(secSelector);
-                    try{
-                        Articles articles = new Articles(session, "shortcuts");
-                        Article a = articles.withId(terSelector);
-                        if(objSelector.equals("save")){
-                            if(scs.save(c, a)){
-                                return new Result(200, this.command, "ARTICLE SAVED");
+            if(selectors.length >= 2){
+                String object = secSelector;
+                switch (objSelector) {
+                    case "save" -> {
+                        if(!content.isEmpty()){
+                            if(scs.save(new Shortcut(content))){
+                                return new Result(200, this.command, "SAVED");
                             }
-                            return new Result(505, this.command, "FAILED ARTICLE SAVE");
-                        } else if(objSelector.equals("unsave")){
-                            if(scs.unsave(c, a)){
-                                return new Result(200, this.command, "ARTICLE UNSAVED");
-                            }
-                            return new Result(505, this.command, "FAILED ARTICLE UNSAVE");
+                            return new Result(50, this.command, "FAILED SAVING SHORTCUT");
                         }
-                        return new Result(404, this.command, "BAD SHORTCUT OPTION");
-                    }catch (NullPointerException n){
-                        return new Result(404, this.command, "ARTICLE NOT FOUND");
+                        return new Result(428, this.command, "JSON BODY EXPECTED");
                     }
-                }catch (NullPointerException n){
-                    return new Result(404, this.command, "SHORTCUT NOT FOUND");
+                    case "unsave" -> {
+                        if(selectors.length >= 3){
+                            if(scs.unsave(object)){
+                                return new Result(200, this.command, "UNSAVED");
+                            }
+                            return new Result(50, this.command, "FAILED UNSAVING SHORTCUT");
+                        }
+                        return new Result(403, this.command, "BAD SHORTCUTS COMMAND");
+                    }
                 }
-            }else if(this.selectors.length >= 2){ //Updating, deleting, getting shortcuts
-                if(secSelector != null) {
-                    try {
-                        Shortcut c = scs.get(secSelector);
-                        switch (objSelector) {
-                            case "update" -> {
-                                if (content != null) {
-                                    if (content.getString("name") == null) {
-                                        return new Result(428, this.command, "SHORTCUT NAME EXPECTED");
-                                    }
-                                    if(c.getUser().equals(session.user)){
-                                        if (scs.update(c, content)) {
-                                            return new Result(200, this.command, "SHORTCUT UPDATED");
-                                        }
-                                        return new Result(505, this.command, "FAILED SHORTCUT UPDATE");
-                                    }
-                                    return new Result(401, this.command, "NO SHORTCUT PERMISSIONS");
-                                }
-                                return new Result(428, this.command, "SHORTCUT JSON EXPECTED");
-                            }
-                            case "delete" -> {
-                                if (scs.delete(c)) {
-                                    return new Result(200, this.command, "SHORTCUT DELETED");
-                                }
-                                return new Result(505, this.command, "FAILED SHORTCUT DELETION");
-                            }
-                            case "id" -> {
-                                if(c.getUser().equals(session.user)) {
-                                    return new Result(this.command, "shortcut", scs.withArticles(secSelector));
-                                }
-                                return new Result(401, this.command, "NO SHORTCUT PERMISSIONS");
-                            }
-                        }
-                        return new Result(404, this.command, "BAD SHORTCUTS OPTION");
-                    }catch (NullPointerException n){
-                        return new Result(404, this.command, "SHORTCUT NOT FOUND");
-                    }
-                }else if(objSelector.equals("create")){
-                    if(content != null){
-                        Shortcut newShortcut = new Shortcut(content);
-                        Shortcut createdShortcut = scs.create(newShortcut);
-                        if(createdShortcut != null){
-                            return new Result(this.command, "shortcut", createdShortcut);
-                        }
-                        return new Result(505, this.command, "FAILED SHORTCUT CREATION");
-                    }
-                    return new Result(428, this.command, "JSON BODY EXPECTED");
-                }
-                return new Result(428, this.command, "SHORTCUT ID REQUIRED");
             }
-            ArrayList<Shortcut> usersShortcuts = scs.forUser(session.user);
-            return new Result(this.command, "shortcuts", usersShortcuts);
+            return new Result(this.command, "shortcuts", scs.getShortcuts());
         }else if(selector.equals("indexes")){
             //TODO check permissions
             if(content != null){
