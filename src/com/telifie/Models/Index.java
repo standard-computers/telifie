@@ -29,8 +29,7 @@ public class Index {
 
     @Override
     public String toString() {
-        return "{" +
-                "\"id\" : \"" + id + '\"' +
+        return "{\"id\" : \"" + id + '\"' +
                 ", \"name\" : \"" + name + '\"' +
                 ", \"alias\" : \"" + alias + '\"' +
                 ", \"origin\" :" + origin +

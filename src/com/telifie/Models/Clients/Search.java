@@ -12,9 +12,6 @@ import java.util.regex.Pattern;
 
 public class Search {
 
-    public Search() {
-    }
-
     public Result execute(Session session, String q, Parameters params) throws JsonProcessingException {
         Articles articles = new Articles(session, params.index); //TODO Search more than params.index
         Result result = new Result(200, q, "");
@@ -37,10 +34,8 @@ public class Search {
                     }
                 }
             }else if(q.contains("uuid")){
-
                 result.setGenerated("Here's a UUID  \\n" + UUID.randomUUID());
             }else if(q.contains("weather")){
-
                 if(Packages.get("com.telifie.connectors.openweathermap") != null){
                     result.setSource("com.telifie.connectors.openweathermap");
                     result.setGenerated(Telifie.tools.escape(Rest.get(Packages.get("com.telifie.connectors.openweathermap"), new HashMap<>() {{
@@ -52,10 +47,8 @@ public class Search {
                     }})));
                 }
             }else if(q.contains("flip a coin")){
-
                 result.setGenerated(((new Random().nextInt(2) == 0) ? "Heads" : "Tails"));
             }else if(q.contains("roll") && q.contains("dice")){
-
                 int random = new Random().nextInt(6) + 1;
                 result.setGenerated("Your dice roll is " + random);
             }else if(Telifie.tools.containsAddress(q)){
@@ -75,7 +68,6 @@ public class Search {
     }
 
     public static Document filter(String q, Parameters params){
-
         if(q.startsWith("@")){
             String p = q.split(" ")[0].replace("@","");
             String spl = q.replace("@" + p, "");

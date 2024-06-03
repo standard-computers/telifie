@@ -4,7 +4,6 @@ import com.telifie.Models.Shortcut;
 import com.telifie.Models.Utilities.Network.SQL;
 import com.telifie.Models.Utilities.Session;
 import com.telifie.Models.Utilities.Telifie;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;

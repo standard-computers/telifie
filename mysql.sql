@@ -105,6 +105,7 @@ CREATE TABLE relationship (
     FOREIGN KEY (two) REFERENCES users (id)
 )
 
+--Front end use only
 CREATE TABLE themes (
     user VARCHAR(36),
     origin INT,

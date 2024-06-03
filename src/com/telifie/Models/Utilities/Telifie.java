@@ -1,8 +1,9 @@
 package com.telifie.Models.Utilities;
 
 import com.google.common.html.HtmlEscapers;
+import com.telifie.Models.Clients.Packages;
+import com.twilio.rest.api.v2010.account.Message;
 import org.apache.commons.text.StringEscapeUtils;
-import org.bson.Document;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
@@ -84,17 +85,21 @@ public class Telifie {
         }
     }
 
+    public static void sms(String to, String from, String content){
+        String ACCOUNT_SID = Packages.get("com.telifie.connectors.twilio").getAccess();
+        String AUTH_TOKEN = Packages.get("com.telifie.connectors.twilio").getSecret();
+        com.twilio.Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
+        Message.creator(new com.twilio.type.PhoneNumber(to), new com.twilio.type.PhoneNumber(from), content).create();
+    }
+
+    public static boolean email(String email, String code){
+        return false;
+    }
+
     public static class tools {
 
         public static String escapeMarkdownForJson(String markdownText) {
-            String escapedText = markdownText.replace("\\", "\\\\");
-            escapedText = escapedText.replace("\"", "\\\"");
-            escapedText = escapedText.replace("\n", "\\n");
-            escapedText = escapedText.replace("\r", "\\r");
-            escapedText = escapedText.replace("\t", "\\t");
-            escapedText = escapedText.replace("\b", "\\b");
-            escapedText = escapedText.replace("\f", "\\f");
-            return escapedText;
+            return markdownText.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace("\b", "\\b").replace("\f", "\\f");
         }
 
         public static boolean contains(String[] things, String string){

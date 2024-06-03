@@ -83,8 +83,7 @@ public class Domain {
 
     @Override
     public String toString() {
-        return "{" +
-                "\"id\" : \"" + id + '\"' +
+        return "{\"id\" : \"" + id + '\"' +
                 ", \"owner\" : \"" + owner + '\"' +
                 ", \"name\" : \"" + name + '\"' +
                 ", \"alias\" : \"" + alias + '\"' +

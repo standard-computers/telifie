@@ -32,7 +32,7 @@ public class Command {
         return this.selectors[index].replaceAll("/", "");
     }
 
-    public Result parseCommand(Session session, Document content){
+    public Result parseCommand(Session session, Document content, String type){
         String selector = this.selectors[0];
         String objSelector = (this.selectors.length > 1 ? this.get(1) : "");
         String secSelector = (this.selectors.length > 2 ? this.get(2) : null);
@@ -69,20 +69,19 @@ public class Command {
             }
             return new Result(428, this.command, "JSON BODY EXPECTED");
         }else if(selector.equals("domains")){
-            if(this.selectors.length >= 2){ //telifie.com/domains/{owner|member|create|update}
+            if(this.selectors.length >= 2){
                 Domains domains = new Domains(session);
                 ArrayList<Domain> foundDomains;
                 if(objSelector.equals("owner")){
                     foundDomains = domains.mine();
                     return new Result(this.command, "domains", foundDomains);
-                }else if(objSelector.equals("member")){ //Domains they're a member of
+                }else if(objSelector.equals("member")){
 //                    foundDomains = domains.viewable();
 //                    return new Result(this.command, "domains", foundDomains);
-                }else if(objSelector.equals("protected")){ //Domains they can view
-
+                }else if(objSelector.equals("protected")){
                     foundDomains = domains.viewable();
                     return new Result(this.command, "domains", foundDomains);
-                }else if(objSelector.equals("create")){ //Creating a new domain
+                }else if(objSelector.equals("create")){
                     if(content != null){
                         String domainName;
                         if((domainName = content.getString("name")) != null && content.getInteger("permissions") != null){
@@ -95,7 +94,7 @@ public class Command {
                         return new Result(428, this.command, "DOMAIN INFO NOT PROVIDED");
                     }
                     return new Result(428, this.command, "JSON BODY EXPECTED");
-                }else if(this.selectors.length == 3){ //telifie.com/domains/{delete|id}/{domainID}
+                }else if(this.selectors.length == 3){
                     try{
                         Domain d = domains.withId(secSelector);
                         switch (objSelector) {
@@ -320,40 +319,40 @@ public class Command {
             }
             return new Result(this.command, "shortcuts", scs.getShortcuts());
         }else if(selector.equals("indexes")){
-            //TODO check permissions
-            if(content != null){
-                Indexes indexes = new Indexes(session);
-                String domainId = content.getString("domain"); //Get domain and check validity
-                Log.console(domainId);
-                Domains domains = new Domains(session);
-                Domain domain = domains.withId(domainId);
-                if(!domainId.isEmpty()){
-                    if(this.selectors.length >= 2){
-                        switch (objSelector) {
-                            case "create" -> {
-                                String domainName = content.getString("name").toLowerCase().replaceAll(" ", "-"); //Get domain and check validity
-                                Index i = indexes.withAlias(domainId, domainName);
-                                if(i == null){
-                                    if(indexes.create(domain, new Index(content))){
-                                        return new Result(200, this.command, "INDEX CREATED");
-                                    }
-                                    return new Result(500, this.command, "FAILED CREATING INDEX");
+            Indexes indexes = new Indexes(session);
+            Domains domains = new Domains(session);
+            Domain domain = domains.withId(secSelector);
+            if(this.selectors.length >= 2){
+                if(content != null) {
+                    String domainId = content.getString("domain");
+                    if(objSelector.equals("create")){
+                            String domainName = content.getString("name").toLowerCase().replaceAll(" ", "-"); //Get domain and check validity
+                            Index i = indexes.withAlias(domainId, domainName);
+                            if(i == null){
+                                if(indexes.create(domain, new Index(content))){
+                                    return new Result(200, this.command, "INDEX CREATED");
                                 }
-                                return new Result(409, this.command, "INDEX ALREADY EXISTS");
+                                return new Result(500, this.command, "FAILED CREATING INDEX");
                             }
-                            case "id" -> {
-                                Index i = indexes.get(secSelector);
-                                if(i != null){
-                                    return new Result(this.command, "index", i);
-                                }
-                                return new Result(404, this.command, "INDEX NOT FOUND");
-                            }
-                        }
+                            return new Result(409, this.command, "INDEX ALREADY EXISTS");
                     }
                 }
-                return new Result(400, this.command, "DOMAIN REQUIRED AS ID");
+            }else if(type.equals("GET") && selectors.length == 3){
+                Index i = indexes.get(terSelector);
+                if(i != null){
+                    return new Result(this.command, "index", i);
+                }
+                return new Result(404, this.command, "INDEX NOT FOUND");
+            }else if(type.equals("DELETE") && selectors.length == 3){
+                Index i = indexes.get(terSelector);
+                if(i != null){
+                    if(indexes.delete(domain, terSelector)){
+                        return new Result(200, this.command, "INDEX DELETED");
+                    }
+                    return new Result(500, this.command, "FAILED DELETING INDEX");
+                }
+                return new Result(404, this.command, "INDEX NOT FOUND");
             }
-
         }else if(selector.equals("users")){
             Users users = new Users();
             if(this.selectors.length >= 3){
@@ -526,10 +525,10 @@ public class Command {
             Users users = new Users();
             User user = users.getUserWithPhone(from);
             if(user == null){
-                Twilio.send(from, "+15138029566", "The number you are texting from is not registered to a Telifie account.");
+                Telifie.sms(from, "+15138029566", "The number you are texting from is not registered to a Telifie account.");
                 return new Result(404, this.command, "PHONE NUMBER NOT REGISTERED");
             }
-            Twilio.send(user.getPhone(), "+15138029566", "Hello " + user.getName() + "!");
+            Telifie.sms(user.getPhone(), "+15138029566", "Hello " + user.getName() + "!");
             return new Result(200, this.command, "MESSAGE RECEIVED");
         }else if(selector.equals("ping")){
             if(content != null){

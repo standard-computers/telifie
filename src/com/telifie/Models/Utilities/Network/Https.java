@@ -31,7 +31,7 @@ public class Https {
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).childHandler(new HttpsServerInitializer(sslCtx));
-            Channel ch = b.bind(443).sync().channel(); // Bind to HTTPS port 443
+            Channel ch = b.bind(443).sync().channel();
             ch.closeFuture().sync();
         } finally {
             bossGroup.shutdownGracefully();
@@ -74,14 +74,12 @@ public class Https {
                             try {
                                 HttpContent content = (HttpContent) msg;
                                 String requestBody = content.content().toString(CharsetUtil.UTF_8);
-                                result = new Command(query).parseCommand(session, Document.parse(requestBody));
+                                result = new Command(query).parseCommand(session, Document.parse(requestBody), request.method().name());
                             }catch(BsonInvalidOperationException e){
                                 result = new Result(505, query, "MALFORMED JSON");
                             }
-                        }else if(request.method().name().equals("GET")){
-                            result = new Command(query).parseCommand(session, null);
                         }else{
-                            result = new Result(404, query, "INVALID METHOD");
+                            result = new Command(query).parseCommand(session, null, request.method().name());
                         }
                     }else{
                         result = new Result(403, query, "INVALID CREDENTIALS");

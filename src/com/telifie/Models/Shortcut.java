@@ -2,7 +2,6 @@ package com.telifie.Models;
 
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 

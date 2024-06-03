@@ -20,8 +20,9 @@ public class Indexes {
 
     public boolean create(Domain d, Index i){
         Configuration.mongoClient.getDatabase(d.alias).getCollection(i.alias);
+        session.setDomain(d.alias);
         Articles articles = new Articles(session, i.alias);
-        articles.create(new Article(new Document("title", "Welcome to your new Domain!").append("link", "https://telifie.com/manual")));
+        articles.create(new Article(new Document("title", "Welcome to your new Index!").append("link", "https://telifie.com/manual")));
         return SQL.update("INSERT INTO indexes (id, domain, name, alias, origin) VALUES (?, ?, ?, ?, ?)", i.id, i.domain, i.name, i.alias, i.origin);
     }
 
@@ -35,6 +36,7 @@ public class Indexes {
             return null;
         }
     }
+
     public Index get(String indexId){
         try {
             ResultSet resultSet = SQL.get("SELECT * FROM indexes WHERE id = ? LIMIT 1", indexId);
@@ -44,5 +46,9 @@ public class Indexes {
         } catch (SQLException e) {
             return null;
         }
+    }
+
+    public boolean delete(Domain d, String indexId){
+        return SQL.delete("DELETE FROM indexes WHERE id = ? AND domain = ?", indexId, d.id);
     }
 }
