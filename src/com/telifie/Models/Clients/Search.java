@@ -3,67 +3,21 @@ package com.telifie.Models.Clients;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.telifie.Models.Article;
 import com.telifie.Models.Utilities.*;
-import com.telifie.Models.Utilities.Network.Rest;
 import com.telifie.Models.Result;
 import org.bson.Document;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Search {
 
     public Result execute(Session session, String q, Parameters params) throws JsonProcessingException {
-        Articles articles = new Articles(session, params.index); //TODO Search more than params.index
+        Articles articles = new Articles(session, params.index);
         Result result = new Result(200, q, "");
-        result.setParams(params);
-        boolean doQuery = true;
-        if(params.page == 1){
-            Voyager.Unit unit = new Voyager.Unit(q);
-            if((q.contains("*") || q.contains("+") || q.contains("-") || q.contains("/")) || Telifie.tools.contains(Telifie.NUMERALS, q)){
-                String mathExpressionPattern = "[\\d\\s()+\\-*/=xX^sincoaet]+";
-                Pattern pattern = Pattern.compile(mathExpressionPattern);
-                Matcher matcher = pattern.matcher(q);
-                if(matcher.find()) {
-                    if(Packages.get("com.telifie.connectors.wolfram") != null){
-                        doQuery = false;
-                        result.setSource("com.telifie.connectors.wolfram");
-                        result.setGenerated(Rest.get(Packages.get("com.telifie.connectors.wolfram"), new HashMap<>() {{
-                            put("appid", Packages.get("com.telifie.connectors.wolfram").getAccess());
-                            put("i", q);
-                        }}));
-                    }
-                }
-            }else if(q.contains("uuid")){
-                result.setGenerated("Here's a UUID  \\n" + UUID.randomUUID());
-            }else if(q.contains("weather")){
-                if(Packages.get("com.telifie.connectors.openweathermap") != null){
-                    result.setSource("com.telifie.connectors.openweathermap");
-                    result.setGenerated(Telifie.tools.escape(Rest.get(Packages.get("com.telifie.connectors.openweathermap"), new HashMap<>() {{
-                        put("units", "imperial");
-                        put("excluded", "hourly,minutely,current");
-                        put("lat", String.valueOf(params.latitude));
-                        put("lon", String.valueOf(params.longitude));
-                        put("appid", Packages.get("com.telifie.connectors.openweathermap").getAccess());
-                    }})));
-                }
-            }else if(q.contains("flip a coin")){
-                result.setGenerated(((new Random().nextInt(2) == 0) ? "Heads" : "Tails"));
-            }else if(q.contains("roll") && q.contains("dice")){
-                int random = new Random().nextInt(6) + 1;
-                result.setGenerated("Your dice roll is " + random);
-            }else if(Telifie.tools.containsAddress(q)){
-                //TODO map/radar lookup
-            }else if(unit.isInterrogative()){
-                Log.console(unit.getSubject());
-            }
-        }
-        if(doQuery){
-            ArrayList<Article> results;
-            ArrayList<Article> all = articles.search(q, params, filter(q, params));
-            results = paginate(all, params.page, params.rpp);
-            result.setResults("articles", results);
-            result.setTotal(all.size());
-        }
+        ArrayList<Article> results;
+        ArrayList<Article> all = articles.search(q, params, filter(q, params));
+        results = paginate(all, params.page, params.rpp);
+        result.setResults("articles", results);
+        result.setTotal(all.size());
         return result;
     }
 
@@ -103,9 +57,5 @@ public class Search {
             paginatedResults.addAll(results.subList(startIndex, endIndex));
         }
         return paginatedResults;
-    }
-
-    public static Pattern pattern(String value){
-        return Pattern.compile("\\b" + Pattern.quote(value) + "\\b", Pattern.CASE_INSENSITIVE);
     }
 }

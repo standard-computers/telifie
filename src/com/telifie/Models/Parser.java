@@ -2,7 +2,6 @@ package com.telifie.Models;
 
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
-import com.telifie.Models.Utilities.Radar;
 import com.telifie.Models.Clients.Articles;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Network.Network;
@@ -20,10 +19,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import com.telifie.Models.Clients.Search;
 
 public class Parser {
 
@@ -31,33 +28,6 @@ public class Parser {
 
     public Parser(Session session){
         articles = new Articles(session, "articles"); //TODO give option to select collection
-    }
-
-    public void reparse(){
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Articles articles =  new Articles(new Session("telifie", "telifie"), "articles"); //TODO Reparse give option to select collection
-        Log.message("STARTING REPARSE", "PARx011");
-        ArrayList<Article> parsing = articles.withProjection(
-                new org.bson.Document("$or", Arrays.asList(
-                    new org.bson.Document("link", Search.pattern("https://")),
-                    new org.bson.Document("link", Search.pattern("http://")),
-                    new org.bson.Document("source", Search.pattern("http://")),
-                    new org.bson.Document("source", Search.pattern("http://"))
-                )),
-                new org.bson.Document("link", 1).append("link", 1)
-        );
-        Log.console("RE-PARSE TOTAL : " + parsing.size());
-        parsing.forEach(a -> {
-            Future<Article> future = executor.submit(() -> engines.fetch(a.getLink(), 0, true));
-            try {
-                future.get();
-                reparse();
-            } catch (InterruptedException | ExecutionException e) {
-                Log.error("FAILED ASYNC QUEUE TASK", "PARx010");
-            } finally {
-                executor.shutdown();
-            }
-        });
     }
 
     public Article parse(String uri){
@@ -87,11 +57,6 @@ public class Parser {
         }
 
         private static Article fetch(String url, int depth, boolean allowExternalCrawl){
-            depth++;
-            if(new SQL().isParsed(url)){
-                Log.console("ALREADY PARSED : " + url);
-                return null;
-            }
             try {
                 String host = Network.url(url).getProtocol() + "://" + Network.url(url).getHost();
                 Connection.Response response = Jsoup.connect(url).userAgent("telifie/1.0").execute();
@@ -374,7 +339,7 @@ public class Parser {
 
                 }else{
                     try {
-                        JSONObject location = Radar.get(fullAddress);
+                        JSONObject location = Telifie.tools.geolocate(fullAddress);
                         article.addAttribute(new Attribute("Longitude", String.valueOf(location.getFloat("longitude"))));
                         article.addAttribute(new Attribute("Latitude", String.valueOf(location.getFloat("latitude"))));
                         article.addAttribute(new Attribute("Address", location.getString("formattedAddress")));

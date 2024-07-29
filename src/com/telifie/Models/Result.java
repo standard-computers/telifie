@@ -1,6 +1,5 @@
 package com.telifie.Models;
 
-import com.telifie.Models.Utilities.Parameters;
 import com.telifie.Models.Utilities.Telifie;
 import org.bson.Document;
 import java.util.ArrayList;
@@ -11,24 +10,19 @@ public class Result {
     private final String id = UUID.randomUUID().toString();
     public final String query;
     private String source = "";
-    private Parameters params;
     private String object = "results";
     private String generated = "";
     private Object results;
     private final int origin = Telifie.epochTime();
     private int statusCode = 200, count = 0, total;
 
-    public Result(String query, String object, ArrayList results) {
-        this.query = query;
-        this.object = object;
-        this.results = results;
-        this.count = results.size();
-    }
-
     public Result(String query, String object, Object results) {
         this.query = query;
         this.object = object;
         this.results = results;
+        if(results instanceof ArrayList<?>) {
+            this.count = ((ArrayList<?>) results).size();
+        }
     }
 
     public Result(int statusCode, String query, String results) {
@@ -85,10 +79,6 @@ public class Result {
         }
         sb.append("}");
         return sb.toString();
-    }
-
-    public void setParams(Parameters params) {
-        this.params = params;
     }
 
     public void setResults(String object, Object results) {

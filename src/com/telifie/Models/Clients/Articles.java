@@ -146,7 +146,7 @@ public class Articles extends Client {
     }
 
     public boolean lookup(Article article){
-        ArrayList<Article> matches = get(new Document("link", Search.pattern(article.getLink())));
+        ArrayList<Article> matches = get(new Document("link", Pattern.compile("\\b" + Pattern.quote(article.getLink()) + "\\b", Pattern.CASE_INSENSITIVE)));
         for (Article a : matches) {
             String link = a.getLink();
             try {

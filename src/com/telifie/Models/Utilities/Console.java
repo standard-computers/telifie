@@ -11,26 +11,6 @@ import java.util.*;
 
 public class Console {
 
-    public static void welcome() {
-        System.out.println("||=============================================================||");
-        System.out.println("||                                                             ||");
-        System.out.println("||   ,--------. ,------. ,--.    ,--. ,------. ,--. ,------.   ||");
-        System.out.println("||   '--.  .--' |  .---' |  |    |  | |  .---' |  | |  .---'   ||");
-        System.out.println("||      |  |    |  `--,  |  |    |  | |  `--,  |  | |  `--,    ||");
-        System.out.println("||      |  |    |  `---. |  '--. |  | |  |`    |  | |  `---.   ||");
-        System.out.println("||      `--'    `------' `-----' `--' `--'     `--' `------'   ||");
-        System.out.println("||                                                             ||");
-        System.out.println("||=============================================================||");
-        System.out.println("        COPYRIGHT (C) TELIFIE LLC 2024, CINCINNATI, OHIO         ");
-        System.out.println("-----------------------------------------------------------------");
-        System.out.println("Operating System    : " + System.getProperty("os.name"));
-        System.out.println("System OS Version   : " + System.getProperty("os.version"));
-        System.out.println("System Architecture : " + System.getProperty("os.arch"));
-        System.out.println("Working Directory   : " + Telifie.configDirectory());
-        System.out.println("Model Selection     : " + Configuration.getModel());
-        System.out.println("-----------------------------------------------------------------");
-    }
-
     public static void message(String m){
         System.out.println("-----------------------------------------------------------------");
         System.out.println(m);

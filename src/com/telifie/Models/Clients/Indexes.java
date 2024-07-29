@@ -48,7 +48,8 @@ public class Indexes {
         }
     }
 
-    public boolean delete(Domain d, String indexId){
-        return SQL.delete("DELETE FROM indexes WHERE id = ? AND domain = ?", indexId, d.id);
+    public boolean delete(Domain d, Index i){
+        Configuration.mongoClient.getDatabase(d.alias).getCollection(i.alias).drop();
+        return SQL.delete("DELETE FROM indexes WHERE id = ? AND domain = ?", i.id, d.id);
     }
 }

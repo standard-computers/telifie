@@ -4,6 +4,8 @@ import com.google.common.html.HtmlEscapers;
 import com.telifie.Models.Clients.Packages;
 import com.twilio.rest.api.v2010.account.Message;
 import org.apache.commons.text.StringEscapeUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
@@ -11,7 +13,14 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -111,6 +120,15 @@ public class Telifie {
             return false;
         }
 
+        public static boolean startsWith(String[] things, String string){
+            for (String thing: things) {
+                if(string.startsWith(thing)){
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public static boolean equals(char sample, char[] chars){
             for(char ch : chars){
                 if(sample == ch){
@@ -182,6 +200,17 @@ public class Telifie {
 
         private static int min(int... numbers) {
             return java.util.Arrays.stream(numbers).min().orElse(Integer.MAX_VALUE);
+        }
+
+        public static JSONObject geolocate(String address) throws IOException, InterruptedException {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder().uri(URI.create("https://api.radar.io/v1/geocode/forward?query=" + URLEncoder.encode(address, StandardCharsets.UTF_8.toString()))).header("Authorization", Packages.get("com.telifie.connectors.radar").getAccess()).build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            JSONArray addressed = new JSONObject(response.body()).getJSONArray("addresses");
+            if(addressed.length() > 0){
+                return addressed.getJSONObject(0);
+            }
+            return null;
         }
     }
 

@@ -19,7 +19,22 @@ public class Start {
     private static final File configFile = new File(Telifie.configDirectory() + "/config.json");
 
     public static void main(String[] args){
-        Console.welcome();
+        System.out.println("||=============================================================||");
+        System.out.println("||                                                             ||");
+        System.out.println("||   ,--------. ,------. ,--.    ,--. ,------. ,--. ,------.   ||");
+        System.out.println("||   '--.  .--' |  .---' |  |    |  | |  .---' |  | |  .---'   ||");
+        System.out.println("||      |  |    |  `--,  |  |    |  | |  `--,  |  | |  `--,    ||");
+        System.out.println("||      |  |    |  `---. |  '--. |  | |  |`    |  | |  `---.   ||");
+        System.out.println("||      `--'    `------' `-----' `--' `--'     `--' `------'   ||");
+        System.out.println("||                                                             ||");
+        System.out.println("||=============================================================||");
+        System.out.println("        COPYRIGHT (C) TELIFIE LLC 2024, CINCINNATI, OHIO         ");
+        System.out.println("-----------------------------------------------------------------");
+        System.out.println("Operating System    : " + System.getProperty("os.name"));
+        System.out.println("System OS Version   : " + System.getProperty("os.version"));
+        System.out.println("System Architecture : " + System.getProperty("os.arch"));
+        System.out.println("Working Directory   : " + Telifie.configDirectory());
+        System.out.println("-----------------------------------------------------------------");
         Log.message("TELIFIE STARTED", "CLIx001");
         File[] folders = new File[]{new File(Telifie.configDirectory()), new File(Telifie.configDirectory() + "\\temp")};
         for(File folder : folders){

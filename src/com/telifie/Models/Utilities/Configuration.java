@@ -13,7 +13,7 @@ import java.sql.SQLException;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Configuration {
 
-    private static String VERSION = "v1.0.0b", mongodb, mysql, model;
+    private static String VERSION = "v1.0.0b", mongodb, mysql;
     @JsonIgnore
     public static MongoClient mongoClient;
     @JsonIgnore
@@ -24,12 +24,6 @@ public class Configuration {
         this.VERSION = VERSION;
         this.mongodb = mongodb;
         this.mysql = mysql;
-        this.model = model;
-    }
-
-    @JsonIgnore
-    public static String getModel() {
-        return model;
     }
 
     @JsonIgnore

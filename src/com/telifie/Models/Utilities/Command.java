@@ -7,13 +7,11 @@ import com.telifie.Models.Clients.*;
 import com.telifie.Models.Clients.Packages;
 import com.telifie.Models.Utilities.Network.SQL;
 import org.bson.Document;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,16 +35,56 @@ public class Command {
         String objSelector = (this.selectors.length > 1 ? this.get(1) : "");
         String secSelector = (this.selectors.length > 2 ? this.get(2) : null);
         String terSelector = (this.selectors.length > 3 ? this.get(3) : null);
-        if(selector.equals("search")){
+        if(selector.isEmpty()){
+
             if(content != null){
-                String query = (content.getString("query") == null ? "" : content.getString("query"));
-                if(query.isEmpty()){
-                    return new Result(428, this.command, "QUERY EXPECTED");
+                String q = (content.getString("query") == null ? "" : content.getString("query").trim());
+                String[] units = q.split(" ");
+                if(units.length == 1){
+                    Articles ar = new Articles(session, "articles");
+                    ArrayList<Article> a = ar.get(new Document("title", Pattern.compile("^" + Pattern.quote(q) + "$", Pattern.CASE_INSENSITIVE)));
+                    return new Result(this.command, "articles", a);
+                }else if((q.contains("*") || q.contains("+") || q.contains("-") || q.contains("/")) || Telifie.tools.contains(Telifie.NUMERALS, q)){
+                    String mathExpressionPattern = "[\\d\\s()+\\-*/=xX^sincoaet]+";
+                    Pattern pattern = Pattern.compile(mathExpressionPattern);
+                    Matcher matcher = pattern.matcher(q);
+                    if(matcher.find()) {
+
+                    }
+                }else if(q.contains("weather")){
+                    if(Packages.get("com.telifie.connectors.openweathermap") != null){
+//                        result.setSource("com.telifie.connectors.openweathermap");
+//                        result.setGenerated(Telifie.tools.escape(Rest.get(Packages.get("com.telifie.connectors.openweathermap"), new HashMap<>() {{
+//                            put("units", "imperial");
+//                            put("excluded", "hourly,minutely,current");
+//                            put("lat", String.valueOf(params.latitude));
+//                            put("lon", String.valueOf(params.longitude));
+//                            put("appid", Packages.get("com.telifie.connectors.openweathermap").getAccess());
+//                        }})));
+                    }
+                }else{
+                    try {
+                        Parameters params = new Parameters(content);
+                        return new Search().execute(session, q, params);
+                    }
+                    //                catch(NullPointerException n){
+                    //                    return new Result(505, this.command, "SEARCH ERROR");
+                    //                }
+                    catch (JsonProcessingException e) {
+                        return new Result(428, this.command, "MALFORMED PARAMS");
+                    }
                 }
+            }
+            return new Result(428, this.command, "NO QUERY PROVIDED");
+
+        }else if(selector.equals("search")){
+
+            if(content != null){
+                String q = (content.getString("query") == null ? "" : content.getString("query"));
                 String targetDomain = (content.getString("domain") == null ? "telifie" : content.getString("domain").trim().toLowerCase());
                 Domains domains = new Domains(session);
                 Domain domain = domains.withAlias("telifie");
-                if(!targetDomain.equals("telifie")){
+                if(!targetDomain.equals("telifie") && !targetDomain.isEmpty()){
                     try{
                         domain = domains.withAlias(targetDomain);
                         session.setDomain(targetDomain);
@@ -57,12 +95,11 @@ public class Command {
                 try {
                     if(domain.hasViewPermissions(session.user)){
                         Parameters params = new Parameters(content);
-                        return new Search().execute(session, query, params);
+                        return new Search().execute(session, q, params);
                     }
                     return new Result(401,this.command, "INSUFFICIENT PERMISSIONS");
-                }catch(NullPointerException n){
+                } catch(NullPointerException n){
                     return new Result(505, this.command, "SEARCH ERROR");
-//                    throw new RuntimeException(n);
                 } catch (JsonProcessingException e) {
                     return new Result(428, this.command, "MALFORMED PARAMS");
                 }
@@ -279,52 +316,15 @@ public class Command {
                 }catch(JSONException e){
                     return new Result(505, this.command, "BAD ARTICLE JSON");
                 }
-            }else if(objSelector.equals("audit")){
-                String query = (content.getString("query") == null ? "" : content.getString("query"));
-                ArrayList<Article> auditable = articles.get(new Document("$and", Arrays.asList(
-                        Search.filter(query, new Parameters(content)),
-                        new Document("verified", false)
-                )), new Document("_id", -1));
-                ArrayList<String> ids = new ArrayList<>();
-                for(Article a : auditable){
-                    ids.add(a.getId());
-                }
-                return new Result(this.command, "articles", new JSONArray(ids));
             }
             return new Result(this.command,"stats", articles.stats());
-        }else if(selector.equals("shortcuts")){
-            Shortcuts scs = new Shortcuts(session);
-            if(selectors.length >= 2){
-                String object = secSelector;
-                switch (objSelector) {
-                    case "save" -> {
-                        if(!content.isEmpty()){
-                            if(scs.save(new Shortcut(content))){
-                                return new Result(200, this.command, "SAVED");
-                            }
-                            return new Result(50, this.command, "FAILED SAVING SHORTCUT");
-                        }
-                        return new Result(428, this.command, "JSON BODY EXPECTED");
-                    }
-                    case "unsave" -> {
-                        if(selectors.length >= 3){
-                            if(scs.unsave(object)){
-                                return new Result(200, this.command, "UNSAVED");
-                            }
-                            return new Result(50, this.command, "FAILED UNSAVING SHORTCUT");
-                        }
-                        return new Result(403, this.command, "BAD SHORTCUTS COMMAND");
-                    }
-                }
-            }
-            return new Result(this.command, "shortcuts", scs.getShortcuts());
         }else if(selector.equals("indexes")){
             Indexes indexes = new Indexes(session);
             Domains domains = new Domains(session);
-            Domain domain = domains.withId(secSelector);
-            if(this.selectors.length >= 2){
+            if(this.selectors.length == 2){
                 if(content != null) {
                     String domainId = content.getString("domain");
+                    Domain domain = domains.withId(domainId);
                     if(objSelector.equals("create")){
                             String domainName = content.getString("name").toLowerCase().replaceAll(" ", "-"); //Get domain and check validity
                             Index i = indexes.withAlias(domainId, domainName);
@@ -338,15 +338,17 @@ public class Command {
                     }
                 }
             }else if(type.equals("GET") && selectors.length == 3){
-                Index i = indexes.get(terSelector);
+                Domain domain = domains.withId(objSelector);
+                Index i = indexes.get(secSelector);
                 if(i != null){
                     return new Result(this.command, "index", i);
                 }
                 return new Result(404, this.command, "INDEX NOT FOUND");
             }else if(type.equals("DELETE") && selectors.length == 3){
-                Index i = indexes.get(terSelector);
+                Domain domain = domains.withId(objSelector);
+                Index i = indexes.get(secSelector);
                 if(i != null){
-                    if(indexes.delete(domain, terSelector)){
+                    if(indexes.delete(domain, i)){
                         return new Result(200, this.command, "INDEX DELETED");
                     }
                     return new Result(500, this.command, "FAILED DELETING INDEX");
@@ -426,15 +428,6 @@ public class Command {
                             }
                             return new Result(428, this.command, "URI REQUIRED");
                         }
-                        case "crawl" -> {
-                            if (uri != null && !uri.isEmpty()) {
-                                boolean allowExternalCrawl = (content.getBoolean("allow_external") != null && content.getBoolean("allow_external"));
-                                new Parser(session);
-                                Parser.engines.crawler(uri, allowExternalCrawl);
-                                return new Result(200, this.command, "CRAWLING");
-                            }
-                            return new Result(428, this.command, "URI REQUIRED");
-                        }
                     }
                 }
                 return new Result(428, this.command, "PARSER MODE REQUIRED");
@@ -484,40 +477,6 @@ public class Command {
                 return new Result(404, this.command, "USER NOT FOUND");
             }
             return new Result(404, this.command, "JSON BODY EXPECTED");
-        }else if(selector.equals("connectors")){
-            Connectors connectors = new Connectors(session);
-            if(content != null){
-                Connector connector = new Connector(content);
-                connector.setUser(session.user);
-                boolean connectorUsed = connectors.exists(connector);
-                if(connector.getId().equals("com.telifie.connectors.spotify")){
-                    return new Result(501, this.command, "FAILED PARSING SPOTIFY");
-                }else{
-                    if(connectorUsed){
-                        return new Result(409, this.command, "CONNECTOR EXISTS");
-                    }
-                    connectors.create(connector);
-                }
-            }
-            if(this.selectors.length >= 2){
-                if(objSelector.equals("connected")){
-                    return new Result(this.command, "connectors", connectors.mine());
-                }else if(objSelector.equals("activate")){
-                    if(!secSelector.isEmpty()){
-                        Package p =  Packages.get(secSelector);
-                        if(p != null){
-                            return new Result(this.command, "auth", new JSONObject(p.activate()));
-                        }
-                        return new Result(404, this.command, "CONNECTOR NOT FOUND");
-                    }
-                }
-                Connector connector = connectors.getConnector(objSelector);
-                if(connector != null){
-                    return new Result(this.command, "connector", connector);
-                }
-                return new Result(404, this.command, "CONNECTOR NOT FOUND");
-            }
-            return new Result(428, this.command, "CONNECTOR NAME REQUIRED");
         }else if(selector.equals("messaging")){
             String from  = content.getString("From");
             String message = content.getString("Body");
@@ -525,10 +484,8 @@ public class Command {
             Users users = new Users();
             User user = users.getUserWithPhone(from);
             if(user == null){
-                Telifie.sms(from, "+15138029566", "The number you are texting from is not registered to a Telifie account.");
                 return new Result(404, this.command, "PHONE NUMBER NOT REGISTERED");
             }
-            Telifie.sms(user.getPhone(), "+15138029566", "Hello " + user.getName() + "!");
             return new Result(200, this.command, "MESSAGE RECEIVED");
         }else if(selector.equals("ping")){
             if(content != null){
