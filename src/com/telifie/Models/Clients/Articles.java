@@ -1,9 +1,13 @@
 package com.telifie.Models.Clients;
 
+import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
+import com.mongodb.client.result.UpdateResult;
 import com.telifie.Models.Domain;
 import com.telifie.Models.Utilities.Configuration;
 import com.telifie.Models.Utilities.Log;
@@ -16,22 +20,26 @@ import java.net.URISyntaxException;
 import java.util.*;
 import java.util.regex.Pattern;
 
-public class Articles extends Client {
+public class Articles {
+
+    protected static MongoClient mc;
+    protected String collection;
+    protected Session session;
 
     public Articles(Session session, String collection){
-        super(session);
-        super.collection = collection;
+        this.session = session;
+        this.collection = collection;
     }
 
     public boolean update(Article article, Article newArticle){
-        return super.updateOne(new Document("id", article.getId()), new Document("$set", Document.parse(newArticle.toString())));
+        return this.updateOne(new Document("id", article.getId()), new Document("$set", Document.parse(newArticle.toString())));
     }
 
     public boolean create(Article article){
         if(article.getOwner() == null || article.getOwner().isEmpty()){
             article.setOwner(session.user);
         }
-        super.insertOne(Document.parse(article.toString()));
+        this.insertOne(Document.parse(article.toString()));
         if(article.hasAttribute("Longitude") && article.hasAttribute("Latitude")){
             String longitude = article.getAttribute("Longitude");
             String latitude = article.getAttribute("Latitude");
@@ -40,10 +48,28 @@ public class Articles extends Client {
                 double latitudeValue = Double.parseDouble(latitude);
                 Position position = new Position(longitudeValue, latitudeValue);
                 Point point = new Point(position);
-                super.updateOne(new Document("id", article.getId()), new Document("$set", new Document("location", point)));
+                this.updateOne(new Document("id", article.getId()), new Document("$set", new Document("location", point)));
             }
         }
         return true;
+    }
+
+    private boolean updateOne(Document filter, Document update){
+        try {
+            UpdateResult result = mc.getDatabase(session.getDomain()).getCollection(this.collection).updateOne(filter, update);
+            return result.getModifiedCount() > 0;
+        }catch(MongoException e){
+            return false;
+        }
+    }
+
+    private boolean insertOne(Document document){
+        try {
+            mc.getDatabase(session.getDomain()).getCollection(this.collection).insertOne(document);
+            return true;
+        }catch(MongoException e){
+            return false;
+        }
     }
 
     public Article withLink(String link){
@@ -70,12 +96,6 @@ public class Articles extends Client {
         return this.find(filter, sort).map(Article::new).into(new ArrayList<>());
     }
 
-    public ArrayList<Article> withProjection(Document filter, Document projection){
-        ArrayList<Article> articles = new ArrayList<>();
-        this.findWithProjection(filter, projection).map(Article::new).into(new ArrayList<>());
-        return articles;
-    }
-
     public Article findPlace(String place, Parameters params){
         return this.search(place, params,
                 new Document("$and", Arrays.asList(
@@ -97,7 +117,7 @@ public class Articles extends Client {
     } 
 
     public boolean delete(Article article) {
-        return super.deleteOne(new Document("id", article.getId()));
+        return this.deleteOne(new Document("id", article.getId()));
     }
 
     public boolean move(Article article, Domain domain){
@@ -116,9 +136,9 @@ public class Articles extends Client {
         groupFields.put("count", new Document("$sum", 1));
         groupFields.put("priority", new Document("$avg", "$priority"));
         Document groupStage = new Document("$group", groupFields);
-        List<Document> iterable = super.aggregate(groupStage);
+        List<Document> iterable = this.aggregate(groupStage);
         Document stats = new Document();
-        int total = super.count();
+        int total = this.count();
         stats.append("total", total);
         MongoDatabase database = Configuration.mongoClient.getDatabase(session.getDomain());
         Document memoryUsage = database.runCommand(new Document("collStats", collection));
@@ -162,14 +182,6 @@ public class Articles extends Client {
         return false;
     }
 
-    public Document next(){
-        return super.next(3);
-    }
-
-    public boolean hasNext(){
-        return super.hasNext();
-    }
-
     private boolean areSimilarURLs(URI uri1, URI uri2) {
         return uri1.getHost().equalsIgnoreCase(uri2.getHost()) && removeTrailingSlash(uri1.getPath()).equalsIgnoreCase(removeTrailingSlash(uri2.getPath()));
     }
@@ -179,6 +191,81 @@ public class Articles extends Client {
             return path.substring(0, path.length() - 1);
         }
         return path;
+    }
+
+    private List<Document> aggregate(Document filter){
+        try {
+            return mc.getDatabase(session.getDomain()).getCollection(this.collection).aggregate(Collections.singletonList(filter)).into(new ArrayList<>());
+        }catch(MongoException e){
+            return null;
+        }
+    }
+
+    private int count(){
+        try {
+            return (int) mc.getDatabase(session.getDomain()).getCollection(this.collection).countDocuments();
+        }catch(MongoException e){
+            return -1;
+        }
+    }
+
+    private FindIterable<Document> find(Document filter){
+        try {
+            return mc.getDatabase(session.getDomain()).getCollection(this.collection).find(filter);
+        }catch(MongoException e){
+            return null;
+        }
+    }
+
+    private FindIterable<Document> find(Document filter, Document sort){
+        try {
+            return mc.getDatabase(session.getDomain()).getCollection(this.collection).find(filter).sort(sort);
+        }catch(MongoException e){
+            return null;
+        }
+    }
+
+    private FindIterable<Document> findWithProjection(Document filter, Document projection){
+        try {
+            return mc.getDatabase(session.getDomain()).getCollection(this.collection).find(filter).projection(projection);
+        }catch(MongoException e){
+            return null;
+        }
+    }
+
+    private Document findOne(Document filter){
+        try {
+            return mc.getDatabase(session.getDomain()).getCollection(this.collection).find(filter).first();
+        }catch(MongoException e){
+            return null;
+        }
+    }
+
+    private Document next(int skip) {
+        MongoCursor<Document> cursor = mc.getDatabase(session.getDomain()).getCollection(this.collection).find().skip(skip).limit(1).iterator();
+        if (cursor.hasNext()) {
+            return cursor.next();
+        } else {
+            return null;
+        }
+    }
+
+    private boolean hasNext() {
+        return mc.getDatabase(session.getDomain()).getCollection(this.collection).find().limit(1).iterator().hasNext();
+    }
+
+    private boolean exists(Document filter){
+        Document data = this.findOne(filter);
+        return data != null;
+    }
+
+    private boolean deleteOne(Document filter){
+        try {
+            mc.getDatabase(session.getDomain()).getCollection(this.collection).deleteOne(filter);
+            return true;
+        }catch(MongoException e){
+            return false;
+        }
     }
 
     private static class CosmoScore implements Comparator<Article> {

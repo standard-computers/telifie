@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.telifie.Models.*;
 import com.telifie.Models.Parser;
 import com.telifie.Models.Clients.*;
-import com.telifie.Models.Clients.Packages;
+import com.telifie.Models.Clients.Services;
 import com.telifie.Models.Utilities.Network.SQL;
 import org.bson.Document;
 import org.json.JSONException;
@@ -41,8 +41,9 @@ public class Command {
                 String q = (content.getString("query") == null ? "" : content.getString("query").trim());
                 String[] units = q.split(" ");
                 if(units.length == 1){
+                    q = q.substring(0, 1).toUpperCase() + q.substring(1).toLowerCase();
                     Articles ar = new Articles(session, "articles");
-                    ArrayList<Article> a = ar.get(new Document("title", Pattern.compile("^" + Pattern.quote(q) + "$", Pattern.CASE_INSENSITIVE)));
+                    ArrayList<Article> a = ar.get(new Document("title", q));
                     return new Result(this.command, "articles", a);
                 }else if((q.contains("*") || q.contains("+") || q.contains("-") || q.contains("/")) || Telifie.tools.contains(Telifie.NUMERALS, q)){
                     String mathExpressionPattern = "[\\d\\s()+\\-*/=xX^sincoaet]+";
@@ -50,17 +51,6 @@ public class Command {
                     Matcher matcher = pattern.matcher(q);
                     if(matcher.find()) {
 
-                    }
-                }else if(q.contains("weather")){
-                    if(Packages.get("com.telifie.connectors.openweathermap") != null){
-//                        result.setSource("com.telifie.connectors.openweathermap");
-//                        result.setGenerated(Telifie.tools.escape(Rest.get(Packages.get("com.telifie.connectors.openweathermap"), new HashMap<>() {{
-//                            put("units", "imperial");
-//                            put("excluded", "hourly,minutely,current");
-//                            put("lat", String.valueOf(params.latitude));
-//                            put("lon", String.valueOf(params.longitude));
-//                            put("appid", Packages.get("com.telifie.connectors.openweathermap").getAccess());
-//                        }})));
                     }
                 }else{
                     try {
@@ -105,108 +95,6 @@ public class Command {
                 }
             }
             return new Result(428, this.command, "JSON BODY EXPECTED");
-        }else if(selector.equals("domains")){
-            if(this.selectors.length >= 2){
-                Domains domains = new Domains(session);
-                ArrayList<Domain> foundDomains;
-                if(objSelector.equals("owner")){
-                    foundDomains = domains.mine();
-                    return new Result(this.command, "domains", foundDomains);
-                }else if(objSelector.equals("member")){
-//                    foundDomains = domains.viewable();
-//                    return new Result(this.command, "domains", foundDomains);
-                }else if(objSelector.equals("protected")){
-                    foundDomains = domains.viewable();
-                    return new Result(this.command, "domains", foundDomains);
-                }else if(objSelector.equals("create")){
-                    if(content != null){
-                        String domainName;
-                        if((domainName = content.getString("name")) != null && content.getInteger("permissions") != null){
-                            Domain newDomain = new Domain(session.user, domainName, content.getInteger("permissions"));
-                            if(domains.create(newDomain)){
-                                return new Result(this.command, "domain", newDomain);
-                            }
-                            return new Result(505, this.command, "FAILED DOMAIN CREATION");
-                        }
-                        return new Result(428, this.command, "DOMAIN INFO NOT PROVIDED");
-                    }
-                    return new Result(428, this.command, "JSON BODY EXPECTED");
-                }else if(this.selectors.length == 3){
-                    try{
-                        Domain d = domains.withId(secSelector);
-                        switch (objSelector) {
-                            case "delete" -> {
-                                if (d.owner.equals(session.user)) {
-                                    if (domains.delete(d)) {
-                                        return new Result(200, this.command, "DOMAIN DELETED");
-                                    }
-                                    return new Result(505, this.command, "FAILED DOMAIN DELETION");
-                                }
-                                return new Result(401, this.command, "DOMAIN ACCESS DENIED");
-                            }
-                            case "id" -> {
-                                if(d.owner.equals(session.user)){
-                                    return new Result(this.command, "domain", d);
-                                }
-                                return new Result(403, this.command, "DOMAIN ACCESS DENIED");
-                            }
-                            case "check" -> {
-                                int p = d.getPermissions(session.user);
-                                if(p == 0){
-                                    return new Result(200, this.command, "domain", d);
-                                }else if(p == 1){
-                                    return new Result(206, this.command, "domain", d);
-                                }else if(p == 2){
-                                    return new Result(207, this.command, "domain", d);
-                                }
-                                return new Result(403, this.command, "DOMAIN ACCESS DENIED");
-                            }
-                            case "update" -> {
-                                if (content != null) {
-//                                    if (domains.update(d, content)) { //TODO content check
-//                                        return new Result(this.command, "domain", d);
-//                                    }
-                                }
-                                return new Result(428, this.command, "JSON BODY EXPECTED");
-                            }
-                        }
-                        return new Result(404, this.command, "BAD DOMAIN OPTION");
-                    }catch (NullPointerException n){
-                        return new Result(404, this.command, "DOMAIN NOT FOUND");
-                    }
-                }else if(this.selectors.length >= 4){ //'/domains/{id}/users/{add|remove}'
-                    try{
-                        Domain d = domains.withId(objSelector);
-                        if(content != null){
-                            switch (terSelector) {
-                                case "add" -> {
-                                    if(domains.addUser(d, content.getString("user"), content.getInteger("permissions"))){
-                                        return new Result(200, this.command, "ADDED USER TO DOMAIN");
-                                    }
-                                    return new Result(505, this.command, "FAILED ADDING USER FROM DOMAIN");
-                                }
-                                case "remove" -> {
-                                    if (domains.removeUser(d, this.selectors[4])) {
-                                        return new Result(200, this.command, "REMOVED USER FROM DOMAIN");
-                                    }
-                                    return new Result(505, this.command, "FAILED REMOVING USER FROM DOMAIN");
-                                }
-                                case "update" -> {
-                                    if (domains.updateUser(d, this.selectors[4], 0)) {
-                                        return new Result(200, this.command, "DOMAIN USER UPDATED");
-                                    }
-                                    return new Result(505, this.command, "FAILED DOMAIN USER UPDATE");
-                                }
-                            }
-                            return new Result(428, this.command, "BAD DOMAIN USER OPTION");
-                        }
-                        return new Result(428, this.command, "JSON BODY EXPECTED");
-                    }catch (NullPointerException n){
-                        return new Result(404, this.command, "DOMAIN NOT FOUND");
-                    }
-                }
-            }
-            return new Result(200, this.command, "BAD DOMAINS OPTION");
         }else if(selector.equals("articles")){
             Domains domains = new Domains(session);
             String index = (content.getString("index") == null ? "articles" : content.getString("index").trim().toLowerCase());
@@ -318,84 +206,6 @@ public class Command {
                 }
             }
             return new Result(this.command,"stats", articles.stats());
-        }else if(selector.equals("indexes")){
-            Indexes indexes = new Indexes(session);
-            Domains domains = new Domains(session);
-            if(this.selectors.length == 2){
-                if(content != null) {
-                    String domainId = content.getString("domain");
-                    Domain domain = domains.withId(domainId);
-                    if(objSelector.equals("create")){
-                            String domainName = content.getString("name").toLowerCase().replaceAll(" ", "-"); //Get domain and check validity
-                            Index i = indexes.withAlias(domainId, domainName);
-                            if(i == null){
-                                if(indexes.create(domain, new Index(content))){
-                                    return new Result(200, this.command, "INDEX CREATED");
-                                }
-                                return new Result(500, this.command, "FAILED CREATING INDEX");
-                            }
-                            return new Result(409, this.command, "INDEX ALREADY EXISTS");
-                    }
-                }
-            }else if(type.equals("GET") && selectors.length == 3){
-                Domain domain = domains.withId(objSelector);
-                Index i = indexes.get(secSelector);
-                if(i != null){
-                    return new Result(this.command, "index", i);
-                }
-                return new Result(404, this.command, "INDEX NOT FOUND");
-            }else if(type.equals("DELETE") && selectors.length == 3){
-                Domain domain = domains.withId(objSelector);
-                Index i = indexes.get(secSelector);
-                if(i != null){
-                    if(indexes.delete(domain, i)){
-                        return new Result(200, this.command, "INDEX DELETED");
-                    }
-                    return new Result(500, this.command, "FAILED DELETING INDEX");
-                }
-                return new Result(404, this.command, "INDEX NOT FOUND");
-            }
-        }else if(selector.equals("users")){
-            Users users = new Users();
-            if(this.selectors.length >= 3){
-                if(objSelector.equals("update") && content != null){
-                    User changedUser = users.getUserWithId(session.user);
-                    if(secSelector.equals("settings")){
-                        if(users.updateSettings(changedUser, content.getString("settings"))){
-                            return new Result(this.command, "user", changedUser);
-                        }
-                        return new Result(400, this.command, "Bad Request");
-                    }
-                    return new Result(404, this.command, "BAD USER OPTION");
-                }
-                return new Result(404, this.command, "BAD USER OPTION");
-
-            }else if(objSelector.equals("create")){
-                if(content != null){
-                    User newUser = new User(content.getString("email"), content.getString("name"), content.getString("phone"));
-                    if(newUser.getPermissions() == 0 && !newUser.getName().isEmpty() && !newUser.getEmail().isEmpty() && newUser.getName() != null && newUser.getEmail() != null) {
-                        if (!users.existsWithEmail(newUser.getEmail())) {
-                            //TODO
-//                            if (users.create(newUser)) {
-//                                return new Result(this.command, "user", newUser);
-//                            }
-                            return new Result(505, this.command, "FAILED USER CREATION");
-                        }
-                        return new Result(410, this.command, "EMAIL TAKEN");
-                    }
-                    return new Result(428, this.command, "NOT ENOUGH INFO");
-                }
-                return new Result(428, this.command, "JSON BODY EXPECTED");
-            }
-            Matcher matcher = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", Pattern.CASE_INSENSITIVE).matcher(objSelector);
-            if (matcher.matches()) {
-                if(users.existsWithEmail(objSelector)){
-                    User found = users.getUserWithEmail(objSelector);
-                    return new Result(this.command, "user", found);
-                }
-                return new Result(404, this.command, "USER NOT FOUND");
-            }
-            return new Result(404, this.command, "INVALID EMAIL");
         }else if(selector.equals("parser")){
             Articles articles = new Articles(session, "articles");
             if(content != null){
@@ -477,30 +287,8 @@ public class Command {
                 return new Result(404, this.command, "USER NOT FOUND");
             }
             return new Result(404, this.command, "JSON BODY EXPECTED");
-        }else if(selector.equals("messaging")){
-            String from  = content.getString("From");
-            String message = content.getString("Body");
-            Log.console("Income message -> " + message);
-            Users users = new Users();
-            User user = users.getUserWithPhone(from);
-            if(user == null){
-                return new Result(404, this.command, "PHONE NUMBER NOT REGISTERED");
-            }
-            return new Result(200, this.command, "MESSAGE RECEIVED");
         }else if(selector.equals("ping")){
-            if(content != null){
-                return new Result(200, this.command, "RECEIVED");
-            }
-            return new Result(428, this.command, "JSON BODY EXPECTED");
-        }else if(selector.equals("packages")){
-            if(this.selectors.length >= 2){
-                try{
-                    return new Result(this.command, "package", Packages.get(objSelector));
-                }catch (NullPointerException e){
-                    return new Result(404, this.command, "PACKAGE NOT FOUND");
-                }
-            }
-            return new Result(this.command, "packages", Packages.getPublic());
+            return new Result(200, this.command, "RECEIVED");
         }
         return new Result(200, this.command, "NO COMMAND RECEIVED");
     }

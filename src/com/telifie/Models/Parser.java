@@ -3,9 +3,11 @@ package com.telifie.Models;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 import com.telifie.Models.Clients.Articles;
+import com.telifie.Models.Clients.Services;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Network.Network;
 import com.telifie.Models.Utilities.Network.SQL;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -14,6 +16,9 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import java.io.*;
 import java.net.*;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -335,11 +340,14 @@ public class Parser {
             while (am.find()) {
                 String fullAddress = am.group(0);
                 article.setDescription("Building");
-                if(article.hasAttribute("Address")){
-
-                }else{
+                if(!article.hasAttribute("Address")){
+                    //TODO if article does have address, create duplicate article with differentiating titles and addresses/coordinates
                     try {
-                        JSONObject location = Telifie.tools.geolocate(fullAddress);
+                        HttpClient client = HttpClient.newHttpClient();
+                        HttpRequest request = HttpRequest.newBuilder().uri(URI.create("https://api.radar.io/v1/geocode/forward?query=" + URLEncoder.encode(fullAddress, StandardCharsets.UTF_8.toString()))).header("Authorization", "com.telifie.connectors.radar").build();
+                        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                        JSONArray addressed = new JSONObject(response.body()).getJSONArray("addresses");
+                        JSONObject location =  addressed.getJSONObject(0);
                         article.addAttribute(new Attribute("Longitude", String.valueOf(location.getFloat("longitude"))));
                         article.addAttribute(new Attribute("Latitude", String.valueOf(location.getFloat("latitude"))));
                         article.addAttribute(new Attribute("Address", location.getString("formattedAddress")));

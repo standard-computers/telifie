@@ -1,7 +1,7 @@
 package com.telifie.Models.Utilities;
 
 import com.google.common.html.HtmlEscapers;
-import com.telifie.Models.Clients.Packages;
+import com.telifie.Models.Clients.Services;
 import com.twilio.rest.api.v2010.account.Message;
 import org.apache.commons.text.StringEscapeUtils;
 import org.json.JSONArray;
@@ -95,10 +95,10 @@ public class Telifie {
     }
 
     public static void sms(String to, String from, String content){
-        String ACCOUNT_SID = Packages.get("com.telifie.connectors.twilio").getAccess();
-        String AUTH_TOKEN = Packages.get("com.telifie.connectors.twilio").getSecret();
-        com.twilio.Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
-        Message.creator(new com.twilio.type.PhoneNumber(to), new com.twilio.type.PhoneNumber(from), content).create();
+//        String ACCOUNT_SID = Services.get("com.telifie.connectors.twilio").getAccess();
+//        String AUTH_TOKEN = Services.get("com.telifie.connectors.twilio").getSecret();
+//        com.twilio.Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
+//        Message.creator(new com.twilio.type.PhoneNumber(to), new com.twilio.type.PhoneNumber(from), content).create();
     }
 
     public static boolean email(String email, String code){
@@ -200,17 +200,6 @@ public class Telifie {
 
         private static int min(int... numbers) {
             return java.util.Arrays.stream(numbers).min().orElse(Integer.MAX_VALUE);
-        }
-
-        public static JSONObject geolocate(String address) throws IOException, InterruptedException {
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder().uri(URI.create("https://api.radar.io/v1/geocode/forward?query=" + URLEncoder.encode(address, StandardCharsets.UTF_8.toString()))).header("Authorization", Packages.get("com.telifie.connectors.radar").getAccess()).build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            JSONArray addressed = new JSONObject(response.body()).getJSONArray("addresses");
-            if(addressed.length() > 0){
-                return addressed.getJSONObject(0);
-            }
-            return null;
         }
     }
 

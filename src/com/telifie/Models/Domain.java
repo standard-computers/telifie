@@ -1,10 +1,8 @@
 package com.telifie.Models;
 
-import com.telifie.Models.Utilities.Telifie;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.UUID;
 
 public class Domain {
 
@@ -12,15 +10,6 @@ public class Domain {
     public final int origin, permissions;
     private ArrayList<Member> users = new ArrayList<>();
     private ArrayList<Index> indexes = new ArrayList<>();
-
-    public Domain(String owner, String name, int permissions){
-        this.id = UUID.randomUUID().toString();
-        this.owner = owner;
-        this.name = name;
-        this.alias = name.toLowerCase().replaceAll(" ", "-");
-        this.origin = Telifie.epochTime();
-        this.permissions = (permissions != 1 ? 0 : 1); //Private is default mode if none
-    }
 
     public Domain(ResultSet rs) throws SQLException {
         this.id = rs.getString("id");
