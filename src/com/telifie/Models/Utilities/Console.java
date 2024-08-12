@@ -29,9 +29,6 @@ public class Console {
             String cmd = Console.in("telifie -> ").trim();
             switch (cmd) {
                 case "exit", "logout", "close" -> System.exit(0);
-                case "@import" -> { //TODO REMOVE
-
-                }
                 case "@authenticate" -> {
                     Authentication auth = new Authentication(new User("", "telifie", ""));
                     Log.console("Authorizing as database admin...");

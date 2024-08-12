@@ -11,7 +11,7 @@ import java.util.HashMap;
 
 public class Domains {
 
-    private Session session;
+    private final Session session;
 
     public Domains(Session session){
         this.session = session;
@@ -24,7 +24,7 @@ public class Domains {
             ResultSet drs = SQL.get("SELECT * FROM domains WHERE owner = ?", session.user);
             while (drs.next()) {
                 String domainId = drs.getString("id");
-                Domain domain = new Domain(drs); // Assumes Domain constructor handles domain data
+                Domain domain = new Domain(drs);
                 domainsMap.put(domainId, domain);
                 domainList.add(domain);
             }
@@ -48,7 +48,6 @@ public class Domains {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
             return null;
         }
         return domainList;
@@ -74,7 +73,6 @@ public class Domains {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
             return null;
         }
         return domain;
@@ -100,7 +98,6 @@ public class Domains {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
             return null;
         }
         return domain;

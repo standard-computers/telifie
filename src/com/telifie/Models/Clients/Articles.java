@@ -1,10 +1,7 @@
 package com.telifie.Models.Clients;
 
 import com.mongodb.MongoException;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoCursor;
-import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.*;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
 import com.mongodb.client.result.UpdateResult;
@@ -29,6 +26,7 @@ public class Articles {
     public Articles(Session session, String collection){
         this.session = session;
         this.collection = collection;
+        this.mc = Configuration.mongoClient;
     }
 
     public boolean update(Article article, Article newArticle){

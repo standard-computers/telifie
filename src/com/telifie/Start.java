@@ -3,7 +3,6 @@ package com.telifie;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Network.Http;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
@@ -82,9 +81,7 @@ public class Start {
                         Log.error("HTTPS SERVER FAILED", "CLIx103");
                     }
                 }
-                case "--master" -> CompletableFuture.runAsync(() -> {
-
-                });
+                case "--master" -> CompletableFuture.runAsync(() -> {});
             }
         }else{
             Console.command();

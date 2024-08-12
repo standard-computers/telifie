@@ -1,11 +1,7 @@
 package com.telifie.Models.Utilities;
 
 import com.google.common.html.HtmlEscapers;
-import com.telifie.Models.Clients.Services;
-import com.twilio.rest.api.v2010.account.Message;
 import org.apache.commons.text.StringEscapeUtils;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
@@ -13,14 +9,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.math.BigInteger;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

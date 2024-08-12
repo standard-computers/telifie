@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.telifie.Models.*;
 import com.telifie.Models.Parser;
 import com.telifie.Models.Clients.*;
-import com.telifie.Models.Clients.Services;
 import com.telifie.Models.Utilities.Network.SQL;
 import org.bson.Document;
 import org.json.JSONException;
@@ -38,12 +37,10 @@ public class Command {
         if(selector.isEmpty()){
 
             if(content != null){
-                String q = (content.getString("query") == null ? "" : content.getString("query").trim());
-                String[] units = q.split(" ");
-                if(units.length == 1){
-                    q = q.substring(0, 1).toUpperCase() + q.substring(1).toLowerCase();
+                String q = (content.getString("query") == null ? "" : content.getString("query").toLowerCase().trim());
+                if(!Telifie.tools.startsWith(new String[]{"who", "what", "when", "where", "why", "how"}, q) && !q.startsWith("@")){
                     Articles ar = new Articles(session, "articles");
-                    ArrayList<Article> a = ar.get(new Document("title", q));
+                    ArrayList<Article> a = ar.get(new Document("title", Pattern.compile("^" + Pattern.quote(q) + "$", Pattern.CASE_INSENSITIVE)));
                     return new Result(this.command, "articles", a);
                 }else if((q.contains("*") || q.contains("+") || q.contains("-") || q.contains("/")) || Telifie.tools.contains(Telifie.NUMERALS, q)){
                     String mathExpressionPattern = "[\\d\\s()+\\-*/=xX^sincoaet]+";
@@ -97,10 +94,11 @@ public class Command {
             return new Result(428, this.command, "JSON BODY EXPECTED");
         }else if(selector.equals("articles")){
             Domains domains = new Domains(session);
-            String index = (content.getString("index") == null ? "articles" : content.getString("index").trim().toLowerCase());
+            String index = "articles";
             //TODO check index validity
             Domain domain = domains.withAlias("telifie");
             if(content != null){
+                index = (content.getString("index") == null ? "articles" : content.getString("index").trim().toLowerCase());
                 if(content.getString("domain") != null){
                     String td = content.getString("domain");
                     try{
