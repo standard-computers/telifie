@@ -9,11 +9,10 @@ public class Result {
 
     private final String id = UUID.randomUUID().toString();
     public final String query;
-    private String source = "";
     private String object = "results";
     private String generated = "";
     private Object results;
-    private final int origin = Telifie.epochTime();
+    private final int origin = Telifie.time();
     private int statusCode = 200, count = 0, total;
 
     public Result(String query, String object, Object results) {
@@ -38,10 +37,6 @@ public class Result {
         this.results = results;
     }
 
-    public void setSource(String source) {
-        this.source = source;
-    }
-
     public int getStatusCode() {
         return statusCode;
     }
@@ -62,9 +57,6 @@ public class Result {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("{").append("\"status_code\" : ").append(statusCode).append(", \"id\" : \"").append(id).append('\"').append(", \"query\" : \"").append(query).append('\"');
-        if (!source.isEmpty()) {
-            sb.append(", \"source\" : \"").append(source).append('\"');
-        }
         if (!generated.isEmpty()) {
             sb.append(", \"generated\" : \"").append(generated).append('\"');
         }

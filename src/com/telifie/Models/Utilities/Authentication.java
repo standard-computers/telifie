@@ -21,7 +21,7 @@ public class Authentication {
         this.user = user.getId();
         this.token = Telifie.md5(Telifie.randomReferenceCode());
         this.refresh = Telifie.md5(Telifie.randomReferenceCode());
-        this.origin = Telifie.epochTime();
+        this.origin = Telifie.time();
         this.expiration = this.origin + 604800;
     }
 
@@ -51,7 +51,7 @@ public class Authentication {
             command.setString(1, user);
             command.setString(2, token);
             command.setString(3, refresh);
-            command.setInt(4, Telifie.epochTime());
+            command.setInt(4, Telifie.time());
             ResultSet resultSet = command.executeQuery();
             return resultSet.next();
         } catch (SQLException e) {

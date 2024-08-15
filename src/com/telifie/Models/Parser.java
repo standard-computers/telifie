@@ -3,7 +3,6 @@ package com.telifie.Models;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 import com.telifie.Models.Clients.Articles;
-import com.telifie.Models.Clients.Services;
 import com.telifie.Models.Utilities.*;
 import com.telifie.Models.Utilities.Network.Network;
 import com.telifie.Models.Utilities.Network.SQL;
@@ -32,13 +31,13 @@ public class Parser {
     private static Articles articles;
 
     public Parser(Session session){
-        articles = new Articles(session, "articles"); //TODO give option to select collection
+        articles = new Articles(session, "articles");
     }
 
     public Article parse(String uri){
         if(Asset.isWebpage(uri)){
             return Parser.engines.website(uri);
-        }else if(Asset.isFile(uri)){
+        }else if(uri.startsWith("file://") || uri.startsWith("c:/") || uri.startsWith("\\")){ //Is local file
             File file = new File(uri);
             if(file.exists()){
                 return Parser.engines.website(uri);
@@ -77,15 +76,14 @@ public class Parser {
                         Log.console("ARTICLE CREATED : " + url);
                     }
                     ArrayList<String> links = wp.links;
-                    int fd = depth;
                     links.forEach(link -> {
                         String href = Network.fixLink(host, link.split("\\?")[0]);
                         if(Asset.isWebpage(href) && !Telifie.tools.contains(new String[]{"facebook.com", "instagram.com", "spotify.com", "linkedin.com", "youtube.com", "pinterest.com", "twitter.com", "tumblr.com", "reddit.com"}, href)){
                             if((allowExternalCrawl && !href.contains(host)) || (!allowExternalCrawl && href.contains(host))){
                                 try {
                                     Thread.sleep(2000);
-                                    if(fd <= 3){
-                                        fetch(href, fd, allowExternalCrawl);
+                                    if(depth <= 3){
+                                        fetch(href, depth, allowExternalCrawl);
                                     }
                                 } catch (InterruptedException e) {
                                     Log.console("Failed to sleep thread?");
@@ -145,7 +143,7 @@ public class Parser {
                         case "icon" -> iconIndex = i;
                     }
                 }
-                String bid = String.valueOf(Telifie.epochTime());
+                String bid = String.valueOf(Telifie.time());
                 for (int i = 1; i < lines.size(); i++) {
                     String[] articleData = lines.get(i);
                     Article article = new Article();
@@ -197,7 +195,7 @@ public class Parser {
 
         public static Article text(Asset asset){
             Article a = new Article();
-            a.setTitle(asset.getUri().split("/")[asset.getUri().split("/").length - 1].split("\\.")[0]);
+            a.setTitle(asset.uri.split("/")[asset.uri.split("/").length - 1].split("\\.")[0]);
             a.setDescription("Document");
             a.setContent(Telifie.tools.escapeMarkdownForJson(Telifie.tools.htmlEscape(asset.getContents())));
             a.addAttribute(new Attribute("File Type", "Plain Text"));
@@ -344,7 +342,7 @@ public class Parser {
                     //TODO if article does have address, create duplicate article with differentiating titles and addresses/coordinates
                     try {
                         HttpClient client = HttpClient.newHttpClient();
-                        HttpRequest request = HttpRequest.newBuilder().uri(URI.create("https://api.radar.io/v1/geocode/forward?query=" + URLEncoder.encode(fullAddress, StandardCharsets.UTF_8.toString()))).header("Authorization", "com.telifie.connectors.radar").build();
+                        HttpRequest request = HttpRequest.newBuilder().uri(URI.create("https://api.radar.io/v1/geocode/forward?query=" + URLEncoder.encode(fullAddress, StandardCharsets.UTF_8))).header("Authorization", "com.telifie.connectors.radar").build();
                         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
                         JSONArray addressed = new JSONObject(response.body()).getJSONArray("addresses");
                         JSONObject location =  addressed.getJSONObject(0);
@@ -352,7 +350,7 @@ public class Parser {
                         article.addAttribute(new Attribute("Latitude", String.valueOf(location.getFloat("latitude"))));
                         article.addAttribute(new Attribute("Address", location.getString("formattedAddress")));
                     } catch (IOException | InterruptedException | NullPointerException e) {
-                        Log.error("RADAR PACKAGE ERROR", "PARx112");
+                        Log.error("RADAR SERVICE ERROR", "PARx112");
                     }
                 }
             }

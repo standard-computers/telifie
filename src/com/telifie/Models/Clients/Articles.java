@@ -107,10 +107,8 @@ public class Articles {
     public ArrayList<Article> search(String query, Parameters params, Document filter){
         FindIterable<Document> found = this.find(filter);
         ArrayList<Article> results = found.map(Article::new).into(new ArrayList<>());
-        if(!query.startsWith("@")){
+        results.sort(new CosmoScore(query, params));
 //          results.sort(new DistanceSorter(params.getLatitude(), params.getLongitude()));
-            results.sort(new CosmoScore(query, params));
-        }
         return results;
     } 
 

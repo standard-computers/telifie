@@ -14,25 +14,23 @@ import java.sql.SQLException;
 public class Configuration {
 
     private static String VERSION = "v1.0.0b", mongodb, mysql;
+    public static String model;
     @JsonIgnore
     public static MongoClient mongoClient;
     @JsonIgnore
     public static Connection sqlClient;
 
     @JsonCreator
-    public Configuration(@JsonProperty("version") String VERSION, @JsonProperty("mongodb") String mongodb, @JsonProperty("mysql") String mysql, @JsonProperty("model") String model) {
-        this.VERSION = VERSION;
-        this.mongodb = mongodb;
-        this.mysql = mysql;
+    public Configuration(@JsonProperty("version") String VERSION, @JsonProperty("model") String model, @JsonProperty("mongodb") String mongodb, @JsonProperty("mysql") String mysql) {
+        Configuration.VERSION = VERSION;
+        Configuration.model = model;
+        Configuration.mongodb = mongodb;
+        Configuration.mysql = mysql;
     }
 
     @JsonIgnore
-    public void startMongo(){
-        mongoClient = MongoClients.create(this.mongodb);
-    }
-
-    @JsonIgnore
-    public void startSql(){
+    public void connectDB(){
+        mongoClient = MongoClients.create(mongodb);
         try {
             Connection connection = DriverManager.getConnection(mysql);
             System.out.println("SQL CONNECTED");

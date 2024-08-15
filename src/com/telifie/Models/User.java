@@ -7,8 +7,7 @@ import java.util.UUID;
 
 public class User {
 
-    private final String id, email, name, phone, token;
-    private String settings = "{\\\"secondary\\\":\\\"#0583c5\\\",\\\"corner_radius\\\":8,\\\"\\\":\\\"#1977F1\\\",\\\"color\\\":\\\"#0c92c2\\\",\\\"dark_mode\\\":\\\"0,1,2\\\",\\\"background\\\":\\\"#FFFFFF\\\",\\\"font_size\\\":16,\\\"name\\\":\\\"Facebook Blue\\\",\\\"foreground\\\":\\\"#000000\\\",\\\"border_color\\\":\\\"#BEBEBE\\\"}";
+    private final String id, email, name, phone;
     private final int origin;
     private int permissions;
 
@@ -17,8 +16,7 @@ public class User {
         this.email = email;
         this.name = name;
         this.phone = phone;
-        this.token = Telifie.md5(Telifie.randomReferenceCode());
-        this.origin = Telifie.epochTime();
+        this.origin = Telifie.time();
         this.permissions = 0;
     }
 
@@ -27,49 +25,16 @@ public class User {
         this.email = result.getString("email");
         this.name = result.getString("name");
         this.phone = result.getString("phone");
-        this.token = result.getString("token");
         this.origin = result.getInt("origin");
         this.permissions = result.getInt("permissions");
-        this.settings = result.getString("settings");
     }
 
     public String getId() {
         return id;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public int getPermissions() {
-        return permissions;
-    }
-
-    public void setPermissions(int permissions) {
-        this.permissions = permissions;
-    }
-
-    public boolean hasToken(String attempt){
-        return attempt.equals(this.token);
-    }
-
     @Override
     public String toString() {
-        return "{\"id\" : \"" + id + '\"' +
-                ", \"email\" : \"" + email + '\"' +
-                ", \"name\" : \"" + name + '\"' +
-                ", \"phone\" : \"" + phone + '\"' +
-                ", \"origin\" : " + origin +
-                ", \"permissions\" : " + permissions +
-                ", \"settings\" : " + settings.replace("\\", "") +
-                '}';
+        return "{\"id\" : \"" + id + '\"' + ", \"email\" : \"" + email + '\"' + ", \"name\" : \"" + name + '\"' + ", \"phone\" : \"" + phone + '\"' + ", \"origin\" : " + origin + ", \"permissions\" : " + permissions + '}';
     }
 }

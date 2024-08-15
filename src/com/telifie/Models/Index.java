@@ -24,7 +24,7 @@ public class Index {
         this.domain = document.getString("domain");
         this.name = document.getString("name");
         this.alias = this.name.toLowerCase().trim().replaceAll(" ", "_");
-        this.origin = Telifie.epochTime();
+        this.origin = Telifie.time();
     }
 
     @Override

@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 
 public class Asset {
 
-    private final String uri;
+    public final String uri;
     private String localUri;
     private String contents;
     private long length;
@@ -28,7 +28,7 @@ public class Asset {
 
     public Asset(String uri, boolean doContents){
         this.uri = uri;
-        if(isURL() && !isWebpage()){
+        if((uri.startsWith("https://") || uri.startsWith("http://") || uri.startsWith("www")) && !isWebpage()){
             try {
                 analyseFile();
             } catch (IOException e) {
@@ -62,10 +62,6 @@ public class Asset {
 
     public int[] getDimensions(){
         return this.dimensions;
-    }
-
-    public String getUri() {
-        return uri;
     }
 
     public void download(){
@@ -117,14 +113,6 @@ public class Asset {
 
     public String wordCount(){
         return String.valueOf(contents.split(" ").length);
-    }
-
-    public static boolean isFile(String uri){
-        return uri.startsWith("file://") || uri.startsWith("c:/") || uri.startsWith("\\");
-    }
-
-    public boolean isURL(){
-        return uri.startsWith("https://") || uri.startsWith("http://") || uri.startsWith("www");
     }
 
     public boolean isWebpage(){

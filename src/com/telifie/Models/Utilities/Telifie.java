@@ -6,7 +6,6 @@ import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.math.BigInteger;
@@ -34,34 +33,12 @@ public class Telifie {
         }
     }
 
-    public static void purgeTemp(){
-        File tempDir = new File(Telifie.configDirectory() + "temp");
-        if(tempDir.exists() && tempDir.isDirectory()){
-            File[] files = tempDir.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isFile()) {
-                        if (!file.delete()) {
-                            Log.console("FAILED TO DELETE FILE : " + file.getName());
-                        }
-                    }
-                }
-            } else {
-                Log.console("TEMP DIR EMPTY");
-            }
-        }
-    }
-
-    public static int epochTime(){
+    public static int time(){
         return (int) (System.currentTimeMillis() / 1000);
     }
 
     public static String randomReferenceCode(){
         return ALPHAS[(int) random(0, 25)] + ALPHAS[(int) random(0, 25)] + ALPHAS[(int) random(0, 25)] + ALPHAS[(int) random(0, 25)] + ALPHAS[(int) random(0, 25)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)];
-    }
-
-    public static String digitCode(){
-        return NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)] + NUMERALS[(int) random(0, 9)];
     }
 
     public static double random(double low, double high){
@@ -81,17 +58,6 @@ public class Telifie {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public static void sms(String to, String from, String content){
-//        String ACCOUNT_SID = Services.get("com.telifie.connectors.twilio").getAccess();
-//        String AUTH_TOKEN = Services.get("com.telifie.connectors.twilio").getSecret();
-//        com.twilio.Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
-//        Message.creator(new com.twilio.type.PhoneNumber(to), new com.twilio.type.PhoneNumber(from), content).create();
-    }
-
-    public static boolean email(String email, String code){
-        return false;
     }
 
     public static class tools {
@@ -118,17 +84,8 @@ public class Telifie {
             return false;
         }
 
-        public static boolean equals(char sample, char[] chars){
-            for(char ch : chars){
-                if(sample == ch){
-                    return true;
-                }
-            }
-            return false;
-        }
-
         public static String escape(String input){
-            return new StringEscapeUtils().escapeJson(input);
+            return StringEscapeUtils.escapeJson(input);
         }
 
         public static String htmlEscape(String string){
@@ -146,25 +103,13 @@ public class Telifie {
                 String lowerCaseWord = word.toLowerCase();
                 boolean isAbbreviation = lowerCaseWord.endsWith(".");
                 if (capitalizeNext || !excludedWords.contains(lowerCaseWord) || isAbbreviation) {
-                    result.append(isAbbreviation ? word : capitalize(word)).append(" ");
+                    result.append(isAbbreviation ? word : (Character.toUpperCase(word.charAt(0)) + word.substring(1).toLowerCase())).append(" ");
                     capitalizeNext = !isAbbreviation;
                 } else {
                     result.append(word.toLowerCase());
                 }
             }
             return result.toString().trim();
-        }
-
-        public static boolean containsAddress(String text){
-            return text.matches("\\b\\d+\\s+([A-Za-z0-9.\\-'\\s]+)\\s+" +
-                    "(St\\.?|Street|Rd\\.?|Road|Ave\\.?|Avenue|Blvd\\.?|Boulevard|Ln\\.?|Lane|Dr\\.?|Drive|Ct\\.?|Court)\\s+" +
-                    "(\\w+),\\s+" +
-                    "(\\w{2,})\\s+" +
-                    "(\\d{5}(?:[-\\s]\\d{4})?)");
-        }
-
-        private static String capitalize(String word) {
-            return Character.toUpperCase(word.charAt(0)) + word.substring(1).toLowerCase();
         }
 
         public static int levenshtein(String x, String y) {
@@ -192,7 +137,7 @@ public class Telifie {
         }
     }
 
-    public class crypter {
+    public static class crypter {
 
         public static void encrypt(String key, String fileIn, String fileOut) throws Exception {
             Key secretKey = new SecretKeySpec(key.getBytes(), "AES");

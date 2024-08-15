@@ -3,6 +3,7 @@ CREATE TABLE users (
     id VARCHAR(36) PRIMARY KEY,
     email VARCHAR(150),
     name VARCHAR(150),
+    username VARCHAR(250). --TODO
     phone VARCHAR(15),
     token VARCHAR(32),
     settings TEXT,
@@ -10,6 +11,7 @@ CREATE TABLE users (
     permissions INT
 );
 
+-- Parser parse tracker/history &
 -- Tracking hits on objects (articles, users, images, etc)
 CREATE TABLE pings (
     user VARCHAR(36),
@@ -18,28 +20,12 @@ CREATE TABLE pings (
     type VARCHAR(6)
 );
 
-CREATE TABLE shortcuts (
-    user VARCHAR(36),
-    object TEXT,
-    name TEXT,
-    icon TEXT,
-    origin INT,
-    FOREIGN KEY (user) REFERENCES users (id)
-)
-
 -- For system messages, through Twilio/SMS
 CREATE TABLE systemsms (
     id VARCHAR(36),
     type VARCHAR(50),
     content TEXT,
     is_read boolean,
-    origin INT
-);
-
--- Parser parse tracker/history
-CREATE TABLE parsed (
-    user VARCHAR(36),
-    uri TEXT,
     origin INT
 );
 
@@ -79,7 +65,6 @@ CREATE TABLE indexes (
     domain VARCHAR(36),
     name VARCHAR(150),
     alias VARCHAR(150),
-    description VARCHAR(150), --TODO
     origin INT,
     FOREIGN KEY (domain) REFERENCES domains (id)
 )
@@ -100,4 +85,13 @@ CREATE TABLE themes (
     origin INT,
     json TEXT,
     FOREIGN KEY (user) REFERENCES users(id)
-)
+);
+
+CREATE TABLE shortcuts (
+    user VARCHAR(36),
+    object TEXT,
+    name TEXT,
+    icon TEXT,
+    origin INT,
+    FOREIGN KEY (user) REFERENCES users (id)
+);

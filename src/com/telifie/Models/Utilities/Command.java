@@ -7,7 +7,6 @@ import com.telifie.Models.Clients.*;
 import com.telifie.Models.Utilities.Network.SQL;
 import org.bson.Document;
 import org.json.JSONException;
-import org.json.JSONObject;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -34,8 +33,32 @@ public class Command {
         String objSelector = (this.selectors.length > 1 ? this.get(1) : "");
         String secSelector = (this.selectors.length > 2 ? this.get(2) : null);
         String terSelector = (this.selectors.length > 3 ? this.get(3) : null);
-        if(selector.isEmpty()){
+        String targetIndex = ""; //Index Alias
+        Domains domains = new Domains();
+        Domain targetDomain = null;
+        if(content != null){
+            String sdn = (content.getString("domain") == null ? "telifie" : content.getString("domain").trim().toLowerCase());
+            targetIndex = (content.getString("index") == null ? "articles" : content.getString("index").trim().toLowerCase());
+            if(!sdn.equals("telifie") && !sdn.isEmpty()){
+                    try{
+                        try {
+                            if(!targetDomain.hasViewPermissions(session.user)){
+                                return new Result(401,this.command, "INSUFFICIENT PERMISSIONS");
+                            }
+                            targetDomain = domains.withAlias(sdn);
+                            session.setDomain(sdn);
+                        } catch(NullPointerException n){
+                            return new Result(505, this.command, "SEARCH ERROR");
+                        }
+                    }catch (NullPointerException n){
+                        return new Result(410, this.command, "DOMAIN NOT FOUND");
+                    }
+            }else{
+                targetDomain = domains.withAlias("telifie");
+            }
+        }
 
+        if(selector.isEmpty()){
             if(content != null){
                 String q = (content.getString("query") == null ? "" : content.getString("query").toLowerCase().trim());
                 if(!Telifie.tools.startsWith(new String[]{"who", "what", "when", "where", "why", "how"}, q) && !q.startsWith("@")){
@@ -47,16 +70,15 @@ public class Command {
                     Pattern pattern = Pattern.compile(mathExpressionPattern);
                     Matcher matcher = pattern.matcher(q);
                     if(matcher.find()) {
-
+                        return new Result(210, this.command, "NO MATH SERVICE INSTALLED");
                     }
                 }else{
                     try {
                         Parameters params = new Parameters(content);
                         return new Search().execute(session, q, params);
+                    } catch(NullPointerException n){
+                        return new Result(505, this.command, "SEARCH ERROR");
                     }
-                    //                catch(NullPointerException n){
-                    //                    return new Result(505, this.command, "SEARCH ERROR");
-                    //                }
                     catch (JsonProcessingException e) {
                         return new Result(428, this.command, "MALFORMED PARAMS");
                     }
@@ -65,26 +87,11 @@ public class Command {
             return new Result(428, this.command, "NO QUERY PROVIDED");
 
         }else if(selector.equals("search")){
-
             if(content != null){
                 String q = (content.getString("query") == null ? "" : content.getString("query"));
-                String targetDomain = (content.getString("domain") == null ? "telifie" : content.getString("domain").trim().toLowerCase());
-                Domains domains = new Domains(session);
-                Domain domain = domains.withAlias("telifie");
-                if(!targetDomain.equals("telifie") && !targetDomain.isEmpty()){
-                    try{
-                        domain = domains.withAlias(targetDomain);
-                        session.setDomain(targetDomain);
-                    }catch (NullPointerException n){
-                        return new Result(410, this.command, "DOMAIN NOT FOUND");
-                    }
-                }
                 try {
-                    if(domain.hasViewPermissions(session.user)){
-                        Parameters params = new Parameters(content);
-                        return new Search().execute(session, q, params);
-                    }
-                    return new Result(401,this.command, "INSUFFICIENT PERMISSIONS");
+                    Parameters params = new Parameters(content);
+                    return new Search().execute(session, q, params);
                 } catch(NullPointerException n){
                     return new Result(505, this.command, "SEARCH ERROR");
                 } catch (JsonProcessingException e) {
@@ -92,32 +99,17 @@ public class Command {
                 }
             }
             return new Result(428, this.command, "JSON BODY EXPECTED");
+
         }else if(selector.equals("articles")){
-            Domains domains = new Domains(session);
-            String index = "articles";
-            //TODO check index validity
-            Domain domain = domains.withAlias("telifie");
-            if(content != null){
-                index = (content.getString("index") == null ? "articles" : content.getString("index").trim().toLowerCase());
-                if(content.getString("domain") != null){
-                    String td = content.getString("domain");
-                    try{
-                        domain = new Domains(session).withAlias(td);
-                        session.setDomain(td);
-                    }catch (NullPointerException n) {
-                        return new Result(404, this.command, "DOMAIN NOT FOUND");
-                    }
-                }
-            }
-            Articles articles = new Articles(session, index);
+            Articles articles = new Articles(session, targetIndex);
             if(this.selectors.length >= 3){
                 try {
                     Article a = articles.withId(secSelector);
                     switch (objSelector) {
                         case "id" -> {
                             try {
-                                if(domain.hasViewPermissions(session.user)){
-                                    CompletableFuture.runAsync(() -> SQL.history.log(session.user, a.getId()));
+                                if(targetDomain.hasViewPermissions(session.user)){
+                                    CompletableFuture.runAsync(() -> SQL.log(session.user, a.getId()));
                                     return new Result(this.command, "article", articles.withId(secSelector));
                                 }
                                 return new Result(401, this.command, "INSUFFICIENT PERMISSIONS");
@@ -132,7 +124,7 @@ public class Command {
                                 }
                                 Article ua = new Article(content);
                                 //TODO compare for timeline
-                                if(domain.hasEditPermissions(session.user)){
+                                if(targetDomain.hasEditPermissions(session.user)){
                                     if (articles.update(a, ua)) {
                                         return new Result(200, this.command, ua.toString());
                                     }
@@ -143,7 +135,7 @@ public class Command {
                             return new Result(428, this.command, "JSON BODY EXPECTED");
                         }
                         case "delete" -> {
-                            if(domain.hasEditPermissions(session.user)){
+                            if(targetDomain.hasEditPermissions(session.user)){
                                 if (articles.delete(articles.withId(secSelector))) {
                                     return new Result(200, this.command, "");
                                 }
@@ -176,7 +168,7 @@ public class Command {
                             }
                         }
                         case "verify" -> {
-                            if(domain.hasEditPermissions(session.user)){
+                            if(targetDomain.hasEditPermissions(session.user)){
                                 if (articles.verify(secSelector)) {
                                     return new Result(200, this.command, "");
                                 }
@@ -192,7 +184,7 @@ public class Command {
             }else if(objSelector.equals("create")){
                 try {
                     Article na = new Article(content);
-                    if(domain.hasEditPermissions(session.user)){
+                    if(targetDomain.hasEditPermissions(session.user)){
                         if(articles.create(na)){
                             return new Result(this.command, "article", na);
                         }
@@ -204,8 +196,9 @@ public class Command {
                 }
             }
             return new Result(this.command,"stats", articles.stats());
+
         }else if(selector.equals("parser")){
-            Articles articles = new Articles(session, "articles");
+            Articles articles = new Articles(session, targetIndex);
             if(content != null){
                 String mode = content.getString("mode");
                 if(mode != null){
@@ -241,53 +234,19 @@ public class Command {
                 return new Result(428, this.command, "PARSER MODE REQUIRED");
             }
             return new Result(428, this.command, "JSON BODY EXPECTED");
+
         }else if(selector.equals("connect")){
             if(content != null){
                 String email = content.getString("email");
                 Users u = new Users();
                 if(u.existsWithEmail(email)){
                     User user = u.getUserWithEmail(email);
-                    if(user.getPermissions() == 0){
-                        if(u.emailCode(user)){
-                            return new Result(200, this.command, "EMAIL CODE SENT");
-                        }
-                        return new Result(501, this.command, "FAILED EMAIL CODE");
-                    }else if(user.getPermissions() >= 1){
-                        if(u.textCode(user)){
-                            return new Result(200, this.command, "TEXT CODE SENT");
-                        }
-                        return new Result(501, this.command, "FAILED TEXT CODE");
-                    }
+
                 }
                 return new Result(404, this.command, "USER NOT FOUND");
             }
             return new Result(428, this.command, "JSON BODY EXPECTED");
-        }else if(selector.startsWith("verify")){
-            if(content != null){
-                String email = content.getString("email");
-                String code = Telifie.md5(content.getString("code"));
-                Users users = new Users();
-                if(users.existsWithEmail(email)){
-                    User user = users.getUserWithEmail(email);
-                    if(user.hasToken(code)){
-                        if(user.getPermissions() == 0 || user.getPermissions() == 1){
-                            users.upgradePermissions(user, (user.getPermissions() + 1));
-                            user.setPermissions(user.getPermissions() + 1);
-                        }
-                        Authentication auth = new Authentication(user);
-                        auth.authenticate();
-                        JSONObject json = new JSONObject(user.toString());
-                        json.put("authentication", new JSONObject(auth.toString()));
-                        return new Result(this.command, "user", json);
-                    }
-                    return new Result(403, this.command, "INVALID CODE");
-                }
-                return new Result(404, this.command, "USER NOT FOUND");
-            }
-            return new Result(404, this.command, "JSON BODY EXPECTED");
-        }else if(selector.equals("ping")){
-            return new Result(200, this.command, "RECEIVED");
         }
-        return new Result(200, this.command, "NO COMMAND RECEIVED");
+        return new Result(200, this.command, "RECEIVED");
     }
 }

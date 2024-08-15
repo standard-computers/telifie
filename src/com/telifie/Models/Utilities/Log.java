@@ -20,14 +20,6 @@ public class Log {
         out(Event.Type.ERROR, message, code);
     }
 
-    public static void flag(String message, String code){
-        out(Event.Type.FLAG, message, code);
-    }
-
-    public static void put(String message, String code){
-        out(Event.Type.PUT, message, code);
-    }
-
     public static void message(String message, String code){
         out(Event.Type.MESSAGE, message, code);
     }
@@ -36,7 +28,7 @@ public class Log {
         System.out.println("[" + readableTimeDate() + "] " + message);
     }
 
-    public static void wrap(String text, int width) {
+    public static void wrap(String text) {
         StringBuilder sb = new StringBuilder();
         final int[] index = {0};
         Timer timer = new Timer();
@@ -44,17 +36,17 @@ public class Log {
             @Override
             public void run() {
                 if (index[0] < text.length()) {
-                    int endIndex = Math.min(index[0] + width, text.length());
+                    int endIndex = Math.min(index[0] + 65, text.length());
                     String line = text.substring(index[0], endIndex);
                     int lastSpace = line.lastIndexOf(' ');
                     if (lastSpace != -1 && endIndex != text.length()) {
                         line = line.substring(0, lastSpace);
                         index[0] += lastSpace + 1;
                     } else {
-                        index[0] += width;
+                        index[0] += 65;
                     }
                     sb.append(line).append('\n');
-                    System.out.print(sb.toString());
+                    System.out.print(sb);
                     sb.setLength(0);
                 } else {
                     timer.cancel();
@@ -66,7 +58,7 @@ public class Log {
 
     private static void appendToCSV(Event.Type event, String message, String code) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(Telifie.configDirectory() + "/telifie_log.csv", true))) {
-            writer.write(event.toString() + "," + message + "," + Telifie.epochTime() + "," + readableTimeDate() + ", " + code);
+            writer.write(event.toString() + "," + message + "," + Telifie.time() + "," + readableTimeDate() + ", " + code);
             writer.newLine();
         } catch (IOException e) {
             e.printStackTrace();
@@ -74,7 +66,7 @@ public class Log {
     }
 
     private static String readableTimeDate(){
-        long epochTimestamp = Telifie.epochTime();
+        long epochTimestamp = Telifie.time();
         Instant instant = Instant.ofEpochSecond(epochTimestamp);
         ZoneId zoneId = ZoneId.of("UTC");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(zoneId);

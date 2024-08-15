@@ -44,58 +44,23 @@ public class SQL {
     }
 
     public void parsed(String user, String url) {
-        SQL.update("INSERT INTO parsed (user, uri, origin) VALUES (?, ?, ?)", user, url, String.valueOf(Telifie.epochTime()));
+        SQL.update("INSERT INTO parsed (user, uri, origin) VALUES (?, ?, ?)", user, url, String.valueOf(Telifie.time()));
     }
 
-    public boolean isParsed(String url) {
+    public static void log(String user, String obj) {
         try {
-            PreparedStatement command = Configuration.sqlClient.prepareStatement("SELECT COUNT(*) AS count FROM parsed WHERE uri = ?");
-            command.setString(1, url);
-            ResultSet resultSet = command.executeQuery();
-            if (resultSet.next()) {
-                int count = resultSet.getInt("count");
-                return count > 0;
+            PreparedStatement check = Configuration.sqlClient.prepareStatement("SELECT COUNT(*) FROM pings WHERE user = ? AND object = ?");
+            check.setString(1, user);
+            check.setString(2, obj);
+            ResultSet resultSet = check.executeQuery();
+            resultSet.next();
+            int count = resultSet.getInt(1);
+            if (count > 0) {
+                return;
             }
-            return false;
+            SQL.update("INSERT INTO pings (user, object, origin) VALUES (?, ?, ?)", user, obj, String.valueOf(Telifie.time()));
         } catch (SQLException e) {
             e.printStackTrace();
-        }
-        return false;
-    }
-
-    public static class history {
-        public static boolean isEmpty() {
-            boolean empty = true;
-            try {
-                ResultSet resultSet = Configuration.sqlClient.prepareStatement("SELECT COUNT(*) AS count FROM quickresponse").executeQuery();
-                if (resultSet.next()) {
-                    int count = resultSet.getInt("count");
-                    if (count > 0) {
-                        empty = false;
-                    }
-                }
-                resultSet.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            return empty;
-        }
-
-        public static void log(String user, String obj) {
-            try {
-                PreparedStatement check = Configuration.sqlClient.prepareStatement("SELECT COUNT(*) FROM pings WHERE user = ? AND object = ?");
-                check.setString(1, user);
-                check.setString(2, obj);
-                ResultSet resultSet = check.executeQuery();
-                resultSet.next();
-                int count = resultSet.getInt(1);
-                if (count > 0) {
-                    return;
-                }
-                SQL.update("INSERT INTO pings (user, object, origin) VALUES (?, ?, ?)", user, obj, String.valueOf(Telifie.epochTime()));
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
     }
 }

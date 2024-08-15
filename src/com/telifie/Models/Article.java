@@ -7,7 +7,14 @@ import java.util.UUID;
 
 public class Article {
 
-    private String owner, id, title, link, icon, description = "Webpage", content, source;
+    private String owner;
+    private final String id;
+    private String title;
+    private String link;
+    private String icon;
+    private String description = "Webpage";
+    private String content;
+    private String source;
     private boolean verified = false;
     private ArrayList<Attribute> attributes = new ArrayList<>();
     private ArrayList<DataSet> dataSets = new ArrayList<>();
@@ -16,7 +23,7 @@ public class Article {
 
     public Article(){
         this.id = UUID.randomUUID().toString();
-        this.origin = Telifie.epochTime();
+        this.origin = Telifie.time();
     }
 
     public Article(Document document) throws NullPointerException {

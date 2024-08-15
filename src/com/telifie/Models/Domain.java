@@ -6,34 +6,18 @@ import java.util.ArrayList;
 
 public class Domain {
 
-    public final String id, owner, name, alias;
-    public final int origin, permissions;
-    private ArrayList<Member> users = new ArrayList<>();
-    private ArrayList<Index> indexes = new ArrayList<>();
+    public final String id, owner, name;
+    public final int permissions;
+    private final ArrayList<Member> users;
+    private final ArrayList<Index> indexes;
 
     public Domain(ResultSet rs) throws SQLException {
         this.id = rs.getString("id");
         this.owner = rs.getString("owner");
         this.name = rs.getString("name");
-        this.alias = rs.getString("alias");
-        this.origin = rs.getInt("origin");
         this.permissions = rs.getInt("permissions");
         this.users = new ArrayList<>();
         this.indexes = new ArrayList<>();
-    }
-
-    public int getPermissions(String userId){
-        if(this.owner.equals(userId)){
-            return 0;
-        }else{
-            for(Member u : users){
-                if(u.user.equals(userId)){
-                    int up = u.permissions;
-                    return (up < 1 || up > 2 ? 1 : u.permissions);
-                }
-            }
-        }
-        return -1;
     }
 
     public boolean hasEditPermissions(String userId){
@@ -75,8 +59,6 @@ public class Domain {
         return "{\"id\" : \"" + id + '\"' +
                 ", \"owner\" : \"" + owner + '\"' +
                 ", \"name\" : \"" + name + '\"' +
-                ", \"alias\" : \"" + alias + '\"' +
-                ", \"origin\" :" + origin +
                 ", \"permissions\" :" + permissions +
                 ", \"users\" :" + users +
                 ", \"indexes\" :" + indexes +

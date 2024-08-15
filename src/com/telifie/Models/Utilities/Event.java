@@ -10,7 +10,7 @@ public class Event {
     private final String content;
 
     public enum Type {
-        UPDATE, POST, GET, PUT, MESSAGE, EMAIL, TEXT, FLAG, DELETE, CRAWL, ERROR, HTTP, HEAD
+        PUT, MESSAGE, FLAG, ERROR
     }
 
     public Event(Document document){
@@ -23,11 +23,7 @@ public class Event {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("{\"type\" : \"").append(type).append('\"')
-                .append(", \"user\" : \"").append(user).append('\"')
-                .append(", \"origin\" : ").append(origin)
-                .append(", \"content\" : \"").append(content).append('\"')
-                .append('}');
+        sb.append("{\"type\" : \"").append(type).append('\"').append(", \"user\" : \"").append(user).append('\"').append(", \"origin\" : ").append(origin).append(", \"content\" : \"").append(content).append('\"').append('}');
         return sb.toString();
     }
 }

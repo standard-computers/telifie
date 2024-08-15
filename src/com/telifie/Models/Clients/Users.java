@@ -2,7 +2,6 @@ package com.telifie.Models.Clients;
 
 import com.telifie.Models.User;
 import com.telifie.Models.Utilities.Network.SQL;
-import com.telifie.Models.Utilities.Telifie;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -43,25 +42,5 @@ public class Users {
 
     public boolean existsWithEmail(String email){
         return (this.getUserWithEmail(email) != null);
-    }
-
-    public boolean lock(User user, String code) {
-        return SQL.update("UPDATE users SET token = ? WHERE email = ?", Telifie.md5(code), user.getEmail());
-    }
-
-    public boolean emailCode(User user){
-        String code = Telifie.digitCode();
-        Telifie.email(user.getEmail(), code);
-        return this.lock(user, code);
-    }
-
-    public boolean textCode(User user){
-        String code = Telifie.digitCode();
-        Telifie.sms(user.getPhone(), "+15138029566", "Hello \uD83D\uDC4B It's Telifie! Your login code is " + code);
-        return this.lock(user, code);
-    }
-
-    public boolean upgradePermissions(User user, int permissions) {
-        return SQL.update("UPDATE users SET permissions = ? WHERE id = ?", permissions, user.getId());
     }
 }

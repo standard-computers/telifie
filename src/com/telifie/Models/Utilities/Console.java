@@ -28,32 +28,31 @@ public class Console {
         while(true){
             String cmd = Console.in("telifie -> ").trim();
             switch (cmd) {
-                case "exit", "logout", "close" -> System.exit(0);
+                case "exit", "logout", "close", "bye" -> System.exit(0);
                 case "@authenticate" -> {
                     Authentication auth = new Authentication(new User("", "telifie", ""));
                     Log.console("Authorizing as database admin...");
                     if(auth.authenticate()){
-                        Log.flag("NEW ACCESS CREDENTIALS AUTHENTICATED", "CLIx003");
+                        Log.out(Event.Type.FLAG, "NEW ACCESS CREDENTIALS AUTHENTICATED", "CLIx003");
                         Log.console(new JSONObject(auth.toString()).toString(4));
+                    }
+                }
+                case "$" -> {
+                    String modelName = Console.in("Model Name (A-Za-z.-0-9) ->");
+                    if(modelName.startsWith("@")){
+                        new Cognition(modelName.substring(1));
+                    }else{
+                        new Cognition(modelName, Configuration.model);
                     }
                 }
                 default -> {
                     Log.console("Thinking...");
-                    try {
-                        Result results = new Search().execute(
-                                new Session("telifie@terminal", "telifie"),
-                                cmd, new Parameters(new Document("results_per_page", 1).append("pages", 1).append("page", 1))
-                        );
-                        if(!results.getGenerated().isEmpty()){
-                            Console.message(results.getGenerated());
-                        }else if(results.getResults() != null){
-                            ArrayList<Article> as = (ArrayList<Article>) results.getResults();
-                            Log.wrap(as.get(0).getContent(), 65);
-                        }else{
-                            Log.wrap(new JSONObject(results.toString()).toString(4), 65);
-                        }
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
+                    Result r = new Command("/").parseCommand(new Session("telifie@terminal", "telifie"), new Document("query", cmd), "POST");
+                    if(r.getResults() != null || !r.getGenerated().isEmpty()){
+                        ArrayList<Article> as = (ArrayList<Article>) r.getResults();
+                        Log.wrap(as.get(0).getContent());
+                    }else{
+                        Log.console("Couldn't find anything :(");
                     }
                 }
             }

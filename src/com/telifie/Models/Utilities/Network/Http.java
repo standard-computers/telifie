@@ -53,8 +53,7 @@ public class Http {
             if (msg instanceof FullHttpRequest request) {
                 String authHeader = request.headers().get(HttpHeaderNames.AUTHORIZATION);
                 String query = new QueryStringDecoder(request.uri()).path().substring(1);
-                String userIp = ctx.channel().remoteAddress().toString();
-                Log.out(Event.Type.valueOf(request.method().toString()), "INBOUND HTTP REQUEST : " + userIp + "/" + query, "HTTx001");
+                Log.out(Event.Type.valueOf(request.method().toString()), "INBOUND HTTP REQUEST : " + ctx.channel().remoteAddress().toString() + "/" + query, "HTTx001");
                 Result result = new Result(406, ctx.channel().remoteAddress().toString(), "NO AUTH PROVIDED");
                 if(authHeader != null){
                     Authentication auth = new Authentication(authHeader);
@@ -66,7 +65,7 @@ public class Http {
                                 String requestBody = content.content().toString(CharsetUtil.UTF_8);
                                 result = new Command(query).parseCommand(session, Document.parse(requestBody), request.method().name());
                             }catch(BsonInvalidOperationException e){
-                                result = new Result(505, userIp + "/" + query, "MALFORMED JSON");
+                                result = new Result(505, query, "MALFORMED JSON");
                             }
                         }else{
                             result = new Command(query).parseCommand(session, null, request.method().name());
