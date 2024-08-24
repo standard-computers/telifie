@@ -241,7 +241,6 @@ public class Command {
                 Users u = new Users();
                 if(u.existsWithEmail(email)){
                     User user = u.getUserWithEmail(email);
-
                 }
                 return new Result(404, this.command, "USER NOT FOUND");
             }

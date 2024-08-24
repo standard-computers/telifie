@@ -10,7 +10,7 @@ public class Event {
     private final String content;
 
     public enum Type {
-        PUT, MESSAGE, FLAG, ERROR
+        PUT, MESSAGE, FLAG, ERROR, POST, GET
     }
 
     public Event(Document document){

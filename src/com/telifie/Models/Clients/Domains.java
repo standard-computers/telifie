@@ -33,6 +33,8 @@ public class Domains {
         return domain;
     }
 
+//        return SQL.update("INSERT INTO indexes (id, domain, name, alias, origin) VALUES (?, ?, ?, ?, ?)", i.id, i.domain, i.name, i.alias, i.origin);
+//        return SQL.delete("DELETE FROM indexes WHERE id = ? AND domain = ?", i.id, d.id);
     public Domain withAlias(String alias) {
         Domain domain = null;
         try {

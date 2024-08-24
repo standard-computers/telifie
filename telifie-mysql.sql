@@ -1,9 +1,7 @@
--- Users
 CREATE TABLE users (
     id VARCHAR(36) PRIMARY KEY,
     email VARCHAR(150),
     name VARCHAR(150),
-    username VARCHAR(250). --TODO
     phone VARCHAR(15),
     token VARCHAR(32),
     settings TEXT,
@@ -11,8 +9,6 @@ CREATE TABLE users (
     permissions INT
 );
 
--- Parser parse tracker/history &
--- Tracking hits on objects (articles, users, images, etc)
 CREATE TABLE pings (
     user VARCHAR(36),
     object VARCHAR(36),
@@ -20,7 +16,6 @@ CREATE TABLE pings (
     type VARCHAR(6)
 );
 
--- For system messages, through Twilio/SMS
 CREATE TABLE systemsms (
     id VARCHAR(36),
     type VARCHAR(50),
@@ -29,7 +24,6 @@ CREATE TABLE systemsms (
     origin INT
 );
 
--- Authentication tokens
 CREATE TABLE authentications (
     user VARCHAR(36),
     token VARCHAR(32),
@@ -38,7 +32,6 @@ CREATE TABLE authentications (
     expiration INT
 )
 
--- Domains are like organizations.
 CREATE TABLE domains (
     id VARCHAR(36) PRIMARY KEY,
     owner VARCHAR(36),
@@ -49,7 +42,6 @@ CREATE TABLE domains (
     FOREIGN KEY (owner) REFERENCES users (id)
 )
 
--- Memberships to domains
 CREATE TABLE memberships (
     user VARCHAR(36),
     domain VARCHAR(36),
@@ -59,7 +51,6 @@ CREATE TABLE memberships (
     FOREIGN KEY (domain) REFERENCES domains (id)
 )
 
--- Indexes are sets of articles in a domain //TODO implement
 CREATE TABLE indexes (
     id VARCHAR(36),
     domain VARCHAR(36),
@@ -69,7 +60,6 @@ CREATE TABLE indexes (
     FOREIGN KEY (domain) REFERENCES domains (id)
 )
 
--- For timelines
 CREATE TABLE events (
     user VARCHAR(36),
     object VARCHAR(36),
@@ -79,9 +69,9 @@ CREATE TABLE events (
     FOREIGN KEY (user) REFERENCES users (id)
 )
 
---Front end use only
 CREATE TABLE themes (
     user VARCHAR(36),
+    name VARCHAR(150),
     origin INT,
     json TEXT,
     FOREIGN KEY (user) REFERENCES users(id)

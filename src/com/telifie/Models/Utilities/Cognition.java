@@ -13,11 +13,9 @@ import java.util.regex.Pattern;
 
 public class Cognition {
 
+    public Cognition(){}
 
-    public Cognition(){ //load from model in config
-    }
-
-    public Cognition(String name, String corpusPath){
+    public Cognition(String corpusPath){
         Log.console("Attempting file read...");
         File cp = new File(corpusPath);
         if(cp.exists()){
@@ -32,8 +30,8 @@ public class Cognition {
         }
     }
 
-    public Cognition(String name){ //Ini from db with new name
-        Log.console("Starting build for " + name + ".tlfi.knwldg :)");
+    public Cognition(boolean fromDomain){ //Ini from db with new name
+        Log.console("Starting build for *.tlfi.knwldg :)");
         String targetDomain = Console.in("Select Domain -> ");
         Domains domains = new Domains();
         Domain downloads = domains.withAlias(targetDomain);
@@ -58,7 +56,6 @@ public class Cognition {
                 tokenEmbeddings.add(embedding);
             }
         }
-
     }
 
     private List<String> tokenize(String t){
@@ -135,13 +132,105 @@ public class Cognition {
             Random random = new Random();
             for (int i = 0; i < embeddings.length; i++) {
                 for (int j = 0; j < embeddingSize; j++) {
-                    embeddings[i][j] = random.nextDouble() - 0.5; // Random initialization between -0.5 and 0.5
+                    embeddings[i][j] = random.nextDouble() - 0.5;
                 }
             }
         }
 
         public double[] getEmbedding(int index) {
             return embeddings[index];
+        }
+    }
+
+    public class FeedForwardNetwork {
+        private LinearProjection layer1, layer2;
+
+        public FeedForwardNetwork(int modelDim, int hiddenDim) {
+            layer1 = new LinearProjection(modelDim, hiddenDim);
+            layer2 = new LinearProjection(hiddenDim, modelDim);
+        }
+
+        public double[][] forward(double[][] input) {
+            double[][] hidden = layer1.project(input);
+//            hidden = activate(hidden); // Apply activation function
+            return layer2.project(hidden);
+        }
+    }
+
+
+    public class MultiHeadAttention {
+        private int numHeads;
+        private int headDim;
+        private LinearProjection queryProjection, keyProjection, valueProjection, outputProjection;
+
+        public MultiHeadAttention(int numHeads, int modelDim) {
+            this.numHeads = numHeads;
+            this.headDim = modelDim / numHeads;
+            queryProjection = new LinearProjection(modelDim, modelDim);
+            keyProjection = new LinearProjection(modelDim, modelDim);
+            valueProjection = new LinearProjection(modelDim, modelDim);
+            outputProjection = new LinearProjection(modelDim, modelDim);
+        }
+
+        public double[][] computeAttention(double[][] queries, double[][] keys, double[][] values) {
+            double[][] projectedQueries = queryProjection.project(queries);
+            double[][] projectedKeys = keyProjection.project(keys);
+            double[][] projectedValues = valueProjection.project(values);
+
+            // Split into heads and compute attention scores
+            // ...
+
+            // Concatenate heads and project output
+//            double[][] output = outputProjection.project(concatenatedHeads);
+//            return output;
+            return null;
+        }
+    }
+
+    public class LinearProjection {
+        private double[][] weights;
+        private double[] biases;
+        private int inputDim;
+        private int outputDim;
+
+        public LinearProjection(int inputDim, int outputDim) {
+            this.inputDim = inputDim;
+            this.outputDim = outputDim;
+            this.weights = new double[inputDim][outputDim];
+            this.biases = new double[outputDim];
+            initializeWeightsAndBiases();
+        }
+
+        private void initializeWeightsAndBiases() {
+            Random random = new Random();
+            for (int i = 0; i < inputDim; i++) {
+                for (int j = 0; j < outputDim; j++) {
+                    weights[i][j] = random.nextGaussian() * 0.01;
+                }
+            }
+            for (int i = 0; i < outputDim; i++) {
+                biases[i] = 0;
+            }
+        }
+
+        public double[] project(double[] input) {
+            double[] output = new double[outputDim];
+            for (int j = 0; j < outputDim; j++) {
+                output[j] = biases[j];
+                for (int i = 0; i < inputDim; i++) {
+                    output[j] += input[i] * weights[i][j];
+                }
+            }
+            return output;
+        }
+
+        public double[][] project(double[][] input) {
+            int batchSize = input.length;
+            double[][] output = new double[batchSize][outputDim];
+            for (int b = 0; b < batchSize; b++) {
+                output[b] = project(input[b]);
+            }
+            return output;
         }
     }
 }

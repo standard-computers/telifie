@@ -1,7 +1,5 @@
 package com.telifie.Models.Utilities;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.telifie.Models.Clients.Search;
 import com.telifie.Models.Article;
 import com.telifie.Models.Result;
 import com.telifie.Models.User;
@@ -29,7 +27,7 @@ public class Console {
             String cmd = Console.in("telifie -> ").trim();
             switch (cmd) {
                 case "exit", "logout", "close", "bye" -> System.exit(0);
-                case "@authenticate" -> {
+                case "@auth" -> {
                     Authentication auth = new Authentication(new User("", "telifie", ""));
                     Log.console("Authorizing as database admin...");
                     if(auth.authenticate()){
@@ -37,14 +35,7 @@ public class Console {
                         Log.console(new JSONObject(auth.toString()).toString(4));
                     }
                 }
-                case "$" -> {
-                    String modelName = Console.in("Model Name (A-Za-z.-0-9) ->");
-                    if(modelName.startsWith("@")){
-                        new Cognition(modelName.substring(1));
-                    }else{
-                        new Cognition(modelName, Configuration.model);
-                    }
-                }
+                case "$" -> new Cognition(Configuration.model);
                 default -> {
                     Log.console("Thinking...");
                     Result r = new Command("/").parseCommand(new Session("telifie@terminal", "telifie"), new Document("query", cmd), "POST");
